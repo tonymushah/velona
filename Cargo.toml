@@ -1,0 +1,16 @@
+[package]
+name = "velona"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+accesskit_winit = "0.29"
+any_spawner = "0.3"
+async-executor = "^1.14"
+async-task = "4"
+masonry = "0.4"
+reactive_graph = { version = "0.2", features = ["effects"] }
+thiserror = "2"
+winit = "0.30"
+log = "0.4"
+pollster = "0.4"

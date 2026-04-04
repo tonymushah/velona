@@ -8,4 +8,6 @@ pub enum Error {
     Surface(#[from] wgpu::SurfaceError),
     RequestDevice(#[from] wgpu::RequestDeviceError),
     Vello(#[from] vello::Error),
+    #[error("Unsupported surface format")]
+    UnsupportedSurfaceFormat,
 }

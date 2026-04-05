@@ -107,7 +107,7 @@ impl Window {
                         window.request_redraw();
                     }
                     masonry::app::RenderRootSignal::RequestAnimFrame => {
-                        todo_warn_of_something("RenderRootSignal::RequestAnimFrame");
+                        window.request_redraw();
                     }
                     masonry::app::RenderRootSignal::TakeFocus => {
                         window.focus_window();

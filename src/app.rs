@@ -14,6 +14,7 @@ use masonry::{
     core::{DefaultProperties, WindowEvent as MasonryWindowEvent},
     vello::wgpu::{self, InstanceDescriptor},
 };
+use reactive_graph::owner::Owner;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -24,7 +25,10 @@ use winit::{
 
 use window::Window;
 
-use crate::{app::executor::SpawnFn, window::WindowBuilder};
+use crate::{
+    app::{executor::SpawnFn, window::WindowNew},
+    window::WindowBuilder,
+};
 
 pub(crate) use el_event::{AppEventLoopProxy, EventLoopEvent};
 
@@ -42,6 +46,7 @@ pub struct Builder {
     default_properties: DefaultProperties,
     spawn_fn: Option<SpawnFn>,
     windows: Vec<WindowBuilder>,
+    owner: Owner,
 }
 
 impl Builder {
@@ -74,6 +79,7 @@ impl Default for Builder {
             default_properties: Default::default(),
             spawn_fn: None,
             windows: Default::default(),
+            owner: Owner::new(),
         }
     }
 }
@@ -249,19 +255,20 @@ impl ApplicationHandler<EventLoopEvent> for App {
                 let window_attributes = builder.window_attributes;
                 match event_loop.create_window(window_attributes) {
                     Ok(window) => {
+                        let window = Arc::new(window);
                         let access_kit = accesskit_winit::Adapter::with_event_loop_proxy(
                             event_loop,
                             &window,
                             self.event_loop_proxy.clone(),
                         );
-                        match pollster::block_on(Window::new(
+                        match pollster::block_on(Window::new(WindowNew {
                             window,
-                            &self.instance,
-                            builder.view,
-                            self.default_properties.clone(),
-                            access_kit,
-                            self.event_loop_proxy.clone(),
-                        )) {
+                            instance: &self.instance,
+                            view: builder.view,
+                            default_properties: self.default_properties.clone(),
+                            access_kit: access_kit,
+                            event_loop_proxy: self.event_loop_proxy.clone(),
+                        })) {
                             Ok(new_instance) => {
                                 self.windows
                                     .insert(new_instance.winit_window.id(), Box::new(new_instance));

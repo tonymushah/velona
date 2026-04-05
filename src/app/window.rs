@@ -8,6 +8,7 @@ use masonry::{
         wgpu::{self, util::TextureBlitter, wgt::TextureDescriptor},
     },
 };
+use reactive_graph::owner::{Owner, provide_context};
 use winit::window::Window as WinitWindow;
 
 use crate::{
@@ -16,12 +17,13 @@ use crate::{
         el_event::{RenderRootNewLayer, RenderRootRemoveLayer, RenderRootRepositionLayer},
     },
     convert_winit_event::masonry_resize_direction_to_winit,
+    render_root::{InnerRenderRoot, WindowRenderRoot},
     utils::todo_warn_of_something,
 };
 
 pub struct Window {
     pub(crate) winit_window: Arc<WinitWindow>,
-    pub(crate) render_root: RenderRoot,
+    pub(crate) render_root: WindowRenderRoot,
     surface: Option<wgpu::Surface<'static>>,
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -29,6 +31,7 @@ pub struct Window {
     renderer: vello::Renderer,
     blitter: TextureBlitter,
     pub(crate) access_kit: accesskit_winit::Adapter,
+    owner: Owner,
 }
 
 pub struct WindowNew<'i, V> {
@@ -38,6 +41,7 @@ pub struct WindowNew<'i, V> {
     pub default_properties: Arc<DefaultProperties>,
     pub access_kit: accesskit_winit::Adapter,
     pub event_loop_proxy: AppEventLoopProxy,
+    pub parent_owner: &'i Owner,
 }
 
 impl Window {
@@ -52,7 +56,9 @@ impl Window {
             default_properties,
             access_kit,
             event_loop_proxy,
+            parent_owner,
         } = args;
+        let window_owner = parent_owner.child();
 
         let size = window.inner_size();
         let surface = instance.create_surface(window.clone())?;
@@ -105,8 +111,7 @@ impl Window {
 
         let blitter = TextureBlitter::new(&device, surface_format);
 
-        let render_root = RenderRoot::new(
-            view(),
+        let render_root = InnerRenderRoot::new(
             {
                 let window = window.clone();
                 move |ev| match ev {
@@ -210,6 +215,22 @@ impl Window {
                 test_font: None,
             },
         );
+        let render_root = WindowRenderRoot::new(render_root);
+        {
+            let new_widget = window_owner.with(|| {
+                provide_context(render_root.create_weak());
+                view()
+            });
+            if render_root
+                .use_inner_render_root_mut(|root| {
+                    root.swap_root_widget(new_widget);
+                })
+                .is_none()
+            {
+                log::error!("The render root should have been initialized already");
+            }
+        }
+
         Ok(Self {
             blitter,
             renderer,
@@ -219,6 +240,7 @@ impl Window {
             config,
             winit_window: window,
             render_root,
+            owner: window_owner,
             access_kit,
         })
     }
@@ -273,19 +295,30 @@ impl Window {
         }
         Ok(())
     }
-    fn sync_surface_render_root_size(&mut self) {
-        let size = self.render_root.size();
+    fn sync_surface_render_root_size(&mut self) -> bool {
+        let Some(size) = self
+            .render_root
+            .use_inner_render_root_ref(|root| root.tree.size())
+        else {
+            return false;
+        };
         self.config.width = size.width;
         self.config.height = size.height;
         if let Some(surface) = self.surface.as_mut() {
             surface.configure(&self.device, &self.config);
         }
+        true
     }
     pub fn render(&mut self) -> Result<(), crate::error::Error> {
         if self.surface.is_none() {
             return Ok(());
         }
-        let (scene, _access_tree) = self.render_root.redraw();
+        let Some((scene, _access_tree)) = self
+            .render_root
+            .use_inner_render_root_mut(|root| root.tree.redraw())
+        else {
+            return Ok(());
+        };
         if let Some(access_tree) = _access_tree {
             self.access_kit.update_if_active(|| access_tree);
         }
@@ -303,9 +336,9 @@ impl Window {
         };
         let scene_ref = transformed_scene.as_ref().unwrap_or(&scene);
 
-        self.sync_surface_render_root_size();
-        self.render_scene(scene_ref)?;
-
+        if self.sync_surface_render_root_size() {
+            self.render_scene(scene_ref)?;
+        }
         Ok(())
     }
 }

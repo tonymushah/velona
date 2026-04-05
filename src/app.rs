@@ -38,6 +38,7 @@ struct App {
     instance: wgpu::Instance,
     default_properties: Arc<DefaultProperties>,
     builder_windows: Option<Vec<WindowBuilder>>,
+    owner: Owner,
 }
 
 pub struct Builder {
@@ -112,6 +113,7 @@ impl Builder {
             instance: wgpu::Instance::new(&instance_descriptor),
             default_properties: Arc::new(self.default_properties),
             builder_windows: Some(self.windows),
+            owner: self.owner,
         };
         event_loop.run_app(&mut app)?;
         Ok(())
@@ -269,6 +271,7 @@ impl ApplicationHandler<EventLoopEvent> for App {
                             default_properties: self.default_properties.clone(),
                             access_kit,
                             event_loop_proxy: self.event_loop_proxy.clone(),
+                            parent_owner: &self.owner,
                         })) {
                             Ok(new_instance) => {
                                 self.windows

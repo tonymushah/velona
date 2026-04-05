@@ -1,5 +1,5 @@
 use masonry::core::{NewWidget, Widget};
-use winit::window::WindowAttributes;
+use winit::{dpi::Size, window::WindowAttributes};
 
 pub struct WindowBuilder {
     pub(crate) view: Box<dyn FnOnce() -> NewWidget<dyn Widget + 'static> + Send + Sync>,
@@ -22,10 +22,22 @@ impl WindowBuilder {
     }
     pub fn update_window_attributes<U>(mut self, update_fn: U) -> Self
     where
-        U: FnOnce(&mut WindowAttributes),
+        U: FnOnce(WindowAttributes) -> WindowAttributes,
     {
-        update_fn(&mut self.window_attributes);
+        self.window_attributes = update_fn(self.window_attributes);
         self
+    }
+    pub fn with_title<T>(self, title: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.update_window_attributes(|att| att.with_title(title))
+    }
+    pub fn with_inner_size<S>(self, size: S) -> Self
+    where
+        S: Into<Size>,
+    {
+        self.update_window_attributes(|att| att.with_inner_size(size))
     }
 }
 

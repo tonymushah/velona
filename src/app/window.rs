@@ -194,7 +194,7 @@ impl Window {
                 &device,
                 RendererOptions {
                     use_cpu: false,
-                    antialiasing_support: vello::AaSupport::all(),
+                    antialiasing_support: vello::AaSupport::area_only(),
                     num_init_threads: NonZeroUsize::new(1),
                     pipeline_cache: None,
                 },

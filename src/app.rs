@@ -158,6 +158,7 @@ impl ApplicationHandler<EventLoopEvent> for App {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         if let Some(builder_windows) = self.builder_windows.take() {
             if builder_windows.is_empty() {
+                log::warn!("No window provided! Exiting...");
                 event_loop.exit();
             } else {
                 for window in builder_windows {

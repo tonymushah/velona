@@ -266,7 +266,7 @@ impl ApplicationHandler<EventLoopEvent> for App {
                             instance: &self.instance,
                             view: builder.view,
                             default_properties: self.default_properties.clone(),
-                            access_kit: access_kit,
+                            access_kit,
                             event_loop_proxy: self.event_loop_proxy.clone(),
                         })) {
                             Ok(new_instance) => {

@@ -12,4 +12,5 @@ pub enum Error {
     UnsupportedSurfaceFormat,
     #[error("The `any_spawner::Executor` was already been set")]
     ExecutorAlreadyBeenSet,
+    CreateSurface(#[from] wgpu::CreateSurfaceError),
 }

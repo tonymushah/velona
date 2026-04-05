@@ -83,6 +83,18 @@ impl Window {
             desired_maximum_frame_latency: 2,
         };
 
+        let renderer = vello::Renderer::new(
+            &device,
+            RendererOptions {
+                use_cpu: false,
+                antialiasing_support: vello::AaSupport::area_only(),
+                num_init_threads: NonZeroUsize::new(1),
+                pipeline_cache: None,
+            },
+        )?;
+
+        let blitter = TextureBlitter::new(&device, surface_format);
+
         let render_root = RenderRoot::new(
             view(),
             {
@@ -189,16 +201,8 @@ impl Window {
             },
         );
         Ok(Self {
-            blitter: TextureBlitter::new(&device, surface_format),
-            renderer: vello::Renderer::new(
-                &device,
-                RendererOptions {
-                    use_cpu: false,
-                    antialiasing_support: vello::AaSupport::area_only(),
-                    num_init_threads: NonZeroUsize::new(1),
-                    pipeline_cache: None,
-                },
-            )?,
+            blitter,
+            renderer,
             surface: Some(surface),
             device,
             queue,

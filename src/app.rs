@@ -216,7 +216,7 @@ impl ApplicationHandler<EventLoopEvent> for App {
                 self.windows.remove(&window_id);
             }
             _e => {
-                log::warn!("event {:#?} handling is not implemented yet", _e);
+                log::trace!("event {:#?} handling is not implemented yet", _e);
             }
         }
     }

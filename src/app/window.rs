@@ -27,26 +27,20 @@ pub struct Window {
     pub(crate) access_kit: accesskit_winit::Adapter,
 }
 
-impl Drop for Window {
-    fn drop(&mut self) {
-        self.surface.take();
-    }
-}
-
 impl Window {
     pub(crate) async fn new<V>(
         window: WinitWindow,
         instance: &wgpu::Instance,
         view: V,
         default_properties: Arc<DefaultProperties>,
-        access_kit: accesskit_winit::Adapter, // TODO add access kit handler
+        access_kit: accesskit_winit::Adapter,
     ) -> Result<Self, crate::error::Error>
     where
         V: FnOnce() -> NewWidget<dyn Widget>,
     {
         let window = Arc::new(window);
         let size = window.inner_size();
-        let surface = instance.create_surface(window.clone()).unwrap();
+        let surface = instance.create_surface(window.clone())?;
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -70,14 +64,7 @@ impl Window {
         let surface_format = surface_caps
             .formats
             .iter()
-            .find(|it| {
-                matches!(
-                    it,
-                    wgpu::TextureFormat::Rgba8Unorm
-                        | wgpu::TextureFormat::Bgra8Unorm
-                        | wgpu::TextureFormat::Bgra8UnormSrgb
-                )
-            })
+            .find(|it| it.is_srgb())
             .copied()
             .ok_or(crate::error::Error::UnsupportedSurfaceFormat)?;
         let config = wgpu::SurfaceConfiguration {

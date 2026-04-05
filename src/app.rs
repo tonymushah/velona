@@ -1,3 +1,4 @@
+mod window;
 use std::{
     collections::{BTreeMap, HashMap},
     num::NonZeroUsize,
@@ -7,7 +8,7 @@ use std::{
 use log::warn;
 use masonry::{
     app::{RenderRoot, RenderRootOptions},
-    core::{DefaultProperties, NewWidget, Properties, Widget},
+    core::{DefaultProperties, NewWidget, Properties, Widget, WindowEvent as MasonryWindowEvent},
     palette::css,
     properties::ContentColor,
     vello::{
@@ -25,213 +26,44 @@ use winit::{
     window::{Window as WinitWindow, WindowAttributes, WindowId},
 };
 
-pub struct Window {
-    pub(crate) winit_window: Arc<WinitWindow>,
-    render_root: RenderRoot,
-    surface: wgpu::Surface<'static>,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
-    is_surface_configured: bool,
-    renderer: vello::Renderer,
-    blitter: TextureBlitter,
+use window::Window;
+
+use crate::utils::todo_warn;
+
+pub(crate) enum EventLoopEvent {
+    AccessKitAction(Box<accesskit_winit::Event>),
+    RunTask(async_task::Runnable),
 }
 
-impl Window {
-    async fn new<V>(
-        window: WinitWindow,
-        instance: &wgpu::Instance,
-        view: V,
-        default_properties: Arc<DefaultProperties>,
-    ) -> Result<Self, crate::error::Error>
-    where
-        V: FnOnce() -> NewWidget<dyn Widget>,
-    {
-        let window = Arc::new(window);
-        let size = window.inner_size();
-        let surface = instance.create_surface(window.clone()).unwrap();
+pub(crate) type AppEventLoopProxy = EventLoopProxy<EventLoopEvent>;
 
-        let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: Some(&surface),
-                force_fallback_adapter: false,
-            })
-            .await?;
-        log::info!("adapter info: {:#?}", adapter);
-        let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor {
-                label: None,
-                required_features: wgpu::Features::empty(),
-                required_limits: wgpu::Limits::default(),
-                memory_hints: Default::default(),
-                trace: wgpu::Trace::Off,
-            })
-            .await?;
-        let surface_caps = surface.get_capabilities(&adapter);
-
-        let surface_format = surface_caps
-            .formats
-            .iter()
-            .find(|it| {
-                matches!(
-                    it,
-                    wgpu::TextureFormat::Rgba8Unorm
-                        | wgpu::TextureFormat::Bgra8Unorm
-                        | wgpu::TextureFormat::Bgra8UnormSrgb
-                )
-            })
-            .copied()
-            .ok_or(crate::error::Error::UnsupportedSurfaceFormat)?;
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface_format,
-            width: size.width,
-            height: size.height,
-            present_mode: surface_caps.present_modes[0],
-            alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![],
-            desired_maximum_frame_latency: 2,
-        };
-
-        let render_root = RenderRoot::new(
-            view(),
-            |_| {},
-            RenderRootOptions {
-                default_properties,
-                use_system_fonts: true,
-                size_policy: masonry::app::WindowSizePolicy::User,
-                size,
-                scale_factor: 1.0,
-                test_font: None,
-            },
-        );
-        Ok(Self {
-            blitter: TextureBlitter::new(&device, surface_format),
-            renderer: vello::Renderer::new(
-                &device,
-                RendererOptions {
-                    use_cpu: false,
-                    antialiasing_support: vello::AaSupport::all(),
-                    num_init_threads: NonZeroUsize::new(1),
-                    pipeline_cache: None,
-                },
-            )?,
-            surface,
-            device,
-            queue,
-            config,
-            is_surface_configured: false,
-            winit_window: window,
-            render_root,
-        })
-    }
-    pub fn resize(&mut self, size: PhysicalSize<u32>) {
-        if size.width > 0 && size.height > 0 {
-            self.render_root
-                .handle_window_event(masonry::core::WindowEvent::Resize(size));
-            self.config.width = size.width;
-            self.config.height = size.height;
-            self.surface.configure(&self.device, &self.config);
-            self.is_surface_configured = true;
-        }
-    }
-    fn render_scene(&mut self, scene: &vello::Scene) -> Result<(), crate::error::Error> {
-        let scene_texture = self.device.create_texture(&TextureDescriptor {
-            label: Some("Vello scene render"),
-            size: {
-                wgpu::Extent3d {
-                    width: self.config.width,
-                    height: self.config.height,
-                    depth_or_array_layers: 1,
-                }
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            usage: wgpu::TextureUsages::STORAGE_BINDING | wgpu::TextureUsages::TEXTURE_BINDING,
-            format: wgpu::TextureFormat::Rgba8Unorm,
-            view_formats: &[],
-        });
-        let scene_texture_view = scene_texture.create_view(&Default::default());
-
-        let mut renderer = vello::Renderer::new(
-            &self.device,
-            RendererOptions {
-                use_cpu: false,
-                antialiasing_support: vello::AaSupport::area_only(),
-                num_init_threads: NonZeroUsize::new(1),
-                pipeline_cache: None,
-            },
-        )?;
-        renderer.render_to_texture(
-            &self.device,
-            &self.queue,
-            scene,
-            &scene_texture_view,
-            &vello::RenderParams {
-                base_color: masonry::palette::css::BLACK, // Background color
-                width: self.config.width,
-                height: self.config.height,
-                antialiasing_method: vello::AaConfig::Area,
-            },
-        )?;
-        let output = self.surface.get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Surface Blit"),
-            });
-        self.blitter
-            .copy(&self.device, &mut encoder, &scene_texture_view, &view);
-        self.queue.submit([encoder.finish()]);
-        self.winit_window.pre_present_notify();
-
-        output.present();
-        Ok(())
-    }
-    pub fn render(&mut self) -> Result<(), crate::error::Error> {
-        // self.winit_window.request_redraw();
-        if !self.is_surface_configured {
-            return Ok(());
-        }
-        let (scene, _access_tree) = self.render_root.redraw();
-        let scale_factor = self.winit_window.scale_factor();
-
-        let transformed_scene = if scale_factor == 1.0 {
-            None
-        } else {
-            let mut new_scene = vello::Scene::new();
-            new_scene.append(
-                &scene,
-                Some(masonry::vello::kurbo::Affine::scale(scale_factor)),
-            );
-            Some(new_scene)
-        };
-        let scene_ref = transformed_scene.as_ref().unwrap_or(&scene);
-
-        self.render_scene(scene_ref)?;
-
-        Ok(())
+impl From<accesskit_winit::Event> for EventLoopEvent {
+    fn from(value: accesskit_winit::Event) -> Self {
+        Self::AccessKitAction(Box::new(value))
     }
 }
 
 struct App {
-    event_loop_proxy: EventLoopProxy<()>,
+    event_loop_proxy: AppEventLoopProxy,
     windows: HashMap<WindowId, Box<Window>>,
     instance: wgpu::Instance,
     default_properties: Arc<DefaultProperties>,
 }
 
-#[derive(Default)]
 pub struct Builder {
-    event_loop_builder: EventLoopBuilder<()>,
+    event_loop_builder: EventLoopBuilder<EventLoopEvent>,
     instance_descriptor: Option<InstanceDescriptor>,
     default_properties: DefaultProperties,
+}
+
+impl Default for Builder {
+    fn default() -> Self {
+        Self {
+            event_loop_builder: EventLoop::with_user_event(),
+            instance_descriptor: None,
+            default_properties: Default::default(),
+        }
+    }
 }
 
 impl Builder {
@@ -254,34 +86,42 @@ impl Builder {
 }
 
 impl App {
-    fn handle_redraw_request(&mut self, window_id: WindowId) {
-        if let Some(win) = self.windows.get_mut(&window_id) {
-            match win.render() {
-                Ok(_) => {}
-                Err(crate::error::Error::Surface(
-                    wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated,
-                )) => {
-                    let size = win.winit_window.inner_size();
-                    win.resize(size);
-                }
-                Err(e) => {
-                    log::error!("Unable to render {}", e);
-                }
-            }
+    fn use_window<F, R>(&mut self, window_id: WindowId, fun: F) -> Option<R>
+    where
+        F: FnOnce(&mut Window) -> R,
+    {
+        if let Some(window) = self.windows.get_mut(&window_id) {
+            Some(fun(window))
         } else {
             warn!("No matching window state found for {:?}", window_id);
+            None
         }
     }
+    fn handle_redraw_request(&mut self, window_id: WindowId) {
+        self.use_window(window_id, |win| match win.render() {
+            Ok(_) => {}
+            Err(crate::error::Error::Surface(
+                wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated,
+            )) => {
+                let size = win.winit_window.inner_size();
+                win.render_root
+                    .handle_window_event(MasonryWindowEvent::Resize(size));
+            }
+            Err(e) => {
+                log::error!("Unable to render {}", e);
+            }
+        });
+    }
     fn handle_resize_event(&mut self, window_id: WindowId, size: PhysicalSize<u32>) {
-        if let Some(window) = self.windows.get_mut(&window_id) {
-            window.resize(size);
-        } else {
-            warn!("No window found for resizing");
-        }
+        self.use_window(window_id, |window| {
+            window
+                .render_root
+                .handle_window_event(MasonryWindowEvent::Resize(size));
+        });
     }
 }
 
-impl ApplicationHandler for App {
+impl ApplicationHandler<EventLoopEvent> for App {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         let window_attributes = non_exhaustive::non_exhaustive!(WindowAttributes {
             visible: true,
@@ -292,6 +132,11 @@ impl ApplicationHandler for App {
         });
         match event_loop.create_window(window_attributes) {
             Ok(window) => {
+                let access_kit = accesskit_winit::Adapter::with_event_loop_proxy(
+                    event_loop,
+                    &window,
+                    self.event_loop_proxy.clone(),
+                );
                 match pollster::block_on(Window::new(
                     window,
                     &self.instance,
@@ -306,6 +151,7 @@ impl ApplicationHandler for App {
                             .erased()
                     },
                     self.default_properties.clone(),
+                    access_kit,
                 )) {
                     Ok(new_instance) => {
                         self.windows
@@ -328,6 +174,11 @@ impl ApplicationHandler for App {
         window_id: WindowId,
         event: winit::event::WindowEvent,
     ) {
+        self.use_window(window_id, |window| {
+            window
+                .access_kit
+                .process_event(&window.winit_window, &event);
+        });
         match event {
             WindowEvent::RedrawRequested => {
                 self.handle_redraw_request(window_id);
@@ -341,10 +192,36 @@ impl ApplicationHandler for App {
                     event_loop.exit();
                 }
             }
-            _ => {}
+            _ => {
+                todo_warn();
+            }
         }
     }
     fn memory_warning(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         self.windows.shrink_to_fit();
+    }
+    fn user_event(
+        &mut self,
+        event_loop: &winit::event_loop::ActiveEventLoop,
+        event: EventLoopEvent,
+    ) {
+        match event {
+            EventLoopEvent::AccessKitAction(event) => {
+                self.use_window(event.window_id, |window| match event.window_event {
+                    accesskit_winit::WindowEvent::InitialTreeRequested => {
+                        window.winit_window.request_redraw();
+                    }
+                    accesskit_winit::WindowEvent::ActionRequested(action_request) => {
+                        window.render_root.handle_access_event(action_request);
+                    }
+                    accesskit_winit::WindowEvent::AccessibilityDeactivated => {
+                        window.winit_window.request_redraw();
+                    }
+                });
+            }
+            EventLoopEvent::RunTask(runnable) => {
+                runnable.run();
+            }
+        }
     }
 }

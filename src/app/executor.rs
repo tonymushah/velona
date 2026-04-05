@@ -1,0 +1,35 @@
+use any_spawner::{CustomExecutor, PinnedFuture};
+
+use crate::app::{AppEventLoopProxy, EventLoopEvent};
+
+pub(crate) type SpawnFn = Box<dyn Fn(PinnedFuture<()>) + Send + Sync>;
+
+pub struct AppExecutor {
+    spawn_fn: SpawnFn,
+    proxy: super::AppEventLoopProxy,
+}
+
+impl CustomExecutor for AppExecutor {
+    fn spawn(&self, fut: any_spawner::PinnedFuture<()>) {
+        (self.spawn_fn)(fut);
+    }
+
+    fn spawn_local(&self, fut: any_spawner::PinnedLocalFuture<()>) {
+        let proxy = self.proxy.clone();
+        let (_, task) = async_task::spawn_local(fut, move |run| {
+            let res = proxy.send_event(EventLoopEvent::RunTask(run));
+            if res.is_err() {
+                log::warn!("the event loop is already closed!");
+            }
+        });
+        task.detach();
+    }
+
+    fn poll_local(&self) {}
+}
+
+impl AppExecutor {
+    pub fn new(spawn_fn: SpawnFn, proxy: AppEventLoopProxy) -> Self {
+        Self { spawn_fn, proxy }
+    }
+}

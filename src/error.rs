@@ -10,4 +10,6 @@ pub enum Error {
     Vello(#[from] vello::Error),
     #[error("Unsupported surface format")]
     UnsupportedSurfaceFormat,
+    #[error("The `any_spawner::Executor` was already been set")]
+    ExecutorAlreadyBeenSet,
 }

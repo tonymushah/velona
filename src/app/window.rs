@@ -31,19 +31,29 @@ pub struct Window {
     pub(crate) access_kit: accesskit_winit::Adapter,
 }
 
+pub struct WindowNew<'i, V> {
+    pub window: Arc<WinitWindow>,
+    pub instance: &'i wgpu::Instance,
+    pub view: V,
+    pub default_properties: Arc<DefaultProperties>,
+    pub access_kit: accesskit_winit::Adapter,
+    pub event_loop_proxy: AppEventLoopProxy,
+}
+
 impl Window {
-    pub(crate) async fn new<V>(
-        window: WinitWindow,
-        instance: &wgpu::Instance,
-        view: V,
-        default_properties: Arc<DefaultProperties>,
-        access_kit: accesskit_winit::Adapter,
-        event_loop_proxy: AppEventLoopProxy,
-    ) -> Result<Self, crate::error::Error>
+    pub(crate) async fn new<V>(args: WindowNew<'_, V>) -> Result<Self, crate::error::Error>
     where
         V: FnOnce() -> NewWidget<dyn Widget>,
     {
-        let window = Arc::new(window);
+        let WindowNew {
+            window,
+            instance,
+            view,
+            default_properties,
+            access_kit,
+            event_loop_proxy,
+        } = args;
+
         let size = window.inner_size();
         let surface = instance.create_surface(window.clone())?;
 

@@ -11,8 +11,12 @@ use masonry::{
 use winit::window::Window as WinitWindow;
 
 use crate::{
-    app::AppEventLoopProxy, convert_winit_event::masonry_resize_direction_to_winit,
-    utils::todo_warn,
+    app::{
+        AppEventLoopProxy,
+        el_event::{RenderRootNewLayer, RenderRootRemoveLayer, RenderRootRepositionLayer},
+    },
+    convert_winit_event::masonry_resize_direction_to_winit,
+    utils::todo_warn_of_something,
 };
 
 pub struct Window {
@@ -34,6 +38,7 @@ impl Window {
         view: V,
         default_properties: Arc<DefaultProperties>,
         access_kit: accesskit_winit::Adapter,
+        event_loop_proxy: AppEventLoopProxy,
     ) -> Result<Self, crate::error::Error>
     where
         V: FnOnce() -> NewWidget<dyn Widget>,
@@ -84,23 +89,25 @@ impl Window {
                 let window = window.clone();
                 move |ev| match ev {
                     masonry::app::RenderRootSignal::Action(_any_debug, _widget_id) => {
-                        todo_warn();
+                        todo_warn_of_something("RenderRootSignal::Action");
                     }
                     masonry::app::RenderRootSignal::StartIme => {
-                        todo_warn();
+                        todo_warn_of_something("RenderRootSignal::StartIme");
                     }
                     masonry::app::RenderRootSignal::EndIme => {
-                        todo_warn();
+                        todo_warn_of_something("RenderRootSignal::EndIme");
                     }
-                    masonry::app::RenderRootSignal::ImeMoved(_logical_position, _logical_size) => {}
+                    masonry::app::RenderRootSignal::ImeMoved(_logical_position, _logical_size) => {
+                        window.set_ime_cursor_area(_logical_position, _logical_size);
+                    }
                     masonry::app::RenderRootSignal::ClipboardStore(_) => {
-                        todo_warn();
+                        todo_warn_of_something("RenderRootSignal::ClipboardStore");
                     }
                     masonry::app::RenderRootSignal::RequestRedraw => {
                         window.request_redraw();
                     }
                     masonry::app::RenderRootSignal::RequestAnimFrame => {
-                        todo_warn();
+                        todo_warn_of_something("RenderRootSignal::RequestAnimFrame");
                     }
                     masonry::app::RenderRootSignal::TakeFocus => {
                         window.focus_window();
@@ -133,22 +140,42 @@ impl Window {
                         window.set_minimized(true);
                     }
                     masonry::app::RenderRootSignal::Exit => {
-                        todo_warn();
+                        todo_warn_of_something("RenderRootSignal::Exit");
                     }
                     masonry::app::RenderRootSignal::ShowWindowMenu(logical_position) => {
                         window.show_window_menu(logical_position);
                     }
                     masonry::app::RenderRootSignal::WidgetSelectedInInspector(_widget_id) => {
-                        todo_warn();
+                        todo_warn_of_something("RenderRootSignal::WidgetSelectedInInspector");
                     }
                     masonry::app::RenderRootSignal::NewLayer(_new_widget, _point) => {
-                        todo_warn();
+                        let _ = event_loop_proxy.send_event(
+                            RenderRootNewLayer {
+                                window_id: window.id(),
+                                layer: _new_widget.into(),
+                                point: _point,
+                            }
+                            .into(),
+                        );
                     }
                     masonry::app::RenderRootSignal::RemoveLayer(_widget_id) => {
-                        todo_warn();
+                        let _ = event_loop_proxy.send_event(
+                            RenderRootRemoveLayer {
+                                widget_id: _widget_id,
+                                window_id: window.id(),
+                            }
+                            .into(),
+                        );
                     }
                     masonry::app::RenderRootSignal::RepositionLayer(_widget_id, _point) => {
-                        todo_warn();
+                        let _ = event_loop_proxy.send_event(
+                            RenderRootRepositionLayer {
+                                widget_id: _widget_id,
+                                point: _point,
+                                window_id: window.id(),
+                            }
+                            .into(),
+                        );
                     }
                 }
             },

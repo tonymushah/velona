@@ -1,10 +1,10 @@
+pub(crate) mod el_event;
 mod executor;
 mod window;
 
 use std::{
     collections::HashMap,
     sync::{Arc, OnceLock},
-    thread,
 };
 
 use any_spawner::PinnedFuture;
@@ -21,7 +21,7 @@ use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
     event::WindowEvent,
-    event_loop::{EventLoop, EventLoopBuilder, EventLoopProxy},
+    event_loop::{EventLoop, EventLoopBuilder},
     window::{WindowAttributes, WindowId},
 };
 
@@ -29,22 +29,11 @@ use window::Window;
 
 use crate::{app::executor::SpawnFn, utils::todo_warn};
 
-pub(crate) enum EventLoopEvent {
-    AccessKitAction(Box<accesskit_winit::Event>),
-    RunTask(async_task::Runnable),
-}
-
-pub(crate) type AppEventLoopProxy = EventLoopProxy<EventLoopEvent>;
-
-impl From<accesskit_winit::Event> for EventLoopEvent {
-    fn from(value: accesskit_winit::Event) -> Self {
-        Self::AccessKitAction(Box::new(value))
-    }
-}
+pub(crate) use el_event::{AppEventLoopProxy, EventLoopEvent};
 
 struct App {
     event_loop_proxy: AppEventLoopProxy,
-    windows: HashMap<WindowId, Window>,
+    windows: HashMap<WindowId, Box<Window>>,
     instance: wgpu::Instance,
     default_properties: Arc<DefaultProperties>,
 }
@@ -185,10 +174,11 @@ impl ApplicationHandler<EventLoopEvent> for App {
                     },
                     self.default_properties.clone(),
                     access_kit,
+                    self.event_loop_proxy.clone(),
                 )) {
                     Ok(new_instance) => {
                         self.windows
-                            .insert(new_instance.winit_window.id(), new_instance);
+                            .insert(new_instance.winit_window.id(), Box::new(new_instance));
                     }
                     Err(err) => {
                         log::error!("Cannot create new window ({err})")
@@ -213,6 +203,11 @@ impl ApplicationHandler<EventLoopEvent> for App {
                 .process_event(&window.winit_window, &event);
         });
         match event {
+            WindowEvent::Destroyed => {
+                if self.windows.is_empty() {
+                    event_loop.exit();
+                }
+            }
             WindowEvent::RedrawRequested => {
                 self.handle_redraw_request(window_id);
             }
@@ -221,9 +216,6 @@ impl ApplicationHandler<EventLoopEvent> for App {
             }
             WindowEvent::CloseRequested => {
                 self.windows.remove(&window_id);
-                if self.windows.is_empty() {
-                    event_loop.exit();
-                }
             }
             _ => {
                 todo_warn();
@@ -232,9 +224,6 @@ impl ApplicationHandler<EventLoopEvent> for App {
     }
     fn memory_warning(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         self.windows.shrink_to_fit();
-    }
-    fn exiting(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
-        thread::sleep(std::time::Duration::from_secs(1));
     }
     fn user_event(
         &mut self,
@@ -257,6 +246,28 @@ impl ApplicationHandler<EventLoopEvent> for App {
             }
             EventLoopEvent::RunTask(runnable) => {
                 runnable.run();
+            }
+            EventLoopEvent::NewLayer(new_layer) => {
+                self.use_window(new_layer.window_id, |window| {
+                    window
+                        .render_root
+                        .add_layer(new_layer.layer.0.take(), new_layer.point);
+                });
+            }
+            EventLoopEvent::RemoveLayer(render_root_remove_layer) => {
+                self.use_window(render_root_remove_layer.window_id, |window| {
+                    window
+                        .render_root
+                        .remove_layer(render_root_remove_layer.widget_id);
+                });
+            }
+            EventLoopEvent::RepositionLayer(render_root_reposition_layer) => {
+                self.use_window(render_root_reposition_layer.window_id, |window| {
+                    window.render_root.reposition_layer(
+                        render_root_reposition_layer.widget_id,
+                        render_root_reposition_layer.point,
+                    );
+                });
             }
         }
     }

@@ -3226,6 +3226,7 @@ dependencies = [
  "non-exhaustive",
  "pollster",
  "reactive_graph",
+ "send_wrapper",
  "thiserror 2.0.18",
  "winit",
 ]

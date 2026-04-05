@@ -11,3 +11,9 @@ pub(crate) fn todo_warn_of_something(something: &'static str) {
 pub(crate) fn todo_warn() {
     todo_warn_of_something("");
 }
+
+pub(crate) fn is_send_sync<T>()
+where
+    T: Send + Sync,
+{
+}

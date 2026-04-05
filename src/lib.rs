@@ -4,3 +4,6 @@ pub mod error;
 pub(crate) mod render_root;
 pub mod utils;
 pub mod window;
+
+pub use app::Builder;
+pub use window::WindowBuilder;

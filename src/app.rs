@@ -11,6 +11,7 @@ use any_spawner::PinnedFuture;
 use async_executor::Executor;
 use log::warn;
 use masonry::{
+    app::RenderRoot,
     core::{DefaultProperties, WindowEvent as MasonryWindowEvent},
     vello::wgpu::{self, InstanceDescriptor},
 };
@@ -132,6 +133,17 @@ impl App {
             None
         }
     }
+    fn use_window_render_root<F, R>(&mut self, window_id: WindowId, fun: F) -> Option<R>
+    where
+        F: FnOnce(&mut RenderRoot) -> R,
+    {
+        self.use_window(window_id, |window| {
+            window
+                .render_root
+                .use_inner_render_root_mut(|r| fun(&mut r.tree))
+        })
+        .flatten()
+    }
     fn handle_redraw_request(&mut self, window_id: WindowId) {
         self.use_window(window_id, |win| match win.render() {
             Ok(_) => {}
@@ -139,8 +151,11 @@ impl App {
                 wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated,
             )) => {
                 let size = win.winit_window.inner_size();
-                win.render_root
-                    .handle_window_event(MasonryWindowEvent::Resize(size));
+                win.render_root.use_inner_render_root_mut(|inner| {
+                    inner
+                        .tree
+                        .handle_window_event(MasonryWindowEvent::Resize(size));
+                });
             }
             Err(e) => {
                 log::error!("Unable to render {}", e);
@@ -148,10 +163,8 @@ impl App {
         });
     }
     fn handle_resize_event(&mut self, window_id: WindowId, size: PhysicalSize<u32>) {
-        self.use_window(window_id, |window| {
-            window
-                .render_root
-                .handle_window_event(MasonryWindowEvent::Resize(size));
+        self.use_window_render_root(window_id, |render_root| {
+            render_root.handle_window_event(MasonryWindowEvent::Resize(size));
         });
     }
 }
@@ -222,7 +235,9 @@ impl ApplicationHandler<EventLoopEvent> for App {
                         window.winit_window.request_redraw();
                     }
                     accesskit_winit::WindowEvent::ActionRequested(action_request) => {
-                        window.render_root.handle_access_event(action_request);
+                        window.render_root.use_inner_render_root_mut(|inner| {
+                            inner.tree.handle_access_event(action_request);
+                        });
                     }
                     accesskit_winit::WindowEvent::AccessibilityDeactivated => {
                         window.winit_window.request_redraw();
@@ -233,26 +248,25 @@ impl ApplicationHandler<EventLoopEvent> for App {
                 runnable.run();
             }
             EventLoopEvent::NewLayer(new_layer) => {
-                self.use_window(new_layer.window_id, |window| {
-                    window
-                        .render_root
-                        .add_layer(new_layer.layer.0.take(), new_layer.point);
+                self.use_window_render_root(new_layer.window_id, |render_root| {
+                    render_root.add_layer(new_layer.layer.0.take(), new_layer.point)
                 });
             }
             EventLoopEvent::RemoveLayer(render_root_remove_layer) => {
-                self.use_window(render_root_remove_layer.window_id, |window| {
-                    window
-                        .render_root
-                        .remove_layer(render_root_remove_layer.widget_id);
+                self.use_window_render_root(render_root_remove_layer.window_id, |render_root| {
+                    render_root.remove_layer(render_root_remove_layer.widget_id);
                 });
             }
             EventLoopEvent::RepositionLayer(render_root_reposition_layer) => {
-                self.use_window(render_root_reposition_layer.window_id, |window| {
-                    window.render_root.reposition_layer(
-                        render_root_reposition_layer.widget_id,
-                        render_root_reposition_layer.point,
-                    );
-                });
+                self.use_window_render_root(
+                    render_root_reposition_layer.window_id,
+                    |render_root| {
+                        render_root.reposition_layer(
+                            render_root_reposition_layer.widget_id,
+                            render_root_reposition_layer.point,
+                        );
+                    },
+                );
             }
             EventLoopEvent::NewWindow(builder) => {
                 let window_attributes = builder.window_attributes;

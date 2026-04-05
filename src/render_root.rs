@@ -35,11 +35,7 @@ impl InnerRenderRoot {
         if self.tree.has_widget(self.root_widget_id) {
             self.tree
                 .edit_widget(self.root_widget_id, |mut widget_mut| {
-                    if let Some(w) = widget_mut.try_downcast::<IndexedStack>() {
-                        Some(to_use(w))
-                    } else {
-                        None
-                    }
+                    widget_mut.try_downcast::<IndexedStack>().map(to_use)
                 })
         } else {
             None

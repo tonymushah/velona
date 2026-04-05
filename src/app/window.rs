@@ -1,7 +1,7 @@
 use std::{num::NonZeroUsize, sync::Arc};
 
 use masonry::{
-    app::{RenderRoot, RenderRootOptions},
+    app::RenderRootOptions,
     core::{DefaultProperties, NewWidget, Widget},
     vello::{
         self, RendererOptions,
@@ -42,6 +42,12 @@ pub struct WindowNew<'i, V> {
     pub access_kit: accesskit_winit::Adapter,
     pub event_loop_proxy: AppEventLoopProxy,
     pub parent_owner: &'i Owner,
+}
+
+impl Drop for Window {
+    fn drop(&mut self) {
+        self.owner.cleanup();
+    }
 }
 
 impl Window {

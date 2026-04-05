@@ -13,7 +13,7 @@ use send_wrapper::SendWrapper;
 
 pub struct InnerRenderRoot {
     pub tree: RenderRoot,
-    pub root_widget_id: WidgetId,
+    root_widget_id: WidgetId,
 }
 
 impl InnerRenderRoot {

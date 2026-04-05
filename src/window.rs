@@ -1,0 +1,40 @@
+use masonry::core::{NewWidget, Widget};
+use winit::window::WindowAttributes;
+
+pub struct WindowBuilder {
+    pub(crate) view: Box<dyn FnOnce() -> NewWidget<dyn Widget + 'static> + Send + Sync>,
+    pub(crate) window_attributes: WindowAttributes,
+}
+
+impl WindowBuilder {
+    pub fn new<F>(view_fn: F) -> Self
+    where
+        F: FnOnce() -> NewWidget<dyn Widget + 'static> + Send + Sync + 'static,
+    {
+        Self {
+            view: Box::new(view_fn),
+            window_attributes: WindowAttributes::default(),
+        }
+    }
+    pub fn window_attributes(mut self, window_attributes: WindowAttributes) -> Self {
+        self.window_attributes = window_attributes;
+        self
+    }
+    pub fn update_window_attributes<U>(mut self, update_fn: U) -> Self
+    where
+        U: FnOnce(&mut WindowAttributes),
+    {
+        update_fn(&mut self.window_attributes);
+        self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::utils::is_send_sync;
+
+    #[test]
+    fn test_if_window_builder_is_send_sync() {
+        is_send_sync::<super::WindowBuilder>();
+    }
+}

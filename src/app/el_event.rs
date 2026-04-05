@@ -2,6 +2,8 @@ use masonry::core::{NewWidget, Widget, WidgetId};
 use send_wrapper::SendWrapper;
 use winit::{event_loop::EventLoopProxy, window::WindowId};
 
+use crate::window::WindowBuilder;
+
 pub(crate) struct NewLayer(pub(crate) SendWrapper<NewWidget<dyn Widget + 'static>>);
 
 impl From<NewWidget<dyn Widget + 'static>> for NewLayer {
@@ -33,6 +35,7 @@ pub(crate) enum EventLoopEvent {
     NewLayer(Box<RenderRootNewLayer>),
     RemoveLayer(Box<RenderRootRemoveLayer>),
     RepositionLayer(Box<RenderRootRepositionLayer>),
+    NewWindow(Box<WindowBuilder>),
 }
 
 pub(crate) type AppEventLoopProxy = EventLoopProxy<EventLoopEvent>;

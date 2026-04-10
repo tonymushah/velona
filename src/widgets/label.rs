@@ -1,6 +1,7 @@
 use std::mem::{Discriminant, discriminant};
 
 use masonry::{
+    TextAlign,
     core::{ArcStr, NewWidget, StyleProperty, Widget},
     widgets::Label,
 };
@@ -24,6 +25,12 @@ pub trait NewLabelExt {
     where
         S: Fn() -> Option<T> + 'static,
         T: Into<StyleProperty>;
+    fn hint<S>(self, hint: S) -> Self
+    where
+        S: Fn() -> bool + 'static;
+    fn text_alignment<S>(self, align: S) -> Self
+    where
+        S: Fn() -> TextAlign + 'static;
 }
 
 impl NewLabelExt for NewWidget<Label> {
@@ -68,6 +75,30 @@ impl NewLabelExt for NewWidget<Label> {
         T: Into<StyleProperty>,
     {
         self.style_opt(move || Some(style()))
+    }
+
+    fn hint<S>(mut self, hint: S) -> Self
+    where
+        S: Fn() -> bool + 'static,
+    {
+        {
+            self.widget = Box::new(self.widget.with_hint(untrack(&hint)));
+        }
+        self.use_reactive_widget_mut(move |mut this| {
+            Label::set_hint(&mut this, hint());
+        })
+    }
+
+    fn text_alignment<S>(mut self, align: S) -> Self
+    where
+        S: Fn() -> TextAlign + 'static,
+    {
+        {
+            self.widget = Box::new(self.widget.with_text_alignment(untrack(&align)));
+        }
+        self.use_reactive_widget_mut(move |mut this| {
+            Label::set_text_alignment(&mut this, align());
+        })
     }
 }
 

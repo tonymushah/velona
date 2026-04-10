@@ -1,3 +1,5 @@
+pub mod label;
+
 use std::any::TypeId;
 
 use log::warn;

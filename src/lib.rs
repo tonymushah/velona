@@ -1,5 +1,6 @@
 pub mod app;
 pub(crate) mod convert_winit_event;
+pub mod effect;
 pub mod error;
 pub mod render_root;
 pub mod signal;

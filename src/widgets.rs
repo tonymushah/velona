@@ -1,8 +1,8 @@
 use std::any::TypeId;
 
 use log::warn;
-use masonry::core::{NewWidget, Widget, WidgetMut};
-use reactive_graph::effect::Effect;
+use masonry::core::{NewWidget, Property, Widget, WidgetMut};
+use reactive_graph::{effect::Effect, owner::Owner};
 
 use crate::{
     render_root::use_weak_render_root, window_event_handler::register_window_event_handler,
@@ -18,6 +18,10 @@ where
     fn register_handler<F>(self, fun: F) -> Self
     where
         F: Fn(&W::Action) + 'static;
+    fn property<F, P>(self, prop: F) -> Self
+    where
+        F: Fn() -> P + 'static,
+        P: Property;
 }
 
 impl<W> NewWidgetExt<W> for NewWidget<W>
@@ -66,5 +70,18 @@ where
             }),
         );
         self
+    }
+    fn property<F, P>(mut self, prop: F) -> Self
+    where
+        F: Fn() -> P + 'static,
+        P: Property,
+    {
+        let Some(current_owner) = Owner::current() else {
+            return self;
+        };
+        self.properties.insert(current_owner.child().with(&prop));
+        self.use_reactive_widget_mut(move |mut this| {
+            this.insert_prop::<P>(prop());
+        })
     }
 }

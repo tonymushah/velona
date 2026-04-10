@@ -1,5 +1,5 @@
 use masonry::{
-    core::{ArcStr, NewWidget, Widget},
+    core::{ArcStr, NewWidget, StyleProperty, Widget},
     widgets::Label,
 };
 use reactive_graph::graph::untrack;
@@ -11,6 +11,10 @@ pub trait NewLabelExt {
     where
         S: Fn() -> T + 'static,
         T: Into<ArcStr>;
+    fn style<S, T>(self, style: S) -> Self
+    where
+        S: Fn() -> T + 'static,
+        T: Into<StyleProperty>;
 }
 
 impl NewLabelExt for NewWidget<Label> {
@@ -21,6 +25,17 @@ impl NewLabelExt for NewWidget<Label> {
     {
         self.use_reactive_widget_mut(move |mut this| {
             Label::set_text(&mut this, text());
+        })
+    }
+
+    fn style<S, T>(mut self, style: S) -> Self
+    where
+        S: Fn() -> T + 'static,
+        T: Into<StyleProperty>,
+    {
+        self.widget = Box::new(self.widget.with_style(untrack(&style)));
+        self.use_reactive_widget_mut(move |mut this| {
+            Label::insert_style(&mut this, style());
         })
     }
 }

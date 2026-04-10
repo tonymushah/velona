@@ -1,9 +1,13 @@
-use masonry::core::{NewWidget, Widget};
+use masonry::{
+    core::{NewWidget, Widget},
+    peniko::color::{AlphaColor, Srgb},
+};
 use winit::{dpi::Size, window::WindowAttributes};
 
 pub struct WindowBuilder {
     pub(crate) view: Box<dyn FnOnce() -> NewWidget<dyn Widget + 'static> + Send + Sync>,
     pub(crate) window_attributes: WindowAttributes,
+    pub(crate) base_color: Option<AlphaColor<Srgb>>,
 }
 
 impl WindowBuilder {
@@ -14,6 +18,7 @@ impl WindowBuilder {
         Self {
             view: Box::new(view_fn),
             window_attributes: WindowAttributes::default(),
+            base_color: None,
         }
     }
     pub fn window_attributes(mut self, window_attributes: WindowAttributes) -> Self {
@@ -38,6 +43,10 @@ impl WindowBuilder {
         S: Into<Size>,
     {
         self.update_window_attributes(|att| att.with_inner_size(size))
+    }
+    pub fn base_color(mut self, base_color: AlphaColor<Srgb>) -> Self {
+        self.base_color = Some(base_color);
+        self
     }
 }
 

@@ -366,6 +366,7 @@ impl ApplicationHandler<EventLoopEvent> for App {
                             access_kit,
                             event_loop_proxy: self.event_loop_proxy.clone(),
                             parent_owner: &self.owner,
+                            base_color: builder.base_color,
                         })) {
                             Ok(new_instance) => {
                                 self.windows

@@ -3,6 +3,8 @@ use std::{num::NonZeroUsize, sync::Arc, time::Instant};
 use masonry::{
     app::RenderRootOptions,
     core::{DefaultProperties, NewWidget, Widget},
+    palette::css::BLACK,
+    peniko::color::{AlphaColor, Srgb},
     vello::{
         self, RendererOptions,
         wgpu::{self, util::TextureBlitter, wgt::TextureDescriptor},
@@ -41,6 +43,7 @@ pub struct Window {
     // Is `Some` if the most recently displayed frame was an animation frame.
     last_anim: Option<Instant>,
     pub(crate) window_event_handler: InternWindowEventHandler,
+    base_color: AlphaColor<Srgb>,
 }
 
 pub struct WindowNew<'i, V> {
@@ -51,6 +54,7 @@ pub struct WindowNew<'i, V> {
     pub access_kit: accesskit_winit::Adapter,
     pub event_loop_proxy: AppEventLoopProxy,
     pub parent_owner: &'i Owner,
+    pub base_color: Option<AlphaColor<Srgb>>,
 }
 
 impl Drop for Window {
@@ -79,6 +83,7 @@ impl Window {
             access_kit,
             event_loop_proxy,
             parent_owner,
+            base_color,
         } = args;
         let window_owner = parent_owner.child();
         let event_handlers = InternWindowEventHandler::default();
@@ -276,6 +281,7 @@ impl Window {
             event_reducer: WindowEventReducer::default(),
             last_anim: None,
             window_event_handler: event_handlers,
+            base_color: base_color.unwrap_or(BLACK),
         })
     }
     fn render_scene(&mut self, scene: &vello::Scene) -> Result<(), crate::error::Error> {
@@ -303,7 +309,7 @@ impl Window {
             scene,
             &scene_texture_view,
             &vello::RenderParams {
-                base_color: masonry::palette::css::BLACK, // Background color
+                base_color: self.base_color, // Background color
                 width: self.config.width,
                 height: self.config.height,
                 antialiasing_method: vello::AaConfig::Area,

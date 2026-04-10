@@ -16,8 +16,12 @@ use masonry::{
         DefaultProperties, WindowEvent as MasonryWindowEvent,
         keyboard::{Key, KeyState},
     },
-    vello::wgpu::{self, InstanceDescriptor},
+    vello::{
+        util::RenderContext,
+        wgpu::{self, InstanceDescriptor},
+    },
 };
+use parking_lot::RwLock;
 use reactive_graph::owner::Owner;
 use ui_events_winit::WindowEventTranslation;
 use winit::{
@@ -42,10 +46,10 @@ pub(crate) use el_event::{AppEventLoopProxy, EventLoopEvent};
 struct App {
     event_loop_proxy: AppEventLoopProxy,
     windows: HashMap<WindowId, Box<Window>>,
-    instance: wgpu::Instance,
     default_properties: Arc<DefaultProperties>,
     builder_windows: Option<Vec<WindowBuilder>>,
     owner: Owner,
+    render_context: Arc<RwLock<RenderContext>>,
 }
 
 pub struct Builder {
@@ -60,6 +64,20 @@ pub struct Builder {
 impl Builder {
     pub fn instance_descriptor(mut self, instance_descriptor: InstanceDescriptor) -> Self {
         self.instance_descriptor = Some(instance_descriptor);
+        self
+    }
+    pub fn instance_descriptor_from_env(mut self) -> Self {
+        let backends = wgpu::Backends::from_env().unwrap_or_default();
+        let flags = wgpu::InstanceFlags::from_build_config().with_env();
+        let memory_budget_thresholds = wgpu::MemoryBudgetThresholds::default();
+        let backend_options = wgpu::BackendOptions::from_env_or_default();
+        let desc = wgpu::InstanceDescriptor {
+            backends,
+            flags,
+            memory_budget_thresholds,
+            backend_options,
+        };
+        self.instance_descriptor = Some(desc);
         self
     }
     pub fn default_properties(mut self, default_properties: DefaultProperties) -> Self {
@@ -110,14 +128,18 @@ impl Builder {
             Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
         }
         let instance_descriptor = self.instance_descriptor.unwrap_or(InstanceDescriptor {
-            backends: wgpu::Backends::PRIMARY.union(wgpu::Backends::SECONDARY),
+            backends: wgpu::Backends::PRIMARY,
             ..Default::default()
         });
+        let wgpu_instance = wgpu::Instance::new(&instance_descriptor);
 
         let mut app = App {
             event_loop_proxy: proxy,
             windows: Default::default(),
-            instance: wgpu::Instance::new(&instance_descriptor),
+            render_context: Arc::new(RwLock::new(RenderContext {
+                instance: wgpu_instance,
+                devices: Default::default(),
+            })),
             default_properties: Arc::new(self.default_properties),
             builder_windows: Some(self.windows),
             owner: self.owner,
@@ -359,16 +381,16 @@ impl ApplicationHandler<EventLoopEvent> for App {
                             &window,
                             self.event_loop_proxy.clone(),
                         );
-                        match pollster::block_on(Window::new(WindowNew {
+                        match Window::new(WindowNew {
                             window,
-                            instance: &self.instance,
                             view: builder.view,
                             default_properties: self.default_properties.clone(),
                             access_kit,
                             event_loop_proxy: self.event_loop_proxy.clone(),
                             parent_owner: &self.owner,
                             base_color: builder.base_color,
-                        })) {
+                            render_context: &self.render_context,
+                        }) {
                             Ok(new_instance) => {
                                 self.windows
                                     .insert(new_instance.winit_window.id(), Box::new(new_instance));

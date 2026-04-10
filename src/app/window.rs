@@ -7,9 +7,11 @@ use masonry::{
     peniko::color::{AlphaColor, Srgb},
     vello::{
         self, RendererOptions,
-        wgpu::{self, util::TextureBlitter, wgt::TextureDescriptor},
+        util::{RenderContext, RenderSurface},
+        wgpu::{self},
     },
 };
+use parking_lot::RwLock;
 use reactive_graph::owner::{Owner, provide_context};
 use send_wrapper::SendWrapper;
 use ui_events_winit::WindowEventReducer;
@@ -31,7 +33,6 @@ use crate::{
 pub struct Window {
     pub(crate) render_root: WindowRenderRoot,
     renderer: vello::Renderer,
-    blitter: TextureBlitter,
     pub(crate) access_kit: accesskit_winit::Adapter,
     owner: Owner,
     pub(crate) event_reducer: WindowEventReducer,
@@ -39,16 +40,14 @@ pub struct Window {
     last_anim: Option<Instant>,
     pub(crate) window_event_handler: InternWindowEventHandler,
     base_color: AlphaColor<Srgb>,
-    surface: Option<wgpu::Surface<'static>>,
-    config: wgpu::SurfaceConfiguration,
-    queue: wgpu::Queue,
-    device: wgpu::Device,
+    surface: Option<RenderSurface<'static>>,
     pub(crate) winit_window: Arc<WinitWindow>,
+    pub(crate) render_context: Arc<RwLock<RenderContext>>,
 }
 
 pub struct WindowNew<'i, V> {
     pub window: Arc<WinitWindow>,
-    pub instance: &'i wgpu::Instance,
+    pub render_context: &'i Arc<RwLock<vello::util::RenderContext>>,
     pub view: V,
     pub default_properties: Arc<DefaultProperties>,
     pub access_kit: accesskit_winit::Adapter,
@@ -71,13 +70,13 @@ impl Window {
             write.shrink_to_fit();
         });
     }
-    pub(crate) async fn new<V>(args: WindowNew<'_, V>) -> Result<Self, crate::error::Error>
+    pub(crate) fn new<V>(args: WindowNew<'_, V>) -> Result<Self, crate::error::Error>
     where
         V: FnOnce() -> NewWidget<dyn Widget>,
     {
         let WindowNew {
             window,
-            instance,
+            render_context,
             view,
             default_properties,
             access_kit,
@@ -89,46 +88,15 @@ impl Window {
         let event_handlers = InternWindowEventHandler::default();
 
         let size = window.inner_size();
-        let surface = instance.create_surface(window.clone())?;
-
-        let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: Some(&surface),
-                force_fallback_adapter: false,
-            })
-            .await?;
-        log::info!("adapter info: {:#?}", adapter);
-        let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor {
-                label: None,
-                required_features: wgpu::Features::empty(),
-                required_limits: wgpu::Limits::default(),
-                memory_hints: Default::default(),
-                trace: wgpu::Trace::Off,
-            })
-            .await?;
-        let surface_caps = surface.get_capabilities(&adapter);
-
-        let surface_format = surface_caps
-            .formats
-            .iter()
-            .find(|it| it.is_srgb())
-            .copied()
-            .ok_or(crate::error::Error::UnsupportedSurfaceFormat)?;
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface_format,
-            width: size.width,
-            height: size.height,
-            present_mode: surface_caps.present_modes[0],
-            alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![],
-            desired_maximum_frame_latency: 2,
-        };
+        let surface = pollster::block_on(render_context.write().create_surface(
+            window.clone(),
+            size.width,
+            size.height,
+            wgpu::PresentMode::AutoVsync,
+        ))?;
 
         let renderer = vello::Renderer::new(
-            &device,
+            &render_context.read().devices[surface.dev_id].device,
             RendererOptions {
                 use_cpu: false,
                 antialiasing_support: vello::AaSupport::area_only(),
@@ -136,8 +104,6 @@ impl Window {
                 pipeline_cache: None,
             },
         )?;
-
-        let blitter = TextureBlitter::new(&device, surface_format);
 
         let render_root = InnerRenderRoot::new(
             {
@@ -268,12 +234,8 @@ impl Window {
         }
 
         Ok(Self {
-            blitter,
             renderer,
             surface: Some(surface),
-            device,
-            queue,
-            config,
             winit_window: window,
             render_root,
             owner: window_owner,
@@ -282,57 +244,45 @@ impl Window {
             last_anim: None,
             window_event_handler: event_handlers,
             base_color: base_color.unwrap_or(BLACK),
+            render_context: render_context.clone(),
         })
     }
     fn render_scene(&mut self, scene: &vello::Scene) -> Result<(), crate::error::Error> {
-        let scene_texture = self.device.create_texture(&TextureDescriptor {
-            label: Some("Vello scene render"),
-            size: {
-                wgpu::Extent3d {
-                    width: self.config.width,
-                    height: self.config.height,
-                    depth_or_array_layers: 1,
-                }
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            usage: wgpu::TextureUsages::STORAGE_BINDING | wgpu::TextureUsages::TEXTURE_BINDING,
-            format: wgpu::TextureFormat::Rgba8Unorm,
-            view_formats: &[],
-        });
-        let scene_texture_view = scene_texture.create_view(&Default::default());
-
+        let Some(surface) = self.surface.as_ref() else {
+            return Ok(());
+        };
+        let device = &self.render_context.read().devices[surface.dev_id];
+        let scene_target_view = &surface.target_view;
         self.renderer.render_to_texture(
-            &self.device,
-            &self.queue,
+            &device.device,
+            &device.queue,
             scene,
-            &scene_texture_view,
+            scene_target_view,
             &vello::RenderParams {
                 base_color: self.base_color, // Background color
-                width: self.config.width,
-                height: self.config.height,
+                width: surface.config.width,
+                height: surface.config.height,
                 antialiasing_method: vello::AaConfig::Area,
             },
         )?;
-        if let Some(surface) = self.surface.as_ref() {
-            let output = surface.get_current_texture()?;
-            let view = output
-                .texture
-                .create_view(&wgpu::TextureViewDescriptor::default());
+        let output = surface.surface.get_current_texture()?;
+        let view = output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
 
-            let mut encoder = self
-                .device
-                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                    label: Some("Surface Blit"),
-                });
-            self.blitter
-                .copy(&self.device, &mut encoder, &scene_texture_view, &view);
-            self.queue.submit([encoder.finish()]);
-            self.winit_window.pre_present_notify();
+        let mut encoder = self.render_context.read().devices[surface.dev_id]
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Surface Blit"),
+            });
+        surface
+            .blitter
+            .copy(&device.device, &mut encoder, scene_target_view, &view);
+        device.queue.submit([encoder.finish()]);
+        self.winit_window.pre_present_notify();
 
-            output.present();
-        }
+        output.present();
+
         Ok(())
     }
     fn sync_surface_render_root_size(&mut self) -> bool {
@@ -342,10 +292,10 @@ impl Window {
         else {
             return false;
         };
-        self.config.width = size.width;
-        self.config.height = size.height;
         if let Some(surface) = self.surface.as_mut() {
-            surface.configure(&self.device, &self.config);
+            self.render_context
+                .write()
+                .resize_surface(surface, size.width, size.height);
         }
         true
     }

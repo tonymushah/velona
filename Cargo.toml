@@ -19,6 +19,7 @@ send_wrapper = "0.6"
 uuid = { version = "1", features = ["v4"] }
 ui-events-winit = "0.2"
 parking_lot = "0.12"
+copypasta = "0.10.2"
 
 [dev-dependencies]
 env_logger = "0.11.10"

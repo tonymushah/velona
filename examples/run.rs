@@ -2,7 +2,7 @@ use masonry::{
     core::{NewWidget, PointerButton, Widget},
     palette::css::{WHITE, WHITE_SMOKE},
     properties::{ActiveBackground, Background, ContentColor},
-    widgets::{Button, Flex, Label},
+    widgets::{Align, Button, Flex, Label},
 };
 use reactive_graph::{
     signal::{WriteSignal, signal},
@@ -30,30 +30,33 @@ where
 
 fn view() -> NewWidget<dyn Widget + 'static> {
     let (count, set_count) = signal(0u32);
-    Flex::row()
-        .with_child(button(
-            set_count,
-            |count| {
-                *count = count.checked_sub(1).unwrap_or_default();
-            },
-            "Decrement",
-        ))
-        .with_child(
-            label(move || format!("Count: {}", count.get()))
-                .append_static_propeperty(ContentColor::new(WHITE)),
-        )
-        .with_child(button(
-            set_count,
-            |count| {
-                let Some(new_count) = count.checked_add(1) else {
-                    return;
-                };
-                *count = new_count;
-            },
-            "Increment",
-        ))
-        .with_auto_id()
-        .erased()
+    Align::centered(
+        Flex::row()
+            .with_child(button(
+                set_count,
+                |count| {
+                    *count = count.checked_sub(1).unwrap_or_default();
+                },
+                "Decrement",
+            ))
+            .with_child(
+                label(move || format!("Count: {}", count.get()))
+                    .append_static_propeperty(ContentColor::new(WHITE)),
+            )
+            .with_child(button(
+                set_count,
+                |count| {
+                    let Some(new_count) = count.checked_add(1) else {
+                        return;
+                    };
+                    *count = new_count;
+                },
+                "Increment",
+            ))
+            .with_auto_id(),
+    )
+    .with_auto_id()
+    .erased()
 }
 
 fn main() {

@@ -53,7 +53,7 @@ impl InnerRenderRoot {
     }
 }
 
-pub struct WindowRenderRoot {
+pub(crate) struct WindowRenderRoot {
     inner: SendWrapper<Rc<RefCell<InnerRenderRoot>>>,
 }
 

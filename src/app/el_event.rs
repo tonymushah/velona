@@ -1,4 +1,4 @@
-use masonry::core::{NewWidget, Widget, WidgetId};
+use masonry::core::{ErasedAction, NewWidget, Widget, WidgetId};
 use send_wrapper::SendWrapper;
 use winit::{event_loop::EventLoopProxy, window::WindowId};
 
@@ -29,13 +29,20 @@ pub(crate) struct RenderRootRepositionLayer {
     pub point: masonry::kurbo::Point,
 }
 
+pub struct WidgetAction {
+    pub window_id: WindowId,
+    pub widget_id: WidgetId,
+    pub event: SendWrapper<ErasedAction>,
+}
+
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<accesskit_winit::Event>),
-    RunTask(async_task::Runnable),
+    RunTask(Box<async_task::Runnable>),
     NewLayer(Box<RenderRootNewLayer>),
     RemoveLayer(Box<RenderRootRemoveLayer>),
     RepositionLayer(Box<RenderRootRepositionLayer>),
     NewWindow(Box<WindowBuilder>),
+    WidgetAction(Box<WidgetAction>),
 }
 
 pub(crate) type AppEventLoopProxy = EventLoopProxy<EventLoopEvent>;
@@ -61,6 +68,12 @@ impl From<RenderRootRemoveLayer> for EventLoopEvent {
 impl From<RenderRootRepositionLayer> for EventLoopEvent {
     fn from(value: RenderRootRepositionLayer) -> Self {
         Self::RepositionLayer(Box::new(value))
+    }
+}
+
+impl From<WidgetAction> for EventLoopEvent {
+    fn from(value: WidgetAction) -> Self {
+        Self::WidgetAction(Box::new(value))
     }
 }
 

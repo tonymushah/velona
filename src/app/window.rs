@@ -9,17 +9,21 @@ use masonry::{
     },
 };
 use reactive_graph::owner::{Owner, provide_context};
+use send_wrapper::SendWrapper;
 use ui_events_winit::WindowEventReducer;
 use winit::window::Window as WinitWindow;
 
 use crate::{
     app::{
         AppEventLoopProxy,
-        el_event::{RenderRootNewLayer, RenderRootRemoveLayer, RenderRootRepositionLayer},
+        el_event::{
+            RenderRootNewLayer, RenderRootRemoveLayer, RenderRootRepositionLayer, WidgetAction,
+        },
     },
     convert_winit_event::masonry_resize_direction_to_winit,
     render_root::{InnerRenderRoot, WindowRenderRoot},
     utils::{todo_warn, todo_warn_of_something},
+    window_event_handler::InternWindowEventHandler,
 };
 
 pub struct Window {
@@ -36,6 +40,7 @@ pub struct Window {
     pub(crate) event_reducer: WindowEventReducer,
     // Is `Some` if the most recently displayed frame was an animation frame.
     last_anim: Option<Instant>,
+    pub(crate) window_event_handler: InternWindowEventHandler,
 }
 
 pub struct WindowNew<'i, V> {
@@ -72,6 +77,7 @@ impl Window {
             parent_owner,
         } = args;
         let window_owner = parent_owner.child();
+        let event_handlers = InternWindowEventHandler::default();
 
         let size = window.inner_size();
         let surface = instance.create_surface(window.clone())?;
@@ -128,8 +134,15 @@ impl Window {
             {
                 let window = window.clone();
                 move |ev| match ev {
-                    masonry::app::RenderRootSignal::Action(_any_debug, _widget_id) => {
-                        todo_warn_of_something("RenderRootSignal::Action");
+                    masonry::app::RenderRootSignal::Action(any_debug, widget_id) => {
+                        let _ = event_loop_proxy.send_event(
+                            WidgetAction {
+                                window_id: window.id(),
+                                event: SendWrapper::new(any_debug),
+                                widget_id,
+                            }
+                            .into(),
+                        );
                     }
                     masonry::app::RenderRootSignal::StartIme => {
                         window.set_ime_allowed(true);
@@ -232,6 +245,7 @@ impl Window {
         {
             let new_widget = window_owner.with(|| {
                 provide_context(render_root.create_weak());
+                provide_context(event_handlers.get_weak());
                 view()
             });
             if render_root
@@ -257,6 +271,7 @@ impl Window {
             access_kit,
             event_reducer: WindowEventReducer::default(),
             last_anim: None,
+            window_event_handler: event_handlers,
         })
     }
     fn render_scene(&mut self, scene: &vello::Scene) -> Result<(), crate::error::Error> {

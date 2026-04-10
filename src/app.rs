@@ -139,6 +139,17 @@ impl App {
             None
         }
     }
+    fn use_window_ref<F, R>(&mut self, window_id: WindowId, fun: F) -> Option<R>
+    where
+        F: FnOnce(&Window) -> R,
+    {
+        if let Some(window) = self.windows.get(&window_id) {
+            Some(fun(window))
+        } else {
+            warn!("No matching window state found for {:?}", window_id);
+            None
+        }
+    }
     fn use_window_render_root<F, R>(&mut self, window_id: WindowId, fun: F) -> Option<R>
     where
         F: FnOnce(&mut RenderRoot) -> R,
@@ -369,6 +380,14 @@ impl ApplicationHandler<EventLoopEvent> for App {
                         log::error!("Os error on creating new window {err}");
                     }
                 }
+            }
+            EventLoopEvent::WidgetAction(widget_action) => {
+                self.use_window_ref(widget_action.window_id, |window| {
+                    window
+                        .window_event_handler
+                        .read()
+                        .handle_event(widget_action.widget_id, &widget_action.event);
+                });
             }
         }
     }

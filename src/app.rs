@@ -12,10 +12,14 @@ use async_executor::Executor;
 use log::warn;
 use masonry::{
     app::RenderRoot,
-    core::{DefaultProperties, WindowEvent as MasonryWindowEvent},
+    core::{
+        DefaultProperties, WindowEvent as MasonryWindowEvent,
+        keyboard::{Key, KeyState},
+    },
     vello::wgpu::{self, InstanceDescriptor},
 };
 use reactive_graph::owner::Owner;
+use ui_events_winit::WindowEventTranslation;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -28,6 +32,8 @@ use window::Window;
 
 use crate::{
     app::{executor::SpawnFn, window::WindowNew},
+    convert_winit_event::winit_ime_to_masonry,
+    utils::todo_warn_of_something,
     window::WindowBuilder,
 };
 
@@ -200,6 +206,52 @@ impl ApplicationHandler<EventLoopEvent> for App {
                 .access_kit
                 .process_event(&window.winit_window, &event);
         });
+        self.use_window(window_id, |window| {
+            if !matches!(
+                event,
+                WindowEvent::KeyboardInput {
+                    is_synthetic: true,
+                    ..
+                }
+            ) && let Some(wet) = window
+                .event_reducer
+                .reduce(window.winit_window.scale_factor(), &event)
+            {
+                match wet {
+                    WindowEventTranslation::Keyboard(k) => {
+                        // TODO - Detect in Masonry code instead
+                        let action_mod = if cfg!(target_os = "macos") {
+                            k.modifiers.meta()
+                        } else {
+                            k.modifiers.ctrl()
+                        };
+                        if let Key::Character(c) = &k.key
+                            && c.as_str().eq_ignore_ascii_case("v")
+                            && action_mod
+                            && k.state == KeyState::Down
+                        {
+                            window.render_root.use_inner_render_root_mut(|_rr| {
+                                todo_warn_of_something("Clipboard Paste");
+                                /*
+                                rr.tree.handle_text_event(TextEvent::ClipboardPaste(
+                                    self.clipboard_cx.get_contents().unwrap(),
+                                ));*/
+                            });
+                        } else {
+                            window.render_root.use_inner_render_root_mut(|rr| {
+                                rr.tree
+                                    .handle_text_event(masonry::core::TextEvent::Keyboard(k));
+                            });
+                        }
+                    }
+                    WindowEventTranslation::Pointer(p) => {
+                        window.render_root.use_inner_render_root_mut(|rr| {
+                            rr.tree.handle_pointer_event(p);
+                        });
+                    }
+                }
+            }
+        });
         match event {
             WindowEvent::Destroyed => {
                 if self.windows.is_empty() {
@@ -215,6 +267,12 @@ impl ApplicationHandler<EventLoopEvent> for App {
             WindowEvent::CloseRequested => {
                 self.windows.remove(&window_id);
             }
+            WindowEvent::Ime(ime) => {
+                let ime = winit_ime_to_masonry(ime);
+                self.use_window_render_root(window_id, |render_root| {
+                    render_root.handle_text_event(masonry::core::TextEvent::Ime(ime));
+                });
+            }
             _e => {
                 log::trace!("event {:#?} handling is not implemented yet", _e);
             }
@@ -222,6 +280,9 @@ impl ApplicationHandler<EventLoopEvent> for App {
     }
     fn memory_warning(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         self.windows.shrink_to_fit();
+        self.windows
+            .values_mut()
+            .for_each(|w| w.on_memory_warning());
     }
     fn user_event(
         &mut self,
@@ -232,7 +293,11 @@ impl ApplicationHandler<EventLoopEvent> for App {
             EventLoopEvent::AccessKitAction(event) => {
                 self.use_window(event.window_id, |window| match event.window_event {
                     accesskit_winit::WindowEvent::InitialTreeRequested => {
-                        window.winit_window.request_redraw();
+                        window.render_root.use_inner_render_root_mut(|render_root| {
+                            render_root
+                                .tree
+                                .handle_window_event(MasonryWindowEvent::EnableAccessTree);
+                        });
                     }
                     accesskit_winit::WindowEvent::ActionRequested(action_request) => {
                         window.render_root.use_inner_render_root_mut(|inner| {
@@ -240,7 +305,11 @@ impl ApplicationHandler<EventLoopEvent> for App {
                         });
                     }
                     accesskit_winit::WindowEvent::AccessibilityDeactivated => {
-                        window.winit_window.request_redraw();
+                        window.render_root.use_inner_render_root_mut(|render_root| {
+                            render_root
+                                .tree
+                                .handle_window_event(MasonryWindowEvent::DisableAccessTree);
+                        });
                     }
                 });
             }

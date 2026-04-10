@@ -1,4 +1,4 @@
-use std::{num::NonZeroUsize, sync::Arc};
+use std::{num::NonZeroUsize, sync::Arc, time::Instant};
 
 use masonry::{
     app::RenderRootOptions,
@@ -9,6 +9,7 @@ use masonry::{
     },
 };
 use reactive_graph::owner::{Owner, provide_context};
+use ui_events_winit::WindowEventReducer;
 use winit::window::Window as WinitWindow;
 
 use crate::{
@@ -18,7 +19,7 @@ use crate::{
     },
     convert_winit_event::masonry_resize_direction_to_winit,
     render_root::{InnerRenderRoot, WindowRenderRoot},
-    utils::todo_warn_of_something,
+    utils::{todo_warn, todo_warn_of_something},
 };
 
 pub struct Window {
@@ -32,6 +33,9 @@ pub struct Window {
     blitter: TextureBlitter,
     pub(crate) access_kit: accesskit_winit::Adapter,
     owner: Owner,
+    pub(crate) event_reducer: WindowEventReducer,
+    // Is `Some` if the most recently displayed frame was an animation frame.
+    last_anim: Option<Instant>,
 }
 
 pub struct WindowNew<'i, V> {
@@ -51,6 +55,9 @@ impl Drop for Window {
 }
 
 impl Window {
+    pub fn on_memory_warning(&mut self) {
+        todo_warn();
+    }
     pub(crate) async fn new<V>(args: WindowNew<'_, V>) -> Result<Self, crate::error::Error>
     where
         V: FnOnce() -> NewWidget<dyn Widget>,
@@ -125,10 +132,10 @@ impl Window {
                         todo_warn_of_something("RenderRootSignal::Action");
                     }
                     masonry::app::RenderRootSignal::StartIme => {
-                        todo_warn_of_something("RenderRootSignal::StartIme");
+                        window.set_ime_allowed(true);
                     }
                     masonry::app::RenderRootSignal::EndIme => {
-                        todo_warn_of_something("RenderRootSignal::EndIme");
+                        window.set_ime_allowed(false);
                     }
                     masonry::app::RenderRootSignal::ImeMoved(_logical_position, _logical_size) => {
                         window.set_ime_cursor_area(_logical_position, _logical_size);
@@ -248,6 +255,8 @@ impl Window {
             render_root,
             owner: window_owner,
             access_kit,
+            event_reducer: WindowEventReducer::default(),
+            last_anim: None,
         })
     }
     fn render_scene(&mut self, scene: &vello::Scene) -> Result<(), crate::error::Error> {
@@ -319,15 +328,35 @@ impl Window {
         if self.surface.is_none() {
             return Ok(());
         }
+
+        let now = Instant::now();
+        // TODO: this calculation uses wall-clock time of the paint call, which
+        // potentially has jitter.
+        //
+        // See https://github.com/linebender/druid/issues/85 for discussion.
+        let last = self.last_anim.take();
+        let elapsed = last.map(|t| now.duration_since(t)).unwrap_or_default();
+
+        self.render_root.use_inner_render_root_mut(|rr| {
+            rr.tree
+                .handle_window_event(masonry::core::WindowEvent::AnimFrame(elapsed));
+        });
+
+        // If this animation will continue, store the time.
+        // If a new animation starts, then it will have zero reported elapsed time.
+        let animation_continues = self
+            .render_root
+            .use_inner_render_root_ref(|rr| rr.tree.needs_anim())
+            .unwrap_or_default();
+        self.last_anim = animation_continues.then_some(now);
+
         let Some((scene, _access_tree)) = self
             .render_root
             .use_inner_render_root_mut(|root| root.tree.redraw())
         else {
             return Ok(());
         };
-        if let Some(access_tree) = _access_tree {
-            self.access_kit.update_if_active(|| access_tree);
-        }
+
         let scale_factor = self.winit_window.scale_factor();
 
         let transformed_scene = if scale_factor == 1.0 {
@@ -344,6 +373,9 @@ impl Window {
 
         if self.sync_surface_render_root_size() {
             self.render_scene(scene_ref)?;
+        }
+        if let Some(access_tree) = _access_tree {
+            self.access_kit.update_if_active(|| access_tree);
         }
         Ok(())
     }

@@ -1496,6 +1496,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fbe853b403ae61a04233030ae8a79d94975281ed9770a1f9e246732b534b28d"
 dependencies = [
  "bitflags 2.11.0",
+ "serde",
 ]
 
 [[package]]
@@ -3121,6 +3122,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ui-events-winit"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3ef6b086ceb9e4bbf0148e494959b18cf08de7604f8d8e958a94e73fc2d531e"
+dependencies = [
+ "ui-events",
+ "web-time",
+ "winit",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3229,6 +3241,7 @@ dependencies = [
  "reactive_graph",
  "send_wrapper",
  "thiserror 2.0.18",
+ "ui-events-winit",
  "uuid",
  "winit",
 ]

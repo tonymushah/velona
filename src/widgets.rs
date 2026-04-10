@@ -14,9 +14,14 @@ pub trait NewWidgetExt<W>
 where
     W: Widget + 'static,
 {
+    fn use_reactive_widget_mut_with_effect_val<F, V>(self, fun: F) -> Self
+    where
+        F: FnMut(WidgetMut<'_, W>, Option<V>) -> Option<V> + 'static,
+        V: 'static;
     fn use_reactive_widget_mut<F>(self, fun: F) -> Self
     where
         F: FnMut(WidgetMut<'_, W>) + 'static;
+
     fn register_handler<F>(self, fun: F) -> Self
     where
         F: Fn(&W::Action) + 'static;
@@ -30,33 +35,46 @@ impl<W> NewWidgetExt<W> for NewWidget<W>
 where
     W: Widget + 'static,
 {
+    fn use_reactive_widget_mut_with_effect_val<F, V>(self, mut fun: F) -> Self
+    where
+        F: FnMut(WidgetMut<'_, W>, Option<V>) -> Option<V> + 'static,
+        V: 'static,
+    {
+        let widget_id = self.id();
+        Effect::new(move |v: Option<Option<V>>| {
+            let v = v.flatten();
+            let Some(weak_render_root) = use_weak_render_root() else {
+                warn!("No render root found");
+                return None;
+            };
+            weak_render_root
+                .use_inner_render_root_mut::<_, Option<V>>(|rr| {
+                    if rr.tree.has_widget(widget_id) {
+                        rr.tree.edit_widget(widget_id, |mut widget_mut| {
+                            let Some(widget_mut) = widget_mut.try_downcast::<W>() else {
+                                warn!("The {:?} is not {:?}", widget_id, TypeId::of::<W>());
+                                return None::<V>;
+                            };
+                            fun(widget_mut, v)
+                        })
+                    } else {
+                        warn!("No {:?} widget found", widget_id);
+                        None
+                    }
+                })
+                .flatten()
+        });
+        self
+    }
     fn use_reactive_widget_mut<F>(self, mut fun: F) -> Self
     where
         F: FnMut(WidgetMut<'_, W>) + 'static,
     {
-        let widget_id = self.id();
-        Effect::new(move || {
-            let Some(weak_render_root) = use_weak_render_root() else {
-                warn!("No render root found");
-                return;
-            };
-            weak_render_root.use_inner_render_root_mut(|rr| {
-                if rr.tree.has_widget(widget_id) {
-                    rr.tree.edit_widget::<()>(widget_id, |mut widget_mut| {
-                        let Some(widget_mut) = widget_mut.try_downcast::<W>() else {
-                            warn!("The {:?} is not {:?}", widget_id, TypeId::of::<W>());
-                            return;
-                        };
-                        fun(widget_mut);
-                    });
-                } else {
-                    warn!("No {:?} widget found", widget_id)
-                }
-            });
-        });
-        self
+        self.use_reactive_widget_mut_with_effect_val::<_, ()>(move |this, _| {
+            fun(this);
+            None
+        })
     }
-
     fn register_handler<F>(self, fun: F) -> Self
     where
         F: Fn(&<W as Widget>::Action) + 'static,

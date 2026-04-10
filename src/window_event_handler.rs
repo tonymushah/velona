@@ -9,7 +9,7 @@ use parking_lot::RwLock;
 
 use log::debug;
 use masonry::core::{ErasedAction, WidgetId};
-use reactive_graph::owner::use_context;
+use reactive_graph::owner::{on_cleanup, use_context};
 use send_wrapper::SendWrapper;
 use uuid::Uuid;
 
@@ -86,11 +86,11 @@ impl InternWindowEventHandler {
 pub struct WindowEventHandlerWrapper(Weak<RwLock<WindowEventHandler>>);
 
 impl WindowEventHandlerWrapper {
-    pub fn add_handler_fn(&mut self, widget_id: WidgetId, hander_fn: HandlerFn) -> Option<Uuid> {
+    pub fn add_handler_fn(&self, widget_id: WidgetId, hander_fn: HandlerFn) -> Option<Uuid> {
         let arc = self.0.upgrade()?;
         Some(arc.write().add_handler_fn(widget_id, hander_fn))
     }
-    pub fn remove_handler_fn(&mut self, handler_id: Uuid) {
+    pub fn remove_handler_fn(&self, handler_id: Uuid) {
         let Some(arc) = self.0.upgrade() else {
             return;
         };
@@ -100,4 +100,33 @@ impl WindowEventHandlerWrapper {
 
 pub fn use_window_event_handler() -> Option<WindowEventHandlerWrapper> {
     use_context()
+}
+
+pub fn register_window_event_handler(widget_id: WidgetId, hander_fn: HandlerFn) {
+    let Some(handlers) = use_window_event_handler() else {
+        #[cfg(debug_assertions)]
+        {
+            panic!("No event handlers");
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            log::warn!("No event handlers");
+            return;
+        }
+    };
+    let Some(handler_id) = handlers.add_handler_fn(widget_id, hander_fn) else {
+        #[cfg(debug_assertions)]
+        {
+            panic!("Cannot register {} event handler", widget_id)
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            log::warn!("Cannot register {} event handler", widget_id);
+            return;
+        }
+    };
+
+    on_cleanup(move || {
+        handlers.remove_handler_fn(handler_id);
+    });
 }

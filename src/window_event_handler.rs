@@ -16,7 +16,7 @@ use uuid::Uuid;
 pub type HandlerFn = Box<dyn Fn(&ErasedAction)>;
 
 #[derive(Default)]
-pub struct WindowEventHandler {
+pub(crate) struct WindowEventHandler {
     widget_handlers: HashMap<WidgetId, HashMap<Uuid, SendWrapper<HandlerFn>>>,
 }
 
@@ -42,6 +42,10 @@ impl WindowEventHandler {
             v.remove(&handler_id);
             !v.is_empty()
         });
+    }
+    pub fn cleanup(&mut self, render_root: &masonry::app::RenderRoot) {
+        self.widget_handlers
+            .retain(|widget_id, _| render_root.has_widget(*widget_id));
     }
     pub(crate) fn shrink_to_fit(&mut self) {
         self.widget_handlers

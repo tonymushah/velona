@@ -32,7 +32,6 @@ pub struct Window {
     pub(crate) winit_window: Arc<WinitWindow>,
     pub(crate) render_root: WindowRenderRoot,
     surface: Option<wgpu::Surface<'static>>,
-    device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     renderer: vello::Renderer,
@@ -44,6 +43,7 @@ pub struct Window {
     last_anim: Option<Instant>,
     pub(crate) window_event_handler: InternWindowEventHandler,
     base_color: AlphaColor<Srgb>,
+    device: wgpu::Device,
 }
 
 pub struct WindowNew<'i, V> {

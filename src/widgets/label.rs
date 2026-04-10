@@ -10,24 +10,26 @@ use reactive_graph::graph::untrack;
 use super::NewWidgetExt;
 
 pub trait NewLabelExt {
-    /// It is efficient to call this function twice
+    /// It is inefficient to call this function twice
     fn text<S, T>(self, text: S) -> Self
     where
         S: Fn() -> T + 'static,
         T: Into<ArcStr>;
-    // Reactive styles
+    /// Reactive styles
     fn style<S, T>(self, style: S) -> Self
     where
         S: Fn() -> T + 'static,
         T: Into<StyleProperty>;
-    // Reactive option styles
+    /// Reactive option styles
     fn style_opt<S, T>(self, style: S) -> Self
     where
         S: Fn() -> Option<T> + 'static,
         T: Into<StyleProperty>;
+    /// It is inefficient to call this function twice
     fn hint<S>(self, hint: S) -> Self
     where
         S: Fn() -> bool + 'static;
+    /// It is inefficient to call this function twice
     fn text_alignment<S>(self, align: S) -> Self
     where
         S: Fn() -> TextAlign + 'static;

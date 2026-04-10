@@ -325,6 +325,7 @@ impl ApplicationHandler<EventLoopEvent> for App {
                 });
             }
             EventLoopEvent::RunTask(runnable) => {
+                log::trace!("running task");
                 runnable.run();
             }
             EventLoopEvent::NewLayer(new_layer) => {
@@ -383,6 +384,7 @@ impl ApplicationHandler<EventLoopEvent> for App {
                 }
             }
             EventLoopEvent::WidgetAction(widget_action) => {
+                log::debug!("{:#?}", widget_action);
                 self.use_window_ref(widget_action.window_id, |window| {
                     window
                         .window_event_handler

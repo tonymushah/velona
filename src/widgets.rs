@@ -2,7 +2,7 @@ use std::any::TypeId;
 
 use log::warn;
 use masonry::core::{NewWidget, Property, Widget, WidgetMut};
-use reactive_graph::{effect::Effect, owner::Owner};
+use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
     render_root::use_weak_render_root, window_event_handler::register_window_event_handler,
@@ -76,7 +76,7 @@ where
         F: Fn() -> P + 'static,
         P: Property,
     {
-        self.properties.insert(Owner::new().with(&prop));
+        self.properties.insert(untrack(&prop));
         self.use_reactive_widget_mut(move |mut this| {
             this.insert_prop::<P>(prop());
         })

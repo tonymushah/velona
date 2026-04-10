@@ -76,10 +76,7 @@ where
         F: Fn() -> P + 'static,
         P: Property,
     {
-        let Some(current_owner) = Owner::current() else {
-            return self;
-        };
-        self.properties.insert(current_owner.child().with(&prop));
+        self.properties.insert(Owner::new().with(&prop));
         self.use_reactive_widget_mut(move |mut this| {
             this.insert_prop::<P>(prop());
         })

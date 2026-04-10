@@ -29,7 +29,6 @@ use crate::{
 };
 
 pub struct Window {
-    pub(crate) winit_window: Arc<WinitWindow>,
     pub(crate) render_root: WindowRenderRoot,
     surface: Option<wgpu::Surface<'static>>,
     queue: wgpu::Queue,
@@ -44,6 +43,7 @@ pub struct Window {
     pub(crate) window_event_handler: InternWindowEventHandler,
     base_color: AlphaColor<Srgb>,
     device: wgpu::Device,
+    pub(crate) winit_window: Arc<WinitWindow>,
 }
 
 pub struct WindowNew<'i, V> {

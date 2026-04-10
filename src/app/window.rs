@@ -30,9 +30,6 @@ use crate::{
 
 pub struct Window {
     pub(crate) render_root: WindowRenderRoot,
-    surface: Option<wgpu::Surface<'static>>,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
     renderer: vello::Renderer,
     blitter: TextureBlitter,
     pub(crate) access_kit: accesskit_winit::Adapter,
@@ -42,6 +39,9 @@ pub struct Window {
     last_anim: Option<Instant>,
     pub(crate) window_event_handler: InternWindowEventHandler,
     base_color: AlphaColor<Srgb>,
+    surface: Option<wgpu::Surface<'static>>,
+    config: wgpu::SurfaceConfiguration,
+    queue: wgpu::Queue,
     device: wgpu::Device,
     pub(crate) winit_window: Arc<WinitWindow>,
 }

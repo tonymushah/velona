@@ -3,7 +3,7 @@ pub mod label;
 use std::any::TypeId;
 
 use log::warn;
-use masonry::core::{NewWidget, Property, Widget, WidgetMut};
+use masonry::core::{HasProperty, NewWidget, Property, Widget, WidgetMut};
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
@@ -28,7 +28,13 @@ where
     fn property<F, P>(self, prop: F) -> Self
     where
         F: Fn() -> P + 'static,
-        P: Property;
+        P: Property,
+        W: HasProperty<P>;
+    /// Use [`property`] for reactive values
+    fn append_static_propeperty<P>(self, prop: P) -> Self
+    where
+        P: Property,
+        W: HasProperty<P>;
 }
 
 impl<W> NewWidgetExt<W> for NewWidget<W>
@@ -95,10 +101,21 @@ where
     where
         F: Fn() -> P + 'static,
         P: Property,
+        W: HasProperty<P>,
     {
         self.properties.insert(untrack(&prop));
         self.use_reactive_widget_mut(move |mut this| {
             this.insert_prop::<P>(prop());
         })
+    }
+
+    fn append_static_propeperty<P>(mut self, prop: P) -> Self
+    where
+        P: Property,
+        W: HasProperty<P>,
+    {
+        self.properties.insert(prop);
+
+        self
     }
 }

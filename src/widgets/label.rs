@@ -1,3 +1,5 @@
+use std::mem::{Discriminant, discriminant};
+
 use masonry::{
     core::{ArcStr, NewWidget, StyleProperty, Widget},
     widgets::Label,
@@ -7,6 +9,7 @@ use reactive_graph::graph::untrack;
 use super::NewWidgetExt;
 
 pub trait NewLabelExt {
+    // Don't call this twice or
     fn text<S, T>(self, text: S) -> Self
     where
         S: Fn() -> T + 'static,
@@ -34,9 +37,16 @@ impl NewLabelExt for NewWidget<Label> {
         T: Into<StyleProperty>,
     {
         self.widget = Box::new(self.widget.with_style(untrack(&style)));
-        self.use_reactive_widget_mut(move |mut this| {
-            Label::insert_style(&mut this, style());
-        })
+        self.use_reactive_widget_mut_with_effect_val::<_, Discriminant<StyleProperty>>(
+            move |mut this, old_style| {
+                if let Some(old_style) = old_style {
+                    Label::remove_style(&mut this, old_style);
+                }
+                Label::insert_style(&mut this, style())
+                    .as_ref()
+                    .map(discriminant)
+            },
+        )
     }
 }
 

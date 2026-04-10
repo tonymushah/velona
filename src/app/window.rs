@@ -22,7 +22,7 @@ use crate::{
     },
     convert_winit_event::masonry_resize_direction_to_winit,
     render_root::{InnerRenderRoot, WindowRenderRoot},
-    utils::{todo_warn, todo_warn_of_something},
+    utils::todo_warn_of_something,
     window_event_handler::InternWindowEventHandler,
 };
 
@@ -61,7 +61,11 @@ impl Drop for Window {
 
 impl Window {
     pub fn on_memory_warning(&mut self) {
-        todo_warn();
+        self.render_root.use_inner_render_root_ref(|rr| {
+            let mut write = self.window_event_handler.write();
+            write.cleanup(&rr.tree);
+            write.shrink_to_fit();
+        });
     }
     pub(crate) async fn new<V>(args: WindowNew<'_, V>) -> Result<Self, crate::error::Error>
     where

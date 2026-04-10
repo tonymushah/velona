@@ -29,6 +29,7 @@ pub(crate) struct RenderRootRepositionLayer {
     pub point: masonry::kurbo::Point,
 }
 
+#[derive(Debug)]
 pub struct WidgetAction {
     pub window_id: WindowId,
     pub widget_id: WidgetId,

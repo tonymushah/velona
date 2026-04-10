@@ -1,7 +1,7 @@
 use masonry::{
     core::{NewWidget, PointerButton, Widget},
     palette::css::{WHITE, WHITE_SMOKE},
-    properties::{ActiveBackground, Background, ContentColor},
+    properties::{ActiveBackground, Background, ContentColor, CornerRadius, Padding},
     widgets::{Align, Button, Flex, Label},
 };
 use reactive_graph::{
@@ -24,6 +24,8 @@ where
                 set_count.update(&update);
             }
         })
+        .append_static_propeperty(Padding::all(3.0))
+        .append_static_propeperty(CornerRadius::all(3.0))
         .append_static_propeperty(Background::Color(WHITE))
         .append_static_propeperty(ActiveBackground(Background::Color(WHITE_SMOKE)))
 }

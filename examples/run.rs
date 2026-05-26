@@ -1,7 +1,11 @@
 use masonry::{
     core::{NewWidget, PointerButton, Widget},
+    kurbo::Point,
     palette::css::{WHITE, WHITE_SMOKE},
-    properties::{ActiveBackground, Background, ContentColor, CornerRadius, Padding},
+    properties::{
+        ActiveBackground, Background, BorderColor, BorderWidth, BoxShadow, ContentColor,
+        CornerRadius, HoveredBorderColor, Padding,
+    },
     widgets::{Align, Button, Flex, Label},
 };
 use reactive_graph::{
@@ -24,10 +28,21 @@ where
                 set_count.update(&update);
             }
         })
-        .append_static_propeperty(Padding::all(3.0))
-        .append_static_propeperty(CornerRadius::all(3.0))
+        .append_static_propeperty(Padding::from_vh(3.0, 8.0))
+        .append_static_propeperty(CornerRadius::all(8.0))
         .append_static_propeperty(Background::Color(WHITE))
         .append_static_propeperty(ActiveBackground(Background::Color(WHITE_SMOKE)))
+        .append_static_propeperty(BorderColor::new(
+            masonry::peniko::color::AlphaColor::from_rgb8(255, 0, 41),
+        ))
+        .append_static_propeperty(HoveredBorderColor(BorderColor::new(
+            masonry::peniko::color::AlphaColor::from_rgb8(255, 0, 41),
+        )))
+        .append_static_propeperty(BorderWidth::all(3.0))
+        .append_static_propeperty(BoxShadow::new(
+            masonry::peniko::color::AlphaColor::from_rgb8(255, 0, 41),
+            Point::new(0.0, 4.0),
+        ))
 }
 
 fn view() -> NewWidget<dyn Widget + 'static> {

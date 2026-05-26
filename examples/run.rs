@@ -12,7 +12,7 @@ use reactive_graph::{
     signal::{WriteSignal, signal},
     traits::{Get, Update},
 };
-use velona::{NewWidgetExt, widgets::label::label, window::WindowBuilder};
+use velona::{NewWidgetExt, widgets::label::label, window::builder::WindowBuilder};
 
 fn button<U>(set_count: WriteSignal<u32>, update: U, text: &'static str) -> NewWidget<Button>
 where

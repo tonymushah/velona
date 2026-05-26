@@ -1,6 +1,6 @@
 use winit::{event_loop::EventLoopProxy, window::WindowId};
 
-use crate::window::WindowBuilder;
+use crate::window::builder::WindowBuilder;
 
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<accesskit_winit::Event>),

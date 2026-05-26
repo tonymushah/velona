@@ -24,6 +24,7 @@ use winit::window::{Window as WinitWindow, WindowId};
 use crate::{
     app::AppEventLoopProxy,
     render_root::{InnerRenderRoot, WindowRenderRoot},
+    window::handle::WindowHandle,
     window_event_handler::InternWindowEventHandler,
 };
 
@@ -81,7 +82,7 @@ impl Window {
             view,
             default_properties,
             access_kit,
-            event_loop_proxy: _,
+            event_loop_proxy,
             parent_owner,
             base_color,
             signal_sender,
@@ -137,6 +138,10 @@ impl Window {
             let new_widget = window_owner.with(|| {
                 provide_context(render_root.create_weak());
                 provide_context(event_handlers.get_weak());
+                provide_context(WindowHandle {
+                    window: Arc::downgrade(&window),
+                    event_proxy: event_loop_proxy,
+                });
                 view()
             });
             if render_root

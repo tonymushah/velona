@@ -1,6 +1,6 @@
 pub(crate) mod el_event;
 mod executor;
-mod window;
+use crate::window::runner as window;
 
 use std::{
     cell::RefCell,
@@ -40,7 +40,7 @@ use crate::{
     app::{executor::SpawnFn, window::WindowNew},
     convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
     utils::todo_warn_of_something,
-    window::WindowBuilder,
+    window::builder::WindowBuilder,
 };
 
 pub(crate) use el_event::{AppEventLoopProxy, EventLoopEvent};
@@ -460,10 +460,8 @@ impl ApplicationHandler<EventLoopEvent> for App {
             }
         });
         match event {
-            WindowEvent::Destroyed => {
-                if self.windows.is_empty() {
-                    event_loop.exit();
-                }
+            WindowEvent::Destroyed if self.windows.is_empty() => {
+                event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
                 self.handle_redraw_request(window_id);
@@ -493,7 +491,7 @@ impl ApplicationHandler<EventLoopEvent> for App {
             .values_mut()
             .for_each(|w| w.on_memory_warning());
     }
-    fn suspended(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {}
+    fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {}
     fn user_event(
         &mut self,
         event_loop: &winit::event_loop::ActiveEventLoop,

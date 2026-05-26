@@ -11,4 +11,4 @@ pub use reactive_graph;
 
 pub use app::Builder;
 pub use widgets::NewWidgetExt;
-pub use window::WindowBuilder;
+pub use window::builder::WindowBuilder;

@@ -186,6 +186,9 @@ impl Window {
         self.winit_window.pre_present_notify();
 
         output.present();
+        {
+            device.device.poll(wgpu::PollType::Wait)?;
+        }
 
         Ok(())
     }

@@ -63,6 +63,28 @@ impl WindowRenderRoot {
             inner: SendWrapper::new(Rc::new(RefCell::new(render_root))),
         }
     }
+    pub fn use_render_root_ref<Ufn, R>(&self, use_fn: Ufn) -> Option<R>
+    where
+        Ufn: FnOnce(&RenderRoot) -> R,
+    {
+        if let Ok(_ref) = self.inner.try_borrow() {
+            Some(use_fn(&_ref.tree))
+        } else {
+            log::warn!("The inner render root mutable reference is used somewhere else...");
+            None
+        }
+    }
+    pub fn use_render_root_mut<Ufn, R>(&self, use_fn: Ufn) -> Option<R>
+    where
+        Ufn: FnOnce(&mut RenderRoot) -> R,
+    {
+        if let Ok(mut _ref) = self.inner.try_borrow_mut() {
+            Some(use_fn(&mut _ref.tree))
+        } else {
+            log::warn!("The inner render root mutable reference is used somewhere else...");
+            None
+        }
+    }
     pub fn use_inner_render_root_ref<Ufn, R>(&self, use_fn: Ufn) -> Option<R>
     where
         Ufn: FnOnce(&InnerRenderRoot) -> R,

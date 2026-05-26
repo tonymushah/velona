@@ -1,7 +1,11 @@
-use std::{num::NonZeroUsize, sync::Arc, time::Instant};
+use std::{
+    num::NonZeroUsize,
+    sync::{Arc, mpsc},
+    time::Instant,
+};
 
 use masonry::{
-    app::RenderRootOptions,
+    app::{RenderRootOptions, RenderRootSignal},
     core::{DefaultProperties, NewWidget, Widget},
     palette::css::BLACK,
     peniko::color::{AlphaColor, Srgb},
@@ -13,20 +17,12 @@ use masonry::{
 };
 use parking_lot::RwLock;
 use reactive_graph::owner::{Owner, provide_context};
-use send_wrapper::SendWrapper;
 use ui_events_winit::WindowEventReducer;
-use winit::window::Window as WinitWindow;
+use winit::window::{Window as WinitWindow, WindowId};
 
 use crate::{
-    app::{
-        AppEventLoopProxy,
-        el_event::{
-            RenderRootNewLayer, RenderRootRemoveLayer, RenderRootRepositionLayer, WidgetAction,
-        },
-    },
-    convert_winit_event::masonry_resize_direction_to_winit,
+    app::AppEventLoopProxy,
     render_root::{InnerRenderRoot, WindowRenderRoot},
-    utils::todo_warn_of_something,
     window_event_handler::InternWindowEventHandler,
 };
 
@@ -51,7 +47,9 @@ pub struct WindowNew<'i, V> {
     pub view: V,
     pub default_properties: Arc<DefaultProperties>,
     pub access_kit: accesskit_winit::Adapter,
+    #[allow(unused)]
     pub event_loop_proxy: AppEventLoopProxy,
+    pub signal_sender: mpsc::Sender<(WindowId, RenderRootSignal)>,
     pub parent_owner: &'i Owner,
     pub base_color: Option<AlphaColor<Srgb>>,
 }
@@ -80,9 +78,10 @@ impl Window {
             view,
             default_properties,
             access_kit,
-            event_loop_proxy,
+            event_loop_proxy: _,
             parent_owner,
             base_color,
+            signal_sender,
         } = args;
         let window_owner = parent_owner.child();
         let event_handlers = InternWindowEventHandler::default();
@@ -107,104 +106,9 @@ impl Window {
 
         let render_root = InnerRenderRoot::new(
             {
-                let window = window.clone();
-                move |ev| match ev {
-                    masonry::app::RenderRootSignal::Action(any_debug, widget_id) => {
-                        let _ = event_loop_proxy.send_event(
-                            WidgetAction {
-                                window_id: window.id(),
-                                event: SendWrapper::new(any_debug),
-                                widget_id,
-                            }
-                            .into(),
-                        );
-                    }
-                    masonry::app::RenderRootSignal::StartIme => {
-                        window.set_ime_allowed(true);
-                    }
-                    masonry::app::RenderRootSignal::EndIme => {
-                        window.set_ime_allowed(false);
-                    }
-                    masonry::app::RenderRootSignal::ImeMoved(_logical_position, _logical_size) => {
-                        window.set_ime_cursor_area(_logical_position, _logical_size);
-                    }
-                    masonry::app::RenderRootSignal::ClipboardStore(_) => {
-                        todo_warn_of_something("RenderRootSignal::ClipboardStore");
-                    }
-                    masonry::app::RenderRootSignal::RequestRedraw => {
-                        window.request_redraw();
-                    }
-                    masonry::app::RenderRootSignal::RequestAnimFrame => {
-                        window.request_redraw();
-                    }
-                    masonry::app::RenderRootSignal::TakeFocus => {
-                        window.focus_window();
-                    }
-                    masonry::app::RenderRootSignal::SetCursor(cursor_icon) => {
-                        window.set_cursor(cursor_icon);
-                    }
-                    masonry::app::RenderRootSignal::SetSize(physical_size) => {
-                        let _ = window.request_inner_size(physical_size);
-                    }
-                    masonry::app::RenderRootSignal::SetTitle(title) => {
-                        window.set_title(&title);
-                    }
-                    masonry::app::RenderRootSignal::DragWindow => {
-                        if let Err(err) = window.drag_window() {
-                            log::warn!("Cannot draw window ({})", err);
-                        }
-                    }
-                    masonry::app::RenderRootSignal::DragResizeWindow(resize_direction) => {
-                        if let Err(err) = window
-                            .drag_resize_window(masonry_resize_direction_to_winit(resize_direction))
-                        {
-                            log::warn!("Cannot drag resize window ({})", err);
-                        }
-                    }
-                    masonry::app::RenderRootSignal::ToggleMaximized => {
-                        window.set_maximized(!window.is_maximized());
-                    }
-                    masonry::app::RenderRootSignal::Minimize => {
-                        window.set_minimized(true);
-                    }
-                    masonry::app::RenderRootSignal::Exit => {
-                        todo_warn_of_something("RenderRootSignal::Exit");
-                    }
-                    masonry::app::RenderRootSignal::ShowWindowMenu(logical_position) => {
-                        window.show_window_menu(logical_position);
-                    }
-                    masonry::app::RenderRootSignal::WidgetSelectedInInspector(_widget_id) => {
-                        todo_warn_of_something("RenderRootSignal::WidgetSelectedInInspector");
-                    }
-                    masonry::app::RenderRootSignal::NewLayer(_new_widget, _point) => {
-                        let _ = event_loop_proxy.send_event(
-                            RenderRootNewLayer {
-                                window_id: window.id(),
-                                layer: _new_widget.into(),
-                                point: _point,
-                            }
-                            .into(),
-                        );
-                    }
-                    masonry::app::RenderRootSignal::RemoveLayer(_widget_id) => {
-                        let _ = event_loop_proxy.send_event(
-                            RenderRootRemoveLayer {
-                                widget_id: _widget_id,
-                                window_id: window.id(),
-                            }
-                            .into(),
-                        );
-                    }
-                    masonry::app::RenderRootSignal::RepositionLayer(_widget_id, _point) => {
-                        let _ = event_loop_proxy.send_event(
-                            RenderRootRepositionLayer {
-                                widget_id: _widget_id,
-                                point: _point,
-                                window_id: window.id(),
-                            }
-                            .into(),
-                        );
-                    }
+                let window = window.id();
+                move |ev| {
+                    let _ = signal_sender.send((window, ev));
                 }
             },
             RenderRootOptions {

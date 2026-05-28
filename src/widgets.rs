@@ -30,7 +30,7 @@ where
         F: Fn() -> P + 'static,
         P: Property,
         W: HasProperty<P>;
-    /// Use [`property`] for reactive values
+    /// Use [`property`](Self::property) for reactive values
     fn append_static_propeperty<P>(self, prop: P) -> Self
     where
         P: Property,

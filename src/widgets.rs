@@ -37,6 +37,8 @@ where
         P: Property,
         W: HasProperty<P>;
     /// Update the internal [`NewWidget::widget`].
+    // **NOTE: Please be smart and always use [`untrack`](reactive_graph::graph::untrack) if you use decide to bring a reactive closure on using this.**
+    // Weird thing might happen if you do that.
     fn update_inner_widget<T>(self, update_fn: T) -> Self
     where
         T: FnOnce(W) -> W;

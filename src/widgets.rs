@@ -36,6 +36,10 @@ where
     where
         P: Property,
         W: HasProperty<P>;
+    /// Update the internal [`NewWidget::widget`].
+    fn update_inner_widget<T>(self, update_fn: T) -> Self
+    where
+        T: FnOnce(W) -> W;
 }
 
 impl<W> NewWidgetExt<W> for NewWidget<W>
@@ -117,6 +121,14 @@ where
     {
         self.properties.insert(prop);
 
+        self
+    }
+
+    fn update_inner_widget<T>(mut self, update_fn: T) -> Self
+    where
+        T: FnOnce(W) -> W,
+    {
+        self.widget = Box::new(update_fn(*self.widget));
         self
     }
 }

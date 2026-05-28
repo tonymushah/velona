@@ -11,6 +11,11 @@ use super::NewWidgetExt;
 
 /// A [`Label`] trait extention
 pub trait NewLabelExt {
+    /// create a new [`Label`] with reactive value `text`.
+    fn new<S, T>(text: S) -> Self
+    where
+        S: Fn() -> T + 'static,
+        T: Into<ArcStr>;
     /// It is inefficient to call this function twice
     fn text<S, T>(self, text: S) -> Self
     where
@@ -54,7 +59,7 @@ impl NewLabelExt for NewWidget<Label> {
     {
         {
             if let Some(style) = untrack(&style) {
-                self.widget = Box::new(self.widget.with_style(style));
+                self = self.update_inner_widget(|label| label.with_style(style));
             }
         }
         self.use_reactive_widget_mut_with_effect_val::<_, Discriminant<StyleProperty>>(
@@ -85,7 +90,7 @@ impl NewLabelExt for NewWidget<Label> {
         S: Fn() -> bool + 'static,
     {
         {
-            self.widget = Box::new(self.widget.with_hint(untrack(&hint)));
+            self = self.update_inner_widget(|label| label.with_hint(untrack(&hint)));
         }
         self.use_reactive_widget_mut(move |mut this| {
             Label::set_hint(&mut this, hint());
@@ -102,6 +107,14 @@ impl NewLabelExt for NewWidget<Label> {
         self.use_reactive_widget_mut(move |mut this| {
             Label::set_text_alignment(&mut this, align());
         })
+    }
+
+    fn new<S, T>(text: S) -> Self
+    where
+        S: Fn() -> T + 'static,
+        T: Into<ArcStr>,
+    {
+        Label::new(untrack(&text)).with_auto_id().text(text)
     }
 }
 

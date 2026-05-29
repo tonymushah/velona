@@ -8,6 +8,7 @@ pub(crate) enum EventLoopEvent {
     NewWindow(Box<WindowBuilder>),
     CloseWindow(WindowId),
     SetClipboardContent(String),
+    HandleRenderRootSignals,
 }
 
 pub(crate) type AppEventLoopProxy = EventLoopProxy<EventLoopEvent>;

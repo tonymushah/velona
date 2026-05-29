@@ -377,7 +377,6 @@ impl App {
                 log::error!("Os error on creating new window {err}");
             }
         }
-        self.handle_signals(event_loop);
     }
 }
 
@@ -483,7 +482,6 @@ impl ApplicationHandler<EventLoopEvent> for App {
                 // log::trace!("event {:#?} handling is not implemented yet", _e);
             }
         }
-        self.handle_signals(event_loop);
     }
     fn memory_warning(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         self.windows.shrink_to_fit();
@@ -538,7 +536,9 @@ impl ApplicationHandler<EventLoopEvent> for App {
                     .set_contents(text)
                     .inspect_err(|err| log::error!("cannot set clipboard content => {err}"));
             }
+            EventLoopEvent::HandleRenderRootSignals => {
+                self.handle_signals(event_loop);
+            }
         }
-        self.handle_signals(event_loop);
     }
 }

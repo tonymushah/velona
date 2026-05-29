@@ -120,8 +120,10 @@ impl Window {
         let render_root = InnerRenderRoot::new(
             {
                 let window = window.id();
+                let proxy = event_loop_proxy.clone();
                 move |ev| {
                     let _ = signal_sender.send((window, ev));
+                    let _ = proxy.send_event(crate::app::EventLoopEvent::HandleRenderRootSignals);
                 }
             },
             RenderRootOptions {

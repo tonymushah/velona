@@ -22,7 +22,7 @@ use ui_events_winit::WindowEventReducer;
 use winit::window::{Window as WinitWindow, WindowId};
 
 use crate::{
-    app::{AppEventLoopProxy, AppHandle, el_event::EventProxyHandle},
+    app::{AppHandle, el_event::EventProxyHandle},
     render_root::{InnerRenderRoot, WindowRenderRoot},
     window::handle::WindowHandle,
     window_event_handler::InternWindowEventHandler,

@@ -27,14 +27,14 @@ use winit::{
 use super::window::Window;
 
 use crate::{
-    app::{AppEventLoopProxy, EventLoopEvent, window::WindowNew},
+    app::{AppHandle, EventLoopEvent, el_event::EventProxyHandle, window::WindowNew},
     convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
     utils::todo_warn_of_something,
     window::builder::WindowBuilder,
 };
 
 pub(crate) struct AppRunner {
-    pub(crate) event_loop_proxy: AppEventLoopProxy,
+    pub(crate) app_handle: AppHandle,
     pub(crate) windows: HashMap<WindowId, Box<Window>>,
     pub(crate) default_properties: Arc<DefaultProperties>,
     pub(crate) builder_windows: Option<Vec<WindowBuilder>>,
@@ -102,11 +102,12 @@ impl AppRunner {
     }
     fn handle_signals(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         let mut need_redraw = HashSet::<WindowId>::new();
+        let event_loop_proxy = self.app_handle.get_proxy().clone();
         loop {
             let Some((window_id, signal)) = self.signal_receiver.try_iter().next() else {
                 break;
             };
-            let event_loop_proxy = self.event_loop_proxy.clone();
+
             self.use_window(window_id, |window| {
                 match signal {
                     masonry::app::RenderRootSignal::Action(any_debug, widget_id) => {
@@ -237,14 +238,14 @@ impl AppRunner {
                 let access_kit = accesskit_winit::Adapter::with_event_loop_proxy(
                     event_loop,
                     &window,
-                    self.event_loop_proxy.clone(),
+                    self.app_handle.get_proxy().clone(),
                 );
                 match Window::new(WindowNew {
                     window,
                     view: builder.view,
                     default_properties: self.default_properties.clone(),
                     access_kit,
-                    event_loop_proxy: self.event_loop_proxy.clone(),
+                    app_handle: self.app_handle.clone(),
                     parent_owner: &self.owner,
                     base_color: builder.base_color,
                     render_context: &self.render_context,
@@ -275,7 +276,7 @@ impl ApplicationHandler<EventLoopEvent> for AppRunner {
             } else {
                 for window in builder_windows {
                     if self
-                        .event_loop_proxy
+                        .app_handle
                         .send_event(EventLoopEvent::NewWindow(Box::new(window)))
                         .is_err()
                     {

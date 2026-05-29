@@ -1,4 +1,7 @@
-use winit::{event_loop::EventLoopProxy, window::WindowId};
+use winit::{
+    event_loop::{EventLoopClosed, EventLoopProxy},
+    window::WindowId,
+};
 
 use crate::window::builder::WindowBuilder;
 
@@ -16,6 +19,13 @@ pub(crate) type AppEventLoopProxy = EventLoopProxy<EventLoopEvent>;
 impl From<accesskit_winit::Event> for EventLoopEvent {
     fn from(value: accesskit_winit::Event) -> Self {
         Self::AccessKitAction(Box::new(value))
+    }
+}
+
+pub(crate) trait EventProxyHandle {
+    fn get_proxy(&self) -> &AppEventLoopProxy;
+    fn send_event(&self, event: EventLoopEvent) -> Result<(), EventLoopClosed<EventLoopEvent>> {
+        self.get_proxy().send_event(event)
     }
 }
 

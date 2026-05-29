@@ -2,12 +2,12 @@ use std::sync::Weak;
 
 use winit::window::Window;
 
-use crate::app::AppEventLoopProxy;
+use crate::app::{self, AppEventLoopProxy, AppHandle};
 
 #[derive(Debug, Clone)]
 pub struct WindowHandle {
     pub(crate) window: Weak<Window>,
-    pub(crate) event_proxy: AppEventLoopProxy,
+    pub(crate) app_handle: AppHandle,
 }
 
 impl WindowHandle {
@@ -26,5 +26,11 @@ impl WindowHandle {
         self.use_raw_window(|window| {
             window.set_title(title);
         });
+    }
+}
+
+impl app::el_event::EventProxyHandle for WindowHandle {
+    fn get_proxy(&self) -> &AppEventLoopProxy {
+        self.app_handle.get_proxy()
     }
 }

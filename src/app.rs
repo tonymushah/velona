@@ -112,7 +112,7 @@ impl Builder {
         let (signal_sender, signal_receiver) =
             mpsc::channel::<(WindowId, masonry::app::RenderRootSignal)>();
         let mut app = run::AppRunner {
-            event_loop_proxy: proxy,
+            app_handle: AppHandle::new(proxy),
             windows: Default::default(),
             render_context: Rc::new(RefCell::new(RenderContext {
                 instance: wgpu_instance,
@@ -132,3 +132,5 @@ impl Builder {
 }
 
 // TODO add an Manager trait
+
+pub use handle::{AppHandle, use_app_handle};

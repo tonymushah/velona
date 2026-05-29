@@ -22,7 +22,7 @@ use ui_events_winit::WindowEventReducer;
 use winit::window::{Window as WinitWindow, WindowId};
 
 use crate::{
-    app::AppEventLoopProxy,
+    app::{AppEventLoopProxy, AppHandle, el_event::EventProxyHandle},
     render_root::{InnerRenderRoot, WindowRenderRoot},
     window::handle::WindowHandle,
     window_event_handler::InternWindowEventHandler,
@@ -50,7 +50,7 @@ pub struct WindowNew<'i, V> {
     pub default_properties: Arc<DefaultProperties>,
     pub access_kit: accesskit_winit::Adapter,
     #[allow(unused)]
-    pub event_loop_proxy: AppEventLoopProxy,
+    pub app_handle: AppHandle,
     pub signal_sender: mpsc::Sender<(WindowId, RenderRootSignal)>,
     pub parent_owner: &'i Owner,
     pub base_color: Option<AlphaColor<Srgb>>,
@@ -82,7 +82,7 @@ impl Window {
             view,
             default_properties,
             access_kit,
-            event_loop_proxy,
+            app_handle,
             parent_owner,
             base_color,
             signal_sender,
@@ -120,7 +120,7 @@ impl Window {
         let render_root = InnerRenderRoot::new(
             {
                 let window = window.id();
-                let proxy = event_loop_proxy.clone();
+                let proxy = app_handle.get_proxy().clone();
                 move |ev| {
                     let _ = signal_sender.send((window, ev));
                     let _ = proxy.send_event(crate::app::EventLoopEvent::HandleRenderRootSignals);
@@ -142,8 +142,9 @@ impl Window {
                 provide_context(event_handlers.get_weak());
                 provide_context(WindowHandle {
                     window: Arc::downgrade(&window),
-                    event_proxy: event_loop_proxy,
+                    app_handle: app_handle.clone(),
                 });
+                provide_context(app_handle);
                 view()
             });
             if render_root

@@ -134,3 +134,5 @@ where
         self
     }
 }
+
+pub use masonry::widgets as masonry_widgets;

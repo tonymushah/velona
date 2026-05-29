@@ -19,6 +19,7 @@ impl super::el_event::EventProxyHandle for AppHandle {
     }
 }
 
+/// Get the current app handle.
 pub fn use_app_handle() -> Option<AppHandle> {
     use_context()
 }

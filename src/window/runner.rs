@@ -291,4 +291,7 @@ impl Window {
         }
         Ok(())
     }
+    pub fn create_children_owner(&self) -> Owner {
+        self.owner.child()
+    }
 }

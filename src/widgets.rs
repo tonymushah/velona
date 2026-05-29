@@ -1,14 +1,15 @@
 pub mod checkbox;
 pub mod label;
 
-use std::any::TypeId;
+use std::{any::TypeId, marker::PhantomData};
 
 use log::warn;
 use masonry::core::{HasProperty, NewWidget, Property, Widget, WidgetMut};
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
-    render_root::use_weak_render_root, window_event_handler::register_window_event_handler,
+    render_root::use_weak_render_root, widget_ref::VelonaWidgetRef, window::use_window,
+    window_event_handler::register_window_event_handler,
 };
 
 pub trait NewWidgetExt<W>
@@ -42,6 +43,10 @@ where
     fn update_inner_widget<T>(self, update_fn: T) -> Self
     where
         T: FnOnce(W) -> W;
+    /// Create a [`WidgetRef`](VelonaWidgetRef) that you can send safely between thread.
+    ///
+    /// Return `None` if [`use_window`] returns `None`.
+    fn create_velona_ref(&self) -> Option<VelonaWidgetRef<W>>;
 }
 
 impl<W> NewWidgetExt<W> for NewWidget<W>
@@ -132,6 +137,15 @@ where
     {
         self.widget = Box::new(update_fn(*self.widget));
         self
+    }
+
+    fn create_velona_ref(&self) -> Option<VelonaWidgetRef<W>> {
+        let window = use_window()?;
+        Some(VelonaWidgetRef {
+            id: self.id(),
+            window,
+            phantom: PhantomData::<W>,
+        })
     }
 }
 

@@ -57,7 +57,7 @@ impl AppRunner {
             None
         }
     }
-    fn use_window_ref<F, R>(&mut self, window_id: WindowId, fun: F) -> Option<R>
+    fn use_window_ref<F, R>(&self, window_id: WindowId, fun: F) -> Option<R>
     where
         F: FnOnce(&Window) -> R,
     {
@@ -76,6 +76,9 @@ impl AppRunner {
             window.render_root.use_render_root_mut(|r| fun(r))
         })
         .flatten()
+    }
+    fn create_window_owner_children(&self, window_id: WindowId) -> Option<Owner> {
+        self.use_window_ref(window_id, |window| window.create_children_owner())
     }
     fn handle_redraw_request(&mut self, window_id: WindowId) {
         self.use_window(window_id, |win| match win.render() {
@@ -425,6 +428,22 @@ impl ApplicationHandler<EventLoopEvent> for AppRunner {
             }
             EventLoopEvent::HandleRenderRootSignals => {
                 self.handle_signals(event_loop);
+            }
+            EventLoopEvent::EditWidget(edit_widget_fn_event) => {
+                let maybe_owner = self.create_window_owner_children(edit_widget_fn_event.window_id);
+                self.use_window_render_root(edit_widget_fn_event.window_id, |root| {
+                    if root.has_widget(edit_widget_fn_event.widget_id) {
+                        root.edit_widget(edit_widget_fn_event.widget_id, |widget_mut| {
+                            if let Some(owner) = maybe_owner {
+                                owner.with_cleanup(|| {
+                                    (edit_widget_fn_event.edit_fn)(widget_mut);
+                                })
+                            } else {
+                                (edit_widget_fn_event.edit_fn)(widget_mut);
+                            }
+                        });
+                    }
+                });
             }
         }
     }

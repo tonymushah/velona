@@ -9,7 +9,7 @@ any_spawner = "0.3"
 async-executor = "^1.14"
 async-task = "4"
 masonry = "0.4"
-reactive_graph = { version = "0.2", features = ["effects"] }
+reactive_graph = { version = "0.2", features = ["effects", "sandboxed-arenas"] }
 thiserror = "2"
 winit = "0.30"
 log = "0.4"
@@ -20,6 +20,7 @@ uuid = { version = "1", features = ["v4"] }
 ui-events-winit = "0.2"
 parking_lot = "0.12"
 copypasta = "0.10.2"
+futures-channel = "0.3"
 
 [dev-dependencies]
 env_logger = "0.11.10"

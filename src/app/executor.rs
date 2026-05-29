@@ -23,8 +23,8 @@ impl CustomExecutor for AppExecutor {
                 log::warn!("the event loop is already closed!");
             }
         });
-        task.detach();
         run.schedule();
+        task.detach();
     }
 
     fn poll_local(&self) {}

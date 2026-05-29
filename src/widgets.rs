@@ -1,14 +1,14 @@
 pub mod checkbox;
 pub mod label;
 
-use std::{any::TypeId, marker::PhantomData};
+use std::{marker::PhantomData, thread};
 
 use log::warn;
 use masonry::core::{HasProperty, NewWidget, Property, Widget, WidgetMut};
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
-    render_root::use_weak_render_root, widget_ref::VelonaWidgetRef, window::use_window,
+    widget_ref::VelonaWidgetRef, window::use_window,
     window_event_handler::register_window_event_handler,
 };
 
@@ -44,9 +44,7 @@ where
     where
         T: FnOnce(W) -> W;
     /// Create a [`WidgetRef`](VelonaWidgetRef) that you can send safely between thread.
-    ///
-    /// Return `None` if [`use_window`] returns `None`.
-    fn create_velona_ref(&self) -> Option<VelonaWidgetRef<W>>;
+    fn create_velona_ref(&self) -> VelonaWidgetRef<W>;
 }
 
 impl<W> NewWidgetExt<W> for NewWidget<W>
@@ -58,29 +56,32 @@ where
         F: FnMut(WidgetMut<'_, W>, Option<V>) -> Option<V> + 'static,
         V: 'static,
     {
-        let widget_id = self.id();
+        let widget_ref = self.create_velona_ref().remove_window();
         Effect::new(move |v: Option<Option<V>>| {
             let v = v.flatten();
-            let Some(weak_render_root) = use_weak_render_root() else {
-                warn!("No render root found");
-                return None;
-            };
-            weak_render_root
-                .use_inner_render_root_mut::<_, Option<V>>(|rr| {
-                    if rr.tree.has_widget(widget_id) {
-                        rr.tree.edit_widget(widget_id, |mut widget_mut| {
-                            let Some(widget_mut) = widget_mut.try_downcast::<W>() else {
-                                warn!("The {:?} is not {:?}", widget_id, TypeId::of::<W>());
-                                return None::<V>;
-                            };
-                            fun(widget_mut, v)
-                        })
-                    } else {
-                        warn!("No {:?} widget found", widget_id);
-                        None
-                    }
-                })
-                .flatten()
+            match widget_ref.edit_local_now(|widget_mut| (fun)(widget_mut, v)) {
+                Ok(val) => val,
+                Err(err) => {
+                    log::warn!("{err}");
+                    None
+                }
+            }
+            // weak_render_root
+            //     .use_inner_render_root_mut::<_, Option<V>>(|rr| {
+            //         if rr.tree.has_widget(widget_id) {
+            //             rr.tree.edit_widget(widget_id, |mut widget_mut| {
+            //                 let Some(widget_mut) = widget_mut.try_downcast::<W>() else {
+            //                     warn!("The {:?} is not {:?}", widget_id, TypeId::of::<W>());
+            //                     return None::<V>;
+            //                 };
+            //                 fun(widget_mut, v)
+            //             })
+            //         } else {
+            //             warn!("No {:?} widget found", widget_id);
+            //             None
+            //         }
+            //     })
+            //     .flatten()
         });
         self
     }
@@ -139,13 +140,13 @@ where
         self
     }
 
-    fn create_velona_ref(&self) -> Option<VelonaWidgetRef<W>> {
-        let window = use_window()?;
-        Some(VelonaWidgetRef {
+    fn create_velona_ref(&self) -> VelonaWidgetRef<W> {
+        VelonaWidgetRef {
             id: self.id(),
-            window,
+            window: use_window().map(Box::new),
             phantom: PhantomData::<W>,
-        })
+            thread_id: thread::current().id(),
+        }
     }
 }
 

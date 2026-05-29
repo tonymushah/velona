@@ -99,6 +99,10 @@ pub struct WindowEventHandlerWrapper(SendWrapper<Weak<RefCell<WindowEventHandler
 
 impl WindowEventHandlerWrapper {
     pub fn add_handler_fn(&self, widget_id: WidgetId, hander_fn: HandlerFn) -> Option<Uuid> {
+        if !self.0.valid() {
+            log::error!("An window event handler was called outside the main thread");
+            return None;
+        }
         let arc = self.0.upgrade()?;
         Some(
             arc.try_borrow_mut()
@@ -107,6 +111,10 @@ impl WindowEventHandlerWrapper {
         )
     }
     pub fn remove_handler_fn(&self, handler_id: Uuid) {
+        if !self.0.valid() {
+            log::error!("An window event handler was called outside the main thread");
+            return;
+        }
         let Some(arc) = self.0.upgrade() else {
             return;
         };

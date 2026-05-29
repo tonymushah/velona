@@ -1,10 +1,10 @@
 use masonry::{
     core::{ArcStr, NewWidget, Widget},
-    widgets::{Checkbox, CheckboxToggled},
+    widgets::Checkbox,
 };
-use reactive_graph::{computed::Memo, graph::untrack, signal::WriteSignal, traits::Get};
+use reactive_graph::{computed::Memo, graph::untrack, traits::Get};
 
-use crate::{NewWidgetExt, widgets::checkbox};
+use crate::NewWidgetExt;
 
 /// A [`Checkbox`] trait extension
 pub trait NewCheckboxExt {

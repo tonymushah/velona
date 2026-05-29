@@ -7,8 +7,11 @@ pub mod widgets;
 pub mod window;
 pub mod window_event_handler;
 
+use masonry::core::{NewWidget, Widget};
 pub use reactive_graph;
 
 pub use app::Builder;
 pub use widgets::NewWidgetExt;
 pub use window::builder::WindowBuilder;
+
+pub type AnyNewWidget = NewWidget<dyn Widget>;

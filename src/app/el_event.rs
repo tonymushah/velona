@@ -3,7 +3,10 @@ use winit::{
     window::WindowId,
 };
 
-use crate::{widget_ref::EditWidgetFnEvent, window::builder::WindowBuilder};
+use crate::{
+    widget_ref::{EditWidgetFnEvent, UseWidgetFnEvent},
+    window::builder::WindowBuilder,
+};
 
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<accesskit_winit::Event>),
@@ -13,6 +16,7 @@ pub(crate) enum EventLoopEvent {
     SetClipboardContent(String),
     HandleRenderRootSignals,
     EditWidget(Box<EditWidgetFnEvent>),
+    UseWidget(Box<UseWidgetFnEvent>),
 }
 
 pub(crate) type AppEventLoopProxy = EventLoopProxy<EventLoopEvent>;

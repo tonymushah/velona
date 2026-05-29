@@ -77,6 +77,17 @@ impl AppRunner {
         })
         .flatten()
     }
+    fn use_window_render_root_ref<F, R>(&mut self, window_id: WindowId, fun: F) -> Option<R>
+    where
+        F: FnOnce(&RenderRoot) -> R,
+    {
+        self.use_window_ref(window_id, |window| {
+            window
+                .render_root
+                .use_inner_render_root_ref(|r| fun(&r.tree))
+        })
+        .flatten()
+    }
     fn create_window_owner_children(&self, window_id: WindowId) -> Option<Owner> {
         self.use_window_ref(window_id, |window| window.create_children_owner())
     }
@@ -442,6 +453,21 @@ impl ApplicationHandler<EventLoopEvent> for AppRunner {
                                 (edit_widget_fn_event.edit_fn)(widget_mut);
                             }
                         });
+                    }
+                });
+            }
+            EventLoopEvent::UseWidget(use_widget_fn_event) => {
+                let maybe_owner = self.create_window_owner_children(use_widget_fn_event.window_id);
+                self.use_window_render_root_ref(use_widget_fn_event.window_id, |root| {
+                    let Some(widget_ref) = root.get_widget(use_widget_fn_event.widget_id) else {
+                        return;
+                    };
+                    if let Some(owner) = maybe_owner {
+                        owner.with_cleanup(|| {
+                            (use_widget_fn_event.use_fn)(widget_ref);
+                        })
+                    } else {
+                        (use_widget_fn_event.use_fn)(widget_ref);
                     }
                 });
             }

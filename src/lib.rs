@@ -3,6 +3,7 @@ pub(crate) mod convert_winit_event;
 pub mod error;
 pub mod render_root;
 pub mod utils;
+pub mod widget_ref;
 pub mod widgets;
 pub mod window;
 pub mod window_event_handler;

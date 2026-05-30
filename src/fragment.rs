@@ -1,19 +1,18 @@
 //! A reactive widget
 
 use masonry::{core::Widget, widgets::IndexedStack};
-use reactive_graph::{effect::Effect, graph::untrack};
+use reactive_graph::effect::Effect;
 
 use crate::{AnyNewWidget, NewWidgetExt};
 
 /// The function signature and the signature might sound dumb,
 /// but this allows you to show widgets based on conditional logic, ect...
-// TODO make example
 pub fn fragment<F>(mut widget_fn: F) -> AnyNewWidget
 where
     F: FnMut() -> AnyNewWidget + 'static,
 {
     let indexed = IndexedStack::new()
-        .with_child(untrack(&mut widget_fn))
+        // .with_child(untrack(&mut widget_fn))
         .with_auto_id();
     let indexed_ref = indexed.create_velona_ref();
     Effect::new(move || {

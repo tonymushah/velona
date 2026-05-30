@@ -1,22 +1,20 @@
 use masonry::{
-    core::{NewWidget, Widget},
+    core::Widget,
     palette::css::WHITE,
-    widgets::{Align, Checkbox, Flex},
+    widgets::{Align, Flex},
 };
 use reactive_graph::{
     signal::signal,
     traits::{Get, Set},
 };
-use velona::{
-    AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, widgets::checkbox::NewCheckboxExt,
-};
+use velona::{AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, widgets::checkbox::_checkbox};
 
 fn view() -> AnyNewWidget {
     let (checked, set_checked) = signal(false);
     Align::centered(
         Flex::column()
             .with_child(
-                <NewWidget<Checkbox> as NewCheckboxExt>::new(
+                _checkbox(
                     move || checked.get(),
                     move || {
                         if checked.get() {

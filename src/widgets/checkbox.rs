@@ -65,3 +65,12 @@ impl NewCheckboxExt for NewWidget<Checkbox> {
         })
     }
 }
+
+pub fn _checkbox<Cf, Tf, T>(checked: Cf, text: Tf) -> NewWidget<Checkbox>
+where
+    Cf: Fn() -> bool + 'static,
+    Tf: Fn() -> T + 'static,
+    T: Into<ArcStr>,
+{
+    <NewWidget<Checkbox> as NewCheckboxExt>::new(checked, text)
+}

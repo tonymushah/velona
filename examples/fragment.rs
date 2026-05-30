@@ -1,11 +1,10 @@
 use masonry::{
     core::{NewWidget, PointerButton, Widget},
-    kurbo,
     palette::css::{BLACK, GREEN, WHEAT},
     peniko::color::AlphaColor,
     properties::{
-        ActiveBackground, Background, BorderColor, BorderWidth, BoxShadow, CheckmarkColor,
-        CornerRadius, HoveredBorderColor, Padding,
+        ActiveBackground, Background, BorderColor, BorderWidth, CheckmarkColor, CornerRadius,
+        HoveredBorderColor, Padding,
     },
     widgets::{Align, Button, Flex, Label},
 };

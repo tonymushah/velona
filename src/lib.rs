@@ -3,6 +3,7 @@
 pub mod app;
 pub(crate) mod convert_winit_event;
 pub mod error;
+pub mod fragment;
 pub mod manager;
 pub mod render_root;
 pub mod utils;

@@ -56,7 +56,7 @@ where
         F: FnMut(WidgetMut<'_, W>, Option<V>) -> Option<V> + 'static,
         V: 'static,
     {
-        let widget_ref = self.create_velona_ref().remove_window();
+        let widget_ref = self.create_velona_ref().disarm();
         Effect::new(move |v: Option<Option<V>>| {
             let v = v.flatten();
             match widget_ref.edit_local_now(|widget_mut| (fun)(widget_mut, v)) {

@@ -6,7 +6,7 @@ use reactive_graph::owner::use_context;
 
 /// Get the current window from the current context
 ///
-/// Return [`None`] if the [`WindowHandle`] is not found inside the current context.
+/// Return [`None`] if the [`WindowHandle`](handle::WindowHandle) is not found inside the current context.
 pub fn use_window() -> Option<handle::WindowHandle> {
     use_context()
 }

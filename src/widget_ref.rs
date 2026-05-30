@@ -73,7 +73,7 @@ impl<W> VelonaWidgetRef<W>
 where
     W: Widget + 'static,
 {
-    pub(crate) fn remove_window(mut self) -> Self {
+    pub(crate) fn disarm(mut self) -> Self {
         self.window.take();
         self
     }

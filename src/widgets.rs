@@ -91,22 +91,6 @@ where
                     None
                 }
             }
-            // weak_render_root
-            //     .use_inner_render_root_mut::<_, Option<V>>(|rr| {
-            //         if rr.tree.has_widget(widget_id) {
-            //             rr.tree.edit_widget(widget_id, |mut widget_mut| {
-            //                 let Some(widget_mut) = widget_mut.try_downcast::<W>() else {
-            //                     warn!("The {:?} is not {:?}", widget_id, TypeId::of::<W>());
-            //                     return None::<V>;
-            //                 };
-            //                 fun(widget_mut, v)
-            //             })
-            //         } else {
-            //             warn!("No {:?} widget found", widget_id);
-            //             None
-            //         }
-            //     })
-            //     .flatten()
         });
         self
     }

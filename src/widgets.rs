@@ -7,7 +7,7 @@
 //! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]
 //! - [ ] [`Flex`](masonry::widgets::Flex)
 //! - [ ] [`Grid`](masonry::widgets::Grid)
-//! - [ ] [`Image`](masonry::widgets::Image)
+//! - [ ] [`Image`](masonry::widgets::Image) in [`image`]
 //! - [ ] [`IndexedStack`](masonry::widgets::IndexedStack)
 //! - [x] [`Label`](masonry::widgets::Label) in [`label`]
 //! - [ ] [`Portal`](masonry::widgets::Portal)
@@ -24,6 +24,7 @@
 //! - [ ] [`VirtualScroll`](masonry::widgets::VirtualScroll)
 //! - [ ] [`ZStack`](masonry::widgets::ZStack)
 pub mod checkbox;
+pub mod image;
 pub mod label;
 
 use std::{marker::PhantomData, thread};

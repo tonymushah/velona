@@ -6,7 +6,7 @@ use std::{
 use masonry::{
     app::{RenderRoot, RenderRootOptions, RenderRootSignal},
     core::{NewWidget, Widget, WidgetId, WidgetMut},
-    widgets::IndexedStack,
+    widgets::SizedBox,
 };
 use reactive_graph::owner::use_context;
 use send_wrapper::SendWrapper;
@@ -24,7 +24,7 @@ impl InnerRenderRoot {
         signal_sink: impl FnMut(RenderRootSignal) + 'static,
         options: RenderRootOptions,
     ) -> Self {
-        let index_stack = IndexedStack::new().with_auto_id();
+        let index_stack = SizedBox::empty().with_auto_id();
         let root_widget_id = index_stack.id();
         Self {
             tree: RenderRoot::new(index_stack, signal_sink, options),
@@ -34,12 +34,12 @@ impl InnerRenderRoot {
     /// Use the render root root widget
     pub fn use_root_widget_mut<F, R>(&mut self, to_use: F) -> Option<R>
     where
-        F: FnOnce(WidgetMut<'_, IndexedStack>) -> R,
+        F: FnOnce(WidgetMut<'_, SizedBox>) -> R,
     {
         if self.tree.has_widget(self.root_widget_id) {
             self.tree
                 .edit_widget(self.root_widget_id, |mut widget_mut| {
-                    widget_mut.try_downcast::<IndexedStack>().map(to_use)
+                    widget_mut.try_downcast::<SizedBox>().map(to_use)
                 })
         } else {
             None
@@ -48,12 +48,7 @@ impl InnerRenderRoot {
     /// Swap the root widget
     pub fn swap_root_widget(&mut self, new_widget: NewWidget<dyn Widget + 'static>) {
         self.use_root_widget_mut(|mut root| {
-            if root.widget.is_empty() {
-                IndexedStack::add_child(&mut root, new_widget);
-            } else {
-                IndexedStack::remove_child(&mut root, 0);
-                IndexedStack::add_child(&mut root, new_widget);
-            }
+            SizedBox::set_child(&mut root, new_widget);
         });
     }
 }

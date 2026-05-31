@@ -50,7 +50,7 @@ impl Debug for UseWidgetFnEvent {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct VelonaWidgetRef<W>
 where
     W: Widget + 'static,
@@ -59,6 +59,20 @@ where
     pub(crate) window: Option<Box<WindowHandle>>,
     pub(crate) phantom: PhantomData<W>,
     pub(crate) thread_id: ThreadId,
+}
+
+impl<W> Clone for VelonaWidgetRef<W>
+where
+    W: Widget + 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            window: self.window.clone(),
+            phantom: self.phantom,
+            thread_id: thread::current().id(),
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -249,6 +263,20 @@ where
             thread_id: thread::current().id(),
         }
     }
+    /// Set the [`WidgetId`] that this reference belongs too
+    pub fn set_id(&mut self, widget_id: WidgetId) {
+        self.id = widget_id;
+    }
+    /// Change the widget signature
+    pub fn cast<W1: Widget + 'static>(self) -> VelonaWidgetRef<W1> {
+        VelonaWidgetRef::<W1> {
+            phantom: PhantomData::<W1>,
+            id: self.id,
+            window: self.window,
+            thread_id: self.thread_id,
+        }
+    }
+    // TODO add_props_local and add_props Send Sync
 }
 
 unsafe impl<W> Send for VelonaWidgetRef<W> where W: Widget + 'static {}

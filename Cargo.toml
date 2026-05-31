@@ -24,7 +24,7 @@ futures-channel = "0.3"
 hotpath = { version = "0.16", optional = true }
 
 [features]
-default = ["hotpath"]
+default = []
 hotpath = ["dep:hotpath"]
 hotpath-run = ["hotpath", "hotpath/hotpath"]
 hotpath-cpu = ["hotpath/hotpath-cpu"]

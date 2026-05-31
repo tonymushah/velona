@@ -99,7 +99,7 @@ impl Builder {
         });
         let event_loop = self.event_loop_builder.build()?;
         let proxy = event_loop.create_proxy();
-        let (runables_sender, runable_receiver) = hotpath::channel!(mpsc::channel::<Runnable>());
+        let (runables_sender, runable_receiver) = mpsc::channel::<Runnable>();
 
         let proxy = AppTaskProxy {
             task_sender: runables_sender,

@@ -118,6 +118,7 @@ impl NewLabelExt for NewWidget<Label> {
     }
 }
 
+// TODO move to [`crate::components`]
 pub fn label<S, T>(text: S) -> NewWidget<Label>
 where
     S: Fn() -> T + 'static,

@@ -6,6 +6,7 @@ use masonry::{
 use winit::{dpi::Size, window::WindowAttributes};
 
 use crate::window::handle::WindowHandle;
+
 pub struct WindowBuilder {
     pub(crate) view: Box<dyn FnOnce() -> NewWidget<dyn Widget + 'static> + Send + Sync>,
     pub(crate) window_attributes: WindowAttributes,
@@ -52,4 +53,5 @@ impl WindowBuilder {
         self.base_color = Some(base_color);
         self
     }
+    // TODO implement other winit and masonry builder options
 }

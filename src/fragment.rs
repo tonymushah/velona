@@ -5,6 +5,7 @@ use reactive_graph::effect::Effect;
 
 use crate::{AnyNewWidget, NewWidgetExt};
 
+// TODO move to `crate::components`
 /// The function signature and the signature might sound dumb,
 /// but this allows you to show widgets based on conditional logic, ect...
 pub fn fragment<F>(mut widget_fn: F) -> AnyNewWidget

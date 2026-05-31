@@ -66,6 +66,7 @@ impl NewCheckboxExt for NewWidget<Checkbox> {
     }
 }
 
+// TODO move to `crate::component`
 pub fn _checkbox<Cf, Tf, T>(checked: Cf, text: Tf) -> NewWidget<Checkbox>
 where
     Cf: Fn() -> bool + 'static,

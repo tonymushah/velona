@@ -1,3 +1,28 @@
+//! Various [`widgets`](masonry::widgets) extenstions
+//!
+//! TODO custom implementation
+//!
+//! - [ ] [`Align`](masonry::widgets::Align)
+//! - [ ] [`Button`](masonry::widgets::Button)
+//! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]
+//! - [ ] [`Flex`](masonry::widgets::Flex)
+//! - [ ] [`Grid`](masonry::widgets::Grid)
+//! - [ ] [`Image`](masonry::widgets::Image)
+//! - [ ] [`IndexedStack`](masonry::widgets::IndexedStack)
+//! - [x] [`Label`](masonry::widgets::Label) in [`label`]
+//! - [ ] [`Portal`](masonry::widgets::Portal)
+//! - [ ] [`ProgressBar`](masonry::widgets::ProgressBar)
+//! - [ ] [`Prose`](masonry::widgets::Prose)
+//! - [ ] [`ScrollBar`](masonry::widgets::ScrollBar)
+//! - [ ] [`SizedBox`](masonry::widgets::SizedBox)
+//! - [ ] [`Slider`](masonry::widgets::Slider)
+//! - [ ] [`Spinner`](masonry::widgets::Spinner)
+//! - [ ] [`Split`](masonry::widgets::Split)
+//! - [ ] [`TextArea`](masonry::widgets::TextArea)
+//! - [ ] [`TextInput`](masonry::widgets::TextInput)
+//! - [ ] [`VariableLabel`](masonry::widgets::VariableLabel)
+//! - [ ] [`VirtualScroll`](masonry::widgets::VirtualScroll)
+//! - [ ] [`ZStack`](masonry::widgets::ZStack)
 pub mod checkbox;
 pub mod label;
 

@@ -46,11 +46,6 @@ pub trait Manager: EventProxyHandle {
         F: Future<Output = O> + Send + 'static,
         O: Send + 'static,
     {
-        let proxy = self.get_proxy().clone();
-        let (run, task) = async_task::spawn(task, move |run| {
-            let _ = proxy.send_event(EventLoopEvent::RunTask(Box::new(run)));
-        });
-        run.schedule();
-        task
+        self.get_proxy().create_task(task)
     }
 }

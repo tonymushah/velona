@@ -34,6 +34,7 @@ fn view() -> AnyNewWidget {
     .erased()
 }
 
+#[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
     Builder::default()
         .window(

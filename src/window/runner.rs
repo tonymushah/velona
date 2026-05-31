@@ -72,6 +72,7 @@ impl Drop for Window {
     }
 }
 
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
 impl Window {
     pub fn on_memory_warning(&mut self) {
         self.render_root.use_inner_render_root_ref(|rr| {
@@ -224,9 +225,6 @@ impl Window {
         self.winit_window.pre_present_notify();
 
         output.present();
-        {
-            device.device.poll(wgpu::PollType::Wait)?;
-        }
 
         Ok(())
     }

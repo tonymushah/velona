@@ -5,6 +5,7 @@ use std::{
     sync::{Arc, mpsc},
 };
 
+use async_task::Runnable;
 use copypasta::{ClipboardContext, ClipboardProvider};
 use log::warn;
 use masonry::{
@@ -43,8 +44,10 @@ pub(crate) struct AppRunner {
     pub(crate) signal_receiver: mpsc::Receiver<(WindowId, masonry::app::RenderRootSignal)>,
     pub(crate) signal_sender: mpsc::Sender<(WindowId, masonry::app::RenderRootSignal)>,
     pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
+    pub(crate) tasks: mpsc::Receiver<Runnable>,
 }
 
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
 impl AppRunner {
     fn use_window<F, R>(&mut self, window_id: WindowId, fun: F) -> Option<R>
     where
@@ -252,7 +255,7 @@ impl AppRunner {
                 let access_kit = accesskit_winit::Adapter::with_event_loop_proxy(
                     event_loop,
                     &window,
-                    self.app_handle.get_proxy().clone(),
+                    (self.app_handle.get_proxy().proxy).clone(),
                 );
                 match Window::new(WindowNew {
                     window,
@@ -282,8 +285,14 @@ impl AppRunner {
             }
         }
     }
+    fn run_tasks(&self) {
+        for task in self.tasks.try_iter() {
+            task.run();
+        }
+    }
 }
 
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
 impl ApplicationHandler<EventLoopEvent> for AppRunner {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         if let Some(builder_windows) = self.builder_windows.take() {
@@ -310,6 +319,8 @@ impl ApplicationHandler<EventLoopEvent> for AppRunner {
         window_id: WindowId,
         event: winit::event::WindowEvent,
     ) {
+        // #[cfg(feature = "hotpath")]
+        // hotpath::dbg!((&window_id, &event));
         self.use_window(window_id, |window| {
             window
                 .access_kit
@@ -399,6 +410,8 @@ impl ApplicationHandler<EventLoopEvent> for AppRunner {
         event_loop: &winit::event_loop::ActiveEventLoop,
         event: EventLoopEvent,
     ) {
+        // #[cfg(feature = "hotpath")]
+        // hotpath::dbg!(&event);
         match event {
             EventLoopEvent::AccessKitAction(event) => {
                 self.use_window(event.window_id, |window| match event.window_event {
@@ -423,9 +436,8 @@ impl ApplicationHandler<EventLoopEvent> for AppRunner {
                     }
                 });
             }
-            EventLoopEvent::RunTask(runnable) => {
-                log::trace!("running task");
-                runnable.run();
+            EventLoopEvent::RunTasks => {
+                self.run_tasks();
             }
             EventLoopEvent::NewWindow(builder) => {
                 self.create_window(builder, event_loop);
@@ -475,5 +487,8 @@ impl ApplicationHandler<EventLoopEvent> for AppRunner {
                 });
             }
         }
+    }
+    fn exiting(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
+        self.run_tasks();
     }
 }

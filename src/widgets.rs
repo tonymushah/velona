@@ -59,6 +59,13 @@ where
         let widget_ref = self.create_velona_ref().disarm();
         Effect::new(move |v: Option<Option<V>>| {
             let v = v.flatten();
+            #[cfg(feature = "hotpath")]
+            let mut fun = |d: WidgetMut<'_, W>, o: Option<V>| {
+                hotpath::measure_block!(
+                    "NewWidgetExt::use_reactive_widget_mut_effect_val",
+                    (fun)(d, o)
+                )
+            };
             match widget_ref.edit_local_now(|widget_mut| (fun)(widget_mut, v)) {
                 Ok(val) => val,
                 Err(err) => {

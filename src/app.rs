@@ -3,6 +3,7 @@ mod executor;
 use crate::window::runner as window;
 mod handle;
 mod run;
+pub(crate) use executor::AppTaskProxy;
 
 use std::{
     cell::RefCell,
@@ -13,6 +14,7 @@ use std::{
 use crate::{app::executor::SpawnFn, window::builder::WindowBuilder};
 use any_spawner::PinnedFuture;
 use async_executor::Executor;
+use async_task::Runnable;
 use copypasta::ClipboardContext;
 use masonry::{
     core::DefaultProperties,
@@ -97,7 +99,14 @@ impl Builder {
         });
         let event_loop = self.event_loop_builder.build()?;
         let proxy = event_loop.create_proxy();
-        match any_spawner::Executor::init_custom_executor(executor::AppExecutor::new(
+        let (runables_sender, runable_receiver) = hotpath::channel!(mpsc::channel::<Runnable>());
+
+        let proxy = AppTaskProxy {
+            task_sender: runables_sender,
+            proxy,
+        };
+
+        match any_spawner::Executor::init_local_custom_executor(executor::AppExecutor::new(
             spawn_fn,
             proxy.clone(),
         )) {
@@ -111,6 +120,7 @@ impl Builder {
         let wgpu_instance = wgpu::Instance::new(&instance_descriptor);
         let (signal_sender, signal_receiver) =
             mpsc::channel::<(WindowId, masonry::app::RenderRootSignal)>();
+
         let mut app = run::AppRunner {
             app_handle: AppHandle::new(proxy),
             windows: Default::default(),
@@ -124,6 +134,7 @@ impl Builder {
             signal_receiver,
             signal_sender,
             clipboard_context: Rc::new(RefCell::new(ClipboardContext::new().unwrap())),
+            tasks: runable_receiver,
         };
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;

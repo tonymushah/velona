@@ -1,5 +1,6 @@
 use std::{
     any::TypeId,
+    fmt::Debug,
     marker::PhantomData,
     thread::{self, ThreadId},
 };
@@ -23,10 +24,30 @@ pub(crate) struct EditWidgetFnEvent {
     pub(crate) edit_fn: EditFn,
 }
 
+impl Debug for EditWidgetFnEvent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EditWidgetFnEvent")
+            .field("window_id", &self.window_id)
+            .field("widget_id", &self.widget_id)
+            .field("edit_fn", &())
+            .finish()
+    }
+}
+
 pub(crate) struct UseWidgetFnEvent {
     pub(crate) window_id: WindowId,
     pub(crate) widget_id: WidgetId,
     pub(crate) use_fn: UseWidgetFn,
+}
+
+impl Debug for UseWidgetFnEvent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UseWidgetFnEvent")
+            .field("window_id", &self.window_id)
+            .field("widget_id", &self.widget_id)
+            .field("use_fn", &())
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -69,6 +90,7 @@ pub enum EditWidgetLocalError {
     OutsideMainThread,
 }
 
+// #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
 impl<W> VelonaWidgetRef<W>
 where
     W: Widget + 'static,

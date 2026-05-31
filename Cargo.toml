@@ -21,6 +21,14 @@ ui-events-winit = "0.2"
 parking_lot = "0.12"
 copypasta = "0.10.2"
 futures-channel = "0.3"
+hotpath = { version = "0.16", optional = true }
+
+[features]
+default = ["hotpath"]
+hotpath = ["dep:hotpath"]
+hotpath-run = ["hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]
 
 [dev-dependencies]
 env_logger = "0.11.10"

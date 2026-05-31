@@ -76,6 +76,7 @@ fn view() -> NewWidget<dyn Widget + 'static> {
     .erased()
 }
 
+#[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
     env_logger::init();
     velona::app::Builder::default()

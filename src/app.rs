@@ -8,12 +8,11 @@ pub(crate) use executor::AppTaskProxy;
 use std::{
     cell::RefCell,
     rc::Rc,
-    sync::{Arc, OnceLock, mpsc},
+    sync::{Arc, mpsc},
 };
 
 use crate::{app::executor::SpawnFn, window::builder::WindowBuilder};
 use any_spawner::PinnedFuture;
-use async_executor::Executor;
 use async_task::Runnable;
 use copypasta::ClipboardContext;
 use masonry::{
@@ -91,12 +90,9 @@ impl Default for Builder {
 
 impl Builder {
     pub fn run(mut self) -> Result<(), crate::error::Error> {
-        let spawn_fn = self.spawn_fn.unwrap_or_else(|| {
-            static EXECUTOR: OnceLock<async_executor::Executor<'static>> = OnceLock::new();
-            Box::new(|fut| {
-                EXECUTOR.get_or_init(Executor::new).spawn(fut).detach();
-            })
-        });
+        let spawn_fn = self
+            .spawn_fn
+            .unwrap_or_else(|| Box::new(|_| panic!("No spawn_fn provided")));
         let event_loop = self.event_loop_builder.build()?;
         let proxy = event_loop.create_proxy();
         let (runables_sender, runable_receiver) = mpsc::channel::<Runnable>();
@@ -106,7 +102,7 @@ impl Builder {
             proxy,
         };
 
-        match any_spawner::Executor::init_local_custom_executor(executor::AppExecutor::new(
+        match any_spawner::Executor::init_custom_executor(executor::AppExecutor::new(
             spawn_fn,
             proxy.clone(),
         )) {

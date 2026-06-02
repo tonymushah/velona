@@ -46,6 +46,7 @@ impl AppTaskProxy {
 
 pub struct AppExecutor {
     spawn_fn: SpawnFn,
+    // TODO Use [`Arc`]
     proxy: AppTaskProxy,
 }
 

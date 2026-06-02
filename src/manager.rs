@@ -40,7 +40,7 @@ pub trait Manager: EventProxyHandle {
             }
         }
     }
-    /// Run a [`task`](Future) to the main thread
+    /// Run a [`task`](Future) that will run on the main thread
     fn run_task<F, O>(&self, task: F) -> Task<O>
     where
         F: Future<Output = O> + Send + 'static,

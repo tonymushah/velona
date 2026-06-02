@@ -1,5 +1,5 @@
 use masonry::{
-    core::Widget,
+    core::{NewWidget, Widget},
     peniko::ImageBrush,
     properties::ObjectFit,
     widgets::{Image, SizedBox},
@@ -39,10 +39,15 @@ fn change_box_child_element(
 
 /// This component should be the way you should show images in Velona.
 ///
+/// This thing automatically return a [`SizedBox`] which allows you to change things width and height as needed.
+///
 /// If image_data return [`None`], it means that your image is not available yet
 /// and will show a [`fallback`](LazyImageOptions::fallback) if provided
 // TODO add add example
-pub fn lazy_image<Ifn, I>(mut image_data: Ifn, options: Option<LazyImageOptions>) -> AnyNewWidget
+pub fn lazy_image<Ifn, I>(
+    mut image_data: Ifn,
+    options: Option<LazyImageOptions>,
+) -> NewWidget<SizedBox>
 where
     Ifn: FnMut() -> Option<I> + 'static,
     I: Into<ImageBrush>,
@@ -110,7 +115,7 @@ where
             Some(image_ref)
         },
     );
-    s_box.erased()
+    s_box
 }
 
 // TODO add image from path

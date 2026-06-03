@@ -14,7 +14,7 @@
 //! - [ ] [`ProgressBar`](masonry::widgets::ProgressBar)
 //! - [ ] [`Prose`](masonry::widgets::Prose)
 //! - [ ] [`ScrollBar`](masonry::widgets::ScrollBar)
-//! - [ ] [`SizedBox`](masonry::widgets::SizedBox)
+//! - [x] [`SizedBox`](masonry::widgets::SizedBox)
 //! - [ ] [`Slider`](masonry::widgets::Slider)
 //! - [ ] [`Spinner`](masonry::widgets::Spinner)
 //! - [ ] [`Split`](masonry::widgets::Split)

@@ -7,7 +7,7 @@
 //! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]
 //! - [ ] [`Flex`](masonry::widgets::Flex)
 //! - [ ] [`Grid`](masonry::widgets::Grid)
-//! - [ ] [`Image`](masonry::widgets::Image) in [`image`]
+//! - [x] [`Image`](masonry::widgets::Image) in [`image`]
 //! - [ ] [`IndexedStack`](masonry::widgets::IndexedStack)
 //! - [x] [`Label`](masonry::widgets::Label) in [`label`]
 //! - [ ] [`Portal`](masonry::widgets::Portal)

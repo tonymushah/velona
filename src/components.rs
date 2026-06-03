@@ -14,7 +14,7 @@ macro_rules! modules {
 
 modules! {
     checkbox,
-    fragment,
+    sized_box,
     image,
     label,
 }

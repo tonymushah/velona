@@ -14,7 +14,7 @@ use reactive_graph::{
 };
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder,
-    components::{checkbox as _checkbox, fragment, label},
+    components::{checkbox as _checkbox, label, sized_box},
 };
 
 enum ViewToUse {
@@ -155,7 +155,7 @@ fn main_view() -> AnyNewWidget {
                     )
                     .with_auto_id(),
             )
-            .with_child(fragment(move || match *view.read() {
+            .with_child(sized_box(move || match *view.read() {
                 ViewToUse::Text => text(),
                 ViewToUse::Checkbox => checkbox(),
                 ViewToUse::Count => counter(),

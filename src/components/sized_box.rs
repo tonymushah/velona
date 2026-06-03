@@ -1,14 +1,16 @@
 //! A reactive widget
 
-use masonry::{core::Widget, widgets::SizedBox};
+use masonry::{
+    core::{NewWidget, Widget},
+    widgets::SizedBox,
+};
 use reactive_graph::effect::Effect;
 
 use crate::{AnyNewWidget, NewWidgetExt};
 
 /// The function signature and the signature might sound dumb,
 /// but this allows you to show widgets based on conditional logic, ect...
-// TODO rename to sized box
-pub fn fragment<F>(mut widget_fn: F) -> AnyNewWidget
+pub fn sized_box<F>(mut widget_fn: F) -> NewWidget<SizedBox>
 where
     F: FnMut() -> AnyNewWidget + 'static,
 {
@@ -24,5 +26,5 @@ where
             log::error!("cannot edit fragment inner {err}");
         }
     });
-    indexed.erased()
+    indexed
 }

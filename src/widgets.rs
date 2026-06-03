@@ -26,6 +26,7 @@
 pub mod checkbox;
 pub mod image;
 pub mod label;
+pub mod sized_box;
 
 use std::{marker::PhantomData, thread};
 

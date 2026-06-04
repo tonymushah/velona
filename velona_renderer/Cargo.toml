@@ -1,0 +1,8 @@
+[package]
+name = "velona_renderer"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+imaging.workspace = true
+raw-window-handle.workspace = true

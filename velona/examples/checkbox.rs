@@ -15,7 +15,7 @@ fn view() -> AnyNewWidget {
     let (checked, set_checked) = signal(false);
     Align::centered(
         Flex::column()
-            .with_child(
+            .with_fixed(
                 _checkbox(
                     move || checked.get(),
                     move || {
@@ -38,7 +38,7 @@ fn view() -> AnyNewWidget {
 
 #[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
-    Builder::default()
+    Builder::new(|_| velona_renderer_vello::VelloWindowRenderer::new())
         .window(
             WindowBuilder::new(view)
                 .with_title("Checkbox")

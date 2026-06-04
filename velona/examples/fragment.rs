@@ -1,10 +1,17 @@
 use masonry::{
     core::{NewWidget, PointerButton, Widget},
+    layout::Length,
     palette::css::{BLACK, GREEN, WHEAT},
     peniko::color::AlphaColor,
     properties::{
-        ActiveBackground, Background, BorderColor, BorderWidth, CheckmarkColor, CornerRadius,
-        HoveredBorderColor, Padding,
+        // ActiveBackground,
+        Background,
+        BorderColor,
+        BorderWidth,
+        CheckmarkColor,
+        CornerRadius,
+        // HoveredBorderColor,
+        Padding,
     },
     widgets::{Align, Button, Flex, Label},
 };
@@ -55,19 +62,19 @@ trait ButtonExt {
 
 impl ButtonExt for NewWidget<Button> {
     fn apply_custom_styles(self) -> Self {
-        self.append_static_propeperty(Padding::from_vh(4f64, 8f64))
-            .append_static_propeperty(CornerRadius::all(8f64))
+        self.append_static_propeperty(Padding::from_vh(Length::px(4f64), Length::px(8f64)))
+            .append_static_propeperty(CornerRadius::all(Length::px(8f64)))
     }
 
     fn apply_counter_button_style(self) -> Self {
         self.apply_custom_styles()
             .append_static_propeperty(Background::Color("#f1aeff".parse().unwrap()))
-            .append_static_propeperty(ActiveBackground(Background::Color(
-                "#de67f8".parse().unwrap(),
-            )))
+            // .append_static_propeperty(ActiveBackground(Background::Color(
+            //     "#de67f8".parse().unwrap(),
+            // )))
             .append_static_propeperty(BorderColor::new(BLACK))
-            .append_static_propeperty(HoveredBorderColor(BorderColor::new(BLACK)))
-            .append_static_propeperty(BorderWidth::all(1f64))
+            // .append_static_propeperty(HoveredBorderColor(BorderColor::new(BLACK)))
+            .append_static_propeperty(BorderWidth::all(Length::px(1f64)))
     }
 }
 
@@ -75,7 +82,7 @@ fn counter() -> AnyNewWidget {
     let (count, set_count) = signal(0usize);
 
     Flex::row()
-        .with_child(
+        .with_fixed(
             Button::with_text("-")
                 .prepare()
                 .register_handler(move |ev| {
@@ -89,8 +96,8 @@ fn counter() -> AnyNewWidget {
                 })
                 .apply_counter_button_style(),
         )
-        .with_child(label(move || format!("{}", count.get())))
-        .with_child(
+        .with_fixed(label(move || format!("{}", count.get())))
+        .with_fixed(
             Button::with_text("+")
                 .prepare()
                 .register_handler(move |ev| {
@@ -112,9 +119,9 @@ fn main_view() -> AnyNewWidget {
     let (view, set_view) = signal(ViewToUse::Text);
     Align::centered(
         Flex::column()
-            .with_child(
+            .with_fixed(
                 Flex::row()
-                    .with_child(
+                    .with_fixed(
                         Button::with_text("Some text")
                             .prepare()
                             .register_handler(move |ev| {
@@ -127,7 +134,7 @@ fn main_view() -> AnyNewWidget {
                             )))
                             .apply_custom_styles(),
                     )
-                    .with_child(
+                    .with_fixed(
                         Button::with_text("Some checkbox")
                             .prepare()
                             .register_handler(move |ev| {
@@ -140,7 +147,7 @@ fn main_view() -> AnyNewWidget {
                             )))
                             .apply_custom_styles(),
                     )
-                    .with_child(
+                    .with_fixed(
                         Button::with_text("Count")
                             .prepare()
                             .register_handler(move |ev| {
@@ -155,7 +162,7 @@ fn main_view() -> AnyNewWidget {
                     )
                     .prepare(),
             )
-            .with_child(sized_box(move || match *view.read() {
+            .with_fixed(sized_box(move || match *view.read() {
                 ViewToUse::Text => text(),
                 ViewToUse::Checkbox => checkbox(),
                 ViewToUse::Count => counter(),
@@ -168,7 +175,7 @@ fn main_view() -> AnyNewWidget {
 
 #[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
-    Builder::default()
+    Builder::new(|_| velona_renderer_vello::VelloWindowRenderer::new())
         .window(
             WindowBuilder::new(main_view)
                 .with_title("Fragment")

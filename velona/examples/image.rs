@@ -2,9 +2,9 @@ use std::{process, sync};
 
 use masonry::{
     core::Widget,
+    layout::Length,
     palette::css::WHITE,
     peniko::{Blob, ImageBrush, ImageData, ImageSampler},
-    properties::types::Length,
     widgets::{Align, Flex, Label, SizedBox, Spinner},
 };
 use reactive_graph::{
@@ -46,8 +46,8 @@ fn new_view() -> AnyNewWidget {
     });
     Align::centered(
         Flex::column()
-            .with_child(Label::new("SOme image").prepare().erased())
-            .with_child(lazy_image(
+            .with_fixed(Label::new("SOme image").prepare().erased())
+            .with_fixed(lazy_image(
                 move || image_data.get(),
                 Some(LazyImageOptions {
                     fallback: Some(
@@ -63,7 +63,7 @@ fn new_view() -> AnyNewWidget {
                     ..Default::default()
                 }),
             ))
-            .with_gap(Length::px(8.0))
+            .with_fixed_spacer(Length::px(8.0))
             .prepare()
             .erased(),
     )
@@ -78,7 +78,7 @@ fn main() {
         .build()
         .unwrap();
     let runtime_handle = runtime.handle().clone();
-    if let Err(err) = Builder::default()
+    if let Err(err) = Builder::new(|_| velona_renderer_vello::VelloWindowRenderer::new())
         .spawn_fn(move |fut| {
             runtime_handle.spawn(fut);
         })

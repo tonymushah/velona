@@ -4794,30 +4794,30 @@ dependencies = [
  "tokio",
  "ui-events-winit",
  "uuid",
- "velona_window_renderer",
+ "velona_renderer",
+ "velona_renderer_vello",
  "winit",
 ]
 
 [[package]]
-name = "velona_window_renderer"
+name = "velona_renderer"
 version = "0.1.0"
 dependencies = [
  "imaging",
- "kurbo",
- "peniko",
  "raw-window-handle",
 ]
 
 [[package]]
-name = "velona_window_renderer_vello"
+name = "velona_renderer_vello"
 version = "0.1.0"
 dependencies = [
  "debug_timer",
  "futures-channel",
  "imaging_vello",
+ "kurbo",
  "peniko",
  "pollster",
- "velona_window_renderer",
+ "velona_renderer",
  "wgpu_context",
 ]
 

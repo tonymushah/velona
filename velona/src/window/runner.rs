@@ -13,7 +13,7 @@ use masonry::{
 use masonry_imaging::{Layer as ImagingLayer, PreparedFrame};
 use reactive_graph::owner::{Owner, provide_context};
 use ui_events_winit::WindowEventReducer;
-use velona_window_renderer::WindowRenderer;
+use velona_renderer::WindowRenderer;
 use winit::window::{Window as WinitWindow, WindowId};
 
 use crate::{

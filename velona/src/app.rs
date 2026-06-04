@@ -4,7 +4,7 @@ use crate::window::runner as window;
 mod handle;
 mod run;
 pub(crate) use executor::AppTaskProxy;
-use velona_window_renderer::WindowRenderer;
+use velona_renderer::WindowRenderer;
 
 use std::{
     cell::RefCell,

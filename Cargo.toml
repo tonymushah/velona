@@ -3,7 +3,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["velona", "velona_window_renderer", "velona_window_renderer_vello"]
+members = ["velona", "velona_renderer", "velona_renderer_vello"]
 default-members = ["velona"]
 resolver = "3"
 
@@ -39,10 +39,11 @@ image = { version = "0.25" }
 tokio = { version = "1" }
 anyhow = "1"
 anyrender_vello = "0.11"
-velona_window_renderer = { version = "0.1", path = "velona_window_renderer" }
 kurbo = { default-features = false, version = "0.13.1" }
 peniko = { default-features = false, version = "0.6.1" }
 raw-window-handle = "0.6"
 imaging_vello = "0.0"
 
-# velona specific tools lmao
+# velona tools
+velona_renderer = { version = "0.1", path = "velona_renderer" }
+velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }

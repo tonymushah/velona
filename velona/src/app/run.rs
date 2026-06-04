@@ -17,7 +17,7 @@ use masonry::{
 };
 use reactive_graph::owner::Owner;
 use ui_events_winit::WindowEventTranslation;
-use velona_window_renderer::WindowRenderer;
+use velona_renderer::WindowRenderer;
 use winit::{
     application::ApplicationHandler, dpi::PhysicalSize, event::WindowEvent, window::WindowId,
 };

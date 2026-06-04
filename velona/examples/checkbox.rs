@@ -1,6 +1,8 @@
 use masonry::{
     core::Widget,
     palette::css::WHITE,
+    properties::types::MainAxisAlignment,
+    theme::DEFAULT_SPACER_LEN,
     widgets::{Align, Flex},
 };
 use reactive_graph::{
@@ -15,6 +17,7 @@ fn view() -> AnyNewWidget {
     let (checked, set_checked) = signal(false);
     Align::centered(
         Flex::column()
+            .with_fixed_spacer(DEFAULT_SPACER_LEN)
             .with_fixed(
                 _checkbox(
                     move || checked.get(),
@@ -30,6 +33,7 @@ fn view() -> AnyNewWidget {
                     set_checked.set(event.0);
                 }),
             )
+            .main_axis_alignment(MainAxisAlignment::Center)
             .prepare(),
     )
     .prepare()

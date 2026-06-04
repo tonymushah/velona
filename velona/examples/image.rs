@@ -47,6 +47,7 @@ fn new_view() -> AnyNewWidget {
     Align::centered(
         Flex::column()
             .with_fixed(Label::new("SOme image").prepare().erased())
+            .with_fixed_spacer(Length::px(8.0))
             .with_fixed(lazy_image(
                 move || image_data.get(),
                 Some(LazyImageOptions {
@@ -63,7 +64,7 @@ fn new_view() -> AnyNewWidget {
                     ..Default::default()
                 }),
             ))
-            .with_fixed_spacer(Length::px(8.0))
+            .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
             .prepare()
             .erased(),
     )

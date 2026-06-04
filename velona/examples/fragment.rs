@@ -12,6 +12,7 @@ use masonry::{
         CornerRadius,
         // HoveredBorderColor,
         Padding,
+        types::MainAxisAlignment,
     },
     widgets::{Align, Button, Flex, Label},
 };
@@ -160,6 +161,7 @@ fn main_view() -> AnyNewWidget {
                             )))
                             .apply_custom_styles(),
                     )
+                    .main_axis_alignment(MainAxisAlignment::Center)
                     .prepare(),
             )
             .with_fixed(sized_box(move || match *view.read() {
@@ -167,6 +169,7 @@ fn main_view() -> AnyNewWidget {
                 ViewToUse::Checkbox => checkbox(),
                 ViewToUse::Count => counter(),
             }))
+            .main_axis_alignment(MainAxisAlignment::Center)
             .prepare(),
     )
     .prepare()

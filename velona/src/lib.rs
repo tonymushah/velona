@@ -1,5 +1,6 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+pub(crate) mod anyrender_imaging;
 pub mod app;
 pub mod components;
 pub(crate) mod convert_winit_event;

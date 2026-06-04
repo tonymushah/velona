@@ -2,13 +2,11 @@ use masonry::{
     core::{NewWidget, PointerButton, Widget},
     kurbo::Point,
     layout::Length,
-    palette::css::{
-        WHITE,
-        // WHITE_SMOKE
-    },
+    palette::css::WHITE,
     properties::{
         Background, BorderColor, BorderWidth, BoxShadow, ContentColor, CornerRadius, Padding,
     },
+    theme::DEFAULT_SPACER_LEN,
     widgets::{Align, Button, Flex, Label},
 };
 use reactive_graph::{
@@ -59,10 +57,12 @@ fn view() -> NewWidget<dyn Widget + 'static> {
                 },
                 "Decrement",
             ))
+            .with_fixed_spacer(DEFAULT_SPACER_LEN)
             .with_fixed(
                 label(move || format!("Count: {}", count.get()))
                     .append_static_propeperty(ContentColor::new(WHITE)),
             )
+            .with_fixed_spacer(DEFAULT_SPACER_LEN)
             .with_fixed(button(
                 set_count,
                 |count| {
@@ -73,6 +73,7 @@ fn view() -> NewWidget<dyn Widget + 'static> {
                 },
                 "Increment",
             ))
+            .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
             .prepare(),
     )
     .prepare()

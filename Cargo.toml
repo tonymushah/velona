@@ -4,30 +4,34 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-accesskit_winit = "0.29"
+accesskit_winit = "0.32"
 any_spawner = "0.3"
 async-task = "4"
 # TODO update to 0.5 if released
-masonry = "0.4"
+masonry = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
+masonry_imaging = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
+masonry_core = { version = "0.4", git = "https://github.com/linebender/xilem.git" }
 # TODO update to 0.3
 reactive_graph = { version = "0.2", features = ["effects", "sandboxed-arenas"] }
 thiserror = "2"
 # TODO update to 0.31 when stable
 winit = "0.30"
 log = "0.4"
-pollster = "0.4"
+# pollster = "0.4"
 # TODO remove this
 non-exhaustive = "0.1"
 # TODO Remove this in favor of reactive_graph::send_option
 send_wrapper = "0.6"
 # TODO remove this in favor of atomics counter
 uuid = { version = "1", features = ["v4"] }
-ui-events-winit = "0.2"
+ui-events-winit = "0.3"
 # parking_lot = "0.12"
 copypasta = "0.10.2"
 futures-channel = "0.3"
 hotpath = { version = "0.16", optional = true }
 # TODO add anyrender for rendering simplicity
+anyrender = "0.10"
+imaging = "0.0.1"
 
 [features]
 hotpath = ["dep:hotpath"]
@@ -40,3 +44,4 @@ env_logger = "0.11.10"
 image = { version = "0.25" }
 tokio = { version = "1", features = ["rt", "rt-multi-thread"] }
 anyhow = "1"
+anyrender_vello = "0.10"

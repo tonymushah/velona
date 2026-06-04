@@ -18,8 +18,8 @@ fn button<U>(set_count: WriteSignal<u32>, update: U, text: &'static str) -> NewW
 where
     U: Fn(&mut u32) + 'static,
 {
-    Button::new(Label::new(text).with_auto_id())
-        .with_auto_id()
+    Button::new(Label::new(text).prepare())
+        .prepare()
         .register_handler(move |press| {
             let Some(btt) = press.button.as_ref() else {
                 return;
@@ -70,9 +70,9 @@ fn view() -> NewWidget<dyn Widget + 'static> {
                 },
                 "Increment",
             ))
-            .with_auto_id(),
+            .prepare(),
     )
-    .with_auto_id()
+    .prepare()
     .erased()
 }
 

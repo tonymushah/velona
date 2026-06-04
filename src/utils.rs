@@ -18,3 +18,5 @@ where
     T: Send + Sync,
 {
 }
+
+pub(crate) fn noop() {}

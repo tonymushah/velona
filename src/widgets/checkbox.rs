@@ -42,7 +42,7 @@ impl NewCheckboxExt for NewWidget<Checkbox> {
         T: Into<ArcStr>,
     {
         Checkbox::new(untrack(&checked), untrack(&text))
-            .with_auto_id()
+            .prepare()
             .checked(checked)
             .text(text)
     }

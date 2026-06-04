@@ -256,8 +256,10 @@ where
     #[cfg_attr(docsrs, doc(cfg(test)))]
     /// Create an empty reference for testing purposes
     pub fn create_empty() -> Self {
+        use masonry::widgets::SizedBox;
+
         Self {
-            id: WidgetId::next(),
+            id: SizedBox::empty().prepare().id(),
             window: None,
             phantom: PhantomData,
             thread_id: thread::current().id(),

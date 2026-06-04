@@ -57,7 +57,7 @@ where
         fallback: maybe_fallback,
         object_fit,
     } = options;
-    let s_box = SizedBox::empty().with_auto_id();
+    let s_box = SizedBox::empty().prepare();
     let s_box_ref = s_box.create_velona_ref();
     Effect::new(
         move |maybe_current_image: Option<Option<VelonaWidgetRef<Image>>>| {
@@ -92,7 +92,7 @@ where
                 current_image_ref
             } else {
                 // If not, we create a new one
-                let image = Image::new(image_data).with_auto_id();
+                let image = Image::new(image_data).prepare();
                 let image_ref = image.create_velona_ref();
                 // swap the sized box element
                 let _ = change_box_child_element(&s_box_ref, Some(image.erased()));

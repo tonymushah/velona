@@ -46,16 +46,16 @@ fn new_view() -> AnyNewWidget {
     });
     Align::centered(
         Flex::column()
-            .with_child(Label::new("SOme image").with_auto_id().erased())
+            .with_child(Label::new("SOme image").prepare().erased())
             .with_child(lazy_image(
                 move || image_data.get(),
                 Some(LazyImageOptions {
                     fallback: Some(
                         (|| {
-                            SizedBox::new(Spinner::new().with_auto_id())
+                            SizedBox::new(Spinner::new().prepare())
                                 .width(Length::px(100.0))
                                 .height(Length::px(100.0))
-                                .with_auto_id()
+                                .prepare()
                                 .erased()
                         })
                         .into(),
@@ -64,10 +64,10 @@ fn new_view() -> AnyNewWidget {
                 }),
             ))
             .with_gap(Length::px(8.0))
-            .with_auto_id()
+            .prepare()
             .erased(),
     )
-    .with_auto_id()
+    .prepare()
     .erased()
 }
 

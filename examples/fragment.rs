@@ -25,7 +25,7 @@ enum ViewToUse {
 
 fn text() -> AnyNewWidget {
     Label::new("loreman sadsanhjiaijfpsamfanjfksa sadsam asnsa sasafas ")
-        .with_auto_id()
+        .prepare()
         .erased()
 }
 
@@ -77,7 +77,7 @@ fn counter() -> AnyNewWidget {
     Flex::row()
         .with_child(
             Button::with_text("-")
-                .with_auto_id()
+                .prepare()
                 .register_handler(move |ev| {
                     if let Some(PointerButton::Primary) = ev.button {
                         set_count.update(|ev| {
@@ -92,7 +92,7 @@ fn counter() -> AnyNewWidget {
         .with_child(label(move || format!("{}", count.get())))
         .with_child(
             Button::with_text("+")
-                .with_auto_id()
+                .prepare()
                 .register_handler(move |ev| {
                     if let Some(PointerButton::Primary) = ev.button {
                         set_count.update(|ev| {
@@ -104,7 +104,7 @@ fn counter() -> AnyNewWidget {
                 })
                 .apply_counter_button_style(),
         )
-        .with_auto_id()
+        .prepare()
         .erased()
 }
 
@@ -116,7 +116,7 @@ fn main_view() -> AnyNewWidget {
                 Flex::row()
                     .with_child(
                         Button::with_text("Some text")
-                            .with_auto_id()
+                            .prepare()
                             .register_handler(move |ev| {
                                 if let Some(PointerButton::Primary) = &ev.button {
                                     set_view.set(ViewToUse::Text);
@@ -129,7 +129,7 @@ fn main_view() -> AnyNewWidget {
                     )
                     .with_child(
                         Button::with_text("Some checkbox")
-                            .with_auto_id()
+                            .prepare()
                             .register_handler(move |ev| {
                                 if let Some(PointerButton::Primary) = &ev.button {
                                     set_view.set(ViewToUse::Checkbox);
@@ -142,7 +142,7 @@ fn main_view() -> AnyNewWidget {
                     )
                     .with_child(
                         Button::with_text("Count")
-                            .with_auto_id()
+                            .prepare()
                             .register_handler(move |ev| {
                                 if let Some(PointerButton::Primary) = &ev.button {
                                     set_view.set(ViewToUse::Count);
@@ -153,16 +153,16 @@ fn main_view() -> AnyNewWidget {
                             )))
                             .apply_custom_styles(),
                     )
-                    .with_auto_id(),
+                    .prepare(),
             )
             .with_child(sized_box(move || match *view.read() {
                 ViewToUse::Text => text(),
                 ViewToUse::Checkbox => checkbox(),
                 ViewToUse::Count => counter(),
             }))
-            .with_auto_id(),
+            .prepare(),
     )
-    .with_auto_id()
+    .prepare()
     .erased()
 }
 

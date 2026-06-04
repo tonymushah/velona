@@ -1,22 +1,16 @@
 use std::{
-    cell::RefCell,
-    num::NonZeroUsize,
-    rc::Rc,
     sync::{Arc, mpsc},
     time::Instant,
 };
 
+use anyrender::WindowRenderer;
 use masonry::{
-    app::{RenderRootOptions, RenderRootSignal},
+    app::{RenderRootOptions, RenderRootSignal, VisualLayerKind},
     core::{DefaultProperties, NewWidget, Widget},
     palette::css::BLACK,
     peniko::color::{AlphaColor, Srgb},
-    vello::{
-        self, RendererOptions,
-        util::{RenderContext, RenderSurface},
-        wgpu::{self},
-    },
 };
+use masonry_imaging::{Layer as ImagingLayer, PreparedFrame};
 use reactive_graph::owner::{Owner, provide_context};
 use ui_events_winit::WindowEventReducer;
 use winit::window::{Window as WinitWindow, WindowId};
@@ -28,9 +22,12 @@ use crate::{
     window_event_handler::InternWindowEventHandler,
 };
 
-pub struct Window {
+pub struct Window<W>
+where
+    W: WindowRenderer,
+{
     pub(crate) render_root: WindowRenderRoot,
-    renderer: vello::Renderer,
+    renderer: W,
     pub(crate) access_kit: accesskit_winit::Adapter,
     owner: Owner,
     pub(crate) event_reducer: WindowEventReducer,
@@ -38,15 +35,12 @@ pub struct Window {
     last_anim: Option<Instant>,
     pub(crate) window_event_handler: InternWindowEventHandler,
     base_color: AlphaColor<Srgb>,
-    surface: Option<RenderSurface<'static>>,
     pub(crate) winit_window: Arc<WinitWindow>,
-    pub(crate) render_context: Rc<RefCell<RenderContext>>,
     handle: WindowHandle,
 }
 
-pub struct WindowNew<'i, V> {
+pub struct WindowNew<'i, V, W> {
     pub window: Arc<WinitWindow>,
-    pub render_context: &'i Rc<RefCell<vello::util::RenderContext>>,
     pub view: V,
     pub default_properties: Arc<DefaultProperties>,
     pub access_kit: accesskit_winit::Adapter,
@@ -55,9 +49,10 @@ pub struct WindowNew<'i, V> {
     pub signal_sender: mpsc::Sender<(WindowId, RenderRootSignal)>,
     pub parent_owner: &'i Owner,
     pub base_color: Option<AlphaColor<Srgb>>,
+    pub factory: &'i mut dyn FnMut(&AppHandle) -> W,
 }
 
-impl<'i, V> WindowNew<'i, V> {
+impl<'i, V, W> WindowNew<'i, V, W> {
     pub fn handle(&self) -> WindowHandle {
         WindowHandle {
             window: Arc::downgrade(&self.window),
@@ -66,14 +61,20 @@ impl<'i, V> WindowNew<'i, V> {
     }
 }
 
-impl Drop for Window {
+impl<W> Drop for Window<W>
+where
+    W: WindowRenderer,
+{
     fn drop(&mut self) {
         self.owner.cleanup();
     }
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl Window {
+impl<W> Window<W>
+where
+    W: WindowRenderer,
+{
     pub fn on_memory_warning(&mut self) {
         self.render_root.use_inner_render_root_ref(|rr| {
             let Ok(mut write) = self.window_event_handler.try_borrow_mut() else {
@@ -83,51 +84,28 @@ impl Window {
             write.shrink_to_fit();
         });
     }
-    pub(crate) fn new<V>(args: WindowNew<'_, V>) -> Result<Self, crate::error::Error>
+    pub(crate) fn new<V>(args: WindowNew<'_, V, W>) -> Result<Self, crate::error::Error>
     where
         V: FnOnce() -> NewWidget<dyn Widget>,
     {
         let window_handle = args.handle();
         let WindowNew {
             window,
-            render_context,
             view,
             default_properties,
             access_kit,
             app_handle,
+            signal_sender,
             parent_owner,
             base_color,
-            signal_sender,
+            factory,
         } = args;
         let window_owner = parent_owner.child();
         let event_handlers = InternWindowEventHandler::default();
 
         let size = window.inner_size();
-        let surface = pollster::block_on(
-            render_context
-                .try_borrow_mut()
-                .map_err(|_| crate::error::Error::RenderContextUsedSomewhere)?
-                .create_surface(
-                    window.clone(),
-                    size.width,
-                    size.height,
-                    wgpu::PresentMode::AutoVsync,
-                ),
-        )?;
 
-        let renderer = vello::Renderer::new(
-            &render_context
-                .try_borrow()
-                .map_err(|_| crate::error::Error::RenderContextUsedSomewhere)?
-                .devices[surface.dev_id]
-                .device,
-            RendererOptions {
-                use_cpu: false,
-                antialiasing_support: vello::AaSupport::area_only(),
-                num_init_threads: NonZeroUsize::new(1),
-                pipeline_cache: None,
-            },
-        )?;
+        let renderer = factory(&app_handle);
 
         let render_root = InnerRenderRoot::new(
             {
@@ -168,7 +146,6 @@ impl Window {
 
         let this = Self {
             renderer,
-            surface: Some(surface),
             winit_window: window,
             render_root,
             owner: window_owner,
@@ -177,56 +154,9 @@ impl Window {
             last_anim: None,
             window_event_handler: event_handlers,
             base_color: base_color.unwrap_or(BLACK),
-            render_context: render_context.clone(),
             handle: window_handle,
         };
         Ok(this)
-    }
-    fn render_scene(&mut self, scene: &vello::Scene) -> Result<(), crate::error::Error> {
-        let Some(surface) = self.surface.as_ref() else {
-            return Ok(());
-        };
-        let device = &self
-            .render_context
-            .try_borrow()
-            .map_err(|_| crate::error::Error::RenderContextUsedSomewhere)?
-            .devices[surface.dev_id];
-        let scene_target_view = &surface.target_view;
-        self.renderer.render_to_texture(
-            &device.device,
-            &device.queue,
-            scene,
-            scene_target_view,
-            &vello::RenderParams {
-                base_color: self.base_color, // Background color
-                width: surface.config.width,
-                height: surface.config.height,
-                antialiasing_method: vello::AaConfig::Area,
-            },
-        )?;
-        let output = surface.surface.get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = self
-            .render_context
-            .try_borrow()
-            .map_err(|_| crate::error::Error::RenderContextUsedSomewhere)?
-            .devices[surface.dev_id]
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Surface Blit"),
-            });
-        surface
-            .blitter
-            .copy(&device.device, &mut encoder, scene_target_view, &view);
-        device.queue.submit([encoder.finish()]);
-        self.winit_window.pre_present_notify();
-
-        output.present();
-
-        Ok(())
     }
     fn sync_surface_render_root_size(&mut self) -> bool {
         let Some(size) = self
@@ -235,20 +165,10 @@ impl Window {
         else {
             return false;
         };
-        if let Some(surface) = self.surface.as_mut() {
-            let Ok(rd_cx) = self.render_context.try_borrow() else {
-                return false;
-            };
-
-            rd_cx.resize_surface(surface, size.width, size.height);
-        }
+        self.renderer.set_size(size.width, size.height);
         true
     }
     pub fn render(&mut self) -> Result<(), crate::error::Error> {
-        if self.surface.is_none() {
-            return Ok(());
-        }
-
         let now = Instant::now();
         // TODO: this calculation uses wall-clock time of the paint call, which
         // potentially has jitter.
@@ -270,29 +190,42 @@ impl Window {
             .unwrap_or_default();
         self.last_anim = animation_continues.then_some(now);
 
-        let Some((scene, _access_tree)) = self
+        let Some(((visual_plan, _access_tree), size)) = self
             .render_root
-            .use_inner_render_root_mut(|root| root.tree.redraw())
+            .use_inner_render_root_mut(|root| (root.tree.redraw(), root.tree.size()))
         else {
             return Ok(());
         };
 
-        let scale_factor = self.winit_window.scale_factor();
-
-        let transformed_scene = if scale_factor == 1.0 {
-            None
-        } else {
-            let mut new_scene = vello::Scene::new();
-            new_scene.append(
-                &scene,
-                Some(masonry::vello::kurbo::Affine::scale(scale_factor)),
-            );
-            Some(new_scene)
+        let overlays: Vec<_> = visual_plan
+            .overlay_layers()
+            .map(|layer| {
+                let VisualLayerKind::Scene(scene) = &layer.kind else {
+                    unreachable!("overlay_layers only returns scene layers");
+                };
+                ImagingLayer {
+                    scene,
+                    transform: layer.transform,
+                }
+            })
+            .collect();
+        let root_layer = visual_plan
+            .root_layer()
+            .expect("paint should always produce a root layer");
+        let VisualLayerKind::Scene(root_scene) = &root_layer.kind else {
+            unreachable!("root_layer always returns a scene layer");
         };
-        let scene_ref = transformed_scene.as_ref().unwrap_or(&scene);
+        let frame = PreparedFrame::new(
+            size.width,
+            size.height,
+            self.winit_window.scale_factor(),
+            self.base_color,
+            root_scene,
+            &overlays,
+        );
 
         if self.sync_surface_render_root_size() {
-            self.render_scene(scene_ref)?;
+            // TODO
         }
         if let Some(access_tree) = _access_tree {
             self.access_kit.update_if_active(|| access_tree);
@@ -304,5 +237,18 @@ impl Window {
     }
     pub fn get_handle(&self) -> WindowHandle {
         self.handle.clone()
+    }
+    pub fn resume<F: FnOnce() + 'static>(&mut self, on_ready: F) {
+        let Some(size) = self.render_root.use_render_root_ref(|root| root.size()) else {
+            return;
+        };
+        self.renderer
+            .resume(self.winit_window.clone(), size.width, size.height, on_ready);
+    }
+    pub fn suspend(&mut self) {
+        self.renderer.suspend();
+    }
+    pub fn complete_resume(&mut self) -> bool {
+        self.renderer.complete_resume()
     }
 }

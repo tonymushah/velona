@@ -15,6 +15,6 @@ where
 {
     SizedBox::empty()
         // .with_child(untrack(&mut widget_fn))
-        .with_auto_id()
+        .prepare()
         .child(widget_fn)
 }

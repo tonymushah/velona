@@ -1,4 +1,4 @@
-use masonry::{core::NewWidget, properties::types::Length, widgets::SizedBox};
+use masonry::{core::NewWidget, layout::Length, widgets::SizedBox};
 use reactive_graph::effect::Effect;
 
 use crate::{AnyNewWidget, NewWidgetExt};
@@ -27,16 +27,16 @@ pub trait NewSizedBoxExt {
     ///
     /// If the function returns a [`Length`], it will [update the current width](SizedBox::set_width) sized box,
     /// if [`None`], the current container width will be [unset](SizedBox::unset_width).
-    fn width_opt<W>(self, width_fn: W) -> Self
+    fn raw_width<W>(self, width_fn: W) -> Self
     where
         W: FnMut() -> Option<Length> + 'static;
-    /// Similar to [`width_opt`](Self::width_opt)
+    /// Similar to [`width_opt`](Self::raw_width)
     fn width<W>(self, mut width_fn: W) -> Self
     where
         W: FnMut() -> Length + 'static,
         Self: Sized,
     {
-        self.width_opt(move || Some(width_fn()))
+        self.raw_width(move || Some(width_fn()))
     }
     /// Set a reactive height for this [`SizedBox`].
     ///
@@ -44,29 +44,17 @@ pub trait NewSizedBoxExt {
     ///
     /// If the function returns a [`Length`], it will [update the current height](SizedBox::set_height) sized box,
     /// if [`None`], the current container height will be [unset](SizedBox::unset_height).
-    fn height_opt<W>(self, height_fn: W) -> Self
+    fn raw_height<W>(self, height_fn: W) -> Self
     where
         W: FnMut() -> Option<Length> + 'static;
-    /// Similar to [`height_opt`](Self::height_opt)
+    /// Similar to [`height_opt`](Self::raw_height)
     fn height<W>(self, mut height_fn: W) -> Self
     where
         W: FnMut() -> Length + 'static,
         Self: Sized,
     {
-        self.height_opt(move || Some(height_fn()))
+        self.raw_height(move || Some(height_fn()))
     }
-    /// Set a reactive raw_width for this [`SizedBox`].
-    ///
-    /// The `width_fn` will run inside a [`Effect::new`] and the return value will [update the current `raw_width`](SizedBox::set_raw_width) sized box,
-    fn raw_width<W>(self, width_fn: W) -> Self
-    where
-        W: FnMut() -> Option<f64> + 'static;
-    /// Set a reactive raw_height for this [`SizedBox`].
-    ///
-    /// The `height_fn` will run inside a [`Effect::new`] and the return value will [update the current `raw_height`](SizedBox::set_raw_height) sized box,
-    fn raw_height<W>(self, height_fn: W) -> Self
-    where
-        W: FnMut() -> Option<f64> + 'static;
 }
 
 impl NewSizedBoxExt for NewWidget<SizedBox> {
@@ -98,7 +86,7 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
         self
     }
 
-    fn width_opt<W>(self, mut width_fn: W) -> Self
+    fn raw_width<W>(self, mut width_fn: W) -> Self
     where
         W: FnMut() -> Option<Length> + 'static,
     {
@@ -126,7 +114,7 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
         self
     }
 
-    fn height_opt<W>(self, mut height_fn: W) -> Self
+    fn raw_height<W>(self, mut height_fn: W) -> Self
     where
         W: FnMut() -> Option<Length> + 'static,
     {
@@ -150,42 +138,6 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
                         log::error!("Cannot unset height for this sized box => {err}");
                     });
             }
-        });
-        self
-    }
-
-    fn raw_width<W>(self, mut width_fn: W) -> Self
-    where
-        W: FnMut() -> Option<f64> + 'static,
-    {
-        let w_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let new_raw_width = width_fn();
-            let _ = w_ref
-                .edit_local_now(|mut this| {
-                    SizedBox::set_raw_width(&mut this, new_raw_width);
-                })
-                .inspect_err(|err| {
-                    log::error!("Cannot set a new raw_width for sized box => {err}");
-                });
-        });
-        self
-    }
-
-    fn raw_height<W>(self, mut height_fn: W) -> Self
-    where
-        W: FnMut() -> Option<f64> + 'static,
-    {
-        let w_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let new_raw_height = height_fn();
-            let _ = w_ref
-                .edit_local_now(|mut this| {
-                    SizedBox::set_raw_height(&mut this, new_raw_height);
-                })
-                .inspect_err(|err| {
-                    log::error!("Cannot set a new raw_height for sized box => {err}");
-                });
         });
         self
     }

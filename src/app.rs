@@ -3,6 +3,7 @@ mod executor;
 use crate::window::runner as window;
 mod handle;
 mod run;
+use anyrender::WindowRenderer;
 pub(crate) use executor::AppTaskProxy;
 
 use std::{
@@ -15,13 +16,7 @@ use crate::{app::executor::SpawnFn, window::builder::WindowBuilder};
 use any_spawner::PinnedFuture;
 use async_task::Runnable;
 use copypasta::ClipboardContext;
-use masonry::{
-    core::DefaultProperties,
-    vello::{
-        util::RenderContext,
-        wgpu::{self, InstanceDescriptor},
-    },
-};
+use masonry::core::DefaultProperties;
 use reactive_graph::owner::Owner;
 use winit::{
     event_loop::{EventLoop, EventLoopBuilder},
@@ -30,34 +25,16 @@ use winit::{
 
 pub(crate) use el_event::{AppEventLoopProxy, EventLoopEvent};
 
-pub struct Builder {
+pub struct Builder<W: WindowRenderer> {
     event_loop_builder: EventLoopBuilder<EventLoopEvent>,
-    instance_descriptor: Option<InstanceDescriptor>,
+    window_render_factory: Box<dyn FnMut(&AppHandle) -> W>,
     default_properties: DefaultProperties,
     spawn_fn: Option<SpawnFn>,
     windows: Vec<WindowBuilder>,
     owner: Owner,
 }
 
-impl Builder {
-    pub fn instance_descriptor(mut self, instance_descriptor: InstanceDescriptor) -> Self {
-        self.instance_descriptor = Some(instance_descriptor);
-        self
-    }
-    pub fn instance_descriptor_from_env(mut self) -> Self {
-        let backends = wgpu::Backends::from_env().unwrap_or_default();
-        let flags = wgpu::InstanceFlags::from_build_config().with_env();
-        let memory_budget_thresholds = wgpu::MemoryBudgetThresholds::default();
-        let backend_options = wgpu::BackendOptions::from_env_or_default();
-        let desc = wgpu::InstanceDescriptor {
-            backends,
-            flags,
-            memory_budget_thresholds,
-            backend_options,
-        };
-        self.instance_descriptor = Some(desc);
-        self
-    }
+impl<W: WindowRenderer> Builder<W> {
     pub fn default_properties(mut self, default_properties: DefaultProperties) -> Self {
         self.default_properties = default_properties;
         self
@@ -73,22 +50,28 @@ impl Builder {
         self.windows.push(window_builder);
         self
     }
-}
-
-impl Default for Builder {
-    fn default() -> Self {
+    pub fn new<F>(factory: F) -> Self
+    where
+        F: FnMut(&AppHandle) -> W + 'static,
+    {
         Self {
             event_loop_builder: EventLoop::with_user_event(),
-            instance_descriptor: None,
+            window_render_factory: Box::new(factory),
             default_properties: Default::default(),
             spawn_fn: None,
-            windows: Default::default(),
+            windows: Vec::with_capacity(1),
             owner: Owner::new(),
         }
     }
+    pub fn provide_context<T: Send + Sync + 'static>(self, data: T) -> Self {
+        self.owner.with(|| {
+            reactive_graph::owner::provide_context(data);
+        });
+        self
+    }
 }
 
-impl Builder {
+impl<W: WindowRenderer> Builder<W> {
     pub fn run(mut self) -> Result<(), crate::error::Error> {
         let spawn_fn = self
             .spawn_fn
@@ -109,21 +92,13 @@ impl Builder {
             Ok(_) => {}
             Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
         }
-        let instance_descriptor = self.instance_descriptor.unwrap_or(InstanceDescriptor {
-            backends: wgpu::Backends::PRIMARY,
-            ..Default::default()
-        });
-        let wgpu_instance = wgpu::Instance::new(&instance_descriptor);
         let (signal_sender, signal_receiver) =
             mpsc::channel::<(WindowId, masonry::app::RenderRootSignal)>();
 
         let mut app = run::AppRunner {
             app_handle: AppHandle::new(proxy),
             windows: Default::default(),
-            render_context: Rc::new(RefCell::new(RenderContext {
-                instance: wgpu_instance,
-                devices: Default::default(),
-            })),
+            window_renderer_factory: self.window_render_factory,
             default_properties: Arc::new(self.default_properties),
             builder_windows: Some(self.windows),
             owner: self.owner,
@@ -131,6 +106,7 @@ impl Builder {
             signal_sender,
             clipboard_context: Rc::new(RefCell::new(ClipboardContext::new().unwrap())),
             tasks: runable_receiver,
+            suspended: true,
         };
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;

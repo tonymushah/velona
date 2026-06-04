@@ -24,7 +24,7 @@ impl InnerRenderRoot {
         signal_sink: impl FnMut(RenderRootSignal) + 'static,
         options: RenderRootOptions,
     ) -> Self {
-        let index_stack = SizedBox::empty().with_auto_id();
+        let index_stack = SizedBox::empty().prepare();
         let root_widget_id = index_stack.id();
         Self {
             tree: RenderRoot::new(index_stack, signal_sink, options),

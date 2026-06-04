@@ -114,6 +114,6 @@ impl NewLabelExt for NewWidget<Label> {
         S: Fn() -> T + 'static,
         T: Into<ArcStr>,
     {
-        Label::new(untrack(&text)).with_auto_id().text(text)
+        Label::new(untrack(&text)).prepare().text(text)
     }
 }

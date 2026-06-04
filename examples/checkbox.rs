@@ -30,9 +30,9 @@ fn view() -> AnyNewWidget {
                     set_checked.set(event.0);
                 }),
             )
-            .with_auto_id(),
+            .prepare(),
     )
-    .with_auto_id()
+    .prepare()
     .erased()
 }
 

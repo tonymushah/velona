@@ -5,6 +5,7 @@ use std::{
     sync::{Arc, mpsc},
 };
 
+use anyrender::WindowRenderer;
 use async_task::Runnable;
 use copypasta::{ClipboardContext, ClipboardProvider};
 use log::warn;
@@ -13,10 +14,6 @@ use masonry::{
     core::{
         DefaultProperties, TextEvent, WindowEvent as MasonryWindowEvent,
         keyboard::{Key, KeyState},
-    },
-    vello::{
-        util::RenderContext,
-        wgpu::{self},
     },
 };
 use reactive_graph::owner::Owner;
@@ -34,24 +31,31 @@ use crate::{
     window::builder::WindowBuilder,
 };
 
-pub(crate) struct AppRunner {
+pub(crate) struct AppRunner<W>
+where
+    W: WindowRenderer,
+{
     pub(crate) app_handle: AppHandle,
-    pub(crate) windows: HashMap<WindowId, Box<Window>>,
+    pub(crate) windows: HashMap<WindowId, Box<Window<W>>>,
     pub(crate) default_properties: Arc<DefaultProperties>,
     pub(crate) builder_windows: Option<Vec<WindowBuilder>>,
     pub(crate) owner: Owner,
-    pub(crate) render_context: Rc<RefCell<RenderContext>>,
+    pub(crate) window_renderer_factory: Box<dyn FnMut(&AppHandle) -> W>,
     pub(crate) signal_receiver: mpsc::Receiver<(WindowId, masonry::app::RenderRootSignal)>,
     pub(crate) signal_sender: mpsc::Sender<(WindowId, masonry::app::RenderRootSignal)>,
     pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
     pub(crate) tasks: mpsc::Receiver<Runnable>,
+    pub(crate) suspended: bool,
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl AppRunner {
+impl<W> AppRunner<W>
+where
+    W: WindowRenderer,
+{
     fn use_window<F, R>(&mut self, window_id: WindowId, fun: F) -> Option<R>
     where
-        F: FnOnce(&mut Window) -> R,
+        F: FnOnce(&mut Window<W>) -> R,
     {
         if let Some(window) = self.windows.get_mut(&window_id) {
             Some(fun(window))
@@ -62,7 +66,7 @@ impl AppRunner {
     }
     fn use_window_ref<F, R>(&self, window_id: WindowId, fun: F) -> Option<R>
     where
-        F: FnOnce(&Window) -> R,
+        F: FnOnce(&Window<W>) -> R,
     {
         if let Some(window) = self.windows.get(&window_id) {
             Some(fun(window))
@@ -95,20 +99,14 @@ impl AppRunner {
         self.use_window_ref(window_id, |window| window.create_children_owner())
     }
     fn handle_redraw_request(&mut self, window_id: WindowId) {
-        self.use_window(window_id, |win| match win.render() {
-            Ok(_) => {}
-            Err(crate::error::Error::Surface(
-                wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated,
-            )) => {
-                let size = win.winit_window.inner_size();
-                win.render_root.use_inner_render_root_mut(|inner| {
-                    inner
-                        .tree
-                        .handle_window_event(MasonryWindowEvent::Resize(size));
-                });
-            }
-            Err(e) => {
-                log::error!("Unable to render {}", e);
+        self.use_window(window_id, |win| {
+            if win.complete_resume() {
+                match win.render() {
+                    Ok(_) => {}
+                    Err(e) => {
+                        log::error!("Unable to render {}", e);
+                    }
+                }
             }
         });
     }
@@ -219,7 +217,8 @@ impl AppRunner {
                             );
                         });
                     }
-                    masonry::app::RenderRootSignal::NewLayer(new_widget, point) => {
+                    masonry::app::RenderRootSignal::NewLayer(_type, new_widget, point) => {
+                        // TODO implement type
                         window.render_root.use_render_root_mut(|render_root| {
                             render_root.add_layer(new_widget, point);
                         });
@@ -265,10 +264,13 @@ impl AppRunner {
                     app_handle: self.app_handle.clone(),
                     parent_owner: &self.owner,
                     base_color: builder.base_color,
-                    render_context: &self.render_context,
+                    factory: &mut self.window_renderer_factory,
                     signal_sender: self.signal_sender.clone(),
                 }) {
-                    Ok(new_instance) => {
+                    Ok(mut new_instance) => {
+                        if !self.suspended {
+                            new_instance.resume(crate::utils::noop);
+                        }
                         if let Some(sender) = builder.window_handle_send {
                             let _ = sender.send(new_instance.get_handle());
                         }
@@ -290,27 +292,53 @@ impl AppRunner {
             task.run();
         }
     }
+    fn resume_windows(&mut self) {
+        for window in self.windows.values_mut() {
+            window.resume(crate::utils::noop);
+        }
+    }
+    fn suspend_windows(&mut self) {
+        for window in self.windows.values_mut() {
+            window.suspend();
+        }
+    }
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl ApplicationHandler<EventLoopEvent> for AppRunner {
-    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        if let Some(builder_windows) = self.builder_windows.take() {
-            if builder_windows.is_empty() {
-                log::warn!("No window provided! Exiting...");
-                event_loop.exit();
-            } else {
-                for window in builder_windows {
-                    if self
-                        .app_handle
-                        .send_event(EventLoopEvent::NewWindow(Box::new(window)))
-                        .is_err()
-                    {
-                        log::warn!("the event loop is already dead lol");
+impl<W> ApplicationHandler<EventLoopEvent> for AppRunner<W>
+where
+    W: WindowRenderer,
+{
+    fn new_events(
+        &mut self,
+        event_loop: &winit::event_loop::ActiveEventLoop,
+        cause: winit::event::StartCause,
+    ) {
+        match cause {
+            winit::event::StartCause::Init => {
+                if let Some(builder_windows) = self.builder_windows.take() {
+                    if builder_windows.is_empty() {
+                        log::warn!("No window provided! Exiting...");
+                        event_loop.exit();
+                    } else {
+                        for window in builder_windows {
+                            if self
+                                .app_handle
+                                .send_event(EventLoopEvent::NewWindow(Box::new(window)))
+                                .is_err()
+                            {
+                                log::warn!("the event loop is already dead lol");
+                            }
+                        }
                     }
                 }
             }
+            _ => {}
         }
+    }
+    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        self.suspended = false;
+        self.resume_windows();
     }
 
     fn window_event(
@@ -404,7 +432,10 @@ impl ApplicationHandler<EventLoopEvent> for AppRunner {
             .values_mut()
             .for_each(|w| w.on_memory_warning());
     }
-    fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {}
+    fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
+        self.suspended = true;
+        self.suspend_windows();
+    }
     fn user_event(
         &mut self,
         event_loop: &winit::event_loop::ActiveEventLoop,

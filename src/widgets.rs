@@ -31,7 +31,7 @@ pub mod sized_box;
 use std::{marker::PhantomData, thread};
 
 use log::warn;
-use masonry::core::{HasProperty, NewWidget, Property, Widget, WidgetMut};
+use masonry::core::{NewWidget, Property, UsesProperty as HasProperty, Widget, WidgetMut};
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{

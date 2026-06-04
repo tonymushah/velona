@@ -5,19 +5,26 @@ use masonry::{
     layout::Length,
     palette::css::WHITE,
     peniko::{Blob, ImageBrush, ImageData, ImageSampler},
-    widgets::{Align, Flex, Label, SizedBox, Spinner},
+    widgets::{Flex, Label, SizedBox, Spinner},
 };
 use reactive_graph::{
-    signal::arc_signal,
-    traits::{Get, Set},
+    computed::Memo,
+    signal::signal,
+    traits::{Get, Read, Set},
 };
 use velona::{
     AnyNewWidget, Builder, WindowBuilder,
     components::{LazyImageOptions, lazy_image},
 };
 
+enum ImageState {
+    Loading,
+    Ready(ImageBrush),
+    Error(anyhow::Error),
+}
+
 fn new_view() -> AnyNewWidget {
-    let (image_data, set_image_data) = arc_signal(None::<ImageBrush>);
+    let (image_data, set_image_data) = signal(ImageState::Loading);
     reactive_graph::spawn(async move {
         // TODO Fix buffer overflow panic
         match image::open("assets/image1.png") {
@@ -27,7 +34,7 @@ fn new_view() -> AnyNewWidget {
                 let height = data.height();
                 let mut data_buf = data.into_vec();
                 data_buf.shrink_to_fit();
-                set_image_data.set(Some(ImageBrush {
+                set_image_data.set(ImageState::Ready(ImageBrush {
                     image: ImageData {
                         data: Blob::new(sync::Arc::new(data_buf)),
                         format: masonry::peniko::ImageFormat::Rgba8,
@@ -40,36 +47,46 @@ fn new_view() -> AnyNewWidget {
                 // println!("Runned shit");
             }
             Err(err) => {
-                log::error!("Cannot load image {err}");
+                set_image_data.set(ImageState::Error(anyhow::Error::from(err)));
             }
         }
     });
-    Align::centered(
-        Flex::column()
-            .with_fixed(Label::new("SOme image").prepare().erased())
-            .with_fixed_spacer(Length::px(8.0))
-            .with_fixed(lazy_image(
-                move || image_data.get(),
-                Some(LazyImageOptions {
-                    fallback: Some(
-                        (|| {
-                            SizedBox::new(Spinner::new().prepare())
-                                .width(Length::px(100.0))
-                                .height(Length::px(100.0))
+    let image_ready = Memo::new(move |_| {
+        if let ImageState::Ready(ref img) = *image_data.read() {
+            Some(img.clone())
+        } else {
+            None
+        }
+    });
+    Flex::column()
+        .with_fixed(Label::new("SOme image").prepare().erased())
+        .with_fixed_spacer(Length::px(8.0))
+        .with_fixed(lazy_image(
+            move || image_ready.get(),
+            Some(LazyImageOptions {
+                fallback: Some(
+                    (move || match *image_data.read() {
+                        ImageState::Loading => SizedBox::new(Spinner::new().prepare())
+                            .width(Length::px(100.0))
+                            .height(Length::px(100.0))
+                            .prepare()
+                            .erased(),
+                        ImageState::Ready(ref _a) => SizedBox::empty().prepare().erased(),
+                        ImageState::Error(ref error) => {
+                            Label::new(format!("Cannot load image: {error}"))
                                 .prepare()
                                 .erased()
-                        })
-                        .into(),
-                    ),
-                    ..Default::default()
-                }),
-            ))
-            .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
-            .prepare()
-            .erased(),
-    )
-    .prepare()
-    .erased()
+                        }
+                    })
+                    .into(),
+                ),
+                // object_fit: Some((|| ObjectFit::Stretch).into())
+                ..Default::default()
+            }),
+        ))
+        .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
+        .prepare()
+        .erased()
 }
 
 fn main() {

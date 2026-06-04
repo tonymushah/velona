@@ -37,7 +37,7 @@ fn change_box_child_element(
     .inspect_err(|e| log::error!("Unable to edit SizedBox => {e}"))
 }
 
-/// This component should be the way you should show images in Velona.
+/// This component should be the way you should show [images](Image) in Velona.
 ///
 /// This thing automatically return a [`SizedBox`] which allows you to change things width and height as needed.
 ///

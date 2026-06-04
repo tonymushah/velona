@@ -11,7 +11,7 @@ use crate::{AnyNewWidget, widgets::sized_box::NewSizedBoxExt};
 /// but this allows you to show widgets based on conditional logic, ect...
 pub fn sized_box<F>(widget_fn: F) -> NewWidget<SizedBox>
 where
-    F: FnMut() -> AnyNewWidget + 'static,
+    F: Fn() -> AnyNewWidget + 'static,
 {
     SizedBox::empty()
         // .with_child(untrack(&mut widget_fn))

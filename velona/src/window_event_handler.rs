@@ -2,8 +2,10 @@ use std::{
     cell::RefCell,
     collections::HashMap,
     fmt::Debug,
+    num::NonZeroU64,
     ops::Deref,
     rc::{Rc, Weak},
+    sync::atomic::{AtomicU64, Ordering},
 };
 
 // use parking_lot::RwLock;
@@ -12,13 +14,36 @@ use log::debug;
 use masonry::core::{ErasedAction, WidgetId};
 use reactive_graph::owner::{on_cleanup, use_context};
 use send_wrapper::SendWrapper;
-use uuid::Uuid;
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub struct HandlerId(pub(crate) NonZeroU64);
+
+impl HandlerId {
+    /// Allocates a new, unique `WidgetId`.
+    ///
+    /// All widgets are assigned ids automatically; you should only create
+    /// an explicit id if you need to know it ahead of time, for instance
+    /// if you want two sibling widgets to know each others' ids.
+    ///
+    /// You must ensure that a given `WidgetId` is only ever used for one
+    /// widget at a time.
+    pub(crate) fn next() -> Self {
+        static HANDLER_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
+        let id = HANDLER_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
+        Self(id.try_into().unwrap())
+    }
+
+    // Returns the integer value of the `WidgetId`.
+    // pub fn to_raw(self) -> u64 {
+    //     self.0.into()
+    // }
+}
 
 pub type HandlerFn = Box<dyn Fn(&ErasedAction)>;
 
 #[derive(Default)]
 pub(crate) struct WindowEventHandler {
-    widget_handlers: HashMap<WidgetId, HashMap<Uuid, SendWrapper<HandlerFn>>>,
+    widget_handlers: HashMap<WidgetId, HashMap<HandlerId, SendWrapper<HandlerFn>>>,
 }
 
 impl WindowEventHandler {
@@ -29,8 +54,8 @@ impl WindowEventHandler {
         };
         handlers.values().for_each(|h| (h)(ev));
     }
-    pub fn add_handler_fn(&mut self, widget_id: WidgetId, hander_fn: HandlerFn) -> Uuid {
-        let handler_id = Uuid::new_v4();
+    pub fn add_handler_fn(&mut self, widget_id: WidgetId, hander_fn: HandlerFn) -> HandlerId {
+        let handler_id = HandlerId::next();
         self.widget_handlers
             .entry(widget_id)
             .or_default()
@@ -38,7 +63,7 @@ impl WindowEventHandler {
             .insert_entry(SendWrapper::new(hander_fn));
         handler_id
     }
-    pub fn remove_handler_fn(&mut self, handler_id: Uuid) {
+    pub fn remove_handler_fn(&mut self, handler_id: HandlerId) {
         self.widget_handlers.retain(|_, v| {
             v.remove(&handler_id);
             !v.is_empty()
@@ -98,7 +123,7 @@ impl InternWindowEventHandler {
 pub struct WindowEventHandlerWrapper(SendWrapper<Weak<RefCell<WindowEventHandler>>>);
 
 impl WindowEventHandlerWrapper {
-    pub fn add_handler_fn(&self, widget_id: WidgetId, hander_fn: HandlerFn) -> Option<Uuid> {
+    pub fn add_handler_fn(&self, widget_id: WidgetId, hander_fn: HandlerFn) -> Option<HandlerId> {
         if !self.0.valid() {
             log::error!("An window event handler was called outside the main thread");
             return None;
@@ -110,7 +135,7 @@ impl WindowEventHandlerWrapper {
                 .add_handler_fn(widget_id, hander_fn),
         )
     }
-    pub fn remove_handler_fn(&self, handler_id: Uuid) {
+    pub fn remove_handler_fn(&self, handler_id: HandlerId) {
         if !self.0.valid() {
             log::error!("An window event handler was called outside the main thread");
             return;

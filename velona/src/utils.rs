@@ -1,5 +1,7 @@
 use log::warn;
 
+pub mod memo;
+
 pub(crate) fn todo_warn_of_something(something: &'static str) {
     if something.is_empty() {
         warn!("Not yet implemented")

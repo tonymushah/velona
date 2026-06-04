@@ -52,16 +52,11 @@ impl NewLabelExt for NewWidget<Label> {
         })
     }
 
-    fn style_opt<S, T>(mut self, style: S) -> Self
+    fn style_opt<S, T>(self, style: S) -> Self
     where
         S: Fn() -> Option<T> + 'static,
         T: Into<StyleProperty>,
     {
-        {
-            if let Some(style) = untrack(&style) {
-                self = self.update_inner_widget(|label| label.with_style(style));
-            }
-        }
         self.use_reactive_widget_mut_with_effect_val::<_, Discriminant<StyleProperty>>(
             move |mut this, old_style| {
                 if let Some(old_style) = old_style {
@@ -85,25 +80,22 @@ impl NewLabelExt for NewWidget<Label> {
         self.style_opt(move || Some(style()))
     }
 
-    fn hint<S>(mut self, hint: S) -> Self
+    fn hint<S>(self, hint: S) -> Self
     where
         S: Fn() -> bool + 'static,
     {
-        {
-            self = self.update_inner_widget(|label| label.with_hint(untrack(&hint)));
-        }
         self.use_reactive_widget_mut(move |mut this| {
             Label::set_hint(&mut this, hint());
         })
     }
 
-    fn text_alignment<S>(mut self, align: S) -> Self
+    fn text_alignment<S>(self, align: S) -> Self
     where
         S: Fn() -> TextAlign + 'static,
     {
-        {
-            self.widget = Box::new(self.widget.with_text_alignment(untrack(&align)));
-        }
+        // {
+        //     self.widget = Box::new(self.widget.with_text_alignment(untrack(&align)));
+        // }
         self.use_reactive_widget_mut(move |mut this| {
             Label::set_text_alignment(&mut this, align());
         })

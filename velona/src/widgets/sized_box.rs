@@ -12,11 +12,11 @@ pub trait NewSizedBoxExt {
     /// if [`None`], the current child will be [removed](SizedBox::remove_child).
     fn child_opt<Cf>(self, child_fn: Cf) -> Self
     where
-        Cf: FnMut() -> Option<AnyNewWidget> + 'static;
+        Cf: Fn() -> Option<AnyNewWidget> + 'static;
     /// Similar to [`child`](Self::child_opt).
-    fn child<Cf>(self, mut child_fn: Cf) -> Self
+    fn child<Cf>(self, child_fn: Cf) -> Self
     where
-        Cf: FnMut() -> AnyNewWidget + 'static,
+        Cf: Fn() -> AnyNewWidget + 'static,
         Self: Sized,
     {
         self.child_opt(move || Some(child_fn()))
@@ -29,11 +29,11 @@ pub trait NewSizedBoxExt {
     /// if [`None`], the current container width will be [unset](SizedBox::unset_width).
     fn raw_width<W>(self, width_fn: W) -> Self
     where
-        W: FnMut() -> Option<Length> + 'static;
+        W: Fn() -> Option<Length> + 'static;
     /// Similar to [`width_opt`](Self::raw_width)
-    fn width<W>(self, mut width_fn: W) -> Self
+    fn width<W>(self, width_fn: W) -> Self
     where
-        W: FnMut() -> Length + 'static,
+        W: Fn() -> Length + 'static,
         Self: Sized,
     {
         self.raw_width(move || Some(width_fn()))
@@ -46,11 +46,11 @@ pub trait NewSizedBoxExt {
     /// if [`None`], the current container height will be [unset](SizedBox::unset_height).
     fn raw_height<W>(self, height_fn: W) -> Self
     where
-        W: FnMut() -> Option<Length> + 'static;
+        W: Fn() -> Option<Length> + 'static;
     /// Similar to [`height_opt`](Self::raw_height)
-    fn height<W>(self, mut height_fn: W) -> Self
+    fn height<W>(self, height_fn: W) -> Self
     where
-        W: FnMut() -> Length + 'static,
+        W: Fn() -> Length + 'static,
         Self: Sized,
     {
         self.raw_height(move || Some(height_fn()))
@@ -58,9 +58,9 @@ pub trait NewSizedBoxExt {
 }
 
 impl NewSizedBoxExt for NewWidget<SizedBox> {
-    fn child_opt<Cf>(self, mut child_fn: Cf) -> Self
+    fn child_opt<Cf>(self, child_fn: Cf) -> Self
     where
-        Cf: FnMut() -> Option<AnyNewWidget> + 'static,
+        Cf: Fn() -> Option<AnyNewWidget> + 'static,
     {
         let w_ref = self.create_velona_ref();
         Effect::new(move || {
@@ -86,9 +86,9 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
         self
     }
 
-    fn raw_width<W>(self, mut width_fn: W) -> Self
+    fn raw_width<W>(self, width_fn: W) -> Self
     where
-        W: FnMut() -> Option<Length> + 'static,
+        W: Fn() -> Option<Length> + 'static,
     {
         let w_ref = self.create_velona_ref();
         Effect::new(move || {
@@ -114,9 +114,9 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
         self
     }
 
-    fn raw_height<W>(self, mut height_fn: W) -> Self
+    fn raw_height<W>(self, height_fn: W) -> Self
     where
-        W: FnMut() -> Option<Length> + 'static,
+        W: Fn() -> Option<Length> + 'static,
     {
         let w_ref = self.create_velona_ref();
         Effect::new(move || {

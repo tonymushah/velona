@@ -3,8 +3,8 @@ mod executor;
 use crate::window::runner as window;
 mod handle;
 mod run;
-use anyrender::WindowRenderer;
 pub(crate) use executor::AppTaskProxy;
+use velona_window_renderer::WindowRenderer;
 
 use std::{
     cell::RefCell,

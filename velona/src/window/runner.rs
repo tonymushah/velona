@@ -3,7 +3,7 @@ use std::{
     time::Instant,
 };
 
-use anyrender::WindowRenderer;
+use imaging::RenderSource;
 use masonry::{
     app::{RenderRootOptions, RenderRootSignal, VisualLayerKind},
     core::{DefaultProperties, NewWidget, Widget},
@@ -13,6 +13,7 @@ use masonry::{
 use masonry_imaging::{Layer as ImagingLayer, PreparedFrame};
 use reactive_graph::owner::{Owner, provide_context};
 use ui_events_winit::WindowEventReducer;
+use velona_window_renderer::WindowRenderer;
 use winit::window::{Window as WinitWindow, WindowId};
 
 use crate::{
@@ -215,7 +216,7 @@ where
         let VisualLayerKind::Scene(root_scene) = &root_layer.kind else {
             unreachable!("root_layer always returns a scene layer");
         };
-        let frame = PreparedFrame::new(
+        let mut frame = PreparedFrame::new(
             size.width,
             size.height,
             self.winit_window.scale_factor(),
@@ -225,7 +226,9 @@ where
         );
 
         if self.sync_surface_render_root_size() {
-            // TODO
+            self.renderer.render(|painter| {
+                frame.paint_into(painter);
+            });
         }
         if let Some(access_tree) = _access_tree {
             self.access_kit.update_if_active(|| access_tree);

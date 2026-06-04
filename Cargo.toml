@@ -3,7 +3,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["velona", "velona_anyrender_imaging"]
+members = ["velona", "velona_window_renderer"]
 default-members = ["velona"]
 resolver = "3"
 
@@ -33,14 +33,13 @@ ui-events-winit = "0.3"
 copypasta = "0.10.2"
 futures-channel = "0.3"
 hotpath = { version = "0.16" }
-# TODO add anyrender for rendering simplicity
-anyrender = "0.10"
 imaging = "0.0.1"
 env_logger = "0.11.10"
 image = { version = "0.25" }
 tokio = { version = "1" }
 anyhow = "1"
-anyrender_vello = "0.10"
-velona_anyrender_imaging = { version = "0.1", path = "velona_anyrender_imaging"}
+anyrender_vello = "0.11"
+velona_window_renderer = { version = "0.1", path = "velona_window_renderer" }
 kurbo = { default-features = false, version = "0.13.1" }
 peniko = { default-features = false, version = "0.6.1" }
+raw-window-handle = "0.6"

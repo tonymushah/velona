@@ -25,9 +25,8 @@ copypasta.workspace = true
 futures-channel.workspace = true
 hotpath = { version = "0.16", optional = true }
 # TODO add anyrender for rendering simplicity
-anyrender.workspace = true
 imaging.workspace = true
-velona_anyrender_imaging.workspace = true
+velona_window_renderer.workspace = true
 
 [features]
 hotpath = ["dep:hotpath"]
@@ -40,4 +39,3 @@ env_logger.workspace = true
 image = { workspace = true }
 tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
 anyhow.workspace = true
-anyrender_vello.workspace = true

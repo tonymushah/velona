@@ -3,7 +3,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["velona", "velona_window_renderer"]
+members = ["velona", "velona_window_renderer", "velona_window_renderer_vello"]
 default-members = ["velona"]
 resolver = "3"
 
@@ -21,7 +21,7 @@ thiserror = "2"
 # TODO update to 0.31 when stable
 winit = "0.30"
 log = "0.4"
-# pollster = "0.4"
+pollster = "0.4"
 # TODO remove this
 non-exhaustive = "0.1"
 # TODO Remove this in favor of reactive_graph::send_option
@@ -43,3 +43,6 @@ velona_window_renderer = { version = "0.1", path = "velona_window_renderer" }
 kurbo = { default-features = false, version = "0.13.1" }
 peniko = { default-features = false, version = "0.6.1" }
 raw-window-handle = "0.6"
+imaging_vello = "0.0"
+
+# velona specific tools lmao

@@ -1,23 +1,37 @@
 //! Various [`widgets`](masonry::widgets) extenstions
 //!
-//! TODO custom implementation
+//! TODO **custom implementation**
 //!
 //! - [ ] [`Align`](masonry::widgets::Align)
+//! - [ ] [`Badge`](masonry::widgets::Badge)
 //! - [ ] [`Button`](masonry::widgets::Button)
+//! - [ ] [`Canvas`](masonry::widgets::Canvas)
 //! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]
+//! - [ ] [`CollapsePanel`](masonry::widgets::CollapsePanel)
+//! - [ ] [`DisclosureButton`](masonry::widgets::DisclosureButton)
+//! - [ ] [`Divider`](masonry::widgets::Divider)
 //! - [ ] [`Flex`](masonry::widgets::Flex)
 //! - [ ] [`Grid`](masonry::widgets::Grid)
 //! - [x] [`Image`](masonry::widgets::Image) in [`image`]
 //! - [ ] [`IndexedStack`](masonry::widgets::IndexedStack)
 //! - [x] [`Label`](masonry::widgets::Label) in [`label`]
+//! - [ ] [`Pagination`](masonry::widgets::Pagination)
+//! - [ ] [`Passthrough`](masonry::widgets::Passthrough)
 //! - [ ] [`Portal`](masonry::widgets::Portal)
 //! - [ ] [`ProgressBar`](masonry::widgets::ProgressBar)
 //! - [ ] [`Prose`](masonry::widgets::Prose)
+//! - [ ] [`Radio`](masonry::widgets::Radio)
+//! - [ ] [`ResizeObserver`](masonry::widgets::ResizeObserver)
 //! - [ ] [`ScrollBar`](masonry::widgets::ScrollBar)
+//! - [ ] [`Selector`](masonry::widgets::Selector)
+//! - [ ] [`SelectorItem`](masonry::widgets::Selector)
 //! - [x] [`SizedBox`](masonry::widgets::SizedBox)
 //! - [ ] [`Slider`](masonry::widgets::Slider)
 //! - [ ] [`Spinner`](masonry::widgets::Spinner)
 //! - [ ] [`Split`](masonry::widgets::Split)
+//! - [ ] [`StepInput`](masonry::widgets::StepInput)
+//! - [ ] [`Svg`](masonry::widgets::Svg)
+//! - [ ] [`Switch`](masonry::widgets::Switch)
 //! - [ ] [`TextArea`](masonry::widgets::TextArea)
 //! - [ ] [`TextInput`](masonry::widgets::TextInput)
 //! - [ ] [`VariableLabel`](masonry::widgets::VariableLabel)

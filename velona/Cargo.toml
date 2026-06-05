@@ -40,3 +40,5 @@ image = { workspace = true }
 tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
 anyhow.workspace = true
 velona_renderer_vello.workspace = true
+derive_more = { workspace = true, features = ["display", "from_str"] }
+enum_all_variants = { workspace = true }

@@ -37,6 +37,7 @@
 //! - [ ] [`VariableLabel`](masonry::widgets::VariableLabel)
 //! - [ ] [`VirtualScroll`](masonry::widgets::VirtualScroll)
 //! - [ ] [`ZStack`](masonry::widgets::ZStack)
+pub mod align;
 pub mod checkbox;
 pub mod image;
 pub mod label;

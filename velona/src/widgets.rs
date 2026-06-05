@@ -148,6 +148,7 @@ where
         })
     }
 
+    // TODO remove this
     fn append_static_propeperty<P>(mut self, prop: P) -> Self
     where
         P: Property,

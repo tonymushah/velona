@@ -1,0 +1,42 @@
+[package]
+name = "velona"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+accesskit_winit.workspace = true
+any_spawner.workspace = true
+async-task.workspace = true
+masonry.workspace = true
+masonry_imaging.workspace = true
+masonry_core.workspace = true
+reactive_graph = { workspace = true, features = ["effects", "sandboxed-arenas"] }
+thiserror.workspace = true
+winit.workspace = true
+log.workspace = true
+# TODO remove this
+non-exhaustive.workspace = true
+send_wrapper.workspace = true
+# TODO remove this in favor of atomics counter
+# uuid = { workspace = true, features = ["v4"] }
+ui-events-winit.workspace = true
+# parking_lot = "0.12"
+copypasta.workspace = true
+futures-channel.workspace = true
+hotpath = { version = "0.16", optional = true }
+# TODO add anyrender for rendering simplicity
+imaging.workspace = true
+velona_renderer.workspace = true
+
+[features]
+hotpath = ["dep:hotpath"]
+hotpath-run = ["hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]
+
+[dev-dependencies]
+env_logger.workspace = true
+image = { workspace = true }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
+anyhow.workspace = true
+velona_renderer_vello.workspace = true

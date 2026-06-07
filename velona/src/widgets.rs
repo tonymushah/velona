@@ -4,6 +4,7 @@
 //!
 //! - [x] [`Align`](masonry::widgets::Align)
 //! - [ ] [`Badge`](masonry::widgets::Badge)
+//! - [ ] [`Badged`](masonry:::wigets::Badged)
 //! - [ ] [`Button`](masonry::widgets::Button)
 //! - [ ] [`Canvas`](masonry::widgets::Canvas)
 //! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]
@@ -38,6 +39,7 @@
 //! - [ ] [`VirtualScroll`](masonry::widgets::VirtualScroll)
 //! - [ ] [`ZStack`](masonry::widgets::ZStack)
 pub mod align;
+pub mod badge;
 pub mod checkbox;
 pub mod image;
 pub mod label;

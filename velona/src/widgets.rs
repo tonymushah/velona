@@ -4,7 +4,7 @@
 //!
 //! - [x] [`Align`](masonry::widgets::Align)
 //! - [x] [`Badge`](masonry::widgets::Badge)
-//! - [ ] [`Badged`](masonry:::wigets::Badged)
+//! - [x] [`Badged`](masonry:::wigets::Badged)
 //! - [ ] [`Button`](masonry::widgets::Button)
 //! - [ ] [`Canvas`](masonry::widgets::Canvas)
 //! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]

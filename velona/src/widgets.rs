@@ -2,7 +2,7 @@
 //!
 //! TODO **custom implementation**
 //!
-//! - [ ] [`Align`](masonry::widgets::Align)
+//! - [x] [`Align`](masonry::widgets::Align)
 //! - [ ] [`Badge`](masonry::widgets::Badge)
 //! - [ ] [`Button`](masonry::widgets::Button)
 //! - [ ] [`Canvas`](masonry::widgets::Canvas)

@@ -7,7 +7,7 @@ pub mod error;
 pub mod manager;
 pub mod reactive;
 pub mod render_root;
-pub(crate) mod utils;
+pub mod utils;
 pub mod widget_ref;
 pub mod widgets;
 pub mod window;

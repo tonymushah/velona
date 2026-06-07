@@ -40,6 +40,7 @@
 //! - [ ] [`ZStack`](masonry::widgets::ZStack)
 pub mod align;
 pub mod badge;
+pub mod badged;
 pub mod checkbox;
 pub mod image;
 pub mod label;
@@ -106,7 +107,7 @@ where
             match widget_ref.edit_local_now(|widget_mut| (fun)(widget_mut, v)) {
                 Ok(val) => val,
                 Err(err) => {
-                    log::warn!("{err}");
+                    log::warn!("cannot edit widget reactivelt => {err}");
                     None
                 }
             }
@@ -130,7 +131,7 @@ where
             self.id(),
             Box::new(move |ev| {
                 let Some(ev) = ev.downcast_ref::<W::Action>() else {
-                    warn!("Added s");
+                    warn!("Cannot cast action");
                     return;
                 };
                 fun(ev);

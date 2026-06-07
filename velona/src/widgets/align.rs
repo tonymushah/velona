@@ -1,7 +1,7 @@
 use masonry::{core::NewWidget, layout::UnitPoint, widgets::Align};
 use reactive_graph::effect::Effect;
 
-use crate::{AnyNewWidget, NewWidgetExt};
+use crate::{AnyNewWidget, NewWidgetExt, utils::ConsumeResult};
 
 /// A [`Align`] trait extension
 pub trait NewAlign {
@@ -23,11 +23,11 @@ impl NewAlign for NewWidget<Align> {
         let w_ref = self.create_velona_ref();
         Effect::new(move || {
             let child = child();
-            let _ = w_ref
+            w_ref
                 .edit_local_now(|mut this| {
                     Align::set_child(&mut this, child);
                 })
-                .inspect_err(|err| log::error!("Cannot edit widget locally => {err}"));
+                .consume_with_log_err();
         });
         self
     }

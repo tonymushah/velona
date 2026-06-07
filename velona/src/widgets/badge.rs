@@ -7,7 +7,7 @@
 use masonry::{core::NewWidget, widgets::Badge};
 use reactive_graph::effect::Effect;
 
-use crate::{AnyNewWidget, NewWidgetExt};
+use crate::{AnyNewWidget, NewWidgetExt, utils::ConsumeResult};
 
 /// A [`NewWidget<Badge>`] trait extension
 pub trait NewBadgeExt {
@@ -27,13 +27,11 @@ impl NewBadgeExt for NewWidget<Badge> {
             // NOTE we used use_reactive_widget_mut before
             // but that might block others `edit_local_now` in the nested childs
             let child = child_fn();
-            let _ = b_ref
+            b_ref
                 .edit_local_now(|mut this| {
                     Badge::set_child(&mut this, child);
                 })
-                .inspect_err(|err| {
-                    log::error!("cannot set badge child => {err}");
-                });
+                .consume_with_log_err();
         });
         self
     }

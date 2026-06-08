@@ -52,7 +52,7 @@ where
 
 /// Similar to [`Badge::count`]
 /// but with a reactive count
-pub fn badge_count<C, O>(count: C) -> NewWidget<Badge>
+pub fn badge_count<C>(count: C) -> NewWidget<Badge>
 where
     C: Fn() -> u32 + 'static,
 {

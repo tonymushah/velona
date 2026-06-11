@@ -5,7 +5,7 @@
 //! - [x] [`Align`](masonry::widgets::Align)
 //! - [x] [`Badge`](masonry::widgets::Badge)
 //! - [x] [`Badged`](masonry:::wigets::Badged)
-//! - [ ] [`Button`](masonry::widgets::Button)
+//! - [x] [`Button`](masonry::widgets::Button)
 //! - [ ] [`Canvas`](masonry::widgets::Canvas)
 //! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]
 //! - [ ] [`CollapsePanel`](masonry::widgets::CollapsePanel)

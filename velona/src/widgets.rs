@@ -47,7 +47,7 @@ pub mod image;
 pub mod label;
 pub mod sized_box;
 
-use std::{marker::PhantomData, thread};
+use std::{any::type_name, marker::PhantomData, thread};
 
 use log::warn;
 use masonry::core::{NewWidget, Property, UsesProperty as HasProperty, Widget, WidgetMut};
@@ -182,3 +182,30 @@ where
 }
 
 pub use masonry::widgets as masonry_widgets;
+
+/// Some widget has a single child with them. (like [button](masonry::widgets::Button), [align](masonry::widgets::Align))
+///
+/// This trait will unify all of those single child widgets "mutations" _instead of making a similar trait for those_.
+pub trait SingleChildWidget {
+    fn use_child_erased<C>(self, use_child_fn: C) -> Self
+    where
+        C: FnMut(WidgetMut<'_, dyn Widget>) + 'static;
+    fn use_child<C, W>(self, mut use_child_fn: C) -> Self
+    where
+        C: FnMut(WidgetMut<'_, W>) + 'static,
+        W: Widget + 'static,
+        Self: Sized,
+    {
+        self.use_child_erased(move |mut child| {
+            if let Some(child) = child.try_downcast::<W>() {
+                use_child_fn(child);
+            } else {
+                log::warn!(
+                    "Invalid downcast. (expected {}, found {:?})",
+                    type_name::<W>(),
+                    child.widget.type_id()
+                );
+            }
+        })
+    }
+}

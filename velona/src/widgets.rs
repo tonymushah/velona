@@ -209,3 +209,35 @@ pub trait SingleChildWidget {
         })
     }
 }
+
+mod single_impl {
+    use super::masonry_widgets::*;
+    use super::{NewWidgetExt, SingleChildWidget};
+    use masonry_core::core::{NewWidget, Widget, WidgetMut};
+
+    macro_rules! impl_single_widget {
+        ($($widget:ty,)*) => {
+            $(
+                impl SingleChildWidget for NewWidget<$widget> {
+                    fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
+                    where
+                        C: FnMut(WidgetMut<'_, dyn Widget>) + 'static
+                    {
+                        self.use_reactive_widget_mut(move |mut this| use_child_fn(<$widget>::child_mut(&mut this)))
+                    }
+                }
+            )*
+        };
+    }
+
+    impl_single_widget!(
+        Align,
+        Badge,
+        Button,
+        CollapsePanel,
+        Passthrough,
+        RadioGroup,
+        ResizeObserver,
+        // VirtualScroll,
+    );
+}

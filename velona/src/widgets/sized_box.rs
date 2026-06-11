@@ -1,7 +1,11 @@
-use masonry::{core::NewWidget, layout::Length, widgets::SizedBox};
+use masonry::{
+    core::{NewWidget, Widget},
+    layout::Length,
+    widgets::SizedBox,
+};
 use reactive_graph::effect::Effect;
 
-use crate::{AnyNewWidget, NewWidgetExt};
+use crate::{AnyNewWidget, NewWidgetExt, widgets::SingleChildWidget};
 
 pub trait NewSizedBoxExt {
     /// Set a "reactive" child for this [`SizedBox`].
@@ -140,5 +144,20 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
             }
         });
         self
+    }
+}
+
+impl SingleChildWidget for NewWidget<SizedBox> {
+    fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
+    where
+        C: FnMut(masonry::core::WidgetMut<'_, dyn Widget>) + 'static,
+    {
+        self.use_reactive_widget_mut(move |mut this| {
+            if let Some(child) = SizedBox::child_mut(&mut this) {
+                use_child_fn(child);
+            } else {
+                log::warn!("Not child for SizedBox #{}", this.id());
+            }
+        })
     }
 }

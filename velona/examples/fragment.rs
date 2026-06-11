@@ -1,5 +1,5 @@
 use masonry::{
-    core::{NewWidget, PointerButton, Widget},
+    core::{NewWidget, Widget},
     layout::Length,
     palette::css::{BLACK, GREEN, WHEAT},
     peniko::color::AlphaColor,
@@ -23,6 +23,7 @@ use reactive_graph::{
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder,
     components::{checkbox as _checkbox, label, sized_box},
+    widgets::button::NewButtonPressEventsExt,
 };
 
 enum ViewToUse {
@@ -86,14 +87,12 @@ fn counter() -> AnyNewWidget {
         .with_fixed(
             Button::with_text("-")
                 .prepare()
-                .register_handler(move |ev| {
-                    if let Some(PointerButton::Primary) = ev.button {
-                        set_count.update(|ev| {
-                            if let Some(val) = ev.checked_sub(1) {
-                                *ev = val
-                            }
-                        });
-                    }
+                .on_primary(move || {
+                    set_count.update(|ev| {
+                        if let Some(val) = ev.checked_sub(1) {
+                            *ev = val
+                        }
+                    });
                 })
                 .apply_counter_button_style(),
         )
@@ -101,14 +100,12 @@ fn counter() -> AnyNewWidget {
         .with_fixed(
             Button::with_text("+")
                 .prepare()
-                .register_handler(move |ev| {
-                    if let Some(PointerButton::Primary) = ev.button {
-                        set_count.update(|ev| {
-                            if let Some(val) = ev.checked_add(1) {
-                                *ev = val
-                            }
-                        });
-                    }
+                .on_primary(move || {
+                    set_count.update(|ev| {
+                        if let Some(val) = ev.checked_add(1) {
+                            *ev = val
+                        }
+                    });
                 })
                 .apply_counter_button_style(),
         )
@@ -125,10 +122,8 @@ fn main_view() -> AnyNewWidget {
                     .with_fixed(
                         Button::with_text("Some text")
                             .prepare()
-                            .register_handler(move |ev| {
-                                if let Some(PointerButton::Primary) = &ev.button {
-                                    set_view.set(ViewToUse::Text);
-                                }
+                            .on_primary(move || {
+                                set_view.set(ViewToUse::Text);
                             })
                             .append_static_propeperty(Background::Color(AlphaColor::from_rgb8(
                                 200, 100, 100,
@@ -138,10 +133,8 @@ fn main_view() -> AnyNewWidget {
                     .with_fixed(
                         Button::with_text("Some checkbox")
                             .prepare()
-                            .register_handler(move |ev| {
-                                if let Some(PointerButton::Primary) = &ev.button {
-                                    set_view.set(ViewToUse::Checkbox);
-                                }
+                            .on_primary(move || {
+                                set_view.set(ViewToUse::Checkbox);
                             })
                             .append_static_propeperty(Background::Color(AlphaColor::from_rgb8(
                                 200, 100, 100,
@@ -151,10 +144,8 @@ fn main_view() -> AnyNewWidget {
                     .with_fixed(
                         Button::with_text("Count")
                             .prepare()
-                            .register_handler(move |ev| {
-                                if let Some(PointerButton::Primary) = &ev.button {
-                                    set_view.set(ViewToUse::Count);
-                                }
+                            .on_primary(move || {
+                                set_view.set(ViewToUse::Count);
                             })
                             .append_static_propeperty(Background::Color(AlphaColor::from_rgb8(
                                 200, 100, 100,

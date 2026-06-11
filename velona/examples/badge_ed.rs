@@ -5,7 +5,7 @@ use enum_all_variants::AllVariants;
 use image::open;
 use imaging::peniko::{Blob, ImageBrush, ImageData, ImageSampler, color::AlphaColor};
 use masonry::{
-    core::{PointerButton, Widget},
+    core::Widget,
     layout::Length,
     palette::css::{BLACK, VIOLET, WHEAT, WHITE, WHITE_SMOKE},
     parley::{FontWeight, StyleProperty},
@@ -26,7 +26,9 @@ use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder,
     components::{LazyImageOptions, badge_count, label, lazy_image},
     utils::memo::unsync_memo,
-    widgets::{self, badged::NewBadgedTrait, sized_box::NewSizedBoxExt},
+    widgets::{
+        self, badged::NewBadgedTrait, button::NewButtonPressEventsExt, sized_box::NewSizedBoxExt,
+    },
 };
 use velona_renderer_vello::VelloWindowRenderer;
 
@@ -208,10 +210,8 @@ fn main_view() -> AnyNewWidget {
                     }
                 }))
                 .prepare()
-                .register_handler(move |ev| {
-                    if let Some(PointerButton::Primary) = ev.button {
-                        set_count.update(|count| *count += 1);
-                    }
+                .on_primary(move || {
+                    set_count.update(|count| *count += 1);
                 })
                 .append_static_propeperty(Background::Color(WHEAT))
                 .append_static_propeperty(BorderColor::new(BLACK))
@@ -239,11 +239,9 @@ fn main_view() -> AnyNewWidget {
             // place a Neuron activiation meme here
             Button::with_text("Tokoyami Towa Reset :)")
                 .prepare()
-                .register_handler(move |ev| {
-                    if let Some(PointerButton::Primary) = ev.button {
-                        set_count.set(0);
-                        should_show_towa.set(true);
-                    }
+                .on_primary(move || {
+                    set_count.set(0);
+                    should_show_towa.set(true);
                 })
                 // Good luck on figuring what it is :)
                 .append_static_propeperty(Background::Color(AlphaColor::from_rgb8(

@@ -241,3 +241,32 @@ mod single_impl {
         // VirtualScroll,
     );
 }
+
+/// Similar to [`SingleChildWidget`] but the child is typed instead of erased.
+// TODO implement for [`Portal`](masonry::widgets::Portal)
+// TODO implement for [`Selector`](masonry::widgets::Selector)
+// TODO implement for [`SelectorItem`](masonry::widgets::SelectorItem)
+pub trait TypedSingleChildWidget {
+    type Child: Widget + 'static;
+    fn use_child<C>(self, use_child_fn: C) -> Self
+    where
+        C: FnMut(WidgetMut<'_, Self::Child>) + 'static;
+}
+
+impl<T> SingleChildWidget for T
+where
+    T: TypedSingleChildWidget,
+{
+    fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
+    where
+        C: FnMut(WidgetMut<'_, dyn Widget>) + 'static,
+    {
+        <Self as TypedSingleChildWidget>::use_child(self, move |mut child| {
+            if let Some(child) = child.try_downcast::<dyn Widget>() {
+                use_child_fn(child);
+            } else {
+                log::warn!("Cannot cast to `dyn Widget`. (which is dumb)");
+            }
+        })
+    }
+}

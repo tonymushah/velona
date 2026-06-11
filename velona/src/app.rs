@@ -1,6 +1,6 @@
 pub(crate) mod el_event;
 mod executor;
-use crate::window::runner as window;
+use crate::window::{renderer::WindowRendererFactory, runner as window};
 mod handle;
 mod run;
 pub(crate) use executor::AppTaskProxy;
@@ -27,7 +27,7 @@ pub(crate) use el_event::{AppEventLoopProxy, EventLoopEvent};
 
 pub struct Builder<W: WindowRenderer> {
     event_loop_builder: EventLoopBuilder<EventLoopEvent>,
-    window_render_factory: Box<dyn FnMut(&AppHandle) -> W>,
+    window_render_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
     default_properties: DefaultProperties,
     spawn_fn: Option<SpawnFn>,
     windows: Vec<WindowBuilder>,
@@ -50,9 +50,9 @@ impl<W: WindowRenderer> Builder<W> {
         self.windows.push(window_builder);
         self
     }
-    pub fn new<F>(factory: F) -> Self
+    pub fn new_with_renderer_factory<F>(factory: F) -> Self
     where
-        F: FnMut(&AppHandle) -> W + 'static,
+        F: WindowRendererFactory<WindowRenderer = W> + 'static,
     {
         Self {
             event_loop_builder: EventLoop::with_user_event(),
@@ -62,6 +62,12 @@ impl<W: WindowRenderer> Builder<W> {
             windows: Vec::with_capacity(1),
             owner: Owner::new(),
         }
+    }
+    pub fn new<F>(factory: F) -> Self
+    where
+        F: FnMut(&AppHandle) -> W + 'static,
+    {
+        Self::new_with_renderer_factory(factory)
     }
     pub fn provide_context<T: Send + Sync + 'static>(self, data: T) -> Self {
         self.owner.with(|| {

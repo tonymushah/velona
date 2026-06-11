@@ -19,7 +19,7 @@ use winit::window::{Window as WinitWindow, WindowId};
 use crate::{
     app::{AppHandle, el_event::EventProxyHandle},
     render_root::{InnerRenderRoot, WindowRenderRoot},
-    window::handle::WindowHandle,
+    window::{handle::WindowHandle, renderer::WindowRendererFactory},
     window_event_handler::InternWindowEventHandler,
 };
 
@@ -50,7 +50,7 @@ pub struct WindowNew<'i, V, W> {
     pub signal_sender: mpsc::Sender<(WindowId, RenderRootSignal)>,
     pub parent_owner: &'i Owner,
     pub base_color: Option<AlphaColor<Srgb>>,
-    pub factory: &'i mut dyn FnMut(&AppHandle) -> W,
+    pub factory: &'i mut dyn WindowRendererFactory<WindowRenderer = W>,
 }
 
 impl<'i, V, W> WindowNew<'i, V, W> {
@@ -106,7 +106,7 @@ where
 
         let size = window.inner_size();
 
-        let renderer = factory(&app_handle);
+        let renderer = factory.create(&app_handle);
 
         let render_root = InnerRenderRoot::new(
             {

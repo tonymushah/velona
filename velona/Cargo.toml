@@ -37,7 +37,7 @@ hotpath-alloc = ["hotpath/hotpath-alloc"]
 [dev-dependencies]
 env_logger.workspace = true
 image = { workspace = true }
-tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "time"] }
 anyhow.workspace = true
 velona_renderer_vello.workspace = true
 derive_more = { workspace = true, features = ["display", "from_str"] }

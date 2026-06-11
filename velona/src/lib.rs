@@ -5,13 +5,16 @@ pub mod components;
 pub(crate) mod convert_winit_event;
 pub mod error;
 pub mod manager;
-pub mod reactive;
 pub mod render_root;
+pub mod task;
 pub mod utils;
 pub mod widget_ref;
 pub mod widgets;
 pub mod window;
 pub(crate) mod window_event_handler;
+
+#[doc(inline)]
+pub use reactive_graph as reactive;
 
 use masonry::core::{NewWidget, Widget};
 

@@ -1,6 +1,6 @@
 use log::warn;
 
-pub(crate) mod memo;
+pub mod memo;
 mod res_log;
 
 pub use res_log::ConsumeResult;

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use masonry::{
     core::{ArcStr, NewWidget, Widget},
     parley::{FontWeight, StyleProperty},
@@ -7,7 +5,10 @@ use masonry::{
 };
 use reactive_graph::{computed::Memo, graph::untrack, traits::Get};
 
-use crate::{utils::memo::unsync_memo, widgets::label::NewLabelExt};
+use crate::{
+    utils::{badge::badge_count_overflow, memo::unsync_memo},
+    widgets::label::NewLabelExt,
+};
 
 /// Similar to [`Badge::with_text`] but with a reactive text
 pub fn badge_with_text<Tf, T>(text: Tf) -> NewWidget<Badge>
@@ -32,20 +33,7 @@ where
 {
     let text: Memo<ArcStr> = unsync_memo(move || {
         let count = count();
-        match overflow() {
-            BadgeCountOverflow::Exact => Arc::from(count.to_string().into_boxed_str()),
-            BadgeCountOverflow::Cap { max, show_plus } => {
-                if count > max {
-                    if show_plus {
-                        Arc::from(format!("{max}+").into_boxed_str())
-                    } else {
-                        Arc::from(max.to_string().into_boxed_str())
-                    }
-                } else {
-                    Arc::from(count.to_string().into_boxed_str())
-                }
-            }
-        }
+        badge_count_overflow(count, overflow())
     });
     badge_with_text(move || text.get())
 }

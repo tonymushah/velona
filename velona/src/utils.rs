@@ -1,5 +1,6 @@
 use log::warn;
 
+pub mod badge;
 pub mod memo;
 mod res_log;
 

@@ -54,7 +54,7 @@ use masonry::core::{NewWidget, Property, UsesProperty as HasProperty, Widget, Wi
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
-    widget_ref::VelonaWidgetRef, window::use_window,
+    AnyNewWidget, widget_ref::VelonaWidgetRef, window::use_window,
     window_event_handler::register_window_event_handler,
 };
 
@@ -185,7 +185,7 @@ pub use masonry::widgets as masonry_widgets;
 
 /// Some widget has a single child with them. (like [button](masonry::widgets::Button), [align](masonry::widgets::Align))
 ///
-/// This trait will unify all of those single child widgets "mutations" _instead of making a similar trait for those_.
+/// This trait will unify all of those single child widgets "mutations" (aka `child_mut`) _instead of making duplicates method for those_.
 pub trait SingleChildWidget {
     fn use_child_erased<C>(self, use_child_fn: C) -> Self
     where
@@ -269,4 +269,58 @@ where
             }
         })
     }
+}
+
+/// Allows you to [`Widget`] `set_child` reactively.
+///
+/// This is only implemented for [`Widget`]s that has an erashed `set_child`
+pub trait ReactiveSingleChildExt {
+    fn child<Cf>(self, child_fn: Cf) -> Self
+    where
+        Cf: Fn() -> AnyNewWidget + 'static;
+}
+
+mod reactive_child_impl {
+    use super::masonry_widgets::*;
+    use super::{NewWidgetExt, ReactiveSingleChildExt};
+    use crate::AnyNewWidget;
+    use masonry_core::core::NewWidget;
+    use reactive_graph::effect::Effect;
+    use std::any::type_name;
+
+    macro_rules! impl_reactive_child {
+        ($($widget:ty,)*) => {
+            $(
+                impl ReactiveSingleChildExt for NewWidget<$widget> {
+                    fn child<Cf>(self, child_fn: Cf) -> Self
+                    where
+                        Cf: Fn() -> AnyNewWidget + 'static
+                    {
+                        let w_ref = self.create_velona_ref();
+                        Effect::new(move || {
+                            let new_widget = child_fn();
+                            let _ = w_ref
+                                .edit_local_now(|mut this| {
+                                    <$widget>::set_child(&mut this, new_widget);
+                                })
+                                .inspect_err(|err| {
+                                    log::error!("Cannot set a new child for this widget {} => {err}", type_name::<$widget>());
+                                });
+                        });
+                        self
+                    }
+                }
+            )*
+        };
+    }
+
+    impl_reactive_child!(
+        Align,
+        Badge,
+        Button,
+        CollapsePanel,
+        Passthrough,
+        ResizeObserver,
+        // VirtualScroll,
+    );
 }

@@ -22,5 +22,6 @@ pub use app::Builder;
 pub use manager::Manager;
 pub use widgets::NewWidgetExt;
 pub use window::builder::WindowBuilder;
+pub use window::renderer::WindowRendererFactory;
 
 pub type AnyNewWidget = NewWidget<dyn Widget>;

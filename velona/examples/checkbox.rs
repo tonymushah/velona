@@ -42,6 +42,7 @@ fn view() -> AnyNewWidget {
 
 #[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
+    env_logger::init();
     Builder::new(|_| velona_renderer_vello::VelloWindowRenderer::new())
         .window(
             WindowBuilder::new(view)

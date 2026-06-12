@@ -1,5 +1,6 @@
 use std::{
     any::TypeId,
+    backtrace::{Backtrace, BacktraceStatus},
     fmt::Debug,
     marker::PhantomData,
     thread::{self, ThreadId},
@@ -11,6 +12,7 @@ use winit::window::WindowId;
 use crate::{
     app::{EventLoopEvent, el_event::EventProxyHandle},
     render_root::use_window_render_root_ref,
+    utils::ConsumeResult,
     window::handle::WindowHandle,
 };
 
@@ -102,6 +104,21 @@ pub enum EditWidgetLocalError {
     },
     #[error("You are trying to edit a `VelonaWidgetRef` outside the main thread")]
     OutsideMainThread,
+}
+
+impl<A> ConsumeResult for Result<A, EditWidgetLocalError> {
+    /// [`log::error`] the [`EditWidgetLocalError`]
+    /// and [`log::trace`] the backtrace if available
+    fn consume_with_log_err(self) {
+        if let Err(err) = self {
+            log::error!("Cannot edit the widget locally => {err}");
+
+            let backtrace = Backtrace::capture();
+            if backtrace.status() == BacktraceStatus::Captured {
+                log::trace!("Backtrace: \n{backtrace}");
+            }
+        }
+    }
 }
 
 // #[cfg_attr(feature = "hotpath", hotpath::measure_all)]

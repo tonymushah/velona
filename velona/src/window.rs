@@ -1,5 +1,7 @@
 pub mod builder;
 pub mod handle;
+// TODO report this as finished
+pub mod renderer;
 pub(crate) mod runner;
 
 use reactive_graph::owner::use_context;

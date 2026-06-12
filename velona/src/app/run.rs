@@ -28,7 +28,7 @@ use crate::{
     app::{AppHandle, EventLoopEvent, el_event::EventProxyHandle, window::WindowNew},
     convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
     utils::todo_warn_of_something,
-    window::builder::WindowBuilder,
+    window::{builder::WindowBuilder, renderer::WindowRendererFactory},
 };
 
 pub(crate) struct AppRunner<W>
@@ -40,7 +40,7 @@ where
     pub(crate) default_properties: Arc<DefaultProperties>,
     pub(crate) builder_windows: Option<Vec<WindowBuilder>>,
     pub(crate) owner: Owner,
-    pub(crate) window_renderer_factory: Box<dyn FnMut(&AppHandle) -> W>,
+    pub(crate) window_renderer_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
     pub(crate) signal_receiver: mpsc::Receiver<(WindowId, masonry::app::RenderRootSignal)>,
     pub(crate) signal_sender: mpsc::Sender<(WindowId, masonry::app::RenderRootSignal)>,
     pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
@@ -264,7 +264,8 @@ where
                     app_handle: self.app_handle.clone(),
                     parent_owner: &self.owner,
                     base_color: builder.base_color,
-                    factory: &mut self.window_renderer_factory,
+                    factory: &mut *self.window_renderer_factory
+                        as &mut dyn WindowRendererFactory<WindowRenderer = W>,
                     signal_sender: self.signal_sender.clone(),
                 }) {
                     Ok(mut new_instance) => {

@@ -1,6 +1,10 @@
 use log::warn;
 
+pub mod badge;
 pub mod memo;
+mod res_log;
+
+pub use res_log::ConsumeResult;
 
 pub(crate) fn todo_warn_of_something(something: &'static str) {
     if something.is_empty() {

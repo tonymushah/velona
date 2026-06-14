@@ -3,6 +3,9 @@ use masonry::{
     widgets::Button,
 };
 
+#[cfg(doc)]
+use masonry::widgets::ButtonPress;
+
 use crate::NewWidgetExt;
 
 fn register_btn_ev<H>(
@@ -24,7 +27,7 @@ macro_rules! btn_ev_trait {
     ($($ptr_ev:expr => {
         $(#[$attr:meta])* $ev_method:ident
     },)*) => {
-        /// A useful wrapper trait for handling [`ButtonPress:button`] event easily
+        /// A useful wrapper trait for handling [`ButtonPress::button`] event easily
         pub trait NewButtonPressEventsExt {
             $(
                 $(#[$attr])*

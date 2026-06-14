@@ -23,7 +23,7 @@ pub trait NewBadgedTrait {
     fn badge_placement<P>(self, placement_fn: P) -> Self
     where
         P: Fn() -> BadgePlacement + 'static;
-    /// Change the [badge offset](Badged::set_badget_offset) reactively.
+    /// Change the [badge offset](Badged::set_badge_offset) reactively.
     fn badge_offset<O>(self, offset_fn: O) -> Self
     where
         O: Fn() -> Vec2 + 'static;

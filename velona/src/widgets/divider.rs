@@ -21,7 +21,7 @@ pub trait NewDividerExt {
         A: Fn() -> Axis + 'static;
     /// Sets the [divider thickness](Divider::set_thickness) reactively.
     ///
-    /// If the `thickness` function return [`Some`] [`Lenght`], it will use [`Divider::set_thickness`],
+    /// If the `thickness` function return [`Some`] [`Length`], it will use [`Divider::set_thickness`],
     /// if [`None`], it will call [`Divider::set_hairline`] instead.
     fn thickness<T>(self, thickness: T) -> Self
     where
@@ -42,31 +42,32 @@ pub trait NewDividerExt {
         D: Fn() -> Vec<Length> + 'static;
     /// Sets the `cap` used both for start and end _reactively_.
     ///
-    /// Use [`start_cap`] or [`end_cap`] to set different edge caps.
+    /// Use [`start_cap`](Self::start_cap) or [`ending_cap`](Self::ending_cap) to set different edge caps.
     ///
     /// Defaults to [`Cap::Butt`].
     ///
-    /// It is not recommended to use [`cap`] and [`start_cap`]/[`end_cap`] together.
+    /// It is not recommended to use [`cap`](Self::cap)
+    /// and [`start_cap`](Self::start_cap)/[`end_cap`](Self::ending_cap) together.
     fn cap<C>(self, cap: C) -> Self
     where
         C: Fn() -> Cap + 'static;
     /// Sets the starting `cap`.
     ///
-    /// Use [`cap`] to set the cap for both the start and the end.
+    /// Use [`cap`](Self::cap) to set the cap for both the start and the end.
     ///
     /// Defaults to [`Cap::Butt`].
     ///
-    /// It is not recommended to use [`start_cap`] and [`cap`] together.
+    /// It is not recommended to use [`start_cap`](Self::start_cap) and [`cap`](Self::cap) together.
     fn start_cap<C>(self, cap: C) -> Self
     where
         C: Fn() -> Cap + 'static;
     /// Sets the ending `cap`.
     ///
-    /// Use [`cap`] to set the cap for both the start and the end.
+    /// Use [`cap`](Self::cap) to set the cap for both the start and the end.
     ///
     /// Defaults to [`Cap::Butt`].
     ///
-    /// It is not recommended to use [`ending_cap`] and [`cap`] together.
+    /// It is not recommended to use [`ending_cap`](Self::ending_cap) and [`cap`](Self::cap) together.
     fn ending_cap<C>(self, cap: C) -> Self
     where
         C: Fn() -> Cap + 'static;

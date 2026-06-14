@@ -9,7 +9,7 @@
 //! - [ ] [`Canvas`](masonry::widgets::Canvas)
 //! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]
 //! - [x] [`CollapsePanel`](masonry::widgets::CollapsePanel)
-//! - [ ] [`DisclosureButton`](masonry::widgets::DisclosureButton)
+//! - [x] [`DisclosureButton`](masonry::widgets::DisclosureButton)
 //! - [ ] [`Divider`](masonry::widgets::Divider)
 //! - [ ] [`Flex`](masonry::widgets::Flex)
 //! - [ ] [`Grid`](masonry::widgets::Grid)
@@ -44,6 +44,7 @@ pub mod badged;
 pub mod button;
 pub mod checkbox;
 pub mod collapse_panel;
+pub mod disclosure_button;
 pub mod image;
 pub mod label;
 pub mod sized_box;

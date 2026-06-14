@@ -59,6 +59,9 @@ use crate::{
     window_event_handler::register_window_event_handler,
 };
 
+// TODO add a `use_reactive_widget` with `WidgetRef` instead.
+// TODO add a `use_reactive_widget_with_effect_val` with `WidgetRef` instead.
+// TODO add documentation for this trait and its methods.
 pub trait NewWidgetExt<W>
 where
     W: Widget + 'static,

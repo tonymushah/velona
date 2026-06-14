@@ -8,7 +8,7 @@
 //! - [x] [`Button`](masonry::widgets::Button)
 //! - [ ] [`Canvas`](masonry::widgets::Canvas)
 //! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]
-//! - [ ] [`CollapsePanel`](masonry::widgets::CollapsePanel)
+//! - [x] [`CollapsePanel`](masonry::widgets::CollapsePanel)
 //! - [ ] [`DisclosureButton`](masonry::widgets::DisclosureButton)
 //! - [ ] [`Divider`](masonry::widgets::Divider)
 //! - [ ] [`Flex`](masonry::widgets::Flex)

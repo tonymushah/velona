@@ -12,9 +12,6 @@ use crate::{
     widgets::{ReactiveSingleChildExt, SingleChildWidget},
 };
 
-#[cfg(doc)]
-use reactive_graph::effect::Effect;
-
 /// A [new](NewWidget) [`Divider`] trait extension.
 // TODO add example
 pub trait NewDividerExt {

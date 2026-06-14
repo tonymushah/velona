@@ -1,5 +1,5 @@
 use masonry::{
-    core::{NewWidget, Widget},
+    core::{NewWidget, Widget, WidgetMut},
     layout::Length,
     widgets::SizedBox,
 };
@@ -17,6 +17,8 @@ pub trait NewSizedBoxExt {
     ///
     /// If the function returns a [`NewWidget`], it will [update](SizedBox::set_child) the current child,
     /// if [`None`], the current child will be [removed](SizedBox::remove_child).
+    ///
+    /// If you want an non-[`Option`] version, use [`ReactiveSingleChildExt::child`].
     fn child_opt<Cf>(self, child_fn: Cf) -> Self
     where
         Cf: Fn() -> Option<AnyNewWidget> + 'static;
@@ -54,6 +56,9 @@ pub trait NewSizedBoxExt {
     {
         self.raw_height(move || Some(height_fn()))
     }
+    fn use_child_opt<F>(self, use_fn: F) -> Self
+    where
+        F: FnMut(Option<WidgetMut<'_, dyn Widget>>) + 'static;
 }
 
 impl NewSizedBoxExt for NewWidget<SizedBox> {
@@ -140,18 +145,32 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
         });
         self
     }
+
+    fn use_child_opt<F>(self, mut use_fn: F) -> Self
+    where
+        F: FnMut(Option<WidgetMut<'_, dyn Widget>>) + 'static,
+    {
+        self.use_reactive_widget_mut(move |mut this| {
+            use_fn(SizedBox::child_mut(&mut this));
+        })
+    }
 }
 
 impl SingleChildWidget for NewWidget<SizedBox> {
+    /// It worth noting that the `use_child_fn` might not re-run properly
+    /// if there are no child inside the [`SizedBox`].
+    ///
+    /// It is recommended to use [`NewSizedBoxExt::use_child_opt`], instead of this.
     fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
     where
         C: FnMut(masonry::core::WidgetMut<'_, dyn Widget>) + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            if let Some(child) = SizedBox::child_mut(&mut this) {
+        self.use_child_opt(move |maybe_child| {
+            if let Some(child) = maybe_child {
+                // This will fail to re-run hardly if there are no child inside.
                 use_child_fn(child);
             } else {
-                log::warn!("Not child for SizedBox #{}", this.id());
+                log::warn!("Not child for SizedBox");
             }
         })
     }

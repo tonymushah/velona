@@ -43,6 +43,7 @@ pub mod badge;
 pub mod badged;
 pub mod button;
 pub mod checkbox;
+pub mod collapse_panel;
 pub mod image;
 pub mod label;
 pub mod sized_box;

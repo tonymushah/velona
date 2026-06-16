@@ -11,7 +11,7 @@
 //! - [x] [`CollapsePanel`](masonry::widgets::CollapsePanel)
 //! - [x] [`DisclosureButton`](masonry::widgets::DisclosureButton)
 //! - [x] [`Divider`](masonry::widgets::Divider)
-//! - [ ] [`Flex`](masonry::widgets::Flex)
+//! - [x] [`Flex`](masonry::widgets::Flex)
 //! - [ ] [`Grid`](masonry::widgets::Grid)
 //! - [x] [`Image`](masonry::widgets::Image) in [`image`]
 //! - [ ] [`IndexedStack`](masonry::widgets::IndexedStack)
@@ -47,6 +47,7 @@ pub mod checkbox;
 pub mod collapse_panel;
 pub mod disclosure_button;
 pub mod divider;
+pub mod flex;
 pub mod image;
 pub mod label;
 pub mod sized_box;

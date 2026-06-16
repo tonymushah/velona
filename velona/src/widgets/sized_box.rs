@@ -1,7 +1,14 @@
-use masonry::{core::NewWidget, layout::Length, widgets::SizedBox};
+use masonry::{
+    core::{NewWidget, Widget, WidgetMut},
+    layout::Length,
+    widgets::SizedBox,
+};
 use reactive_graph::effect::Effect;
 
-use crate::{AnyNewWidget, NewWidgetExt};
+use crate::{
+    AnyNewWidget, NewWidgetExt,
+    widgets::{ReactiveSingleChildExt, SingleChildWidget},
+};
 
 pub trait NewSizedBoxExt {
     /// Set a "reactive" child for this [`SizedBox`].
@@ -10,17 +17,11 @@ pub trait NewSizedBoxExt {
     ///
     /// If the function returns a [`NewWidget`], it will [update](SizedBox::set_child) the current child,
     /// if [`None`], the current child will be [removed](SizedBox::remove_child).
+    ///
+    /// If you want an non-[`Option`] version, use [`ReactiveSingleChildExt::child`].
     fn child_opt<Cf>(self, child_fn: Cf) -> Self
     where
         Cf: Fn() -> Option<AnyNewWidget> + 'static;
-    /// Similar to [`child`](Self::child_opt).
-    fn child<Cf>(self, child_fn: Cf) -> Self
-    where
-        Cf: Fn() -> AnyNewWidget + 'static,
-        Self: Sized,
-    {
-        self.child_opt(move || Some(child_fn()))
-    }
     /// Set a reactive width for this [`SizedBox`].
     ///
     /// The `width_fn` will run inside a [`Effect::new`],
@@ -55,6 +56,9 @@ pub trait NewSizedBoxExt {
     {
         self.raw_height(move || Some(height_fn()))
     }
+    fn use_child_opt<F>(self, use_fn: F) -> Self
+    where
+        F: FnMut(Option<WidgetMut<'_, dyn Widget>>) + 'static;
 }
 
 impl NewSizedBoxExt for NewWidget<SizedBox> {
@@ -140,5 +144,43 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
             }
         });
         self
+    }
+
+    fn use_child_opt<F>(self, mut use_fn: F) -> Self
+    where
+        F: FnMut(Option<WidgetMut<'_, dyn Widget>>) + 'static,
+    {
+        self.use_reactive_widget_mut(move |mut this| {
+            use_fn(SizedBox::child_mut(&mut this));
+        })
+    }
+}
+
+impl SingleChildWidget for NewWidget<SizedBox> {
+    /// It worth noting that the `use_child_fn` might not re-run properly
+    /// if there are no child inside the [`SizedBox`].
+    ///
+    /// It is recommended to use [`NewSizedBoxExt::use_child_opt`], instead of this.
+    fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
+    where
+        C: FnMut(masonry::core::WidgetMut<'_, dyn Widget>) + 'static,
+    {
+        self.use_child_opt(move |maybe_child| {
+            if let Some(child) = maybe_child {
+                // This will fail to re-run hardly if there are no child inside.
+                use_child_fn(child);
+            } else {
+                log::warn!("Not child for SizedBox");
+            }
+        })
+    }
+}
+
+impl ReactiveSingleChildExt for NewWidget<SizedBox> {
+    fn child<Cf>(self, child_fn: Cf) -> Self
+    where
+        Cf: Fn() -> AnyNewWidget + 'static,
+    {
+        self.child_opt(move || Some(child_fn()))
     }
 }

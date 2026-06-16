@@ -1,5 +1,5 @@
 use masonry::{
-    core::{NewWidget, PointerButton, Widget},
+    core::{NewWidget, Widget},
     kurbo::Point,
     layout::Length,
     palette::css::WHITE,
@@ -13,7 +13,10 @@ use reactive_graph::{
     signal::{WriteSignal, signal},
     traits::{Get, Update},
 };
-use velona::{NewWidgetExt, components::label, window::builder::WindowBuilder};
+use velona::{
+    NewWidgetExt, components::label, widgets::button::NewButtonPressEventsExt,
+    window::builder::WindowBuilder,
+};
 
 fn button<U>(set_count: WriteSignal<u32>, update: U, text: &'static str) -> NewWidget<Button>
 where
@@ -21,13 +24,8 @@ where
 {
     Button::new(Label::new(text).prepare())
         .prepare()
-        .register_handler(move |press| {
-            let Some(btt) = press.button.as_ref() else {
-                return;
-            };
-            if matches!(btt, PointerButton::Primary) {
-                set_count.update(&update);
-            }
+        .on_primary(move || {
+            set_count.update(&update);
         })
         .append_static_propeperty(Padding::from_vh(Length::px(3.0), Length::px(8.0)))
         .append_static_propeperty(CornerRadius::all(Length::px(8.0)))

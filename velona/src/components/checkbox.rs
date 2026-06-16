@@ -7,7 +7,7 @@ use crate::widgets::checkbox::NewCheckboxExt;
 
 /// Create a new reactive checkbox.
 ///
-/// This function just call [`NewChecboxExt::new`], _since `<NewWidget<Checkbox> as NewCheckboxExt>::new` is too long_.
+/// This function just call [`NewCheckboxExt::new`], _since `<NewWidget<Checkbox> as NewCheckboxExt>::new` is too long_.
 pub fn checkbox<Cf, Tf, T>(checked: Cf, text: Tf) -> NewWidget<Checkbox>
 where
     Cf: Fn() -> bool + 'static,

@@ -17,4 +17,5 @@ modules! {
     sized_box,
     image,
     label,
+    badge,
 }

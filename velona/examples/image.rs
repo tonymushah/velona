@@ -89,6 +89,7 @@ fn new_view() -> AnyNewWidget {
         .erased()
 }
 
+#[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
     env_logger::init();
     let runtime = tokio::runtime::Builder::new_multi_thread()

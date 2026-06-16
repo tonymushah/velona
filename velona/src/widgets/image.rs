@@ -5,7 +5,7 @@ use masonry::{
 };
 use reactive_graph::effect::Effect;
 
-use crate::NewWidgetExt;
+use crate::{NewWidgetExt, utils::ConsumeResult};
 
 /// A [`NewWidget<Image>`] trait extension
 ///
@@ -42,13 +42,10 @@ impl NewImageExt for NewWidget<Image> {
         let wref = self.create_velona_ref().disarm();
         Effect::new(move || {
             let new_image = img();
-            let _ = wref
-                .edit_local_now(|mut widget_mut| {
-                    Image::set_image_data(&mut widget_mut, new_image);
-                })
-                .inspect_err(|err| {
-                    log::error!("cannot edit image data => {err}");
-                });
+            wref.edit_local_now(|mut widget_mut| {
+                Image::set_image_data(&mut widget_mut, new_image);
+            })
+            .consume_with_log_err();
         });
         self
     }
@@ -60,13 +57,10 @@ impl NewImageExt for NewWidget<Image> {
         let wref = self.create_velona_ref().disarm();
         Effect::new(move || {
             let decorative = is_decorative();
-            let _ = wref
-                .edit_local_now(|mut widget_mut| {
-                    Image::set_decorative(&mut widget_mut, decorative);
-                })
-                .inspect_err(|err| {
-                    log::error!("cannot edit image data => {err}");
-                });
+            wref.edit_local_now(|mut widget_mut| {
+                Image::set_decorative(&mut widget_mut, decorative);
+            })
+            .consume_with_log_err();
         });
         self
     }
@@ -79,13 +73,10 @@ impl NewImageExt for NewWidget<Image> {
         let wref = self.create_velona_ref().disarm();
         Effect::new(move || {
             let alt_text = alt_text();
-            let _ = wref
-                .edit_local_now(|mut widget_mut| {
-                    Image::set_alt_text(&mut widget_mut, alt_text);
-                })
-                .inspect_err(|err| {
-                    log::error!("cannot edit image data => {err}");
-                });
+            wref.edit_local_now(|mut widget_mut| {
+                Image::set_alt_text(&mut widget_mut, alt_text);
+            })
+            .consume_with_log_err();
         });
         self
     }

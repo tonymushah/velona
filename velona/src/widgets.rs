@@ -12,7 +12,7 @@
 //! - [x] [`DisclosureButton`](masonry::widgets::DisclosureButton)
 //! - [x] [`Divider`](masonry::widgets::Divider)
 //! - [x] [`Flex`](masonry::widgets::Flex)
-//! - [ ] [`Grid`](masonry::widgets::Grid)
+//! - [x] [`Grid`](masonry::widgets::Grid)
 //! - [x] [`Image`](masonry::widgets::Image) in [`image`]
 //! - [ ] [`IndexedStack`](masonry::widgets::IndexedStack)
 //! - [x] [`Label`](masonry::widgets::Label) in [`label`]
@@ -48,6 +48,7 @@ pub mod collapse_panel;
 pub mod disclosure_button;
 pub mod divider;
 pub mod flex;
+pub mod grid;
 pub mod image;
 pub mod label;
 pub mod sized_box;

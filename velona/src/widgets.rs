@@ -50,6 +50,7 @@ pub mod divider;
 pub mod flex;
 pub mod grid;
 pub mod image;
+pub mod indexed_stack;
 pub mod label;
 pub mod sized_box;
 

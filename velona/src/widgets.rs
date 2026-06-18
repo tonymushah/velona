@@ -14,7 +14,7 @@
 //! - [x] [`Flex`](masonry::widgets::Flex)
 //! - [x] [`Grid`](masonry::widgets::Grid)
 //! - [x] [`Image`](masonry::widgets::Image) in [`image`]
-//! - [ ] [`IndexedStack`](masonry::widgets::IndexedStack)
+//! - [x] [`IndexedStack`](masonry::widgets::IndexedStack)
 //! - [x] [`Label`](masonry::widgets::Label) in [`label`]
 //! - [ ] [`Pagination`](masonry::widgets::Pagination)
 //! - [ ] [`Passthrough`](masonry::widgets::Passthrough)
@@ -50,6 +50,7 @@ pub mod divider;
 pub mod flex;
 pub mod grid;
 pub mod image;
+pub mod indexed_stack;
 pub mod label;
 pub mod sized_box;
 

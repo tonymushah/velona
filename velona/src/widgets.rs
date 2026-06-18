@@ -48,6 +48,7 @@ pub mod collapse_panel;
 pub mod disclosure_button;
 pub mod divider;
 pub mod flex;
+pub mod grid;
 pub mod image;
 pub mod label;
 pub mod sized_box;

@@ -16,7 +16,7 @@
 //! - [x] [`Image`](masonry::widgets::Image) in [`image`]
 //! - [x] [`IndexedStack`](masonry::widgets::IndexedStack)
 //! - [x] [`Label`](masonry::widgets::Label) in [`label`]
-//! - [ ] [`Pagination`](masonry::widgets::Pagination)
+//! - [x] [`Pagination`](masonry::widgets::Pagination)
 //! - [ ] [`Passthrough`](masonry::widgets::Passthrough)
 //! - [ ] [`Portal`](masonry::widgets::Portal)
 //! - [ ] [`ProgressBar`](masonry::widgets::ProgressBar)
@@ -52,6 +52,7 @@ pub mod grid;
 pub mod image;
 pub mod indexed_stack;
 pub mod label;
+pub mod pagination;
 pub mod sized_box;
 
 use std::{any::type_name, marker::PhantomData, thread};

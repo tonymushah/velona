@@ -16,7 +16,7 @@
 //! - [x] [`Image`](masonry::widgets::Image) in [`image`]
 //! - [x] [`IndexedStack`](masonry::widgets::IndexedStack)
 //! - [x] [`Label`](masonry::widgets::Label) in [`label`]
-//! - [ ] [`Pagination`](masonry::widgets::Pagination)
+//! - [x] [`Pagination`](masonry::widgets::Pagination)
 //! - [ ] [`Passthrough`](masonry::widgets::Passthrough)
 //! - [ ] [`Portal`](masonry::widgets::Portal)
 //! - [ ] [`ProgressBar`](masonry::widgets::ProgressBar)

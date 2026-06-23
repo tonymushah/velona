@@ -262,6 +262,7 @@ pub trait TypedSingleChildWidget {
     fn use_child<C>(self, use_child_fn: C) -> Self
     where
         C: FnMut(WidgetMut<'_, Self::Child>) + 'static;
+    // TODO add a set_child function
 }
 
 impl<T> SingleChildWidget for T

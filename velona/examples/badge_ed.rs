@@ -98,7 +98,7 @@ fn towa(TowaProps { show }: TowaProps) -> AnyNewWidget {
                         ImageState::Loading => SizedBox::new(
                             Spinner::default()
                                 .prepare()
-                                .append_static_propeperty(ContentColor::new(VIOLET)),
+                                .static_propeperty(ContentColor::new(VIOLET)),
                         )
                         .height(Length::px(50.0))
                         .width(Length::px(50.0))
@@ -156,16 +156,16 @@ fn badge_placement(set_placement: WriteSignal<BadgePlacement>) -> AnyNewWidget {
                         .collect(),
                 )
                 .prepare()
-                .register_handler(move |changes| {
+                .on(move |changes| {
                     if let Ok(align) = changes.selected_content.parse::<BadgePlacement>() {
                         set_placement.set(align);
                     }
                 })
-                .append_static_propeperty(BorderColor::new(BLACK))
-                .append_static_propeperty(BorderWidth::all(Length::px(3.0)))
-                .append_static_propeperty(CornerRadius::all(Length::px(8.0)))
-                .append_static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
-                .append_static_propeperty(Background::Color(WHITE_SMOKE)),
+                .static_propeperty(BorderColor::new(BLACK))
+                .static_propeperty(BorderWidth::all(Length::px(3.0)))
+                .static_propeperty(CornerRadius::all(Length::px(8.0)))
+                .static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
+                .static_propeperty(Background::Color(WHITE_SMOKE)),
             )
             .prepare(),
         )
@@ -213,11 +213,11 @@ fn main_view() -> AnyNewWidget {
                 .on_primary(move || {
                     set_count.update(|count| *count += 1);
                 })
-                .append_static_propeperty(Background::Color(WHEAT))
-                .append_static_propeperty(BorderColor::new(BLACK))
-                .append_static_propeperty(BorderWidth::all(Length::px(3.0)))
-                .append_static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
-                .append_static_propeperty(CornerRadius::all(Length::px(3.0))),
+                .static_propeperty(Background::Color(WHEAT))
+                .static_propeperty(BorderColor::new(BLACK))
+                .static_propeperty(BorderWidth::all(Length::px(3.0)))
+                .static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
+                .static_propeperty(CornerRadius::all(Length::px(3.0))),
                 None,
             )
             .prepare()
@@ -244,12 +244,12 @@ fn main_view() -> AnyNewWidget {
                     should_show_towa.set(true);
                 })
                 // Good luck on figuring what it is :)
-                .append_static_propeperty(Background::Color(AlphaColor::from_rgb8(
+                .static_propeperty(Background::Color(AlphaColor::from_rgb8(
                     0xff_u8, 0x78_u8, 0xff_u8,
                 )))
-                .append_static_propeperty(BorderColor::new(BLACK))
-                .append_static_propeperty(BorderWidth::all(Length::px(3.0)))
-                .append_static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0))),
+                .static_propeperty(BorderColor::new(BLACK))
+                .static_propeperty(BorderWidth::all(Length::px(3.0)))
+                .static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0))),
         )
         // Towa!!!
         .with_fixed(towa(TowaProps {

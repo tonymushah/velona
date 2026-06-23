@@ -62,19 +62,16 @@ fn main_view() -> AnyNewWidget {
                                 .collect(),
                         )
                         .prepare()
-                        .register_handler(move |changes| {
+                        .on(move |changes| {
                             if let Ok(align) = changes.selected_content.parse::<Alignment>() {
                                 set_align.set(align);
                             }
                         })
-                        .append_static_propeperty(BorderColor::new(BLACK))
-                        .append_static_propeperty(BorderWidth::all(Length::px(3.0)))
-                        .append_static_propeperty(CornerRadius::all(Length::px(8.0)))
-                        .append_static_propeperty(Padding::from_vh(
-                            Length::px(4.0),
-                            Length::px(8.0),
-                        ))
-                        .append_static_propeperty(Background::Color(WHITE_SMOKE)),
+                        .static_propeperty(BorderColor::new(BLACK))
+                        .static_propeperty(BorderWidth::all(Length::px(3.0)))
+                        .static_propeperty(CornerRadius::all(Length::px(8.0)))
+                        .static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
+                        .static_propeperty(Background::Color(WHITE_SMOKE)),
                     )
                     .prepare()
                     .erased(),

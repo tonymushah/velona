@@ -27,18 +27,18 @@ where
         .on_primary(move || {
             set_count.update(&update);
         })
-        .append_static_propeperty(Padding::from_vh(Length::px(3.0), Length::px(8.0)))
-        .append_static_propeperty(CornerRadius::all(Length::px(8.0)))
-        .append_static_propeperty(Background::Color(WHITE))
+        .static_propeperty(Padding::from_vh(Length::px(3.0), Length::px(8.0)))
+        .static_propeperty(CornerRadius::all(Length::px(8.0)))
+        .static_propeperty(Background::Color(WHITE))
         // .append_static_propeperty(ActiveBackground(Background::Color(WHITE_SMOKE)))
-        .append_static_propeperty(BorderColor::new(
+        .static_propeperty(BorderColor::new(
             masonry::peniko::color::AlphaColor::from_rgb8(255, 0, 41),
         ))
         // .append_static_propeperty(HoveredBorderColor(BorderColor::new(
         //     masonry::peniko::color::AlphaColor::from_rgb8(255, 0, 41),
         // )))
-        .append_static_propeperty(BorderWidth::all(Length::px(3.0)))
-        .append_static_propeperty(BoxShadow::new(
+        .static_propeperty(BorderWidth::all(Length::px(3.0)))
+        .static_propeperty(BoxShadow::new(
             masonry::peniko::color::AlphaColor::from_rgb8(255, 0, 41),
             Point::new(0.0, 4.0),
         ))
@@ -58,7 +58,7 @@ fn view() -> NewWidget<dyn Widget + 'static> {
             .with_fixed_spacer(DEFAULT_SPACER_LEN)
             .with_fixed(
                 label(move || format!("Count: {}", count.get()))
-                    .append_static_propeperty(ContentColor::new(WHITE)),
+                    .static_propeperty(ContentColor::new(WHITE)),
             )
             .with_fixed_spacer(DEFAULT_SPACER_LEN)
             .with_fixed(button(

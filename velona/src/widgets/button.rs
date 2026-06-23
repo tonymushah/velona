@@ -16,7 +16,7 @@ fn register_btn_ev<H>(
 where
     H: Fn() + 'static,
 {
-    btn.register_handler(move |ev| {
+    btn.on(move |ev| {
         if ev.button == ptr_btn {
             handler()
         }

@@ -20,7 +20,7 @@
 //! - [x] [`Passthrough`](masonry::widgets::Passthrough)
 //! - [x] [`Portal`](masonry::widgets::Portal)
 //! - [x] [`ProgressBar`](masonry::widgets::ProgressBar)
-//! - [ ] [`Prose`](masonry::widgets::Prose)
+//! - [x] [`Prose`](masonry::widgets::Prose)
 //! - [ ] [`Radio`](masonry::widgets::RadioButton)
 //! - [ ] [`ResizeObserver`](masonry::widgets::ResizeObserver)
 //! - [ ] [`ScrollBar`](masonry::widgets::ScrollBar)

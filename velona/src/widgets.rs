@@ -39,6 +39,7 @@
 //! - [ ] [`VirtualScroll`](masonry::widgets::VirtualScroll)
 //! - [ ] [`ZStack`](masonry::widgets::ZStack)
 // TODO add [new](NewWidget) for `New*Ext` widget trait doc comments
+// TODO add doc comment for each module
 pub mod align;
 pub mod badge;
 pub mod badged;

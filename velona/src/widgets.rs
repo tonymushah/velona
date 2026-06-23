@@ -19,8 +19,8 @@
 //! - [x] [`Pagination`](masonry::widgets::Pagination)
 //! - [x] [`Passthrough`](masonry::widgets::Passthrough)
 //! - [x] [`Portal`](masonry::widgets::Portal)
-//! - [ ] [`ProgressBar`](masonry::widgets::ProgressBar)
-//! - [ ] [`Prose`](masonry::widgets::Prose)
+//! - [x] [`ProgressBar`](masonry::widgets::ProgressBar)
+//! - [x] [`Prose`](masonry::widgets::Prose)
 //! - [ ] [`Radio`](masonry::widgets::RadioButton)
 //! - [ ] [`ResizeObserver`](masonry::widgets::ResizeObserver)
 //! - [ ] [`ScrollBar`](masonry::widgets::ScrollBar)
@@ -39,6 +39,7 @@
 //! - [ ] [`VirtualScroll`](masonry::widgets::VirtualScroll)
 //! - [ ] [`ZStack`](masonry::widgets::ZStack)
 // TODO add [new](NewWidget) for `New*Ext` widget trait doc comments
+// TODO add doc comment for each module
 pub mod align;
 pub mod badge;
 pub mod badged;
@@ -55,6 +56,7 @@ pub mod label;
 pub mod pagination;
 pub mod portal;
 pub mod progress;
+pub mod prose;
 pub mod sized_box;
 
 use std::{any::type_name, marker::PhantomData, thread};

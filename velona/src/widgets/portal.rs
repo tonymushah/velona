@@ -4,6 +4,12 @@ use masonry::{
     kurbo::Point,
     widgets::{Portal, ScrollBar},
 };
+use reactive_graph::effect::Effect;
+
+use crate::{
+    utils::ConsumeResult,
+    widgets::{ReactiveSingleTypedChildExt, TypedSingleChildWidget},
+};
 
 use super::NewWidgetExt;
 
@@ -129,4 +135,38 @@ where
     }
 }
 
-// TODO implement [`TypedSingleChildWidget`]
+impl<W> TypedSingleChildWidget for NewWidget<Portal<W>>
+where
+    W: Widget + 'static,
+{
+    type Child = W;
+
+    fn use_child<C>(self, mut use_child_fn: C) -> Self
+    where
+        C: FnMut(WidgetMut<'_, Self::Child>) + 'static,
+    {
+        self.use_reactive_widget_mut(move |mut this| use_child_fn(Portal::child_mut(&mut this)))
+    }
+}
+
+impl<W> ReactiveSingleTypedChildExt for NewWidget<Portal<W>>
+where
+    W: Widget + 'static,
+{
+    type Child = W;
+    fn child<Cf>(self, child_fn: Cf) -> Self
+    where
+        Cf: Fn() -> NewWidget<Self::Child> + 'static,
+    {
+        let w_ref = self.create_velona_ref();
+        Effect::new(move || {
+            let new_child = child_fn();
+            w_ref
+                .edit_local_now(|mut this| {
+                    Portal::set_child(&mut this, new_child);
+                })
+                .consume_with_log_err();
+        });
+        self
+    }
+}

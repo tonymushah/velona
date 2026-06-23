@@ -19,7 +19,7 @@
 //! - [x] [`Pagination`](masonry::widgets::Pagination)
 //! - [x] [`Passthrough`](masonry::widgets::Passthrough)
 //! - [x] [`Portal`](masonry::widgets::Portal)
-//! - [ ] [`ProgressBar`](masonry::widgets::ProgressBar)
+//! - [x] [`ProgressBar`](masonry::widgets::ProgressBar)
 //! - [ ] [`Prose`](masonry::widgets::Prose)
 //! - [ ] [`Radio`](masonry::widgets::RadioButton)
 //! - [ ] [`ResizeObserver`](masonry::widgets::ResizeObserver)

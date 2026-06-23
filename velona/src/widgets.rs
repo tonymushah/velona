@@ -18,7 +18,7 @@
 //! - [x] [`Label`](masonry::widgets::Label) in [`label`]
 //! - [x] [`Pagination`](masonry::widgets::Pagination)
 //! - [x] [`Passthrough`](masonry::widgets::Passthrough)
-//! - [ ] [`Portal`](masonry::widgets::Portal)
+//! - [x] [`Portal`](masonry::widgets::Portal)
 //! - [ ] [`ProgressBar`](masonry::widgets::ProgressBar)
 //! - [ ] [`Prose`](masonry::widgets::Prose)
 //! - [ ] [`Radio`](masonry::widgets::RadioButton)
@@ -54,6 +54,7 @@ pub mod indexed_stack;
 pub mod label;
 pub mod pagination;
 pub mod portal;
+pub mod progress;
 pub mod sized_box;
 
 use std::{any::type_name, marker::PhantomData, thread};

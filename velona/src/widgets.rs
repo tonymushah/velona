@@ -77,17 +77,26 @@ pub trait NewWidgetExt<W>
 where
     W: Widget + 'static,
 {
+    /// Use [`WidgetMut`] inside an [`Effect`] with a value.
+    ///
+    /// Since its runs inside an [effect](Effect), any signal changes (subscription) will (re-)run the `fun`.
+    ///
+    /// The return value might useful if you want to track values between re-runs.
     fn use_reactive_widget_mut_with_effect_val<F, V>(self, fun: F) -> Self
     where
         F: FnMut(WidgetMut<'_, W>, Option<V>) -> Option<V> + 'static,
         V: 'static;
+    /// Very similar to [`Self::use_reactive_widget_mut_with_effect_val`],
+    /// but doesn't require a return value.
     fn use_reactive_widget_mut<F>(self, fun: F) -> Self
     where
         F: FnMut(WidgetMut<'_, W>) + 'static;
 
+    /// Listen to the [`Widget::Action`]
     fn on<F>(self, fun: F) -> Self
     where
         F: Fn(&W::Action) + 'static;
+    /// Set a [widget](Widget) [property](Property) reactively.
     fn property<F, P>(self, prop: F) -> Self
     where
         F: Fn() -> P + 'static,
@@ -155,6 +164,8 @@ where
         );
         self
     }
+    /// It is worth mentioning that the `prop` function will be called immediately (inside an [`untrack`]) to set the property beforehand.
+    /// After that, it will just passed inside a [`use_reactive_widget_mut`](Self::use_reactive_widget_mut).
     fn property<F, P>(mut self, prop: F) -> Self
     where
         F: Fn() -> P + 'static,

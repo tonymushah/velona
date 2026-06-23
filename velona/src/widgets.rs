@@ -54,6 +54,7 @@ pub mod indexed_stack;
 pub mod label;
 pub mod pagination;
 pub mod portal;
+pub mod progress;
 pub mod sized_box;
 
 use std::{any::type_name, marker::PhantomData, thread};

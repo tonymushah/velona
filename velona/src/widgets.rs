@@ -85,7 +85,7 @@ where
     where
         F: FnMut(WidgetMut<'_, W>) + 'static;
 
-    fn register_handler<F>(self, fun: F) -> Self
+    fn on<F>(self, fun: F) -> Self
     where
         F: Fn(&W::Action) + 'static;
     fn property<F, P>(self, prop: F) -> Self
@@ -94,7 +94,7 @@ where
         P: Property,
         W: HasProperty<P>;
     /// Use [`property`](Self::property) for reactive values
-    fn append_static_propeperty<P>(self, prop: P) -> Self
+    fn static_propeperty<P>(self, prop: P) -> Self
     where
         P: Property,
         W: HasProperty<P>;
@@ -139,7 +139,7 @@ where
             None
         })
     }
-    fn register_handler<F>(self, fun: F) -> Self
+    fn on<F>(self, fun: F) -> Self
     where
         F: Fn(&<W as Widget>::Action) + 'static,
     {
@@ -168,7 +168,7 @@ where
     }
 
     // TODO remove this
-    fn append_static_propeperty<P>(mut self, prop: P) -> Self
+    fn static_propeperty<P>(mut self, prop: P) -> Self
     where
         P: Property,
         W: HasProperty<P>,

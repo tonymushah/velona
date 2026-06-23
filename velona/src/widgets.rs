@@ -202,8 +202,7 @@ pub trait SingleChildWidget {
     fn use_child_erased<C>(self, use_child_fn: C) -> Self
     where
         C: FnMut(WidgetMut<'_, dyn Widget>) + 'static;
-    // TODO rename to `use_child_casted`
-    fn use_child<C, W>(self, mut use_child_fn: C) -> Self
+    fn use_child_casted<C, W>(self, mut use_child_fn: C) -> Self
     where
         C: FnMut(WidgetMut<'_, W>) + 'static,
         W: Widget + 'static,

@@ -53,6 +53,7 @@ pub mod image;
 pub mod indexed_stack;
 pub mod label;
 pub mod pagination;
+pub mod portal;
 pub mod sized_box;
 
 use std::{any::type_name, marker::PhantomData, thread};
@@ -201,7 +202,7 @@ pub trait SingleChildWidget {
     fn use_child_erased<C>(self, use_child_fn: C) -> Self
     where
         C: FnMut(WidgetMut<'_, dyn Widget>) + 'static;
-    fn use_child<C, W>(self, mut use_child_fn: C) -> Self
+    fn use_child_casted<C, W>(self, mut use_child_fn: C) -> Self
     where
         C: FnMut(WidgetMut<'_, W>) + 'static,
         W: Widget + 'static,
@@ -225,11 +226,14 @@ mod single_impl {
     use super::masonry_widgets::*;
     use super::{NewWidgetExt, SingleChildWidget};
     use masonry_core::core::{NewWidget, Widget, WidgetMut};
+    #[cfg(doc)]
+    use reactive_graph::effect::Effect;
 
     macro_rules! impl_single_widget {
         ($($widget:ty,)*) => {
             $(
                 impl SingleChildWidget for NewWidget<$widget> {
+                    /// It is worth mentioning that the `use_child_fn` will run inside an [`Effect`].
                     fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
                     where
                         C: FnMut(WidgetMut<'_, dyn Widget>) + 'static
@@ -334,4 +338,17 @@ mod reactive_child_impl {
         ResizeObserver,
         // VirtualScroll,
     );
+}
+
+/// Allows you to [`Widget`] `set_child` reactively.
+///
+/// Unlike [`ReactiveSingleChildExt`], this trait is only implemented for [`Widget`]s that has a **typed** `set_child`.
+// TODO implement for [`Portal`](masonry::widgets::Portal)
+// TODO implement for [`Selector`](masonry::widgets::Selector)
+// TODO implement for [`SelectorItem`](masonry::widgets::SelectorItem)
+pub trait ReactiveSingleTypedChildExt {
+    type Child: Widget + 'static;
+    fn child<Cf>(self, child_fn: Cf) -> Self
+    where
+        Cf: Fn() -> NewWidget<Self::Child> + 'static;
 }

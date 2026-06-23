@@ -53,6 +53,7 @@ pub mod image;
 pub mod indexed_stack;
 pub mod label;
 pub mod pagination;
+pub mod portal;
 pub mod sized_box;
 
 use std::{any::type_name, marker::PhantomData, thread};
@@ -201,6 +202,7 @@ pub trait SingleChildWidget {
     fn use_child_erased<C>(self, use_child_fn: C) -> Self
     where
         C: FnMut(WidgetMut<'_, dyn Widget>) + 'static;
+    // TODO rename to `use_child_casted`
     fn use_child<C, W>(self, mut use_child_fn: C) -> Self
     where
         C: FnMut(WidgetMut<'_, W>) + 'static,

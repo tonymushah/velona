@@ -18,7 +18,7 @@
 //! - [x] [`Label`](masonry::widgets::Label) in [`label`]
 //! - [x] [`Pagination`](masonry::widgets::Pagination)
 //! - [x] [`Passthrough`](masonry::widgets::Passthrough)
-//! - [ ] [`Portal`](masonry::widgets::Portal)
+//! - [x] [`Portal`](masonry::widgets::Portal)
 //! - [ ] [`ProgressBar`](masonry::widgets::ProgressBar)
 //! - [ ] [`Prose`](masonry::widgets::Prose)
 //! - [ ] [`Radio`](masonry::widgets::RadioButton)

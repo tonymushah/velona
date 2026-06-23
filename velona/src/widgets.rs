@@ -225,11 +225,14 @@ mod single_impl {
     use super::masonry_widgets::*;
     use super::{NewWidgetExt, SingleChildWidget};
     use masonry_core::core::{NewWidget, Widget, WidgetMut};
+    #[cfg(doc)]
+    use reactive_graph::effect::Effect;
 
     macro_rules! impl_single_widget {
         ($($widget:ty,)*) => {
             $(
                 impl SingleChildWidget for NewWidget<$widget> {
+                    /// It is worth mentioning that the `use_child_fn` will run inside an [`Effect`].
                     fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
                     where
                         C: FnMut(WidgetMut<'_, dyn Widget>) + 'static

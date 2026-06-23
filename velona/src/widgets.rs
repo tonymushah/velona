@@ -266,7 +266,6 @@ pub trait TypedSingleChildWidget {
     fn use_child<C>(self, use_child_fn: C) -> Self
     where
         C: FnMut(WidgetMut<'_, Self::Child>) + 'static;
-    // TODO add a set_child function
 }
 
 impl<T> SingleChildWidget for T
@@ -339,4 +338,17 @@ mod reactive_child_impl {
         ResizeObserver,
         // VirtualScroll,
     );
+}
+
+/// Allows you to [`Widget`] `set_child` reactively.
+///
+/// Unlike [`ReactiveSingleChildExt`], this trait is only implemented for [`Widget`]s that has a **typed** `set_child`.
+// TODO implement for [`Portal`](masonry::widgets::Portal)
+// TODO implement for [`Selector`](masonry::widgets::Selector)
+// TODO implement for [`SelectorItem`](masonry::widgets::SelectorItem)
+pub trait ReactiveSingleTypedChildExt {
+    type Child: Widget + 'static;
+    fn child<Cf>(self, child_fn: Cf) -> Self
+    where
+        Cf: Fn() -> NewWidget<Self::Child> + 'static;
 }

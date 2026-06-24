@@ -9,6 +9,7 @@ use reactive_graph::effect::Effect;
 use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`RadioButton`] extension trait.
+// TODO add example
 pub trait NewRadioButtonExt {
     /// [Check or uncheck the box](RadioButton::set_checked) reactively.
     fn checked<C>(self, checked: C) -> Self

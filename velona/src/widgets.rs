@@ -21,7 +21,7 @@
 //! - [x] [`Portal`](masonry::widgets::Portal)
 //! - [x] [`ProgressBar`](masonry::widgets::ProgressBar)
 //! - [x] [`Prose`](masonry::widgets::Prose)
-//! - [ ] [`Radio`](masonry::widgets::RadioButton)
+//! - [x] [`Radio`](masonry::widgets::RadioButton)
 //! - [ ] [`ResizeObserver`](masonry::widgets::ResizeObserver)
 //! - [ ] [`ScrollBar`](masonry::widgets::ScrollBar)
 //! - [ ] [`Selector`](masonry::widgets::Selector)

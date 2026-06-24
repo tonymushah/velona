@@ -18,4 +18,5 @@ modules! {
     image,
     label,
     badge,
+    radio_button,
 }

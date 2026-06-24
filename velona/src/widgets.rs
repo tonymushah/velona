@@ -21,7 +21,7 @@
 //! - [x] [`Portal`](masonry::widgets::Portal)
 //! - [x] [`ProgressBar`](masonry::widgets::ProgressBar)
 //! - [x] [`Prose`](masonry::widgets::Prose)
-//! - [ ] [`Radio`](masonry::widgets::RadioButton)
+//! - [x] [`Radio`](masonry::widgets::RadioButton)
 //! - [ ] [`ResizeObserver`](masonry::widgets::ResizeObserver)
 //! - [ ] [`ScrollBar`](masonry::widgets::ScrollBar)
 //! - [ ] [`Selector`](masonry::widgets::Selector)
@@ -57,6 +57,7 @@ pub mod pagination;
 pub mod portal;
 pub mod progress;
 pub mod prose;
+pub mod radio;
 pub mod sized_box;
 
 use std::{any::type_name, marker::PhantomData, thread};

@@ -23,7 +23,7 @@
 //! - [x] [`Prose`](masonry::widgets::Prose)
 //! - [x] [`Radio`](masonry::widgets::RadioButton)
 //! - [x] [`ResizeObserver`](masonry::widgets::ResizeObserver)
-//! - [ ] [`ScrollBar`](masonry::widgets::ScrollBar)
+//! - [x] [`ScrollBar`](masonry::widgets::ScrollBar)
 //! - [ ] [`Selector`](masonry::widgets::Selector)
 //! - [ ] [`SelectorItem`](masonry::widgets::Selector)
 //! - [x] [`SizedBox`](masonry::widgets::SizedBox)

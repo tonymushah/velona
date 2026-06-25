@@ -127,7 +127,9 @@ where
                 match signal {
                     masonry::app::RenderRootSignal::Action(any_debug, widget_id) => {
                         match window.window_event_handler.try_borrow() {
-                            Ok(evs) => evs.handle_event(widget_id, &any_debug),
+                            Ok(evs) => window
+                                .create_children_owner()
+                                .with(|| evs.handle_event(widget_id, &any_debug)),
                             Err(_) => {
                                 log::error!(
                                     "Cannot handle event of {} with {:?}",

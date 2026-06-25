@@ -14,7 +14,9 @@ use reactive_graph::{
     traits::{Get, Update},
 };
 use velona::{
-    NewWidgetExt, components::label, widgets::button::NewButtonPressEventsExt,
+    NewWidgetExt,
+    components::label,
+    widgets::{button::NewButtonPressEventsExt, resize_observer::BindResizeObserver},
     window::builder::WindowBuilder,
 };
 
@@ -75,6 +77,13 @@ fn view() -> NewWidget<dyn Widget + 'static> {
             .prepare(),
     )
     .prepare()
+    .on_resize(|resize_ctx| {
+        log::info!("resize `border_box` ... {:?}", resize_ctx.ctx.border_box());
+        log::info!(
+            "resize `content_box` ... {:?}",
+            resize_ctx.ctx.content_box()
+        );
+    })
     .erased()
 }
 

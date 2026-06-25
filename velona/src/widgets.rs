@@ -94,7 +94,7 @@ where
     where
         F: FnMut(WidgetMut<'_, W>) + 'static;
 
-    /// Very similar to [`on`](Self::on) but uses a [`&self`] instead of [`self`].
+    /// Very similar to [`on`](Self::on) but uses a [`&self`](self) instead of [`self`].
     /// _You get the idea._
     fn on_ref_self<F>(&self, fun: F)
     where

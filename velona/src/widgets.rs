@@ -59,6 +59,7 @@ pub mod progress;
 pub mod prose;
 pub mod radio;
 pub mod resize_observer;
+pub mod scrollbar;
 pub mod sized_box;
 
 use std::{any::type_name, marker::PhantomData, thread};

@@ -23,7 +23,7 @@
 //! - [x] [`Prose`](masonry::widgets::Prose)
 //! - [x] [`Radio`](masonry::widgets::RadioButton)
 //! - [x] [`ResizeObserver`](masonry::widgets::ResizeObserver)
-//! - [ ] [`ScrollBar`](masonry::widgets::ScrollBar)
+//! - [x] [`ScrollBar`](masonry::widgets::ScrollBar)
 //! - [ ] [`Selector`](masonry::widgets::Selector)
 //! - [ ] [`SelectorItem`](masonry::widgets::Selector)
 //! - [x] [`SizedBox`](masonry::widgets::SizedBox)
@@ -59,6 +59,7 @@ pub mod progress;
 pub mod prose;
 pub mod radio;
 pub mod resize_observer;
+pub mod scrollbar;
 pub mod sized_box;
 
 use std::{any::type_name, marker::PhantomData, thread};
@@ -94,7 +95,7 @@ where
     where
         F: FnMut(WidgetMut<'_, W>) + 'static;
 
-    /// Very similar to [`on`](Self::on) but uses a [`&self`] instead of [`self`].
+    /// Very similar to [`on`](Self::on) but uses a [`&self`](self) instead of [`self`].
     /// _You get the idea._
     fn on_ref_self<F>(&self, fun: F)
     where

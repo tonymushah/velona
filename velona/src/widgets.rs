@@ -25,7 +25,7 @@
 //! - [x] [`ResizeObserver`](masonry::widgets::ResizeObserver)
 //! - [x] [`ScrollBar`](masonry::widgets::ScrollBar)
 //! - [x] [`Selector`](masonry::widgets::Selector)
-//! - [ ] [`SelectorItem`](masonry::widgets::SelectorItem)
+//! - [x] [`SelectorItem`](masonry::widgets::SelectorItem)
 //! - [x] [`SizedBox`](masonry::widgets::SizedBox)
 //! - [ ] [`Slider`](masonry::widgets::Slider)
 //! - [ ] [`Spinner`](masonry::widgets::Spinner)
@@ -61,6 +61,7 @@ pub mod radio;
 pub mod resize_observer;
 pub mod scrollbar;
 pub mod selector;
+pub mod selector_item;
 pub mod sized_box;
 
 use std::{any::type_name, marker::PhantomData, thread};

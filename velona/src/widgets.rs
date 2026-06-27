@@ -63,6 +63,7 @@ pub mod scrollbar;
 pub mod selector;
 pub mod selector_item;
 pub mod sized_box;
+pub mod slider;
 
 use std::{any::type_name, marker::PhantomData, thread};
 

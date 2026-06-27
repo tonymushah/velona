@@ -6,6 +6,7 @@ use masonry::{
 use crate::{NewWidgetExt, widgets::TypedSingleChildWidget};
 
 /// A [new](NewWidget) [`Selector`] trait extension.
+// TODO Add example
 pub trait NewSelectorExt {
     /// Sets [the list of options with a new one](Selector::set_options) reactively.
     ///

@@ -27,7 +27,7 @@
 //! - [x] [`Selector`](masonry::widgets::Selector)
 //! - [x] [`SelectorItem`](masonry::widgets::SelectorItem)
 //! - [x] [`SizedBox`](masonry::widgets::SizedBox)
-//! - [ ] [`Slider`](masonry::widgets::Slider)
+//! - [x] [`Slider`](masonry::widgets::Slider)
 //! - [ ] [`Spinner`](masonry::widgets::Spinner)
 //! - [ ] [`Split`](masonry::widgets::Split)
 //! - [ ] [`StepInput`](masonry::widgets::StepInput)
@@ -63,6 +63,7 @@ pub mod scrollbar;
 pub mod selector;
 pub mod selector_item;
 pub mod sized_box;
+pub mod slider;
 
 use std::{any::type_name, marker::PhantomData, thread};
 

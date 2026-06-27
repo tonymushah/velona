@@ -27,7 +27,7 @@
 //! - [x] [`Selector`](masonry::widgets::Selector)
 //! - [x] [`SelectorItem`](masonry::widgets::SelectorItem)
 //! - [x] [`SizedBox`](masonry::widgets::SizedBox)
-//! - [ ] [`Slider`](masonry::widgets::Slider)
+//! - [x] [`Slider`](masonry::widgets::Slider)
 //! - [ ] [`Spinner`](masonry::widgets::Spinner)
 //! - [ ] [`Split`](masonry::widgets::Split)
 //! - [ ] [`StepInput`](masonry::widgets::StepInput)

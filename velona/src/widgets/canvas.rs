@@ -10,6 +10,7 @@ use crate::widget_ref::{EditWidgetLocalError, UseWidgetFromRefError, VelonaWidge
 use crate::{NewWidgetExt, utils::ConsumeResult};
 
 /// A [new](NewWidget) [`Canvas`] trait extension.
+// TODO add drawing example
 pub trait NewCanvasExt {
     /// Updates the canvas scene.
     ///

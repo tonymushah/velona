@@ -56,7 +56,7 @@ impl NewCanvasExt for NewWidget<Canvas> {
     }
 }
 
-/// A [`Canvas`] [ref](VelonaWigetRef) trait extension.
+/// A [`Canvas`] [ref](VelonaWidgetRef) trait extension.
 pub trait CanvasRefExt {
     /// Updates the canvas scene.
     ///

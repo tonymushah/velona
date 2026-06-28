@@ -69,6 +69,7 @@ pub mod slider;
 pub mod split;
 pub mod step_input;
 pub mod svg;
+pub mod switch;
 
 use std::{any::type_name, marker::PhantomData, thread};
 

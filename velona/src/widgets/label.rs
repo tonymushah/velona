@@ -12,31 +12,31 @@ use super::NewWidgetExt;
 /// A [`Label`] trait extention
 // TODO create a [`NewLabelBaseExt`] and implement it for any [`TypedSingleChildWidget<Child = Label>`]
 pub trait NewLabelExt {
-    /// create a new [`Label`] with reactive value `text`.
+    /// Create a new [`Label`] with reactive value `text`.
     fn new<S, T>(text: S) -> Self
     where
         S: Fn() -> T + 'static,
         T: Into<ArcStr>;
-    /// It is inefficient to call this function twice
+    /// It is inefficient to call this function twice.
     fn text<S, T>(self, text: S) -> Self
     where
         S: Fn() -> T + 'static,
         T: Into<ArcStr>;
-    /// Reactive styles
+    /// Reactive text styles.
     fn style<S, T>(self, style: S) -> Self
     where
         S: Fn() -> T + 'static,
         T: Into<StyleProperty>;
-    /// Reactive option styles
+    /// Reactive optional text styles.
     fn style_opt<S, T>(self, style: S) -> Self
     where
         S: Fn() -> Option<T> + 'static,
         T: Into<StyleProperty>;
-    /// It is inefficient to call this function twice
+    /// The reactive equivalent of [`with_hint`](Label::with_hint).
     fn hint<S>(self, hint: S) -> Self
     where
         S: Fn() -> bool + 'static;
-    /// It is inefficient to call this function twice
+    /// The reactive equivalent of [`with_text_alignment`](Label::with_text_alignment).
     fn text_alignment<S>(self, align: S) -> Self
     where
         S: Fn() -> TextAlign + 'static;

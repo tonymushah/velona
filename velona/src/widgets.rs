@@ -33,7 +33,7 @@
 //! - [x] [`StepInput`](masonry::widgets::StepInput)
 //! - [x] [`Svg`](masonry::widgets::Svg)
 //! - [x] [`Switch`](masonry::widgets::Switch)
-//! - [ ] [`TextArea`](masonry::widgets::TextArea)
+//! - [x] [`TextArea`](masonry::widgets::TextArea)
 //! - [ ] [`TextInput`](masonry::widgets::TextInput)
 //! - [ ] [`VariableLabel`](masonry::widgets::VariableLabel)
 //! - [ ] [`VirtualScroll`](masonry::widgets::VirtualScroll)

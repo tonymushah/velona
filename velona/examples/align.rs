@@ -62,7 +62,7 @@ fn main_view() -> AnyNewWidget {
                                 .collect(),
                         )
                         .prepare()
-                        .on(move |changes| {
+                        .on_action(move |changes| {
                             if let Ok(align) = changes.selected_content.parse::<Alignment>() {
                                 set_align.set(align);
                             }

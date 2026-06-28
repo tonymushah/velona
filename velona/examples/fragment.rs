@@ -51,7 +51,7 @@ fn checkbox() -> AnyNewWidget {
         },
     )
     .static_propeperty(CheckmarkColor { color: GREEN })
-    .on(move |checked| {
+    .on_action(move |checked| {
         set_checked.set(checked.0);
     })
     .erased()

@@ -105,11 +105,11 @@ where
 
     /// Very similar to [`on`](Self::on) but uses a [`&self`](self) instead of [`self`].
     /// _You get the idea._
-    fn on_ref_self<F>(&self, fun: F)
+    fn on_action_ref_self<F>(&self, fun: F)
     where
         F: Fn(&W::Action) + 'static;
     /// Listen to the [`Widget::Action`]
-    fn on<F>(self, fun: F) -> Self
+    fn on_action<F>(self, fun: F) -> Self
     where
         F: Fn(&W::Action) + 'static;
     /// Set a [widget](Widget) [property](Property) reactively.
@@ -164,7 +164,7 @@ where
             None
         })
     }
-    fn on_ref_self<F>(&self, fun: F)
+    fn on_action_ref_self<F>(&self, fun: F)
     where
         F: Fn(&<W as Widget>::Action) + 'static,
     {
@@ -179,11 +179,11 @@ where
             }),
         );
     }
-    fn on<F>(self, fun: F) -> Self
+    fn on_action<F>(self, fun: F) -> Self
     where
         F: Fn(&<W as Widget>::Action) + 'static,
     {
-        self.on_ref_self(fun);
+        self.on_action_ref_self(fun);
         self
     }
     /// It is worth mentioning that the `prop` function will be called immediately (inside an [`untrack`]) to set the property beforehand.

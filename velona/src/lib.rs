@@ -17,6 +17,8 @@ pub(crate) mod window_event_handler;
 #[doc(inline)]
 pub use reactive_graph as reactive;
 
+pub use masonry;
+
 use masonry::core::{NewWidget, Widget};
 
 pub use app::Builder;

@@ -26,3 +26,7 @@ where
 }
 
 pub(crate) fn noop() {}
+
+pub use crate::window_event_handler::{
+    register_typed_widget_action_handler, register_widget_action_handler,
+};

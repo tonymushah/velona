@@ -10,8 +10,8 @@ use std::{
 
 // use parking_lot::RwLock;
 
-use log::debug;
-use masonry::core::{ErasedAction, WidgetId};
+use log::{debug, warn};
+use masonry::core::{ErasedAction, Widget, WidgetId};
 use reactive_graph::owner::{on_cleanup, use_context};
 use send_wrapper::SendWrapper;
 
@@ -188,4 +188,23 @@ pub fn register_widget_action_handler(widget_id: WidgetId, hander_fn: HandlerFn)
     on_cleanup(move || {
         handlers.remove_handler_fn(handler_id);
     });
+}
+
+// TODO add documentation
+pub fn register_typed_widget_action_handler<W: Widget + 'static, H>(
+    widget_id: WidgetId,
+    handler_fn: H,
+) where
+    H: Fn(&<W as Widget>::Action) + 'static,
+{
+    register_widget_action_handler(
+        widget_id,
+        Box::new(move |ev| {
+            let Some(ev) = ev.downcast_ref::<W::Action>() else {
+                warn!("Cannot cast action");
+                return;
+            };
+            handler_fn(ev);
+        }),
+    );
 }

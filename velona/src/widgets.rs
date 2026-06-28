@@ -75,13 +75,12 @@ pub mod text_input;
 
 use std::{any::type_name, marker::PhantomData, thread};
 
-use log::warn;
 use masonry::core::{NewWidget, Property, UsesProperty as HasProperty, Widget, WidgetMut};
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
     AnyNewWidget, widget_ref::VelonaWidgetRef, window::use_window,
-    window_event_handler::register_widget_action_handler,
+    window_event_handler::register_typed_widget_action_handler,
 };
 
 // TODO add a `use_reactive_widget` with `WidgetRef` instead.
@@ -171,16 +170,7 @@ where
     where
         F: Fn(&<W as Widget>::Action) + 'static,
     {
-        register_widget_action_handler(
-            self.id(),
-            Box::new(move |ev| {
-                let Some(ev) = ev.downcast_ref::<W::Action>() else {
-                    warn!("Cannot cast action");
-                    return;
-                };
-                fun(ev);
-            }),
-        );
+        register_typed_widget_action_handler::<W, _>(self.id(), fun);
     }
     fn on_action<F>(self, fun: F) -> Self
     where

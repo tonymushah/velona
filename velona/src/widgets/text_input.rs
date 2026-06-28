@@ -1,15 +1,16 @@
 use masonry::{
     core::{ArcStr, NewWidget, WidgetMut},
     parley,
-    widgets::{Label, TextArea, TextInput},
+    widgets::{Label, TextAction, TextArea, TextInput},
 };
 
 #[cfg(doc)]
 use reactive_graph::effect::Effect;
 
-use crate::NewWidgetExt;
+use crate::{NewWidgetExt, utils::register_typed_widget_action_handler};
 
 /// A [new](NewWidget) [`TextInput`] trait extension.
+// TODO add example
 pub trait NewTextInputExt {
     /// Edits the underlying text area.
     ///
@@ -94,5 +95,29 @@ impl NewTextInputExt for NewWidget<TextInput> {
         self.use_reactive_widget_mut(move |mut this| {
             TextInput::set_text_alignment(&mut this, text_alignment());
         })
+    }
+}
+
+/// Since a [`TextInput`] is a [`TextArea`] wrapper,
+/// it might be quite complex to handle event _via [`NewTextInputExt::use_text_mut`]_.
+///
+/// This trait provides a [`on_text_action`](Self::on_text_action) to listen to the internal [`TextArea`] action.
+pub trait NewTextInputActionExt {
+    /// Handle the internal [`TextArea`] [`TextAction`]s.
+    fn on_text_action<H>(self, on_action: H) -> Self
+    where
+        H: Fn(&TextAction) + 'static;
+}
+
+impl NewTextInputActionExt for NewWidget<TextInput> {
+    fn on_text_action<H>(self, on_action: H) -> Self
+    where
+        H: Fn(&TextAction) + 'static,
+    {
+        register_typed_widget_action_handler::<TextArea<false>, _>(
+            self.widget.area_pod().id(),
+            on_action,
+        );
+        self
     }
 }

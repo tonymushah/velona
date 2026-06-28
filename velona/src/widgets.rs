@@ -6,7 +6,7 @@
 //! - [x] [`Badge`](masonry::widgets::Badge)
 //! - [x] [`Badged`](masonry_widgets::Badged)
 //! - [x] [`Button`](masonry::widgets::Button)
-//! - [ ] [`Canvas`](masonry::widgets::Canvas)
+//! - [x] [`Canvas`](masonry::widgets::Canvas)
 //! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]
 //! - [x] [`CollapsePanel`](masonry::widgets::CollapsePanel)
 //! - [x] [`DisclosureButton`](masonry::widgets::DisclosureButton)
@@ -45,6 +45,7 @@ pub mod align;
 pub mod badge;
 pub mod badged;
 pub mod button;
+pub mod canvas;
 pub mod checkbox;
 pub mod collapse_panel;
 pub mod disclosure_button;

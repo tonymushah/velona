@@ -150,10 +150,12 @@ impl WindowEventHandlerWrapper {
     }
 }
 
+// TODO add documentation
 pub fn use_window_event_handler() -> Option<WindowEventHandlerWrapper> {
     use_context()
 }
 
+// TODO add documentation
 pub fn register_widget_action_handler(widget_id: WidgetId, hander_fn: HandlerFn) {
     let Some(handlers) = use_window_event_handler() else {
         #[cfg(debug_assertions)]

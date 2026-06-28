@@ -6,8 +6,6 @@ use masonry::{
 };
 
 use reactive_graph::effect::Effect;
-#[cfg(doc)]
-use reactive_graph::effect::Effect;
 
 use crate::{NewWidgetExt, utils::ConsumeResult};
 

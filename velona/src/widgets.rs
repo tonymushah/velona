@@ -32,7 +32,7 @@
 //! - [x] [`Split`](masonry::widgets::Split)
 //! - [x] [`StepInput`](masonry::widgets::StepInput)
 //! - [x] [`Svg`](masonry::widgets::Svg)
-//! - [ ] [`Switch`](masonry::widgets::Switch)
+//! - [x] [`Switch`](masonry::widgets::Switch)
 //! - [ ] [`TextArea`](masonry::widgets::TextArea)
 //! - [ ] [`TextInput`](masonry::widgets::TextInput)
 //! - [ ] [`VariableLabel`](masonry::widgets::VariableLabel)

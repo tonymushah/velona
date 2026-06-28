@@ -27,6 +27,7 @@ hotpath = { version = "0.16", optional = true }
 # TODO add anyrender for rendering simplicity
 imaging.workspace = true
 velona_renderer.workspace = true
+resvg.workspace = true
 
 [features]
 hotpath = ["dep:hotpath"]

@@ -4860,6 +4860,7 @@ dependencies = [
  "masonry_imaging",
  "non-exhaustive",
  "reactive_graph",
+ "resvg",
  "send_wrapper",
  "thiserror 2.0.18",
  "tokio",

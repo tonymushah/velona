@@ -29,6 +29,7 @@ impl SplitMinLengths {
 }
 
 /// A [new](NewWidget) [`Split`] trait extension.
+// TODO add example
 pub trait NewSplitExt<ChildA, ChildB>
 where
     ChildA: Widget + FromDynWidget + ?Sized,

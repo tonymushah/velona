@@ -70,6 +70,7 @@ pub mod split;
 pub mod step_input;
 pub mod svg;
 pub mod switch;
+pub mod text_area;
 
 use std::{any::type_name, marker::PhantomData, thread};
 

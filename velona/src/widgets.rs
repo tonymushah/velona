@@ -30,7 +30,7 @@
 //! - [x] [`Slider`](masonry::widgets::Slider)
 //! - [x] [`Spinner`](masonry::widgets::Spinner)
 //! - [x] [`Split`](masonry::widgets::Split)
-//! - [ ] [`StepInput`](masonry::widgets::StepInput)
+//! - [x] [`StepInput`](masonry::widgets::StepInput)
 //! - [ ] [`Svg`](masonry::widgets::Svg)
 //! - [ ] [`Switch`](masonry::widgets::Switch)
 //! - [ ] [`TextArea`](masonry::widgets::TextArea)

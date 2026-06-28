@@ -67,6 +67,7 @@ pub mod selector_item;
 pub mod sized_box;
 pub mod slider;
 pub mod split;
+pub mod step_input;
 
 use std::{any::type_name, marker::PhantomData, thread};
 

@@ -3,6 +3,7 @@ use masonry::{core::NewWidget, widgets::Switch};
 use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Switch`] trait extension.
+// TODO add example
 pub trait NewSwitchExt {
     /// Sets the [switch state](Switch::set_on)
     /// reactively.

@@ -44,6 +44,11 @@ pub type HandlerFn = Box<dyn Fn(&ErasedAction)>;
 #[derive(Default)]
 pub(crate) struct WindowEventHandler {
     widget_handlers: HashMap<WidgetId, HashMap<HandlerId, SendWrapper<HandlerFn>>>,
+    // TODO add on_mouseenter for widgets
+    // TODO add on_mouseexit for widgets
+    // TODO add on_keydown for window
+    // TODO add on_keyup for window
+    // TODO add on_device_event for window
 }
 
 impl WindowEventHandler {

@@ -154,7 +154,7 @@ pub fn use_window_event_handler() -> Option<WindowEventHandlerWrapper> {
     use_context()
 }
 
-pub fn register_window_event_handler(widget_id: WidgetId, hander_fn: HandlerFn) {
+pub fn register_widget_action_handler(widget_id: WidgetId, hander_fn: HandlerFn) {
     let Some(handlers) = use_window_event_handler() else {
         #[cfg(debug_assertions)]
         {

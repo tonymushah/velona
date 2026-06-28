@@ -80,7 +80,7 @@ use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
     AnyNewWidget, widget_ref::VelonaWidgetRef, window::use_window,
-    window_event_handler::register_window_event_handler,
+    window_event_handler::register_widget_action_handler,
 };
 
 // TODO add a `use_reactive_widget` with `WidgetRef` instead.
@@ -170,7 +170,7 @@ where
     where
         F: Fn(&<W as Widget>::Action) + 'static,
     {
-        register_window_event_handler(
+        register_widget_action_handler(
             self.id(),
             Box::new(move |ev| {
                 let Some(ev) = ev.downcast_ref::<W::Action>() else {

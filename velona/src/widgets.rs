@@ -29,7 +29,7 @@
 //! - [x] [`SizedBox`](masonry::widgets::SizedBox)
 //! - [x] [`Slider`](masonry::widgets::Slider)
 //! - [x] [`Spinner`](masonry::widgets::Spinner)
-//! - [ ] [`Split`](masonry::widgets::Split)
+//! - [x] [`Split`](masonry::widgets::Split)
 //! - [ ] [`StepInput`](masonry::widgets::StepInput)
 //! - [ ] [`Svg`](masonry::widgets::Svg)
 //! - [ ] [`Switch`](masonry::widgets::Switch)

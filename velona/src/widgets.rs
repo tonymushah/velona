@@ -72,6 +72,7 @@ pub mod svg;
 pub mod switch;
 pub mod text_area;
 pub mod text_input;
+pub mod variable_label;
 
 use std::{any::type_name, marker::PhantomData, thread};
 

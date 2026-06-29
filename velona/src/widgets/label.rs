@@ -14,7 +14,6 @@ use crate::widgets::TypedSingleChildWidget;
 use super::NewWidgetExt;
 
 /// A [`Label`] trait extention
-// TODO create a [`NewLabelBaseExt`] and implement it for any [`TypedSingleChildWidget<Child = Label>`]
 pub trait NewLabelExt {
     /// It is inefficient to call this function twice.
     fn text<S, T>(self, text: S) -> Self

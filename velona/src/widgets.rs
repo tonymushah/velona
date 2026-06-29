@@ -42,7 +42,6 @@
 // TODO add doc comment for each module
 // TODO aaa
 pub mod align;
-pub mod badge;
 pub mod badged;
 pub mod button;
 pub mod canvas;

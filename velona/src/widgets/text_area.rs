@@ -52,6 +52,16 @@ pub trait NewTextAreaExt<const USER_EDITABLE: bool> {
     fn insert_newline<I>(self, insert_newline: I) -> Self
     where
         I: Fn() -> InsertNewline + 'static;
+    /// Sets the text displayed in this widget.
+    ///
+    /// This is likely to be disruptive if the user is focused on this widget,
+    /// as it does not retain selections,
+    /// and may cause undesirable interactions with IME.
+    ///
+    /// The reactive version of [`reset_text`](TextArea::reset_text).
+    fn text<T>(self, text: T) -> Self
+    where
+        T: Fn() -> String + 'static;
 }
 
 impl<const USER_EDITABLE: bool> NewTextAreaExt<USER_EDITABLE>
@@ -119,6 +129,15 @@ impl<const USER_EDITABLE: bool> NewTextAreaExt<USER_EDITABLE>
     {
         self.use_reactive_widget_mut(move |mut this| {
             TextArea::set_insert_newline(&mut this, insert_newline());
+        })
+    }
+
+    fn text<T>(self, text: T) -> Self
+    where
+        T: Fn() -> String + 'static,
+    {
+        self.use_reactive_widget_mut(move |mut this| {
+            TextArea::reset_text(&mut this, text().as_str());
         })
     }
 }

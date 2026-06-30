@@ -36,7 +36,7 @@
 //! - [x] [`TextArea`](masonry::widgets::TextArea)
 //! - [x] [`TextInput`](masonry::widgets::TextInput)
 //! - [x] [`VariableLabel`](masonry::widgets::VariableLabel)
-//! - [ ] [`VirtualScroll`](masonry::widgets::VirtualScroll)
+//! - [x] [`VirtualScroll`](masonry::widgets::VirtualScroll)
 //! - [ ] [`ZStack`](masonry::widgets::ZStack)
 // TODO add [new](NewWidget) for `New*Ext` widget trait doc comments
 // TODO add doc comment for each module

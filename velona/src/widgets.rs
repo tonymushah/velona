@@ -37,7 +37,7 @@
 //! - [x] [`TextInput`](masonry::widgets::TextInput)
 //! - [x] [`VariableLabel`](masonry::widgets::VariableLabel)
 //! - [x] [`VirtualScroll`](masonry::widgets::VirtualScroll)
-//! - [ ] [`ZStack`](masonry::widgets::ZStack)
+//! - [x] [`ZStack`](masonry::widgets::ZStack)
 // TODO add [new](NewWidget) for `New*Ext` widget trait doc comments
 // TODO add doc comment for each module
 // TODO aaa
@@ -73,6 +73,7 @@ pub mod text_area;
 pub mod text_input;
 pub mod variable_label;
 pub mod virtual_scroll;
+pub mod zstack;
 
 use std::{any::type_name, marker::PhantomData, thread};
 

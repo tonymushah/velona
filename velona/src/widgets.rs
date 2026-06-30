@@ -40,7 +40,6 @@
 //! - [x] [`ZStack`](masonry::widgets::ZStack)
 // TODO add [new](NewWidget) for `New*Ext` widget trait doc comments
 // TODO add doc comment for each module
-// TODO aaa
 pub mod align;
 pub mod badged;
 pub mod button;

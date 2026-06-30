@@ -26,7 +26,7 @@ pub trait NewVirtualScrollExt {
     /// but can be used outside of tests
     /// (for example, in certain scrollbar schemes).
     ///
-    /// The reactive equivalent of [`overwrite_anchor`].
+    /// The reactive equivalent of [`overwrite_anchor`](VirtualScroll::overwrite_anchor).
     fn anchor<A>(self, overwrite_anchor: A) -> Self
     where
         A: Fn() -> i64 + 'static;

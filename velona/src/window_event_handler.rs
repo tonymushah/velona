@@ -10,8 +10,8 @@ use std::{
 
 // use parking_lot::RwLock;
 
-use log::debug;
-use masonry::core::{ErasedAction, WidgetId};
+use log::{debug, warn};
+use masonry::core::{ErasedAction, Widget, WidgetId};
 use reactive_graph::owner::{on_cleanup, use_context};
 use send_wrapper::SendWrapper;
 
@@ -44,6 +44,11 @@ pub type HandlerFn = Box<dyn Fn(&ErasedAction)>;
 #[derive(Default)]
 pub(crate) struct WindowEventHandler {
     widget_handlers: HashMap<WidgetId, HashMap<HandlerId, SendWrapper<HandlerFn>>>,
+    // TODO add on_mouseenter for widgets
+    // TODO add on_mouseexit for widgets
+    // TODO add on_keydown for window
+    // TODO add on_keyup for window
+    // TODO add on_device_event for window
 }
 
 impl WindowEventHandler {
@@ -150,11 +155,13 @@ impl WindowEventHandlerWrapper {
     }
 }
 
+// TODO add documentation
 pub fn use_window_event_handler() -> Option<WindowEventHandlerWrapper> {
     use_context()
 }
 
-pub fn register_window_event_handler(widget_id: WidgetId, hander_fn: HandlerFn) {
+// TODO add documentation
+pub fn register_widget_action_handler(widget_id: WidgetId, hander_fn: HandlerFn) {
     let Some(handlers) = use_window_event_handler() else {
         #[cfg(debug_assertions)]
         {
@@ -181,4 +188,23 @@ pub fn register_window_event_handler(widget_id: WidgetId, hander_fn: HandlerFn) 
     on_cleanup(move || {
         handlers.remove_handler_fn(handler_id);
     });
+}
+
+// TODO add documentation
+pub fn register_typed_widget_action_handler<W: Widget + 'static, H>(
+    widget_id: WidgetId,
+    handler_fn: H,
+) where
+    H: Fn(&<W as Widget>::Action) + 'static,
+{
+    register_widget_action_handler(
+        widget_id,
+        Box::new(move |ev| {
+            let Some(ev) = ev.downcast_ref::<W::Action>() else {
+                warn!("Cannot cast action");
+                return;
+            };
+            handler_fn(ev);
+        }),
+    );
 }

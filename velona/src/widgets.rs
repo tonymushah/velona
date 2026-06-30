@@ -6,7 +6,7 @@
 //! - [x] [`Badge`](masonry::widgets::Badge)
 //! - [x] [`Badged`](masonry_widgets::Badged)
 //! - [x] [`Button`](masonry::widgets::Button)
-//! - [ ] [`Canvas`](masonry::widgets::Canvas)
+//! - [x] [`Canvas`](masonry::widgets::Canvas)
 //! - [x] [`Checkbox`](masonry::widgets::Checkbox) in [`checkbox`]
 //! - [x] [`CollapsePanel`](masonry::widgets::CollapsePanel)
 //! - [x] [`DisclosureButton`](masonry::widgets::DisclosureButton)
@@ -29,21 +29,22 @@
 //! - [x] [`SizedBox`](masonry::widgets::SizedBox)
 //! - [x] [`Slider`](masonry::widgets::Slider)
 //! - [x] [`Spinner`](masonry::widgets::Spinner)
-//! - [ ] [`Split`](masonry::widgets::Split)
-//! - [ ] [`StepInput`](masonry::widgets::StepInput)
-//! - [ ] [`Svg`](masonry::widgets::Svg)
-//! - [ ] [`Switch`](masonry::widgets::Switch)
-//! - [ ] [`TextArea`](masonry::widgets::TextArea)
-//! - [ ] [`TextInput`](masonry::widgets::TextInput)
-//! - [ ] [`VariableLabel`](masonry::widgets::VariableLabel)
-//! - [ ] [`VirtualScroll`](masonry::widgets::VirtualScroll)
-//! - [ ] [`ZStack`](masonry::widgets::ZStack)
+//! - [x] [`Split`](masonry::widgets::Split)
+//! - [x] [`StepInput`](masonry::widgets::StepInput)
+//! - [x] [`Svg`](masonry::widgets::Svg)
+//! - [x] [`Switch`](masonry::widgets::Switch)
+//! - [x] [`TextArea`](masonry::widgets::TextArea)
+//! - [x] [`TextInput`](masonry::widgets::TextInput)
+//! - [x] [`VariableLabel`](masonry::widgets::VariableLabel)
+//! - [x] [`VirtualScroll`](masonry::widgets::VirtualScroll)
+//! - [x] [`ZStack`](masonry::widgets::ZStack)
 // TODO add [new](NewWidget) for `New*Ext` widget trait doc comments
 // TODO add doc comment for each module
+// TODO aaa
 pub mod align;
-pub mod badge;
 pub mod badged;
 pub mod button;
+pub mod canvas;
 pub mod checkbox;
 pub mod collapse_panel;
 pub mod disclosure_button;
@@ -64,16 +65,24 @@ pub mod selector;
 pub mod selector_item;
 pub mod sized_box;
 pub mod slider;
+pub mod split;
+pub mod step_input;
+pub mod svg;
+pub mod switch;
+pub mod text_area;
+pub mod text_input;
+pub mod variable_label;
+pub mod virtual_scroll;
+pub mod zstack;
 
 use std::{any::type_name, marker::PhantomData, thread};
 
-use log::warn;
 use masonry::core::{NewWidget, Property, UsesProperty as HasProperty, Widget, WidgetMut};
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
     AnyNewWidget, widget_ref::VelonaWidgetRef, window::use_window,
-    window_event_handler::register_window_event_handler,
+    window_event_handler::register_typed_widget_action_handler,
 };
 
 // TODO add a `use_reactive_widget` with `WidgetRef` instead.
@@ -98,13 +107,13 @@ where
     where
         F: FnMut(WidgetMut<'_, W>) + 'static;
 
-    /// Very similar to [`on`](Self::on) but uses a [`&self`](self) instead of [`self`].
+    /// Very similar to [`on`](Self::on_action) but uses a [`&self`](self) instead of [`self`].
     /// _You get the idea._
-    fn on_ref_self<F>(&self, fun: F)
+    fn on_action_ref_self<F>(&self, fun: F)
     where
         F: Fn(&W::Action) + 'static;
     /// Listen to the [`Widget::Action`]
-    fn on<F>(self, fun: F) -> Self
+    fn on_action<F>(self, fun: F) -> Self
     where
         F: Fn(&W::Action) + 'static;
     /// Set a [widget](Widget) [property](Property) reactively.
@@ -159,26 +168,17 @@ where
             None
         })
     }
-    fn on_ref_self<F>(&self, fun: F)
+    fn on_action_ref_self<F>(&self, fun: F)
     where
         F: Fn(&<W as Widget>::Action) + 'static,
     {
-        register_window_event_handler(
-            self.id(),
-            Box::new(move |ev| {
-                let Some(ev) = ev.downcast_ref::<W::Action>() else {
-                    warn!("Cannot cast action");
-                    return;
-                };
-                fun(ev);
-            }),
-        );
+        register_typed_widget_action_handler::<W, _>(self.id(), fun);
     }
-    fn on<F>(self, fun: F) -> Self
+    fn on_action<F>(self, fun: F) -> Self
     where
         F: Fn(&<W as Widget>::Action) + 'static,
     {
-        self.on_ref_self(fun);
+        self.on_action_ref_self(fun);
         self
     }
     /// It is worth mentioning that the `prop` function will be called immediately (inside an [`untrack`]) to set the property beforehand.

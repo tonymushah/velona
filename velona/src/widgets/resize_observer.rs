@@ -42,7 +42,7 @@ where
     {
         let obs = ResizeObserver::new(self).prepare();
         let obs_ref = obs.create_velona_ref();
-        obs.on(move |_| {
+        obs.on_action(move |_| {
             obs_ref.edit_local_now(&handler).consume_with_log_err();
         })
     }

@@ -29,7 +29,7 @@ fn view() -> AnyNewWidget {
                         }
                     },
                 )
-                .on(move |event| {
+                .on_action(move |event| {
                     set_checked.set(event.0);
                 }),
             )

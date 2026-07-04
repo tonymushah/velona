@@ -1,3 +1,8 @@
+//! Various [`Align`] trait implementations.
+//!
+//! The most important thing in the module is the [`NewAlignExt`]
+//! which is implemented for [`NewWidget<Align>`].
+
 use masonry::{core::NewWidget, layout::UnitPoint, widgets::Align};
 use reactive_graph::effect::Effect;
 

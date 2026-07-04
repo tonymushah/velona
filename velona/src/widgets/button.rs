@@ -1,3 +1,20 @@
+//! Various [`Button`] trait implementations
+//!
+//! Since [`Button`] only show a single child,
+//! _aka it already implement both [`SingleChildWidget`] and [`ReactiveSingleChildExt`]_,
+//! the only thing left is the [`NewButtonPressEventsExt`] trait.
+//!
+//! _Quick lore here:_ When writing examples using a [`Button`],
+//! I found it frustrating that I always need to use
+//! to compare the [`PointerButton::Primary`] value everytime
+//! I need to listen to do a simple `on_click` handler.
+//! So after quickly refactoring the widget traits
+//! with [`SingleChildWidget`] and [`ReactiveSingleChildExt`],
+//! I decided to make this [`NewButtonPressEventsExt`] _to make my life a little bit easier_.
+//!
+//! [`SingleChildWidget`]: super::SingleChildWidget
+//! [`ReactiveSingleChildExt`]: super::ReactiveSingleChildExt
+
 use masonry::{
     core::{NewWidget, PointerButton},
     widgets::Button,

@@ -2,6 +2,12 @@
 //!
 //! The most important thing in the module is the [`NewAlignExt`]
 //! which is implemented for [`NewWidget<Align>`].
+//!
+//! The [`NewWidget<Align>`] also implements the [`ReactiveSingleChildExt`][single-widget] trait
+//! and the [`SingleChildWidget`][single-widget] trait.
+//!
+//! [single-widget]: super::SingleChildWidget
+//! [reactive-child]: super::ReactiveSingleChildExt
 
 use masonry::{core::NewWidget, layout::UnitPoint, widgets::Align};
 

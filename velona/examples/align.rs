@@ -13,7 +13,7 @@ use reactive_graph::{
     signal::signal,
     traits::{Get, Set},
 };
-use velona::{AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, widgets::align::NewAlign};
+use velona::{AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, widgets::align::NewAlignExt};
 
 #[derive(Debug, Clone, Copy, Display, FromStr, AllVariants)]
 enum Alignment {

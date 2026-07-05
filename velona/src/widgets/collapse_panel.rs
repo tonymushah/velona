@@ -5,6 +5,8 @@
 //!
 //! The [`NewWidget<CollapsePanel>`] also implements the [`ReactiveSingleChildExt`] trait
 //! and the [`SingleChildWidget`] trait.
+//!
+//! _See the [widget](CollapsePanel) documentation for more information_.
 
 use masonry::{
     core::{ArcStr, NewWidget, WidgetMut},

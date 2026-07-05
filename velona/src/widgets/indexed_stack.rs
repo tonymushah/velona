@@ -1,3 +1,9 @@
+//! Various [`IndexedStack`] implementations.
+//!
+//! The most important thing in the module is the [`NewIndexedStackExt`]
+//! which is implemented for [`NewWidget<IndexedStack>`].
+//!
+//! _See the [widget](IndexedStack) documentation for more information_.
 use masonry::{core::NewWidget, widgets::IndexedStack};
 
 use crate::NewWidgetExt;

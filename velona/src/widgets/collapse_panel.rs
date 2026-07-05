@@ -3,11 +3,8 @@
 //! The most important thing in the module is the [`NewCollapsePanelExt`]
 //! which is implemented for [`NewWidget<CollapsePanel>`].
 //!
-//! The [`NewWidget<CollapsePanel>`] also implements the [`ReactiveSingleChildExt`][single-widget] trait
-//! and the [`SingleChildWidget`][single-widget] trait.
-//!
-//! [single-widget]: super::SingleChildWidget
-//! [reactive-child]: super::ReactiveSingleChildExt
+//! The [`NewWidget<CollapsePanel>`] also implements the [`ReactiveSingleChildExt`] trait
+//! and the [`SingleChildWidget`] trait.
 
 use masonry::{
     core::{ArcStr, NewWidget, WidgetMut},

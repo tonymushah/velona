@@ -1,3 +1,9 @@
+//! Various [`Portal`] implementations.
+//!
+//! The most important thing in the module is the [`NewPortalExt`]
+//! which is implemented for [`NewWidget<Portal>`].
+//!
+//! _See the [widget](Portal) documentation for more information_.
 use imaging::kurbo::{Rect, Vec2};
 use masonry::{
     core::{NewWidget, Widget, WidgetMut},

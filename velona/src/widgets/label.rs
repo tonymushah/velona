@@ -1,3 +1,12 @@
+//! Various [`Label`] implementations.
+//!
+//! The most important thing in the module is the [`NewLabelExt`]
+//! which are implemented for:
+//! - [`NewWidget<Label>`]
+//! - [`W: TypedSingleChildWidget<Child = Label> + 'static`](TypedSingleChildWidget) (for ease of use)
+//!
+//! _See the [widget](Label) documentation for more information_.
+
 use std::{
     mem::{Discriminant, discriminant},
     sync::{self, Mutex},

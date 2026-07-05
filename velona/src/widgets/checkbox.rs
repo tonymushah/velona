@@ -1,19 +1,18 @@
+//! Various [`Checkbox`] trait implementation.
+//!
+//! The most important thing in the module is the [`NewCheckboxExt`]
+//! which is implemented for [`NewWidget<Checkbox>`].
+
 use masonry::{
-    core::{ArcStr, NewWidget, Widget},
+    core::{ArcStr, NewWidget},
     widgets::Checkbox,
 };
-use reactive_graph::{computed::Memo, graph::untrack, traits::Get};
+use reactive_graph::{computed::Memo, traits::Get};
 
 use crate::NewWidgetExt;
 
 /// A [`Checkbox`] trait extension
 pub trait NewCheckboxExt {
-    /// create a new checkbox with reactive text and checked value
-    fn new<Cf, Tf, T>(checked: Cf, text: Tf) -> Self
-    where
-        Cf: Fn() -> bool + 'static,
-        Tf: Fn() -> T + 'static,
-        T: Into<ArcStr>;
     /// Make the `checked` value reactive
     fn checked<C>(self, checked: C) -> Self
     where
@@ -35,17 +34,6 @@ pub trait NewCheckboxExt {
 }
 
 impl NewCheckboxExt for NewWidget<Checkbox> {
-    fn new<Cf, Tf, T>(checked: Cf, text: Tf) -> Self
-    where
-        Cf: Fn() -> bool + 'static,
-        Tf: Fn() -> T + 'static,
-        T: Into<ArcStr>,
-    {
-        Checkbox::new(untrack(&checked), untrack(&text))
-            .prepare()
-            .checked(checked)
-            .text(text)
-    }
     fn checked<C>(self, checked: C) -> Self
     where
         C: Fn() -> bool + 'static,

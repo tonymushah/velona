@@ -1,3 +1,10 @@
+//! Various [`ProgressBar`] implementations.
+//!
+//! The most important thing in the module is the [`NewCollapsePanelExt`]
+//! which is implemented for [`NewWidget<CollapsePanel>`].
+//!
+//! _See the [widget](ProgressBar) documentation for more information_.
+
 use masonry::{core::NewWidget, widgets::ProgressBar};
 
 use crate::NewWidgetExt;

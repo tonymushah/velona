@@ -1,3 +1,8 @@
+//! Various [`DisclosureButton`] implementations.
+//!
+//! The most important thing in the module is the [`NewDisclosureButtonExt`]
+//! which is implemented for [`NewWidget<DisclosureButton>`].
+
 use masonry::{core::NewWidget, widgets::DisclosureButton};
 
 use crate::NewWidgetExt;

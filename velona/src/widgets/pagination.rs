@@ -1,3 +1,10 @@
+//! Various [`Pagination`] implementations
+//!
+//! The most important thing in the module is the [`NewPaginationExt`]
+//! which is implemented for [`NewWidget<Pagination>`].
+//!
+//! _See the [widget](Pagination) documentation for more information_.
+
 use masonry::{core::NewWidget, widgets::Pagination};
 
 use crate::NewWidgetExt;

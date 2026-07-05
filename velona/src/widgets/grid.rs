@@ -1,3 +1,10 @@
+//! Various [`Grid`] implementations.
+//!
+//! The most important thing in the module is the [`NewGridExt`]
+//! which is implemented for [`NewWidget<Grid>`].
+//!
+//! _See the [widget](Grid) documentation for more information_.
+
 use masonry::{core::NewWidget, widgets::Grid};
 
 use crate::NewWidgetExt;

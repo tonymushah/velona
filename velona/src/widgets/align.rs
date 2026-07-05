@@ -3,7 +3,7 @@
 //! The most important thing in the module is the [`NewAlignExt`]
 //! which is implemented for [`NewWidget<Align>`].
 //!
-//! The [`NewWidget<Align>`] also implements the [`ReactiveSingleChildExt`][single-widget] trait
+//! The [`NewWidget<Align>`] also implements the [`ReactiveSingleChildExt`][reactive-child] trait
 //! and the [`SingleChildWidget`][single-widget] trait.
 //!
 //! [single-widget]: super::SingleChildWidget

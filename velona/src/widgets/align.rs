@@ -6,6 +6,8 @@
 //! The [`NewWidget<Align>`] also implements the [`ReactiveSingleChildExt`][reactive-child] trait
 //! and the [`SingleChildWidget`][single-widget] trait.
 //!
+//! _See the [widget](Align) documentation for more information_.
+//!
 //! [single-widget]: super::SingleChildWidget
 //! [reactive-child]: super::ReactiveSingleChildExt
 

@@ -10,6 +10,8 @@
 //! - [`SingleChildWidget`] for using its child.
 //! - [`ReactiveSingleChildExt`] for setting its child reactively.
 //!
+//! _See the [widget](Badged) documentation for more information_.
+//!
 //! [badge-widget]: masonry::widgets::Badge
 //! [`SingleChildWidget`]: super::SingleChildWidget
 //! [`ReactiveSingleChildExt`]: super::ReactiveSingleChildExt

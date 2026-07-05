@@ -2,6 +2,8 @@
 //!
 //! The most important thing in the module is the [`NewCheckboxExt`]
 //! which is implemented for [`NewWidget<Checkbox>`].
+//!
+//! _See the [widget](Checkbox) documentation for more information_.
 
 use masonry::{
     core::{ArcStr, NewWidget},

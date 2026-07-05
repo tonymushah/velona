@@ -37,6 +37,8 @@
 //! > - Requires the callback function to be [`Send`] and [`Sync`].
 //!
 //! I personally recommend using the [`CanvasRefExt::update_scene`] function.
+//!
+//! _See the [widget](Canvas) documentation for more information_.
 
 use imaging::record::Scene;
 use masonry::kurbo::Size;

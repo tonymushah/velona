@@ -12,6 +12,8 @@
 //! with [`SingleChildWidget`] and [`ReactiveSingleChildExt`],
 //! I decided to make this [`NewButtonPressEventsExt`] _to make my life a little bit easier_.
 //!
+//! _See the [widget](Button) documentation for more information_.
+//!
 //! [`SingleChildWidget`]: super::SingleChildWidget
 //! [`ReactiveSingleChildExt`]: super::ReactiveSingleChildExt
 

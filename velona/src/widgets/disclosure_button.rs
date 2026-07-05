@@ -1,5 +1,7 @@
 //! Various [`DisclosureButton`] implementations.
 //!
+//! _See the [widget](DisclosureButton) documentation for more information_.
+//!
 //! The most important thing in the module is the [`NewDisclosureButtonExt`]
 //! which is implemented for [`NewWidget<DisclosureButton>`].
 

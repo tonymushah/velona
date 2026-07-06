@@ -4,7 +4,7 @@
 //! which is implemented for [`NewWidget<RadioButton>`].
 //!
 //! [`NewWidget<Radio>`] also implement the [`NewLabelExt`] trait
-//! (since a [radio](RadioButton) is just a [label](label) wrapper).
+//! (since a [radio](RadioButton) is just a [label](Label) wrapper).
 //!
 //! _See the [widget](RadioButton) documentation for more information_.
 

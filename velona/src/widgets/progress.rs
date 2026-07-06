@@ -1,7 +1,7 @@
 //! Various [`ProgressBar`] implementations.
 //!
-//! The most important thing in the module is the [`NewCollapsePanelExt`]
-//! which is implemented for [`NewWidget<CollapsePanel>`].
+//! The most important thing in the module is the [`NewProgressBarExt`]
+//! which is implemented for [`NewWidget<ProgressBar>`].
 //!
 //! _See the [widget](ProgressBar) documentation for more information_.
 

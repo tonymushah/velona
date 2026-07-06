@@ -7,7 +7,7 @@
 //!
 //! [`NewWidget<TextInput>`] also implements the [`NewTextAreaExt<true>`] trait.
 //!
-//! _See the [widget](Portal) documentation for more information_.
+//! _See the [widget](TextInput) documentation for more information_.
 
 use std::mem::{Discriminant, discriminant};
 

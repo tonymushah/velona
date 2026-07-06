@@ -1,3 +1,13 @@
+//! Various [`SelectorItem`] implementations.
+//!
+//! Nothing interesting to see here _:(_.
+//! The only thing here is the implementation of [`TypedSingleChildWidget`] for [`NewWidget<SelectorItem>`]
+//! with [`Child = Label`](Label) (wich means it implements [`NewLabelExt`]).
+//!
+//! _See the [widget](SelectorItem) documentation for more information_.
+//!
+//! [`NewLabelExt`]: crate::widgets::label::NewLabelExt
+
 // TODO Add example
 use masonry::{
     core::NewWidget,

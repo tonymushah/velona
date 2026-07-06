@@ -4,7 +4,7 @@ use masonry::{
 };
 use reactive_graph::graph::untrack;
 
-use crate::widgets::radio::NewRadioButtonExt;
+use crate::widgets::{label::NewLabelExt, radio::NewRadioButtonExt};
 
 /// We move most the [`RadioButton`] custom component here.
 ///

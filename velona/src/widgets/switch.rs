@@ -1,3 +1,10 @@
+//! Various [`Switch`] implementations.
+//!
+//! The most important thing in the module is the [`NewSwitchExt`]
+//! which is implemented for [`NewWidget<Switch>`].
+//!
+//! _See the [widget](Switch) documentation for more information_.
+
 use masonry::{core::NewWidget, widgets::Switch};
 
 use crate::NewWidgetExt;

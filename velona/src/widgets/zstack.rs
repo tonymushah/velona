@@ -1,3 +1,10 @@
+//! Various [`ZStack`] implementations.
+//!
+//! The most important thing in the module is the [`NewZStackExt`]
+//! which is implemented for [`NewWidget<ZStack>`].
+//!
+//! _See the [widget](ZStack) documentation for more information_.
+
 use masonry::{core::NewWidget, layout::UnitPoint, widgets::ZStack};
 
 use crate::NewWidgetExt;

@@ -1,18 +1,20 @@
 use masonry::{
-    core::{ArcStr, NewWidget},
+    core::{ArcStr, NewWidget, Widget},
     widgets::Checkbox,
 };
+use reactive_graph::graph::untrack;
 
 use crate::widgets::checkbox::NewCheckboxExt;
 
 /// Create a new reactive checkbox.
-///
-/// This function just call [`NewCheckboxExt::new`], _since `<NewWidget<Checkbox> as NewCheckboxExt>::new` is too long_.
 pub fn checkbox<Cf, Tf, T>(checked: Cf, text: Tf) -> NewWidget<Checkbox>
 where
     Cf: Fn() -> bool + 'static,
     Tf: Fn() -> T + 'static,
     T: Into<ArcStr>,
 {
-    <NewWidget<Checkbox> as NewCheckboxExt>::new(checked, text)
+    Checkbox::new(untrack(&checked), untrack(&text))
+        .prepare()
+        .checked(checked)
+        .text(text)
 }

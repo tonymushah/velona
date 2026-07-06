@@ -1,3 +1,10 @@
+//! Various [`VirtualScroll`] implementations.
+//!
+//! The most important thing in the module is the [`NewVirtualScrollExt`]
+//! which is implemented for [`NewWidget<VirtualScroll>`].
+//!
+//! _See the [widget](VirtualScroll) documentation for more information_.
+
 use std::ops::Range;
 
 use masonry::{core::NewWidget, widgets::VirtualScroll};

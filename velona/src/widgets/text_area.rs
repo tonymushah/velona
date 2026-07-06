@@ -1,3 +1,10 @@
+//! Various [`TextArea`] implementations.
+//!
+//! The most important thing in the module is the [`NewTextAreaExt`]
+//! which is implemented for [`NewWidget<TextArea>`].
+//!
+//! _See the [widget](TextArea) documentation for more information_.
+
 use std::mem::{Discriminant, discriminant};
 
 use masonry::{

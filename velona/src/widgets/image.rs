@@ -1,3 +1,10 @@
+//! Various [`Image`] implementations.
+//!
+//! The most important thing in the module is the [`NewImageExt`]
+//! which is implemented for [`NewWidget<Image>`].
+//!
+//! _See the [widget](Image) documentation for more information_.
+
 use masonry::{
     core::{ArcStr, NewWidget},
     peniko::ImageBrush,

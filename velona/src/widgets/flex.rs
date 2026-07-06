@@ -1,3 +1,10 @@
+//! Various [`Flex`] implementation.
+//!
+//! The most important thing in the module is the [`NewFlexExt`]
+//! which is implemented for [`NewWidget<Flex>`].
+//!
+//! _See the [widget](Flex) documentation for more information_.
+
 use imaging::kurbo::Axis;
 use masonry::{
     core::NewWidget,

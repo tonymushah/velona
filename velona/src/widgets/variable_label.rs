@@ -1,7 +1,13 @@
-use std::{
-    mem::{Discriminant, discriminant},
-    sync::{self, Mutex},
-};
+//! Various [`VariableLabel`] implementations.
+//!
+//! The most important thing in the module is the [`NewVariableLabelExt`]
+//! which is implemented for [`NewWidget<VariableLabel>`].
+//!
+//! [`NewWidget<VariableLabel>`] also implements the [`NewLabelExt`] trait.
+//!
+//! _See the [widget](VariableLabel) documentation for more information_.
+
+use std::mem::{Discriminant, discriminant};
 
 use masonry::{
     TextAlign,
@@ -79,25 +85,21 @@ impl NewLabelExt for NewWidget<VariableLabel> {
         S: Fn() -> Option<T> + 'static,
         T: Into<StyleProperty>,
     {
-        let old_style_data = sync::Arc::new(Mutex::new(None::<Discriminant<StyleProperty>>));
-        self.use_label_mut(move |mut this| {
-            let mut old_style_lock = {
-                if old_style_data.is_poisoned() {
-                    old_style_data.clear_poison();
+        self.use_reactive_widget_mut_with_effect_val::<_, Discriminant<StyleProperty>>(
+            move |mut this, old_style| {
+                let mut this = VariableLabel::label_mut(&mut this);
+                if let Some(old_style) = old_style {
+                    Label::remove_style(&mut this, old_style);
                 }
-                old_style_data.lock().unwrap()
-            };
-            if let Some(old_style) = *old_style_lock {
-                Label::remove_style(&mut this, old_style);
-            }
-            if let Some(style) = style() {
-                *old_style_lock = Label::insert_style(&mut this, style)
-                    .as_ref()
-                    .map(discriminant);
-            } else {
-                *old_style_lock = None;
-            }
-        })
+                if let Some(style) = style() {
+                    Label::insert_style(&mut this, style)
+                        .as_ref()
+                        .map(discriminant)
+                } else {
+                    None
+                }
+            },
+        )
     }
     fn style<S, T>(self, style: S) -> Self
     where

@@ -1,3 +1,10 @@
+//! Various [`Selector`] implementations.
+//!
+//! The most important thing in the module is the [`NewSelectorExt`]
+//! which is implemented for [`NewWidget<Selector>`].
+//!
+//! _See the [widget](Selector) documentation for more information_.
+
 use masonry::{
     core::NewWidget,
     widgets::{Label, Selector},

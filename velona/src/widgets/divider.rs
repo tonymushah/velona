@@ -1,3 +1,9 @@
+//! Various [`Divider`] implementations.
+//!
+//! The most important thing in the module is the [`NewDividerExt`]
+//! which is implemented for [`NewWidget<Divider>`].
+//!
+//! _See the [widget](Divider) documentation for more information_.
 use imaging::kurbo::{Axis, Cap};
 use masonry::{
     core::{NewWidget, Widget, WidgetMut},

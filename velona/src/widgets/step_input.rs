@@ -1,3 +1,10 @@
+//! Various [`StepInput`] implementations.
+//!
+//! The most important thing in the module is the [`NewStepInputExt`]
+//! which is implemented for [`NewWidget<StepInput>`].
+//!
+//! _See the [widget](StepInput) documentation for more information_.
+
 use masonry::{
     core::{NewWidget, WidgetMut},
     widgets::{StepInput, StepState, Steppable},

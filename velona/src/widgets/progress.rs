@@ -1,3 +1,10 @@
+//! Various [`ProgressBar`] implementations.
+//!
+//! The most important thing in the module is the [`NewProgressBarExt`]
+//! which is implemented for [`NewWidget<ProgressBar>`].
+//!
+//! _See the [widget](ProgressBar) documentation for more information_.
+
 use masonry::{core::NewWidget, widgets::ProgressBar};
 
 use crate::NewWidgetExt;

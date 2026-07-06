@@ -1,3 +1,13 @@
+//! Various [`Svg`] implementations.
+//!
+//! The most important thing in the module is the [`NewSvgExt`]
+//! which is implemented for [`NewWidget<Svg>`].
+//!
+//! Since building a [`Svg`] need the [`usvg`] crate,
+//! we re-export [it](usvg) here for simplicity.
+//!
+//! _See the [widget](Svg) documentation for more information_.
+
 use std::sync::Arc;
 
 use masonry::{

@@ -373,9 +373,6 @@ mod reactive_child_impl {
 /// Allows you to [`Widget`] `set_child` reactively.
 ///
 /// Unlike [`ReactiveSingleChildExt`], this trait is only implemented for [`Widget`]s that has a **typed** `set_child`.
-// TODO implement for [`Portal`](masonry::widgets::Portal)
-// TODO implement for [`Selector`](masonry::widgets::Selector)
-// TODO implement for [`SelectorItem`](masonry::widgets::SelectorItem)
 pub trait ReactiveSingleTypedChildExt {
     type Child: Widget + 'static;
     fn child<Cf>(self, child_fn: Cf) -> Self

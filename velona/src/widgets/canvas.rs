@@ -1,3 +1,45 @@
+//! Various [`Canvas`] implementations.
+//!
+// As the [`masonry::widgets::Canvas`] documentation says:
+// > A widget allowing custom drawing.
+// > A canvas takes a [painter callback](Canvas::update_scene);
+// > every time the canvas is repainted,
+// > that callback is run with an [`imaging::record::Scene`].
+// > That recording is then replayed as the canvas contents.
+//! In `velona`, there are 3 ways to paint a [`Canvas`]:
+//!
+//! 1. [`NewCanvasExt::update_scene`]:
+//!
+//! > **Pros**:
+//! > - Inline with [`NewWidget<Canvas>`]
+//! > - Runs inside an [`Effect`]
+//!
+//! > **Cons**:
+//! > - Might be complex to use (You might find yourself using a bunch of signals for basic stuff).
+//!
+//! 2. [`CanvasRefExt::update_scene_local`]:
+//!
+//! > **Pros**:
+//! > - Immediately updates the scene once it called.
+//!
+//! > **Cons**:
+//! > - Fails if the canvas is not in the widget tree (ex: component initialization).
+//! > - Fails if called in another thread.
+//!
+//! 3. [`CanvasRefExt::update_scene`]:
+//!
+//! > **Pros**:
+//! > - Can be called on another thread.
+//! > - Should always succeed in component initialization.
+//!
+//! > **Cons**:
+//! > - Fails if the canvas is not in the widget tree (ex: the widget has been destroyed).
+//! > - Requires the callback function to be [`Send`] and [`Sync`].
+//!
+//! I personally recommend using the [`CanvasRefExt::update_scene`] function.
+//!
+//! _See the [widget](Canvas) documentation for more information_.
+
 use imaging::record::Scene;
 use masonry::kurbo::Size;
 use masonry::{

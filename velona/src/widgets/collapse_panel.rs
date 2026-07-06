@@ -1,3 +1,13 @@
+//! Various [`CollapsePanel`] implementations.
+//!
+//! The most important thing in the module is the [`NewCollapsePanelExt`]
+//! which is implemented for [`NewWidget<CollapsePanel>`].
+//!
+//! The [`NewWidget<CollapsePanel>`] also implements the [`ReactiveSingleChildExt`] trait
+//! and the [`SingleChildWidget`] trait.
+//!
+//! _See the [widget](CollapsePanel) documentation for more information_.
+
 use masonry::{
     core::{ArcStr, NewWidget, WidgetMut},
     widgets::{CollapsePanel, DisclosureButton, Label},

@@ -1,3 +1,10 @@
+//! Various [`Slider`] implementations.
+//!
+//! The most important thing in the module is the [`NewSliderExt`]
+//! which is implemented for [`NewWidget<Slider>`].
+//!
+//! _See the [widget](Slider) documentation for more information_.
+
 use std::range::Range;
 
 use masonry::{

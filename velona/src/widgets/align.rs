@@ -1,37 +1,29 @@
+//! Various [`Align`] trait implementations.
+//!
+//! The most important thing in the module is the [`NewAlignExt`]
+//! which is implemented for [`NewWidget<Align>`].
+//!
+//! The [`NewWidget<Align>`] also implements the [`ReactiveSingleChildExt`][reactive-child] trait
+//! and the [`SingleChildWidget`][single-widget] trait.
+//!
+//! _See the [widget](Align) documentation for more information_.
+//!
+//! [single-widget]: super::SingleChildWidget
+//! [reactive-child]: super::ReactiveSingleChildExt
+
 use masonry::{core::NewWidget, layout::UnitPoint, widgets::Align};
-use reactive_graph::effect::Effect;
 
-use crate::{AnyNewWidget, NewWidgetExt, utils::ConsumeResult};
+use crate::NewWidgetExt;
 
-/// A [`Align`] trait extension
-pub trait NewAlign {
-    /// Make the [`Align::set_child`] reactive
-    fn child<C>(self, child: C) -> Self
-    where
-        C: Fn() -> AnyNewWidget + 'static;
+/// A [new](NewWidget) [`Align`] trait extension
+pub trait NewAlignExt {
     /// Make the [`Align::set_alignment`] reactive
     fn alignment<A>(self, alignment: A) -> Self
     where
         A: Fn() -> UnitPoint + 'static;
 }
 
-impl NewAlign for NewWidget<Align> {
-    fn child<C>(self, child: C) -> Self
-    where
-        C: Fn() -> AnyNewWidget + 'static,
-    {
-        let w_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let child = child();
-            w_ref
-                .edit_local_now(|mut this| {
-                    Align::set_child(&mut this, child);
-                })
-                .consume_with_log_err();
-        });
-        self
-    }
-
+impl NewAlignExt for NewWidget<Align> {
     fn alignment<A>(self, alignment: A) -> Self
     where
         A: Fn() -> UnitPoint + 'static,

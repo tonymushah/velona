@@ -1,3 +1,10 @@
+//! Various [`SizedBox`] implementations.
+//!
+//! The most important thing in the module is the [`NewSizedBoxExt`]
+//! which is implemented for [`NewWidget<SizedBox>`].
+//!
+//! _See the [widget](SizedBox) documentation for more information_.
+
 use masonry::{
     core::{NewWidget, Widget, WidgetMut},
     layout::Length,
@@ -10,6 +17,7 @@ use crate::{
     widgets::{ReactiveSingleChildExt, SingleChildWidget},
 };
 
+/// A [new](NewWidget) [`SizedBox`] extension trait.
 pub trait NewSizedBoxExt {
     /// Set a "reactive" child for this [`SizedBox`].
     ///

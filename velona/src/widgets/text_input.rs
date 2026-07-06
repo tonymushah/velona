@@ -1,13 +1,29 @@
+//! Various [`TextInput`] implementations.
+//!
+//! The most important thing in the module is the [`NewTextInputExt`]
+//! which is implemented for [`NewWidget<TextInput>`].
+//!
+//! There is also the [`NewTextInputActionExt`] to handle the internal [`TextArea`] actions.
+//!
+//! [`NewWidget<TextInput>`] also implements the [`NewTextAreaExt<true>`] trait.
+//!
+//! _See the [widget](Portal) documentation for more information_.
+
+use std::mem::{Discriminant, discriminant};
+
 use masonry::{
-    core::{ArcStr, NewWidget, WidgetMut},
+    TextAlign,
+    core::{ArcStr, NewWidget, StyleProperty, WidgetMut},
     parley,
-    widgets::{Label, TextAction, TextArea, TextInput},
+    widgets::{InsertNewline, Label, TextAction, TextArea, TextInput},
 };
 
 #[cfg(doc)]
 use reactive_graph::effect::Effect;
 
-use crate::{NewWidgetExt, utils::register_typed_widget_action_handler};
+use crate::{
+    NewWidgetExt, utils::register_typed_widget_action_handler, widgets::text_area::NewTextAreaExt,
+};
 
 /// A [new](NewWidget) [`TextInput`] trait extension.
 // TODO add example
@@ -94,6 +110,83 @@ impl NewTextInputExt for NewWidget<TextInput> {
     {
         self.use_reactive_widget_mut(move |mut this| {
             TextInput::set_text_alignment(&mut this, text_alignment());
+        })
+    }
+}
+
+impl NewTextAreaExt<true> for NewWidget<TextInput> {
+    fn style<S, T>(self, style: S) -> Self
+    where
+        S: Fn() -> T + 'static,
+        T: Into<StyleProperty>,
+    {
+        self.style_opt(move || Some(style()))
+    }
+
+    fn style_opt<S, T>(self, style: S) -> Self
+    where
+        S: Fn() -> Option<T> + 'static,
+        T: Into<StyleProperty>,
+    {
+        self.use_reactive_widget_mut_with_effect_val::<_, Discriminant<StyleProperty>>(
+            move |mut this, old_style| {
+                let mut this = TextInput::text_mut(&mut this);
+                if let Some(old_style) = old_style {
+                    TextArea::remove_style(&mut this, old_style);
+                }
+                if let Some(style) = style() {
+                    TextArea::insert_style(&mut this, style)
+                        .as_ref()
+                        .map(discriminant)
+                } else {
+                    None
+                }
+            },
+        )
+    }
+
+    fn hint<S>(self, hint: S) -> Self
+    where
+        S: Fn() -> bool + 'static,
+    {
+        self.use_text_mut(move |mut this| {
+            TextArea::set_hint(&mut this, hint());
+        })
+    }
+
+    fn text_alignment<S>(self, align: S) -> Self
+    where
+        S: Fn() -> TextAlign + 'static,
+    {
+        self.use_text_mut(move |mut this| {
+            TextArea::set_text_alignment(&mut this, align());
+        })
+    }
+
+    fn word_wrap<W>(self, wrap_words: W) -> Self
+    where
+        W: Fn() -> bool + 'static,
+    {
+        self.use_text_mut(move |mut this| {
+            TextArea::set_word_wrap(&mut this, wrap_words());
+        })
+    }
+
+    fn insert_newline<I>(self, insert_newline: I) -> Self
+    where
+        I: Fn() -> InsertNewline + 'static,
+    {
+        self.use_text_mut(move |mut this| {
+            TextArea::set_insert_newline(&mut this, insert_newline());
+        })
+    }
+
+    fn text<T>(self, text: T) -> Self
+    where
+        T: Fn() -> String + 'static,
+    {
+        self.use_text_mut(move |mut this| {
+            TextArea::reset_text(&mut this, text().as_str());
         })
     }
 }

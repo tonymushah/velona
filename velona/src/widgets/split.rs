@@ -1,3 +1,10 @@
+//! Various [`Split`] implementations.
+//!
+//! The most important thing in the module is the [`NewSplitExt`]
+//! which is implemented for [`NewWidget<Split>`].
+//!
+//! _See the [widget](Split) documentation for more information_.
+
 use imaging::kurbo::Axis;
 use masonry::{
     core::{FromDynWidget, NewWidget, Widget, WidgetMut},

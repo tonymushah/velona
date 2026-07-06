@@ -1,3 +1,10 @@
+//! Various [`ScrollBar`] implementations.
+//!
+//! The most important thing in the module is the [`NewScrollBarExt`]
+//! which is implemented for [`NewWidget<ScrollBar>`].
+//!
+//! _See the [widget](ScrollBar) documentation for more information_.
+
 use masonry::{
     core::{NewWidget, WidgetMut},
     widgets::ScrollBar,

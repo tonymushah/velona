@@ -1,3 +1,18 @@
+//! Various [`ResizeObserver`] implementations.
+//!
+//! The most important thing in the module is the [`BindResizeObserver`]
+//! which is implemented for all [`NewWidget`].
+//!
+//! [`NewWidget<ResizeObserver>`] also implements
+//! [`SingleChildWidget`] and [`ReactiveSingleChildExt`].
+//!
+//! I recommend to saving the child widget into a [widget ref](crate::widget_ref::VelonaWidgetRef).
+//!
+//! _See the [widget](ResizeObserver) documentation for more information_.
+//!
+//! [`SingleChildWidget`]: super::SingleChildWidget
+//! [`ReactiveSingleChildExt`]: super::ReactiveSingleChildExt
+
 use masonry::{
     core::{FromDynWidget, NewWidget, Widget, WidgetMut},
     widgets::ResizeObserver,

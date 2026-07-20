@@ -16,7 +16,7 @@ masonry = { version = "0.4", git = "https://github.com/linebender/xilem.git", de
 masonry_imaging = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
 masonry_core = { version = "0.4", git = "https://github.com/linebender/xilem.git" }
 # TODO update to 0.3
-reactive_graph = { version = "0.2" }
+reactive_graph = { version = "0.3.0-beta2" }
 thiserror = "2"
 # TODO update to 0.31 when stable
 winit = "0.30"

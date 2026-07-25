@@ -40,19 +40,17 @@ fn text() -> AnyNewWidget {
 
 fn checkbox() -> AnyNewWidget {
     let (checked, set_checked) = signal(false);
-    _checkbox(
-        move || checked.get(),
-        move || {
-            if checked.get() {
-                "Unchecked checkbox..."
-            } else {
-                "Checked checkbox!!"
-            }
-        },
-    )
+    let checked1 = move || checked();
+    _checkbox(checked1, move || {
+        if checked() {
+            "Unchecked checkbox..."
+        } else {
+            "Checked checkbox!!"
+        }
+    })
     .static_propeperty(CheckmarkColor { color: GREEN })
     .on_action(move |checked| {
-        set_checked.set(checked.0);
+        set_checked(checked.0);
     })
     .erased()
 }

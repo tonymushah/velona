@@ -47,7 +47,7 @@ pub trait NewVirtualScrollExt {
     ///
     /// Adjusts pixel snapping for animations.
     ///
-    /// Reactive equivalent of [`set_scrolling`](VirtualScroll:set_scrolling).
+    /// Reactive equivalent of [`set_scrolling`](VirtualScroll::set_scrolling).
     fn scrolling<S>(self, scrolling: S) -> Self
     where
         S: Fn() -> bool + 'static;

@@ -1,5 +1,8 @@
 use std::fmt::Debug;
 
+use async_task::Runnable;
+use masonry::app::RenderRootSignal;
+use send_wrapper::SendWrapper;
 use winit::{
     event_loop::{EventLoopClosed, EventLoopProxy},
     window::WindowId,
@@ -13,11 +16,11 @@ use crate::{
 
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<accesskit_winit::Event>),
-    RunTasks,
+    RunTask(Runnable),
     NewWindow(Box<WindowBuilder>),
     CloseWindow(WindowId),
     SetClipboardContent(String),
-    HandleRenderRootSignals,
+    HandleRenderRootSignals(WindowId, Box<SendWrapper<RenderRootSignal>>),
     EditWidget(Box<EditWidgetFnEvent>),
     UseWidget(Box<UseWidgetFnEvent>),
 }
@@ -26,13 +29,17 @@ impl Debug for EventLoopEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::AccessKitAction(arg0) => f.debug_tuple("AccessKitAction").field(arg0).finish(),
-            Self::RunTasks => write!(f, "RunTasks"),
+            Self::RunTask(_) => write!(f, "RunTasks"),
             Self::NewWindow(_) => f.debug_tuple("NewWindow").finish(),
             Self::CloseWindow(arg0) => f.debug_tuple("CloseWindow").field(arg0).finish(),
             Self::SetClipboardContent(arg0) => {
                 f.debug_tuple("SetClipboardContent").field(arg0).finish()
             }
-            Self::HandleRenderRootSignals => write!(f, "HandleRenderRootSignals"),
+            Self::HandleRenderRootSignals(id, _) => f
+                .debug_tuple("HandleRenderRootSignals")
+                .field(id)
+                .field(&"NonSend")
+                .finish(),
             Self::EditWidget(arg0) => f.debug_tuple("EditWidget").field(arg0).finish(),
             Self::UseWidget(arg0) => f.debug_tuple("UseWidget").field(arg0).finish(),
         }
@@ -56,10 +63,11 @@ pub(crate) trait EventProxyHandle {
 
 #[cfg(test)]
 mod test {
-    use crate::utils::is_send_sync;
+
+    use crate::{app::AppEventLoopProxy, utils::is_send_sync};
 
     #[test]
-    fn test_if_event_is_send_sync() {
-        is_send_sync::<super::EventLoopEvent>();
+    fn test_if_event_proxy_is_send_sync() {
+        is_send_sync::<AppEventLoopProxy>();
     }
 }

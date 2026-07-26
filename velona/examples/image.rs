@@ -7,11 +7,7 @@ use masonry::{
     peniko::{Blob, ImageBrush, ImageData, ImageSampler},
     widgets::{Flex, Label, SizedBox, Spinner},
 };
-use reactive_graph::{
-    computed::Memo,
-    signal::signal,
-    traits::{Get, Read, Set},
-};
+use reactive_graph::{computed::Memo, signal::signal, traits::Read};
 use velona::{
     AnyNewWidget, Builder, WindowBuilder,
     components::{LazyImageOptions, lazy_image},
@@ -34,7 +30,7 @@ fn new_view() -> AnyNewWidget {
                 let height = data.height();
                 let mut data_buf = data.into_vec();
                 data_buf.shrink_to_fit();
-                set_image_data.set(ImageState::Ready(ImageBrush {
+                set_image_data(ImageState::Ready(ImageBrush {
                     image: ImageData {
                         data: Blob::new(sync::Arc::new(data_buf)),
                         format: masonry::peniko::ImageFormat::Rgba8,
@@ -47,7 +43,7 @@ fn new_view() -> AnyNewWidget {
                 // println!("Runned shit");
             }
             Err(err) => {
-                set_image_data.set(ImageState::Error(anyhow::Error::from(err)));
+                set_image_data(ImageState::Error(anyhow::Error::from(err)));
             }
         }
     });
@@ -58,11 +54,12 @@ fn new_view() -> AnyNewWidget {
             None
         }
     });
+    let image_data1 = move || image_ready();
     Flex::column()
         .with_fixed(Label::new("SOme image").prepare().erased())
         .with_fixed_spacer(Length::px(8.0))
         .with_fixed(lazy_image(
-            move || image_ready.get(),
+            image_data1,
             Some(LazyImageOptions {
                 fallback: Some(
                     (move || match *image_data.read() {

@@ -6,22 +6,14 @@ mod run;
 pub(crate) use executor::AppTaskProxy;
 use velona_renderer::WindowRenderer;
 
-use std::{
-    cell::RefCell,
-    rc::Rc,
-    sync::{Arc, mpsc},
-};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use crate::{app::executor::SpawnFn, window::builder::WindowBuilder};
 use any_spawner::PinnedFuture;
-use async_task::Runnable;
 use copypasta::ClipboardContext;
 use masonry::core::DefaultProperties;
 use reactive_graph::owner::Owner;
-use winit::{
-    event_loop::{EventLoop, EventLoopBuilder},
-    window::WindowId,
-};
+use winit::event_loop::{EventLoop, EventLoopBuilder};
 
 pub(crate) use el_event::{AppEventLoopProxy, EventLoopEvent};
 
@@ -84,12 +76,8 @@ impl<W: WindowRenderer> Builder<W> {
             .unwrap_or_else(|| Box::new(|_| panic!("No spawn_fn provided")));
         let event_loop = self.event_loop_builder.build()?;
         let proxy = event_loop.create_proxy();
-        let (runables_sender, runable_receiver) = mpsc::channel::<Runnable>();
 
-        let proxy = AppTaskProxy {
-            task_sender: runables_sender,
-            proxy,
-        };
+        let proxy = AppTaskProxy { proxy };
 
         match any_spawner::Executor::init_custom_executor(executor::AppExecutor::new(
             spawn_fn,
@@ -98,8 +86,6 @@ impl<W: WindowRenderer> Builder<W> {
             Ok(_) => {}
             Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
         }
-        let (signal_sender, signal_receiver) =
-            mpsc::channel::<(WindowId, masonry::app::RenderRootSignal)>();
 
         let mut app = run::AppRunner {
             app_handle: AppHandle::new(proxy),
@@ -108,10 +94,7 @@ impl<W: WindowRenderer> Builder<W> {
             default_properties: Arc::new(self.default_properties),
             builder_windows: Some(self.windows),
             owner: self.owner,
-            signal_receiver,
-            signal_sender,
             clipboard_context: Rc::new(RefCell::new(ClipboardContext::new().unwrap())),
-            tasks: runable_receiver,
             suspended: true,
         };
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);

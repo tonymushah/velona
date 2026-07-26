@@ -47,6 +47,7 @@ impl From<Alignment> for UnitPoint {
 fn main_view() -> AnyNewWidget {
     let (align, set_align) = signal(Alignment::Center);
     let align_memo: Memo<UnitPoint> = Memo::new(move |_| align.get().into());
+    let alignment = move || align_memo();
     Flex::column()
         .cross_axis_alignment(masonry::properties::types::CrossAxisAlignment::Center)
         .with_fixed(
@@ -83,7 +84,7 @@ fn main_view() -> AnyNewWidget {
             SizedBox::new(
                 Align::centered(Label::new("Some text lmao").prepare())
                     .prepare()
-                    .alignment(move || align_memo.get()),
+                    .alignment(alignment),
             )
             .height(Length::px(500.0))
             .width(Length::px(250.0))

@@ -1,5 +1,6 @@
 // I am just copy pasting code man lmao
 
+#[cfg(feature = "log_frame_times")]
 use debug_timer::debug_timer;
 use futures_channel::oneshot;
 use imaging_vello::vello::wgpu::{
@@ -260,6 +261,7 @@ impl WindowRenderer for VelloWindowRenderer {
 
         let render_surface = &mut state.render_surface;
 
+        #[cfg(feature = "log_frame_times")]
         debug_timer!(timer, feature = "log_frame_times");
 
         // Regenerate the vello scene
@@ -269,6 +271,7 @@ impl WindowRenderer for VelloWindowRenderer {
         if let Err(_err) = sink.finish() {
             panic!("{_err}");
         }
+        #[cfg(feature = "log_frame_times")]
         timer.record_time("cmd");
 
         let Ok(texture_view) = render_surface.target_texture_view() else {
@@ -292,6 +295,7 @@ impl WindowRenderer for VelloWindowRenderer {
                 },
             )
             .expect("failed to render to texture");
+        #[cfg(feature = "log_frame_times")]
         timer.record_time("render");
 
         drop(texture_view);
@@ -299,14 +303,17 @@ impl WindowRenderer for VelloWindowRenderer {
         if render_surface.maybe_blit_and_present().is_err() {
             return;
         }
+        #[cfg(feature = "log_frame_times")]
         timer.record_time("present");
 
-        render_surface
-            .device()
-            .poll(wgpu::PollType::wait_indefinitely())
-            .unwrap();
-
+        #[cfg(feature = "log_frame_times")]
+        // render_surface
+        //     .device()
+        //     .poll(wgpu::PollType::wait_indefinitely())
+        //     .unwrap();
+        #[cfg(feature = "log_frame_times")]
         timer.record_time("wait");
+        #[cfg(feature = "log_frame_times")]
         timer.print_times("vello: ");
 
         // Empty the Vello scene (memory optimisation)

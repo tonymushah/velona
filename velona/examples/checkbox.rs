@@ -5,32 +5,27 @@ use masonry::{
     theme::DEFAULT_SPACER_LEN,
     widgets::{Align, Flex},
 };
-use reactive_graph::{
-    signal::signal,
-    traits::{Get, Set},
-};
+use reactive_graph::signal::signal;
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, components::checkbox as _checkbox,
 };
 
 fn view() -> AnyNewWidget {
     let (checked, set_checked) = signal(false);
+    let checked1 = move || checked();
     Align::centered(
         Flex::column()
             .with_fixed_spacer(DEFAULT_SPACER_LEN)
             .with_fixed(
-                _checkbox(
-                    move || checked.get(),
-                    move || {
-                        if checked.get() {
-                            "Checkbox checked"
-                        } else {
-                            "Checkbox not checked"
-                        }
-                    },
-                )
+                _checkbox(checked1, move || {
+                    if checked() {
+                        "Checkbox checked"
+                    } else {
+                        "Checkbox not checked"
+                    }
+                })
                 .on_action(move |event| {
-                    set_checked.set(event.0);
+                    set_checked(event.0);
                 }),
             )
             .main_axis_alignment(MainAxisAlignment::Center)

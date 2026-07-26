@@ -1,7 +1,7 @@
-use std::{ops::Deref, sync::mpsc};
+use std::ops::Deref;
 
 use any_spawner::{CustomExecutor, PinnedFuture};
-use async_task::{Runnable, Task};
+use async_task::Task;
 
 use crate::app::EventLoopEvent;
 
@@ -10,7 +10,6 @@ pub(crate) type SpawnFn = Box<dyn Fn(PinnedFuture<()>) + Send + Sync>;
 #[derive(Debug, Clone)]
 pub(crate) struct AppTaskProxy {
     pub proxy: super::AppEventLoopProxy,
-    pub task_sender: mpsc::Sender<Runnable>,
 }
 
 impl Deref for AppTaskProxy {
@@ -30,11 +29,7 @@ impl AppTaskProxy {
         #[cfg(feature = "hotpath")]
         let fut = hotpath::future!(fut);
         let (run, task) = async_task::spawn_local(fut, move |run| {
-            // log::trace!("");
-            if proxy.task_sender.send(run).is_err() {
-                log::warn!("the event loop is already closed!");
-            }
-            let res = proxy.proxy.send_event(EventLoopEvent::RunTasks);
+            let res = proxy.proxy.send_event(EventLoopEvent::RunTask(run));
             if res.is_err() {
                 log::warn!("the event loop is already closed!");
             }

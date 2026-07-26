@@ -1,23 +1,21 @@
-use std::{
-    sync::{Arc, mpsc},
-    time::Instant,
-};
+use std::{sync::Arc, time::Instant};
 
 use imaging::RenderSource;
 use masonry::{
-    app::{RenderRootOptions, RenderRootSignal, VisualLayerKind},
+    app::{RenderRootOptions, VisualLayerKind},
     core::{DefaultProperties, NewWidget, Widget},
     palette::css::BLACK,
     peniko::color::{AlphaColor, Srgb},
 };
 use masonry_imaging::{Layer as ImagingLayer, PreparedFrame};
 use reactive_graph::owner::{Owner, provide_context};
+use send_wrapper::SendWrapper;
 use ui_events_winit::WindowEventReducer;
 use velona_renderer::WindowRenderer;
-use winit::window::{Window as WinitWindow, WindowId};
+use winit::window::Window as WinitWindow;
 
 use crate::{
-    app::{AppHandle, el_event::EventProxyHandle},
+    app::{AppHandle, EventLoopEvent, el_event::EventProxyHandle},
     render_root::{InnerRenderRoot, WindowRenderRoot},
     window::{handle::WindowHandle, renderer::WindowRendererFactory},
     window_event_handler::InternWindowEventHandler,
@@ -47,7 +45,6 @@ pub struct WindowNew<'i, V, W> {
     pub access_kit: accesskit_winit::Adapter,
     #[allow(unused)]
     pub app_handle: AppHandle,
-    pub signal_sender: mpsc::Sender<(WindowId, RenderRootSignal)>,
     pub parent_owner: &'i Owner,
     pub base_color: Option<AlphaColor<Srgb>>,
     pub factory: &'i mut dyn WindowRendererFactory<WindowRenderer = W>,
@@ -96,7 +93,6 @@ where
             default_properties,
             access_kit,
             app_handle,
-            signal_sender,
             parent_owner,
             base_color,
             factory,
@@ -113,8 +109,10 @@ where
                 let window = window.id();
                 let proxy = app_handle.get_proxy().clone();
                 move |ev| {
-                    let _ = signal_sender.send((window, ev));
-                    let _ = proxy.send_event(crate::app::EventLoopEvent::HandleRenderRootSignals);
+                    let _ = proxy.send_event(EventLoopEvent::HandleRenderRootSignals(
+                        window,
+                        Box::new(SendWrapper::new(ev)),
+                    ));
                 }
             },
             RenderRootOptions {
@@ -159,7 +157,7 @@ where
         };
         Ok(this)
     }
-    fn sync_surface_render_root_size(&mut self) -> bool {
+    pub fn sync_surface_render_root_size(&mut self) -> bool {
         let Some(size) = self
             .render_root
             .use_inner_render_root_ref(|root| root.tree.size())
@@ -225,11 +223,11 @@ where
             &overlays,
         );
 
-        if self.sync_surface_render_root_size() {
-            self.renderer.render(|painter| {
-                frame.paint_into(painter);
-            });
-        }
+        // if self.sync_surface_render_root_size() {
+        self.renderer.render(|painter| {
+            frame.paint_into(painter);
+        });
+        // }
         if let Some(access_tree) = _access_tree {
             self.access_kit.update_if_active(|| access_tree);
         }

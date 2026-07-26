@@ -18,6 +18,7 @@ use masonry::{
     widgets::{InsertNewline, Label, TextAction, TextArea, TextInput},
 };
 
+use reactive_graph::actions;
 #[cfg(doc)]
 use reactive_graph::effect::Effect;
 
@@ -200,6 +201,30 @@ pub trait NewTextInputActionExt {
     fn on_text_action<H>(self, on_action: H) -> Self
     where
         H: Fn(&TextAction) + 'static;
+    /// Handle the internal [`TextArea`] [`TextAction::Changed`]s.
+    fn on_text_action_changed<H>(self, on_changed: H) -> Self
+    where
+        H: Fn(&String) + 'static,
+        Self: Sized,
+    {
+        self.on_text_action(move |action| {
+            if let TextAction::Changed(changes) = action {
+                on_changed(changes);
+            }
+        })
+    }
+    /// Handle the internal [`TextArea`] [`TextAction::Entered`]s.
+    fn on_text_action_entered<H>(self, on_entered: H) -> Self
+    where
+        H: Fn(&String) + 'static,
+        Self: Sized,
+    {
+        self.on_text_action(move |action| {
+            if let TextAction::Entered(changes) = action {
+                on_entered(changes);
+            }
+        })
+    }
 }
 
 impl NewTextInputActionExt for NewWidget<TextInput> {

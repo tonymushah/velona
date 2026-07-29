@@ -7,10 +7,10 @@ use crate::{
     Manager,
     app::{
         self, AppHandle, EventLoopEvent,
-        el_event::{EventProxyHandle, RegisterWidgetActionHandler},
+        el_event::{EventProxyHandle, RegisterOnWindowDestroyHandler, RegisterWidgetActionHandler},
         proxy::AppEventLoopProxy,
     },
-    window_event_handler::{HandlerFn, HandlerId},
+    window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
 };
 
 #[derive(Debug, Clone)]
@@ -83,6 +83,23 @@ impl WindowHandle {
             )))
             .map_err(|_| WindowHandleActionError::AppExited)?;
         Ok(())
+    }
+    pub fn register_on_destroy_handler(
+        &self,
+        handler_fn: NoParamHandlerFn,
+    ) -> Result<HandlerId, WindowHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.app_handle
+            .send_event(EventLoopEvent::RegisterOnWindowDestroy(Box::new(
+                RegisterOnWindowDestroyHandler {
+                    window_id: self.id()?,
+                    handler_id,
+                    handler: handler_fn,
+                },
+            )))
+            .map_err(|_| WindowHandleActionError::AppExited)?;
+
+        Ok(handler_id)
     }
 }
 

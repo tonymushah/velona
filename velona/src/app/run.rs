@@ -137,7 +137,7 @@ where
                     child_owner.with(|| {
                         window
                             .window_event_handler
-                            .handle_event(widget_id, &any_debug)
+                            .handle_widget_action(widget_id, &any_debug)
                     });
                 }
                 masonry::app::RenderRootSignal::StartIme => {
@@ -377,7 +377,7 @@ where
                 }
                 EventLoopEvent::RegisterWidgetActionHandler(register_widget_action_handler) => {
                     self.use_window(register_widget_action_handler.window_id, |window| {
-                        window.window_event_handler.add_handler_fn(
+                        window.window_event_handler.add_widget_action_handler_fn(
                             register_widget_action_handler.handler_id,
                             register_widget_action_handler.widget_id,
                             register_widget_action_handler.handler_fn,
@@ -386,6 +386,14 @@ where
                 }
                 EventLoopEvent::UnregisterEventHandler(unregister) => {
                     self.handle_unregister_event_handler(*unregister);
+                }
+                EventLoopEvent::RegisterOnWindowDestroy(register_on_window_destroy_handler) => {
+                    self.use_window(register_on_window_destroy_handler.window_id, |window| {
+                        window.window_event_handler.add_on_destroy_handler(
+                            register_on_window_destroy_handler.handler_id,
+                            register_on_window_destroy_handler.handler,
+                        );
+                    });
                 }
             }
         }

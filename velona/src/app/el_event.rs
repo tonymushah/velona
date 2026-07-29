@@ -9,7 +9,7 @@ use crate::{
     app::proxy::{AppEventLoopProxy, AppProxySendError},
     widget_ref::{EditWidgetFnEvent, UseWidgetFnEvent},
     window::builder::WindowBuilder,
-    window_event_handler::{HandlerFn, HandlerId},
+    window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
 };
 
 pub(crate) struct RegisterWidgetActionHandler {
@@ -35,6 +35,22 @@ pub(crate) struct UnregisterHandler {
     pub(crate) window_id: Option<WindowId>,
 }
 
+pub(crate) struct RegisterOnWindowDestroyHandler {
+    pub(crate) handler_id: HandlerId,
+    pub(crate) window_id: WindowId,
+    pub(crate) handler: NoParamHandlerFn,
+}
+
+impl Debug for RegisterOnWindowDestroyHandler {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RegisterOnWindowDestroyHandler")
+            .field("handler_id", &self.handler_id)
+            .field("window_id", &self.window_id)
+            .field("handler", &"fn ()")
+            .finish()
+    }
+}
+
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<accesskit_winit::Event>),
     RunTask(Runnable),
@@ -46,6 +62,7 @@ pub(crate) enum EventLoopEvent {
     UseWidget(Box<UseWidgetFnEvent>),
     RegisterWidgetActionHandler(Box<RegisterWidgetActionHandler>),
     UnregisterEventHandler(Box<UnregisterHandler>),
+    RegisterOnWindowDestroy(Box<RegisterOnWindowDestroyHandler>),
 }
 
 impl Debug for EventLoopEvent {
@@ -72,6 +89,10 @@ impl Debug for EventLoopEvent {
             Self::UnregisterEventHandler(arg0) => {
                 f.debug_tuple("UnregisterEventHandler").field(arg0).finish()
             }
+            Self::RegisterOnWindowDestroy(arg0) => f
+                .debug_tuple("RegisterOnWindowDestroy")
+                .field(arg0)
+                .finish(),
         }
     }
 }

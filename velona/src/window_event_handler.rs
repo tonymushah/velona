@@ -39,9 +39,12 @@ impl HandlerId {
 
 pub type HandlerFn = Box<dyn Fn(&ErasedAction) + Send>;
 
+pub type NoParamHandlerFn = Box<dyn Fn() + Send>;
+
 #[derive(Default)]
 pub(crate) struct WindowEventHandlers {
     widget_handlers: HashMap<WidgetId, HashMap<HandlerId, HandlerFn>>,
+    on_destroy_handler: HashMap<HandlerId, NoParamHandlerFn>,
     // TODO add on_mouseenter for widgets
     // TODO add on_mouseexit for widgets
     // TODO add on_keydown for window
@@ -50,14 +53,14 @@ pub(crate) struct WindowEventHandlers {
 }
 
 impl WindowEventHandlers {
-    pub fn handle_event(&self, widget_id: WidgetId, ev: &ErasedAction) {
+    pub fn handle_widget_action(&self, widget_id: WidgetId, ev: &ErasedAction) {
         let Some(handlers) = self.widget_handlers.get(&widget_id) else {
             debug!("no event handler registered for {:?}", widget_id);
             return;
         };
         handlers.values().for_each(|h| (h)(ev));
     }
-    pub fn add_handler_fn(
+    pub fn add_widget_action_handler_fn(
         &mut self,
         handler_id: HandlerId,
         widget_id: WidgetId,
@@ -86,6 +89,18 @@ impl WindowEventHandlers {
             .values_mut()
             .for_each(|map| map.shrink_to_fit());
         self.widget_handlers.shrink_to_fit();
+        self.on_destroy_handler.shrink_to_fit();
+    }
+    pub fn add_on_destroy_handler(&mut self, handler_id: HandlerId, hander_fn: NoParamHandlerFn) {
+        self.on_destroy_handler.insert(handler_id, hander_fn);
+    }
+}
+
+impl Drop for WindowEventHandlers {
+    fn drop(&mut self) {
+        for (_, handler) in self.on_destroy_handler.drain() {
+            handler();
+        }
     }
 }
 

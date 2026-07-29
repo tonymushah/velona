@@ -379,6 +379,26 @@ where
             }
         }
     }
+    fn run_exiting_task(&self) -> usize {
+        let mut tasks = 0usize;
+        while let Some(EventLoopEvent::RunTask(run)) = self.receiver.try_iter().next() {
+            run.run();
+            tasks += 1;
+        }
+        tasks
+    }
+}
+
+impl<W> Drop for AppRunner<W>
+where
+    W: WindowRenderer,
+{
+    fn drop(&mut self) {
+        self.owner.cleanup();
+        let task_runned = self.run_exiting_task();
+
+        log::trace!("Number of drop tasks: {task_runned}");
+    }
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
@@ -517,5 +537,7 @@ where
     }
     fn exiting(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         log::warn!("Exiting...");
+        let task_runned = self.run_exiting_task();
+        log::trace!("Number of exiting tasks: {task_runned}");
     }
 }

@@ -199,11 +199,11 @@ pub trait NewTextInputActionExt {
     /// Handle the internal [`TextArea`] [`TextAction`]s.
     fn on_text_action<H>(self, on_action: H) -> Self
     where
-        H: Fn(&TextAction) + 'static;
+        H: Fn(&TextAction) + Send + 'static;
     /// Handle the internal [`TextArea`] [`TextAction::Changed`]s.
     fn on_text_action_changed<H>(self, on_changed: H) -> Self
     where
-        H: Fn(&String) + 'static,
+        H: Fn(&String) + Send + 'static,
         Self: Sized,
     {
         self.on_text_action(move |action| {
@@ -215,7 +215,7 @@ pub trait NewTextInputActionExt {
     /// Handle the internal [`TextArea`] [`TextAction::Entered`]s.
     fn on_text_action_entered<H>(self, on_entered: H) -> Self
     where
-        H: Fn(&String) + 'static,
+        H: Fn(&String) + Send + 'static,
         Self: Sized,
     {
         self.on_text_action(move |action| {
@@ -229,7 +229,7 @@ pub trait NewTextInputActionExt {
 impl NewTextInputActionExt for NewWidget<TextInput> {
     fn on_text_action<H>(self, on_action: H) -> Self
     where
-        H: Fn(&TextAction) + 'static,
+        H: Fn(&TextAction) + Send + 'static,
     {
         register_typed_widget_action_handler::<TextArea<false>, _>(
             self.widget.area_pod().id(),

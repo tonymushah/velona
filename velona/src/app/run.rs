@@ -26,7 +26,11 @@ use winit::{
 use super::window::Window;
 
 use crate::{
-    app::{AppHandle, EventLoopEvent, el_event::EventProxyHandle, window::WindowNew},
+    app::{
+        AppHandle, EventLoopEvent,
+        el_event::{EventProxyHandle, UnregisterHandler},
+        window::WindowNew,
+    },
     convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
     utils::todo_warn_of_something,
     window::{builder::WindowBuilder, renderer::WindowRendererFactory},
@@ -128,18 +132,13 @@ where
         self.use_window(window_id, |window| {
             match signal {
                 masonry::app::RenderRootSignal::Action(any_debug, widget_id) => {
-                    match window.window_event_handler.try_borrow() {
-                        Ok(evs) => window
-                            .create_children_owner()
-                            .with(|| evs.handle_event(widget_id, &any_debug)),
-                        Err(_) => {
-                            log::error!(
-                                "Cannot handle event of {} with {:?}",
-                                widget_id,
-                                any_debug,
-                            );
-                        }
-                    };
+                    let child_owner = window.create_children_owner();
+
+                    child_owner.with(|| {
+                        window
+                            .window_event_handler
+                            .handle_widget_action(widget_id, &any_debug)
+                    });
                 }
                 masonry::app::RenderRootSignal::StartIme => {
                     window.winit_window.set_ime_allowed(true);
@@ -375,6 +374,44 @@ where
                             (use_widget_fn_event.use_fn)(widget_ref);
                         }
                     });
+                }
+                EventLoopEvent::RegisterWidgetActionHandler(register_widget_action_handler) => {
+                    self.use_window(register_widget_action_handler.window_id, |window| {
+                        window.window_event_handler.add_widget_action_handler_fn(
+                            register_widget_action_handler.handler_id,
+                            register_widget_action_handler.widget_id,
+                            register_widget_action_handler.handler_fn,
+                        );
+                    });
+                }
+                EventLoopEvent::UnregisterEventHandler(unregister) => {
+                    self.handle_unregister_event_handler(*unregister);
+                }
+                EventLoopEvent::RegisterOnWindowDestroy(register_on_window_destroy_handler) => {
+                    self.use_window(register_on_window_destroy_handler.window_id, |window| {
+                        window.window_event_handler.add_on_destroy_handler(
+                            register_on_window_destroy_handler.handler_id,
+                            register_on_window_destroy_handler.handler,
+                        );
+                    });
+                }
+            }
+        }
+    }
+    fn handle_unregister_event_handler(&mut self, event: UnregisterHandler) {
+        if let Some(window_id) = event.window_id {
+            self.use_window(window_id, |window| {
+                window
+                    .window_event_handler
+                    .remove_handler_fn(event.handler_id);
+            });
+        } else {
+            for window in self.windows.values_mut() {
+                if window
+                    .window_event_handler
+                    .remove_handler_fn(event.handler_id)
+                {
+                    break;
                 }
             }
         }

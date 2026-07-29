@@ -110,11 +110,11 @@ where
     /// _You get the idea._
     fn on_action_ref_self<F>(&self, fun: F)
     where
-        F: Fn(&W::Action) + 'static;
+        F: Fn(&W::Action) + Send + 'static;
     /// Listen to the [`Widget::Action`]
     fn on_action<F>(self, fun: F) -> Self
     where
-        F: Fn(&W::Action) + 'static;
+        F: Fn(&W::Action) + Send + 'static;
     /// Set a [widget](Widget) [property](Property) reactively.
     fn property<F, P>(self, prop: F) -> Self
     where
@@ -169,13 +169,13 @@ where
     }
     fn on_action_ref_self<F>(&self, fun: F)
     where
-        F: Fn(&<W as Widget>::Action) + 'static,
+        F: Fn(&<W as Widget>::Action) + Send + 'static,
     {
         register_typed_widget_action_handler::<W, _>(self.id(), fun);
     }
     fn on_action<F>(self, fun: F) -> Self
     where
-        F: Fn(&<W as Widget>::Action) + 'static,
+        F: Fn(&<W as Widget>::Action) + Send + 'static,
     {
         self.on_action_ref_self(fun);
         self

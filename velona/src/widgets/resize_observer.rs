@@ -44,7 +44,7 @@ pub trait BindResizeObserver {
     /// You might also get several of the resulting actions in a sequence.
     fn on_resize<E>(self, handler: E) -> NewWidget<ResizeObserver>
     where
-        E: Fn(WidgetMut<ResizeObserver>) + 'static;
+        E: Fn(WidgetMut<ResizeObserver>) + Send + 'static;
 }
 
 impl<W> BindResizeObserver for NewWidget<W>
@@ -53,7 +53,7 @@ where
 {
     fn on_resize<E>(self, handler: E) -> NewWidget<ResizeObserver>
     where
-        E: Fn(WidgetMut<ResizeObserver>) + 'static,
+        E: Fn(WidgetMut<ResizeObserver>) + Send + 'static,
     {
         let obs = ResizeObserver::new(self).prepare();
         let obs_ref = obs.create_velona_ref();

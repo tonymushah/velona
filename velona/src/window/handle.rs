@@ -4,7 +4,7 @@ use winit::window::Window;
 
 use crate::{
     Manager,
-    app::{self, AppHandle, AppTaskProxy},
+    app::{self, AppHandle, proxy::AppEventLoopProxy},
 };
 
 #[derive(Debug, Clone)]
@@ -33,7 +33,7 @@ impl WindowHandle {
 }
 
 impl app::el_event::EventProxyHandle for WindowHandle {
-    fn get_proxy(&self) -> &AppTaskProxy {
+    fn get_proxy(&self) -> &AppEventLoopProxy {
         self.app_handle.get_proxy()
     }
 }

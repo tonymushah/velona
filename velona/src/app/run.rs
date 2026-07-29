@@ -1,4 +1,9 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    rc::Rc,
+    sync::{Arc, mpsc::Receiver},
+};
 
 use async_task::Runnable;
 use copypasta::{ClipboardContext, ClipboardProvider};
@@ -14,7 +19,8 @@ use reactive_graph::owner::Owner;
 use ui_events_winit::WindowEventTranslation;
 use velona_renderer::WindowRenderer;
 use winit::{
-    application::ApplicationHandler, dpi::PhysicalSize, event::WindowEvent, window::WindowId,
+    application::ApplicationHandler, dpi::PhysicalSize, event::WindowEvent,
+    event_loop::ActiveEventLoop, window::WindowId,
 };
 
 use super::window::Window;
@@ -38,6 +44,7 @@ where
     pub(crate) window_renderer_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
     pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
     pub(crate) suspended: bool,
+    pub(crate) receiver: Receiver<EventLoopEvent>,
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
@@ -239,10 +246,12 @@ where
         match event_loop.create_window(window_attributes) {
             Ok(window) => {
                 let window = Arc::new(window);
-                let access_kit = accesskit_winit::Adapter::with_event_loop_proxy(
+                let access_kit = accesskit_winit::Adapter::with_direct_handlers(
                     event_loop,
                     &window,
-                    (self.app_handle.get_proxy().proxy).clone(),
+                    self.app_handle.get_proxy().accesskit_handler(window.id()),
+                    self.app_handle.get_proxy().accesskit_handler(window.id()),
+                    self.app_handle.get_proxy().accesskit_handler(window.id()),
                 );
                 match Window::new(WindowNew {
                     window,
@@ -288,10 +297,92 @@ where
             window.suspend();
         }
     }
+    fn handle_app_events(&mut self, event_loop: &ActiveEventLoop) {
+        while let Some(event) = self.receiver.try_iter().next() {
+            match event {
+                EventLoopEvent::AccessKitAction(event) => {
+                    self.use_window(event.window_id, |window| match event.window_event {
+                        accesskit_winit::WindowEvent::InitialTreeRequested => {
+                            window.render_root.use_inner_render_root_mut(|render_root| {
+                                render_root
+                                    .tree
+                                    .handle_window_event(MasonryWindowEvent::EnableAccessTree);
+                            });
+                        }
+                        accesskit_winit::WindowEvent::ActionRequested(action_request) => {
+                            window.render_root.use_inner_render_root_mut(|inner| {
+                                inner.tree.handle_access_event(action_request);
+                            });
+                        }
+                        accesskit_winit::WindowEvent::AccessibilityDeactivated => {
+                            window.render_root.use_inner_render_root_mut(|render_root| {
+                                render_root
+                                    .tree
+                                    .handle_window_event(MasonryWindowEvent::DisableAccessTree);
+                            });
+                        }
+                    });
+                }
+                EventLoopEvent::RunTask(run) => {
+                    self.run_task(run);
+                }
+                EventLoopEvent::NewWindow(builder) => {
+                    self.create_window(builder, event_loop);
+                }
+                EventLoopEvent::CloseWindow(window_id) => {
+                    self.windows.remove(&window_id);
+                }
+                EventLoopEvent::SetClipboardContent(text) => {
+                    let _ = self
+                        .clipboard_context
+                        .borrow_mut()
+                        .set_contents(text)
+                        .inspect_err(|err| log::error!("cannot set clipboard content => {err}"));
+                }
+                EventLoopEvent::HandleRenderRootSignals(window_id, signal) => {
+                    self.handle_signal(event_loop, window_id, signal.take());
+                }
+                EventLoopEvent::EditWidget(edit_widget_fn_event) => {
+                    let maybe_owner =
+                        self.create_window_owner_children(edit_widget_fn_event.window_id);
+                    self.use_window_render_root(edit_widget_fn_event.window_id, |root| {
+                        if root.has_widget(edit_widget_fn_event.widget_id) {
+                            root.edit_widget(edit_widget_fn_event.widget_id, |widget_mut| {
+                                if let Some(owner) = maybe_owner {
+                                    owner.with_cleanup(|| {
+                                        (edit_widget_fn_event.edit_fn)(widget_mut);
+                                    })
+                                } else {
+                                    (edit_widget_fn_event.edit_fn)(widget_mut);
+                                }
+                            });
+                        }
+                    });
+                }
+                EventLoopEvent::UseWidget(use_widget_fn_event) => {
+                    let maybe_owner =
+                        self.create_window_owner_children(use_widget_fn_event.window_id);
+                    self.use_window_render_root_ref(use_widget_fn_event.window_id, |root| {
+                        let Some(widget_ref) = root.get_widget(use_widget_fn_event.widget_id)
+                        else {
+                            return;
+                        };
+                        if let Some(owner) = maybe_owner {
+                            owner.with_cleanup(|| {
+                                (use_widget_fn_event.use_fn)(widget_ref);
+                            })
+                        } else {
+                            (use_widget_fn_event.use_fn)(widget_ref);
+                        }
+                    });
+                }
+            }
+        }
+    }
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl<W> ApplicationHandler<EventLoopEvent> for AppRunner<W>
+impl<W> ApplicationHandler<()> for AppRunner<W>
 where
     W: WindowRenderer,
 {
@@ -419,88 +510,10 @@ where
         self.suspended = true;
         self.suspend_windows();
     }
-    fn user_event(
-        &mut self,
-        event_loop: &winit::event_loop::ActiveEventLoop,
-        event: EventLoopEvent,
-    ) {
+    fn user_event(&mut self, event_loop: &winit::event_loop::ActiveEventLoop, _: ()) {
         // #[cfg(feature = "hotpath")]
         // hotpath::dbg!(&event);
-        match event {
-            EventLoopEvent::AccessKitAction(event) => {
-                self.use_window(event.window_id, |window| match event.window_event {
-                    accesskit_winit::WindowEvent::InitialTreeRequested => {
-                        window.render_root.use_inner_render_root_mut(|render_root| {
-                            render_root
-                                .tree
-                                .handle_window_event(MasonryWindowEvent::EnableAccessTree);
-                        });
-                    }
-                    accesskit_winit::WindowEvent::ActionRequested(action_request) => {
-                        window.render_root.use_inner_render_root_mut(|inner| {
-                            inner.tree.handle_access_event(action_request);
-                        });
-                    }
-                    accesskit_winit::WindowEvent::AccessibilityDeactivated => {
-                        window.render_root.use_inner_render_root_mut(|render_root| {
-                            render_root
-                                .tree
-                                .handle_window_event(MasonryWindowEvent::DisableAccessTree);
-                        });
-                    }
-                });
-            }
-            EventLoopEvent::RunTask(run) => {
-                self.run_task(run);
-            }
-            EventLoopEvent::NewWindow(builder) => {
-                self.create_window(builder, event_loop);
-            }
-            EventLoopEvent::CloseWindow(window_id) => {
-                self.windows.remove(&window_id);
-            }
-            EventLoopEvent::SetClipboardContent(text) => {
-                let _ = self
-                    .clipboard_context
-                    .borrow_mut()
-                    .set_contents(text)
-                    .inspect_err(|err| log::error!("cannot set clipboard content => {err}"));
-            }
-            EventLoopEvent::HandleRenderRootSignals(window_id, signal) => {
-                self.handle_signal(event_loop, window_id, signal.take());
-            }
-            EventLoopEvent::EditWidget(edit_widget_fn_event) => {
-                let maybe_owner = self.create_window_owner_children(edit_widget_fn_event.window_id);
-                self.use_window_render_root(edit_widget_fn_event.window_id, |root| {
-                    if root.has_widget(edit_widget_fn_event.widget_id) {
-                        root.edit_widget(edit_widget_fn_event.widget_id, |widget_mut| {
-                            if let Some(owner) = maybe_owner {
-                                owner.with_cleanup(|| {
-                                    (edit_widget_fn_event.edit_fn)(widget_mut);
-                                })
-                            } else {
-                                (edit_widget_fn_event.edit_fn)(widget_mut);
-                            }
-                        });
-                    }
-                });
-            }
-            EventLoopEvent::UseWidget(use_widget_fn_event) => {
-                let maybe_owner = self.create_window_owner_children(use_widget_fn_event.window_id);
-                self.use_window_render_root_ref(use_widget_fn_event.window_id, |root| {
-                    let Some(widget_ref) = root.get_widget(use_widget_fn_event.widget_id) else {
-                        return;
-                    };
-                    if let Some(owner) = maybe_owner {
-                        owner.with_cleanup(|| {
-                            (use_widget_fn_event.use_fn)(widget_ref);
-                        })
-                    } else {
-                        (use_widget_fn_event.use_fn)(widget_ref);
-                    }
-                });
-            }
-        }
+        self.handle_app_events(event_loop);
     }
     fn exiting(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         log::warn!("Exiting...");

@@ -1,25 +1,11 @@
-use std::ops::Deref;
-
 use any_spawner::{CustomExecutor, PinnedFuture};
 use async_task::Task;
 
-use crate::app::EventLoopEvent;
+use crate::app::{EventLoopEvent, proxy::AppEventLoopProxy};
 
 pub(crate) type SpawnFn = Box<dyn Fn(PinnedFuture<()>) + Send + Sync>;
 
-#[derive(Debug, Clone)]
-pub(crate) struct AppTaskProxy {
-    pub proxy: super::AppEventLoopProxy,
-}
-
-impl Deref for AppTaskProxy {
-    type Target = super::AppEventLoopProxy;
-    fn deref(&self) -> &Self::Target {
-        &self.proxy
-    }
-}
-
-impl AppTaskProxy {
+impl AppEventLoopProxy {
     pub fn create_task<F>(&self, fut: F) -> Task<F::Output>
     where
         F: Future + 'static,
@@ -29,7 +15,7 @@ impl AppTaskProxy {
         #[cfg(feature = "hotpath")]
         let fut = hotpath::future!(fut);
         let (run, task) = async_task::spawn_local(fut, move |run| {
-            let res = proxy.proxy.send_event(EventLoopEvent::RunTask(run));
+            let res = proxy.send_event(EventLoopEvent::RunTask(run));
             if res.is_err() {
                 log::warn!("the event loop is already closed!");
             }
@@ -42,7 +28,7 @@ impl AppTaskProxy {
 pub struct AppExecutor {
     spawn_fn: SpawnFn,
     // TODO Use [`Arc`]
-    proxy: AppTaskProxy,
+    proxy: AppEventLoopProxy,
 }
 
 impl CustomExecutor for AppExecutor {
@@ -61,7 +47,7 @@ impl CustomExecutor for AppExecutor {
 }
 
 impl AppExecutor {
-    pub fn new(spawn_fn: SpawnFn, proxy: AppTaskProxy) -> Self {
+    pub fn new(spawn_fn: SpawnFn, proxy: AppEventLoopProxy) -> Self {
         Self { spawn_fn, proxy }
     }
 }

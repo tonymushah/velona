@@ -1,12 +1,19 @@
 pub(crate) mod el_event;
 mod executor;
-use crate::window::{renderer::WindowRendererFactory, runner as window};
+use crate::{
+    app::proxy::AppEventLoopProxy,
+    window::{renderer::WindowRendererFactory, runner as window},
+};
 mod handle;
 mod run;
-pub(crate) use executor::AppTaskProxy;
 use velona_renderer::WindowRenderer;
+pub(crate) mod proxy;
 
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::{Arc, mpsc},
+};
 
 use crate::{app::executor::SpawnFn, window::builder::WindowBuilder};
 use any_spawner::PinnedFuture;
@@ -15,10 +22,10 @@ use masonry::core::DefaultProperties;
 use reactive_graph::owner::Owner;
 use winit::event_loop::{EventLoop, EventLoopBuilder};
 
-pub(crate) use el_event::{AppEventLoopProxy, EventLoopEvent};
+pub(crate) use el_event::EventLoopEvent;
 
 pub struct Builder<W: WindowRenderer> {
-    event_loop_builder: EventLoopBuilder<EventLoopEvent>,
+    event_loop_builder: EventLoopBuilder<()>,
     window_render_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
     default_properties: DefaultProperties,
     spawn_fn: Option<SpawnFn>,
@@ -77,7 +84,9 @@ impl<W: WindowRenderer> Builder<W> {
         let event_loop = self.event_loop_builder.build()?;
         let proxy = event_loop.create_proxy();
 
-        let proxy = AppTaskProxy { proxy };
+        let (send, receiver) = mpsc::channel::<EventLoopEvent>();
+
+        let proxy = AppEventLoopProxy::new(proxy, send);
 
         match any_spawner::Executor::init_custom_executor(executor::AppExecutor::new(
             spawn_fn,
@@ -96,6 +105,7 @@ impl<W: WindowRenderer> Builder<W> {
             owner: self.owner,
             clipboard_context: Rc::new(RefCell::new(ClipboardContext::new().unwrap())),
             suspended: true,
+            receiver,
         };
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;

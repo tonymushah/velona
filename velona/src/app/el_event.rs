@@ -3,13 +3,10 @@ use std::fmt::Debug;
 use async_task::Runnable;
 use masonry::app::RenderRootSignal;
 use send_wrapper::SendWrapper;
-use winit::{
-    event_loop::{EventLoopClosed, EventLoopProxy},
-    window::WindowId,
-};
+use winit::window::WindowId;
 
 use crate::{
-    app::executor::AppTaskProxy,
+    app::proxy::{AppEventLoopProxy, AppProxySendError},
     widget_ref::{EditWidgetFnEvent, UseWidgetFnEvent},
     window::builder::WindowBuilder,
 };
@@ -46,8 +43,6 @@ impl Debug for EventLoopEvent {
     }
 }
 
-pub(crate) type AppEventLoopProxy = EventLoopProxy<EventLoopEvent>;
-
 impl From<accesskit_winit::Event> for EventLoopEvent {
     fn from(value: accesskit_winit::Event) -> Self {
         Self::AccessKitAction(Box::new(value))
@@ -55,19 +50,8 @@ impl From<accesskit_winit::Event> for EventLoopEvent {
 }
 
 pub(crate) trait EventProxyHandle {
-    fn get_proxy(&self) -> &AppTaskProxy;
-    fn send_event(&self, event: EventLoopEvent) -> Result<(), EventLoopClosed<EventLoopEvent>> {
+    fn get_proxy(&self) -> &AppEventLoopProxy;
+    fn send_event(&self, event: EventLoopEvent) -> Result<(), AppProxySendError> {
         self.get_proxy().send_event(event)
-    }
-}
-
-#[cfg(test)]
-mod test {
-
-    use crate::{app::AppEventLoopProxy, utils::is_send_sync};
-
-    #[test]
-    fn test_if_event_proxy_is_send_sync() {
-        is_send_sync::<AppEventLoopProxy>();
     }
 }

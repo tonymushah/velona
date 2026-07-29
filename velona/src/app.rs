@@ -88,7 +88,7 @@ impl<W: WindowRenderer> Builder<W> {
 
         let proxy = AppEventLoopProxy::new(proxy, send);
 
-        match any_spawner::Executor::init_custom_executor(executor::AppExecutor::new(
+        match any_spawner::Executor::init_local_custom_executor(executor::AppExecutor::new(
             spawn_fn,
             proxy.clone(),
         )) {

@@ -1,10 +1,7 @@
 use std::{
-    cell::RefCell,
     collections::HashMap,
     fmt::Debug,
     num::NonZeroU64,
-    ops::Deref,
-    rc::{Rc, Weak},
     sync::atomic::{AtomicU64, Ordering},
 };
 
@@ -12,8 +9,9 @@ use std::{
 
 use log::{debug, warn};
 use masonry::core::{ErasedAction, Widget, WidgetId};
-use reactive_graph::owner::{on_cleanup, use_context};
-use send_wrapper::SendWrapper;
+use reactive_graph::owner::on_cleanup;
+
+use crate::window::use_window;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct HandlerId(pub(crate) NonZeroU64);
@@ -39,11 +37,11 @@ impl HandlerId {
     // }
 }
 
-pub type HandlerFn = Box<dyn Fn(&ErasedAction)>;
+pub type HandlerFn = Box<dyn Fn(&ErasedAction) + Send>;
 
 #[derive(Default)]
-pub(crate) struct WindowEventHandler {
-    widget_handlers: HashMap<WidgetId, HashMap<HandlerId, SendWrapper<HandlerFn>>>,
+pub(crate) struct WindowEventHandlers {
+    widget_handlers: HashMap<WidgetId, HashMap<HandlerId, HandlerFn>>,
     // TODO add on_mouseenter for widgets
     // TODO add on_mouseexit for widgets
     // TODO add on_keydown for window
@@ -51,7 +49,7 @@ pub(crate) struct WindowEventHandler {
     // TODO add on_device_event for window
 }
 
-impl WindowEventHandler {
+impl WindowEventHandlers {
     pub fn handle_event(&self, widget_id: WidgetId, ev: &ErasedAction) {
         let Some(handlers) = self.widget_handlers.get(&widget_id) else {
             debug!("no event handler registered for {:?}", widget_id);
@@ -59,20 +57,25 @@ impl WindowEventHandler {
         };
         handlers.values().for_each(|h| (h)(ev));
     }
-    pub fn add_handler_fn(&mut self, widget_id: WidgetId, hander_fn: HandlerFn) -> HandlerId {
-        let handler_id = HandlerId::next();
+    pub fn add_handler_fn(
+        &mut self,
+        handler_id: HandlerId,
+        widget_id: WidgetId,
+        hander_fn: HandlerFn,
+    ) {
         self.widget_handlers
             .entry(widget_id)
             .or_default()
             .entry(handler_id)
-            .insert_entry(SendWrapper::new(hander_fn));
-        handler_id
+            .insert_entry(hander_fn);
     }
-    pub fn remove_handler_fn(&mut self, handler_id: HandlerId) {
+    pub fn remove_handler_fn(&mut self, handler_id: HandlerId) -> bool {
+        let mut removed = false;
         self.widget_handlers.retain(|_, v| {
-            v.remove(&handler_id);
+            removed = v.remove(&handler_id).is_some();
             !v.is_empty()
         });
+        removed
     }
     pub fn cleanup(&mut self, render_root: &masonry::app::RenderRoot) {
         self.widget_handlers
@@ -86,7 +89,7 @@ impl WindowEventHandler {
     }
 }
 
-impl Debug for WindowEventHandler {
+impl Debug for WindowEventHandlers {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("WindowEventHandle")
             .field(
@@ -101,92 +104,81 @@ impl Debug for WindowEventHandler {
     }
 }
 
-pub(crate) struct InternWindowEventHandler(SendWrapper<Rc<RefCell<WindowEventHandler>>>);
+// pub(crate) struct InternWindowEventHandler(SendWrapper<Rc<RefCell<WindowEventHandler>>>);
 
-impl Default for InternWindowEventHandler {
-    fn default() -> Self {
-        Self(SendWrapper::new(Rc::new(RefCell::new(
-            WindowEventHandler::default(),
-        ))))
-    }
-}
+// impl Default for InternWindowEventHandler {
+//     fn default() -> Self {
+//         Self(SendWrapper::new(Rc::new(RefCell::new(
+//             WindowEventHandler::default(),
+//         ))))
+//     }
+// }
 
-impl Deref for InternWindowEventHandler {
-    type Target = RefCell<WindowEventHandler>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+// impl Deref for InternWindowEventHandler {
+//     type Target = RefCell<WindowEventHandler>;
+//     fn deref(&self) -> &Self::Target {
+//         &self.0
+//     }
+// }
 
-impl InternWindowEventHandler {
-    pub fn get_weak(&self) -> WindowEventHandlerWrapper {
-        WindowEventHandlerWrapper(SendWrapper::new(Rc::downgrade(&*self.0)))
-    }
-}
+// impl InternWindowEventHandler {
+//     pub fn get_weak(&self) -> WindowEventHandlerWrapper {
+//         WindowEventHandlerWrapper(SendWrapper::new(Rc::downgrade(&*self.0)))
+//     }
+// }
 
-#[derive(Debug, Clone)]
-pub struct WindowEventHandlerWrapper(SendWrapper<Weak<RefCell<WindowEventHandler>>>);
+// #[derive(Debug, Clone)]
+// pub struct WindowEventHandlerWrapper(SendWrapper<Weak<RefCell<WindowEventHandler>>>);
 
-impl WindowEventHandlerWrapper {
-    pub fn add_handler_fn(&self, widget_id: WidgetId, hander_fn: HandlerFn) -> Option<HandlerId> {
-        if !self.0.valid() {
-            log::error!("An window event handler was called outside the main thread");
-            return None;
-        }
-        let arc = self.0.upgrade()?;
-        Some(
-            arc.try_borrow_mut()
-                .ok()?
-                .add_handler_fn(widget_id, hander_fn),
-        )
-    }
-    pub fn remove_handler_fn(&self, handler_id: HandlerId) {
-        if !self.0.valid() {
-            log::error!("An window event handler was called outside the main thread");
-            return;
-        }
-        let Some(arc) = self.0.upgrade() else {
-            return;
-        };
-        let Ok(mut evs) = arc.try_borrow_mut() else {
-            return;
-        };
-        evs.remove_handler_fn(handler_id);
-    }
-}
-
-// TODO add documentation
-pub fn use_window_event_handler() -> Option<WindowEventHandlerWrapper> {
-    use_context()
-}
+// impl WindowEventHandlerWrapper {
+//     pub fn add_handler_fn(&self, widget_id: WidgetId, hander_fn: HandlerFn) -> Option<HandlerId> {
+//         if !self.0.valid() {
+//             log::error!("An window event handler was called outside the main thread");
+//             return None;
+//         }
+//         let arc = self.0.upgrade()?;
+//         Some(
+//             arc.try_borrow_mut()
+//                 .ok()?
+//                 .add_handler_fn(widget_id, hander_fn),
+//         )
+//     }
+//     pub fn remove_handler_fn(&self, handler_id: HandlerId) {
+//         if !self.0.valid() {
+//             log::error!("An window event handler was called outside the main thread");
+//             return;
+//         }
+//         let Some(arc) = self.0.upgrade() else {
+//             return;
+//         };
+//         let Ok(mut evs) = arc.try_borrow_mut() else {
+//             return;
+//         };
+//         evs.remove_handler_fn(handler_id);
+//     }
+// }
 
 // TODO add documentation
-pub fn register_widget_action_handler(widget_id: WidgetId, hander_fn: HandlerFn) {
-    let Some(handlers) = use_window_event_handler() else {
+pub fn register_widget_action_handler(widget_id: WidgetId, handler_fn: HandlerFn) {
+    let Some(window) = use_window() else {
         #[cfg(debug_assertions)]
         {
-            panic!("No event handlers");
+            panic!("No window handle found in the current context");
         }
         #[cfg(not(debug_assertions))]
         {
-            log::warn!("No event handlers");
+            log::warn!("No window handle found in the current context");
             return;
         }
     };
-    let Some(handler_id) = handlers.add_handler_fn(widget_id, hander_fn) else {
-        #[cfg(debug_assertions)]
-        {
-            panic!("Cannot register {} event handler", widget_id)
-        }
-        #[cfg(not(debug_assertions))]
-        {
-            log::warn!("Cannot register {} event handler", widget_id);
-            return;
-        }
-    };
+    let handler_id = window
+        .register_action_handler(widget_id, handler_fn)
+        .unwrap();
 
     on_cleanup(move || {
-        handlers.remove_handler_fn(handler_id);
+        if let Err(err) = window.remove_handler(handler_id) {
+            log::error!("{err}");
+        }
     });
 }
 
@@ -195,7 +187,7 @@ pub fn register_typed_widget_action_handler<W: Widget + 'static, H>(
     widget_id: WidgetId,
     handler_fn: H,
 ) where
-    H: Fn(&<W as Widget>::Action) + 'static,
+    H: Fn(&<W as Widget>::Action) + Send + 'static,
 {
     register_widget_action_handler(
         widget_id,

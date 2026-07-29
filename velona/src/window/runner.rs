@@ -18,7 +18,7 @@ use crate::{
     app::{AppHandle, EventLoopEvent, el_event::EventProxyHandle},
     render_root::{InnerRenderRoot, WindowRenderRoot},
     window::{handle::WindowHandle, renderer::WindowRendererFactory},
-    window_event_handler::InternWindowEventHandler,
+    window_event_handler::WindowEventHandlers,
 };
 
 pub struct Window<W>
@@ -32,7 +32,7 @@ where
     pub(crate) event_reducer: WindowEventReducer,
     // Is `Some` if the most recently displayed frame was an animation frame.
     last_anim: Option<Instant>,
-    pub(crate) window_event_handler: InternWindowEventHandler,
+    pub(crate) window_event_handler: WindowEventHandlers,
     base_color: AlphaColor<Srgb>,
     pub(crate) winit_window: Arc<WinitWindow>,
     handle: WindowHandle,
@@ -75,11 +75,8 @@ where
 {
     pub fn on_memory_warning(&mut self) {
         self.render_root.use_inner_render_root_ref(|rr| {
-            let Ok(mut write) = self.window_event_handler.try_borrow_mut() else {
-                return;
-            };
-            write.cleanup(&rr.tree);
-            write.shrink_to_fit();
+            self.window_event_handler.cleanup(&rr.tree);
+            self.window_event_handler.shrink_to_fit();
         });
     }
     pub(crate) fn new<V>(args: WindowNew<'_, V, W>) -> Result<Self, crate::error::Error>
@@ -98,7 +95,7 @@ where
             factory,
         } = args;
         let window_owner = parent_owner.child();
-        let event_handlers = InternWindowEventHandler::default();
+        let event_handlers = WindowEventHandlers::default();
 
         let size = window.inner_size();
 
@@ -128,7 +125,6 @@ where
         {
             let new_widget = window_owner.with(|| {
                 provide_context(render_root.create_weak());
-                provide_context(event_handlers.get_weak());
                 provide_context(window_handle.clone());
                 provide_context(app_handle);
                 view()

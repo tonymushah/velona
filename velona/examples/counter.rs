@@ -22,7 +22,7 @@ use velona::{
 
 fn button<U>(set_count: WriteSignal<u32>, update: U, text: &'static str) -> NewWidget<Button>
 where
-    U: Fn(&mut u32) + 'static,
+    U: Fn(&mut u32) + Send + 'static,
 {
     Button::new(Label::new(text).prepare())
         .prepare()

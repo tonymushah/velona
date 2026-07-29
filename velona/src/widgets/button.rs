@@ -33,7 +33,7 @@ fn register_btn_ev<H>(
     handler: H,
 ) -> NewWidget<Button>
 where
-    H: Fn() + 'static,
+    H: Fn() + Send + 'static,
 {
     btn.on_action(move |ev| {
         if ev.button == ptr_btn {
@@ -51,14 +51,14 @@ macro_rules! btn_ev_trait {
             $(
                 $(#[$attr])*
                 fn $ev_method<F>(self, handler: F) -> Self
-                    where F: Fn() + 'static;
+                    where F: Fn() + Send + 'static;
             )*
         }
 
         impl NewButtonPressEventsExt for NewWidget<Button> {
             $(
                 fn $ev_method<F>(self, handler: F) -> Self
-                    where F: Fn()+ 'static
+                    where F: Fn() + Send+ 'static
                 {
                     register_btn_ev(self, $ptr_ev, handler)
                 }

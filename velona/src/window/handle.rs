@@ -1,16 +1,30 @@
 use std::sync::Weak;
 
-use winit::window::Window;
+use masonry::core::WidgetId;
+use winit::window::{Window, WindowId};
 
 use crate::{
     Manager,
-    app::{self, AppHandle, proxy::AppEventLoopProxy},
+    app::{
+        self, AppHandle, EventLoopEvent,
+        el_event::{EventProxyHandle, RegisterWidgetActionHandler},
+        proxy::AppEventLoopProxy,
+    },
+    window_event_handler::{HandlerFn, HandlerId},
 };
 
 #[derive(Debug, Clone)]
 pub struct WindowHandle {
     pub(crate) window: Weak<Window>,
     pub(crate) app_handle: AppHandle,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum WindowHandleActionError {
+    #[error("The window has already closed")]
+    WindowClosed,
+    #[error("The app has already exited")]
+    AppExited,
 }
 
 impl WindowHandle {
@@ -20,15 +34,55 @@ impl WindowHandle {
     {
         self.window.upgrade().map(|window| to_use(&window))
     }
-    pub fn request_redraw(&self) {
+    pub fn id(&self) -> Result<WindowId, WindowHandleActionError> {
+        self.use_raw_window(|window| window.id())
+            .ok_or(WindowHandleActionError::WindowClosed)
+    }
+    pub fn request_redraw(&self) -> Result<(), WindowHandleActionError> {
         self.use_raw_window(|window| {
             window.request_redraw();
-        });
+        })
+        .ok_or(WindowHandleActionError::WindowClosed)
     }
-    pub fn set_title(&self, title: &str) {
+    pub fn set_title(&self, title: &str) -> Result<(), WindowHandleActionError> {
         self.use_raw_window(|window| {
             window.set_title(title);
-        });
+        })
+        .ok_or(WindowHandleActionError::WindowClosed)
+    }
+}
+
+/// Register event
+impl WindowHandle {
+    pub fn register_action_handler(
+        &self,
+        widget_id: WidgetId,
+        handler_fn: HandlerFn,
+    ) -> Result<HandlerId, WindowHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.app_handle
+            .send_event(EventLoopEvent::RegisterWidgetActionHandler(Box::new(
+                RegisterWidgetActionHandler {
+                    window_id: self.id()?,
+                    widget_id,
+                    handler_fn,
+                    handler_id,
+                },
+            )))
+            .map_err(|_| WindowHandleActionError::AppExited)?;
+
+        Ok(handler_id)
+    }
+    pub fn remove_handler(&self, handler_id: HandlerId) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnregisterEventHandler(Box::new(
+                app::el_event::UnregisterHandler {
+                    handler_id,
+                    window_id: Some(self.id()?),
+                },
+            )))
+            .map_err(|_| WindowHandleActionError::AppExited)?;
+        Ok(())
     }
 }
 

@@ -224,6 +224,18 @@ pub trait NewTextInputActionExt {
             }
         })
     }
+    /// Handle the internal [`TextArea`] [`TextAction::Cancelled`]s.
+    fn on_text_action_cancelled<H>(self, on_entered: H) -> Self
+    where
+        H: Fn() + Send + 'static,
+        Self: Sized,
+    {
+        self.on_text_action(move |action| {
+            if let TextAction::Cancelled = action {
+                on_entered();
+            }
+        })
+    }
 }
 
 impl NewTextInputActionExt for NewWidget<TextInput> {

@@ -25,6 +25,13 @@ where
 {
 }
 
+#[cfg(test)]
+pub(crate) fn is_send<T>()
+where
+    T: Send,
+{
+}
+
 pub(crate) fn noop() {}
 
 pub use crate::window_event_handler::{

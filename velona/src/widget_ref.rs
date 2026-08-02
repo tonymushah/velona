@@ -16,9 +16,9 @@ use crate::{
     window::handle::WindowHandle,
 };
 
-type EditFn = Box<dyn FnOnce(WidgetMut<dyn Widget>) + Send + Sync>;
+type EditFn = Box<dyn FnOnce(WidgetMut<dyn Widget>) + Send>;
 
-type UseWidgetFn = Box<dyn FnOnce(WidgetRef<dyn Widget>) + Send + Sync>;
+type UseWidgetFn = Box<dyn FnOnce(WidgetRef<dyn Widget>) + Send>;
 
 pub(crate) struct EditWidgetFnEvent {
     pub(crate) window_id: WindowId,
@@ -178,7 +178,7 @@ where
     /// If you want to get a return value, use [`Self::edit_with_return`].
     pub fn edit<F>(&self, edit_fn: F) -> Result<(), UseWidgetFromRefError>
     where
-        F: FnOnce(WidgetMut<W>) + Send + Sync + 'static,
+        F: FnOnce(WidgetMut<W>) + Send + 'static,
     {
         let window_id = {
             let Some(window) = self
@@ -208,8 +208,8 @@ where
     /// Similar to [`Self::edit`] but allows you to return a value.
     pub async fn edit_with_return<F, R>(&self, edit_fn: F) -> Result<R, UseWidgetFromRefError>
     where
-        F: FnOnce(WidgetMut<W>) -> R + Send + Sync + 'static,
-        R: Send + Sync + 'static,
+        F: FnOnce(WidgetMut<W>) -> R + Send + 'static,
+        R: Send + 'static,
     {
         let (sender, receiver) = futures_channel::oneshot::channel::<R>();
         self.edit(move |widget_mut| {
@@ -226,7 +226,7 @@ where
     /// If you want to get a return value, use [`Self::use_with_return`].
     pub fn use_widget<F>(&self, use_fn: F) -> Result<(), UseWidgetFromRefError>
     where
-        F: FnOnce(WidgetRef<W>) + Send + Sync + 'static,
+        F: FnOnce(WidgetRef<W>) + Send + 'static,
     {
         let window_id = {
             let Some(window) = self
@@ -256,8 +256,8 @@ where
     /// Similar to [`Self::edit`] but allows you to return a value.
     pub async fn use_with_return<F, R>(&self, use_fn: F) -> Result<R, UseWidgetFromRefError>
     where
-        F: FnOnce(WidgetRef<W>) -> R + Send + Sync + 'static,
-        R: Send + Sync + 'static,
+        F: FnOnce(WidgetRef<W>) -> R + Send + 'static,
+        R: Send + 'static,
     {
         let (sender, receiver) = futures_channel::oneshot::channel::<R>();
         self.use_widget(move |widget_ref| {
@@ -295,6 +295,47 @@ where
             thread_id: self.thread_id,
         }
     }
+    /// Queues a callback that will be called with a [`WidgetMut`] for this widget.
+    ///
+    /// Unlike [`edit`], the callbacks will be run in the order they were submitted during the mutate pass.
+    ///
+    /// You might never use this thing, _since [`edit`](Self::edit) is what you use most of the time_
+    /// but who knows?
+    pub fn mutate_later<Fn>(&self, mutate_fn: Fn) -> Result<(), UseWidgetFromRefError>
+    where
+        Fn: FnOnce(WidgetMut<'_, W>) + Send + 'static,
+    {
+        self.edit(move |mut widget_mut| {
+            widget_mut
+                .ctx
+                .mutate_later(widget_mut.id(), move |mut this| {
+                    if let Some(this) = this.try_downcast::<W>() {
+                        mutate_fn(this);
+                    } else {
+                        log::error!("Invalid downcast for mutate later");
+                    }
+                });
+        })
+    }
+    /// Similar to [`mutate_later`](Self::mutate_later) but with a return value.
+    pub async fn mutate_later_with_output<Fn, O>(
+        &self,
+        mutate_fn: Fn,
+    ) -> Result<O, UseWidgetFromRefError>
+    where
+        Fn: FnOnce(WidgetMut<'_, W>) -> O + Send + 'static,
+        O: Send + 'static,
+    {
+        let (tx, rx) = futures_channel::oneshot::channel::<O>();
+        self.mutate_later(move |this| {
+            let _ = tx.send(mutate_fn(this));
+        })?;
+        if let Ok(res) = rx.await {
+            Ok(res)
+        } else {
+            Err(UseWidgetFromRefError::WidgetNotFound)
+        }
+    }
     // TODO add_props_local and add_props Send Sync
 }
 
@@ -307,7 +348,7 @@ mod tests {
 
     use masonry::widgets::{Label, ZStack};
 
-    use crate::utils::is_send_sync;
+    use crate::utils::{is_send, is_send_sync};
 
     use super::*;
 
@@ -317,11 +358,11 @@ mod tests {
     }
     #[test]
     fn is_edit_fn_event_send_sync() {
-        is_send_sync::<EditWidgetFnEvent>();
+        is_send::<EditWidgetFnEvent>();
     }
     #[test]
     fn is_use_fn_event_send_sync() {
-        is_send_sync::<UseWidgetFnEvent>();
+        is_send::<UseWidgetFnEvent>();
     }
     #[test]
     fn test_threading_test() {

@@ -298,7 +298,7 @@ where
     }
     /// Queues a callback that will be called with a [`WidgetMut`] for this widget.
     ///
-    /// Unlike [`edit`], the callbacks will be run in the order they were submitted during the mutate pass.
+    /// Unlike [`edit`](Self::edit), the callbacks will be run in the order they were submitted during the mutate pass.
     ///
     /// You might never use this thing, _since [`edit`](Self::edit) is what you use most of the time_
     /// but who knows?

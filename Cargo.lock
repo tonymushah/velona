@@ -2568,6 +2568,7 @@ version = "0.1.0"
 dependencies = [
  "masonry_core",
  "masonry_testing",
+ "tracing",
 ]
 
 [[package]]
@@ -5044,6 +5045,7 @@ dependencies = [
  "masonry",
  "masonry_core",
  "masonry_imaging",
+ "masonry_raw_box",
  "non-exhaustive",
  "reactive_graph",
  "resvg",

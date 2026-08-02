@@ -60,6 +60,7 @@ fn view() -> AnyNewWidget {
                     masonry::widgets::TextAction::Entered(e) => {
                         set_todos.update(|todos| todos.push(e.clone()))
                     }
+                    _ => {}
                 }),
         )
         .prepare()

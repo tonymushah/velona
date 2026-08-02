@@ -17,7 +17,7 @@ use masonry::{
 };
 
 #[cfg(doc)]
-use reactive_graph::effect::Effect;
+use velona_core::reactive::effect::Effect;
 
 use crate::{NewWidgetExt, widgets::label::NewLabelExt};
 

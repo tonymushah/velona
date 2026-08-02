@@ -12,6 +12,9 @@ use masonry::{
     widgets::{Portal, ScrollBar},
 };
 
+#[cfg(doc)]
+use velona_core::reactive::effect::Effect;
+
 use super::NewWidgetExt;
 
 /// A [new](NewWidget) [`Portal`] trait extension.

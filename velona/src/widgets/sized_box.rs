@@ -24,6 +24,8 @@ pub trait NewSizedBoxExt {
     /// if [`None`], the current child will be [removed](SizedBox::remove_child).
     ///
     /// If you want an non-[`Option`] version, use [`ReactiveSingleChildExt::child`].
+    ///
+    /// [`ReactiveSingleChildExt::child`]: crate::widgets::ReactiveSingleChildExt::child
     fn child_opt<Cf>(self, child_fn: Cf) -> Self
     where
         Cf: Fn() -> Option<AnyNewWidget> + 'static;

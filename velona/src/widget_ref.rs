@@ -6,6 +6,7 @@ use std::{
     thread::{self, ThreadId},
 };
 
+use imaging::kurbo::Affine;
 use masonry::core::{Widget, WidgetId, WidgetMut, WidgetRef};
 use winit::window::WindowId;
 
@@ -336,7 +337,26 @@ where
             Err(UseWidgetFromRefError::WidgetNotFound)
         }
     }
-    // TODO add_props_local and add_props Send Sync
+    /// Sets the contents of the platform clipboard.
+    ///
+    /// For example, text widgets should call this for "cut" and "copy" user interactions.
+    /// Note that we currently don't support the "Primary" selection buffer on X11/Wayland.
+    pub fn set_clipboard(&self, contents: String) -> Result<(), UseWidgetFromRefError> {
+        self.edit(move |mut this| {
+            this.ctx.set_clipboard(contents);
+        })
+    }
+    /// Sets the local transform for this widget.
+    ///
+    /// This maps this widget's border-box coordinate space
+    /// to the parent's border-box coordinate space.
+    ///
+    /// It behaves similarly as CSS transforms.
+    pub fn set_transform(&self, transform: Affine) -> Result<(), UseWidgetFromRefError> {
+        self.edit(move |mut this| {
+            this.ctx.set_transform(transform);
+        })
+    }
 }
 
 unsafe impl<W> Send for VelonaWidgetRef<W> where W: Widget + 'static {}

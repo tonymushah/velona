@@ -1,0 +1,11 @@
+[package]
+name = "masonry_raw_box"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+masonry_core.workspace = true
+tracing = { workspace = true, features = ["default"] }
+
+[dev-dependencies]
+masonry_testing.workspace = true

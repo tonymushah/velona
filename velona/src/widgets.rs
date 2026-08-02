@@ -76,7 +76,7 @@ pub mod zstack;
 
 use std::{any::type_name, marker::PhantomData, thread};
 
-#[cfg(docsrs)]
+#[cfg(doc)]
 use masonry::core::MutateCtx;
 use masonry::core::{NewWidget, Property, UsesProperty as HasProperty, Widget, WidgetMut};
 use reactive_graph::{effect::Effect, graph::untrack};
@@ -146,7 +146,7 @@ where
         C: Fn() -> String + 'static;
     /// Similar to [`NewWidgetExt::class`] but uses a [`Option<String>`] instead of [`String`].
     ///
-    /// See [`MutateCtx::add_class`] and [`MutateCtx::remov_class`].
+    /// See [`MutateCtx::add_class`] and [`MutateCtx::remove_class`].
     fn class_opt<C>(self, class: C) -> Self
     where
         C: Fn() -> Option<String> + 'static;

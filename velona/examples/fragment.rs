@@ -16,14 +16,14 @@ use masonry::{
     },
     widgets::{Align, Button, Flex, Label},
 };
-use reactive_graph::{
-    signal::signal,
-    traits::{Get, Read, Set, Update},
-};
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder,
     components::{checkbox as _checkbox, label, sized_box},
     widgets::button::NewButtonPressEventsExt,
+};
+use velona_core::reactive::{
+    signal::signal,
+    traits::{Get, Read, Set, Update},
 };
 
 enum ViewToUse {

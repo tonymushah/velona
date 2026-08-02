@@ -1,39 +1,4 @@
-use log::warn;
-
 pub mod badge;
-pub mod memo;
-mod res_log;
 
-pub use res_log::ConsumeResult;
-
-pub(crate) fn todo_warn_of_something(something: &'static str) {
-    if something.is_empty() {
-        warn!("Not yet implemented")
-    } else {
-        warn!("Not yet implemented {something}")
-    }
-}
-
-pub(crate) fn todo_warn() {
-    todo_warn_of_something("");
-}
-
-#[cfg(test)]
-pub(crate) fn is_send_sync<T>()
-where
-    T: Send + Sync,
-{
-}
-
-#[cfg(test)]
-pub(crate) fn is_send<T>()
-where
-    T: Send,
-{
-}
-
-pub(crate) fn noop() {}
-
-pub use crate::window_event_handler::{
-    register_typed_widget_action_handler, register_widget_action_handler,
-};
+#[doc(inline)]
+pub use velona_core::utils::*;

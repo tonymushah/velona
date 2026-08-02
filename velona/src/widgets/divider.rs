@@ -4,19 +4,15 @@
 //! which is implemented for [`NewWidget<Divider>`].
 //!
 //! _See the [widget](Divider) documentation for more information_.
-use imaging::kurbo::{Axis, Cap};
+use masonry::imaging::kurbo::{Axis, Cap};
 use masonry::{
     core::{NewWidget, Widget, WidgetMut},
     layout::Length,
     widgets::{DashFit, Divider, Placement},
 };
-use reactive_graph::effect::Effect;
+use velona_core::reactive::effect::Effect;
 
-use crate::{
-    AnyNewWidget, NewWidgetExt,
-    utils::ConsumeResult,
-    widgets::{ReactiveSingleChildExt, SingleChildWidget},
-};
+use crate::{AnyNewWidget, NewWidgetExt, utils::ConsumeResult};
 
 /// A [new](NewWidget) [`Divider`] trait extension.
 // TODO add example
@@ -222,31 +218,31 @@ impl NewDividerExt for NewWidget<Divider> {
     }
 }
 
-impl SingleChildWidget for NewWidget<Divider> {
-    /// It worth noting that the `use_child_fn` might not re-run properly
-    /// if there are no `content` inside the [`Divider`].
-    ///
-    /// It is recommended to use [`NewDividerExt::use_content`], instead of this.
-    fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
-    where
-        C: FnMut(WidgetMut<'_, dyn Widget>) + 'static,
-    {
-        self.use_content(move |content| {
-            if let Some(content) = content {
-                use_child_fn(content);
-            } else {
-                log::warn!("No content found of this `Divider`");
-            }
-        })
-    }
-}
+// impl SingleChildWidget for NewWidget<Divider> {
+//     /// It worth noting that the `use_child_fn` might not re-run properly
+//     /// if there are no `content` inside the [`Divider`].
+//     ///
+//     /// It is recommended to use [`NewDividerExt::use_content`], instead of this.
+//     fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
+//     where
+//         C: FnMut(WidgetMut<'_, dyn Widget>) + 'static,
+//     {
+//         self.use_content(move |content| {
+//             if let Some(content) = content {
+//                 use_child_fn(content);
+//             } else {
+//                 log::warn!("No content found of this `Divider`");
+//             }
+//         })
+//     }
+// }
 
-impl ReactiveSingleChildExt for NewWidget<Divider> {
-    /// A [`Option`]less version of [`NewDividerExt::content`].
-    fn child<Cf>(self, child_fn: Cf) -> Self
-    where
-        Cf: Fn() -> AnyNewWidget + 'static,
-    {
-        self.content(move || Some(child_fn()))
-    }
-}
+// impl ReactiveSingleChildExt for NewWidget<Divider> {
+//     /// A [`Option`]less version of [`NewDividerExt::content`].
+//     fn child<Cf>(self, child_fn: Cf) -> Self
+//     where
+//         Cf: Fn() -> AnyNewWidget + 'static,
+//     {
+//         self.content(move || Some(child_fn()))
+//     }
+// }

@@ -13,7 +13,7 @@ use masonry::{
 #[cfg(doc)]
 use masonry::widgets::Step;
 #[cfg(doc)]
-use reactive_graph::owner::Owner;
+use velona_core::reactive::owner::Owner;
 
 use crate::NewWidgetExt;
 

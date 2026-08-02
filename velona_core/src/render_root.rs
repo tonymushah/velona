@@ -3,7 +3,7 @@ use std::{
     rc::{Rc, Weak},
 };
 
-use masonry::{
+use masonry_core::{
     app::{RenderRoot, RenderRootOptions, RenderRootSignal},
     core::{NewWidget, Widget, WidgetId, WidgetMut},
 };

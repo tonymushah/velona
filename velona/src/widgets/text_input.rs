@@ -19,7 +19,7 @@ use masonry::{
 };
 
 #[cfg(doc)]
-use reactive_graph::effect::Effect;
+use velona_core::reactive::effect::Effect;
 
 use crate::{
     NewWidgetExt, utils::register_typed_widget_action_handler, widgets::text_area::NewTextAreaExt,

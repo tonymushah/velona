@@ -3,7 +3,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["masonry_raw_box","velona", "velona_renderer", "velona_renderer_vello"]
+members = ["masonry_raw_box","velona", "velona_core", "velona_renderer", "velona_renderer_vello"]
 default-members = ["velona"]
 resolver = "3"
 
@@ -51,5 +51,6 @@ tracing = { version = "0.1.44", default-features = false }
 masonry_raw_box = { path = "masonry_raw_box" }
 
 # velona tools
+velona_core = { path = "velona_core" }
 velona_renderer = { version = "0.1", path = "velona_renderer" }
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }

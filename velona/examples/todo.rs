@@ -5,12 +5,12 @@ use masonry::{
     properties::{Background, BorderColor, BorderWidth, Padding},
     widgets::{Button, Flex, FlexParams, Label, Prose, TextInput},
 };
-use reactive_graph::{signal::signal, traits::Update};
 use velona::{
     AnyNewWidget, WindowBuilder,
     collection::NewCollectionWidgetExt,
     widgets::{button::NewButtonPressEventsExt, text_input::NewTextInputActionExt},
 };
+use velona_core::reactive::{signal::signal, traits::Update};
 
 fn view() -> AnyNewWidget {
     let (todos, set_todos) = signal(Vec::<String>::new());

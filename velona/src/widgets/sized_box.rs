@@ -10,12 +10,9 @@ use masonry::{
     layout::Length,
     widgets::SizedBox,
 };
-use reactive_graph::effect::Effect;
+use velona_core::reactive::effect::Effect;
 
-use crate::{
-    AnyNewWidget, NewWidgetExt,
-    widgets::{ReactiveSingleChildExt, SingleChildWidget},
-};
+use crate::{AnyNewWidget, NewWidgetExt};
 
 /// A [new](NewWidget) [`SizedBox`] extension trait.
 pub trait NewSizedBoxExt {
@@ -161,34 +158,5 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
         self.use_reactive_widget_mut(move |mut this| {
             use_fn(SizedBox::child_mut(&mut this));
         })
-    }
-}
-
-impl SingleChildWidget for NewWidget<SizedBox> {
-    /// It worth noting that the `use_child_fn` might not re-run properly
-    /// if there are no child inside the [`SizedBox`].
-    ///
-    /// It is recommended to use [`NewSizedBoxExt::use_child_opt`], instead of this.
-    fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
-    where
-        C: FnMut(masonry::core::WidgetMut<'_, dyn Widget>) + 'static,
-    {
-        self.use_child_opt(move |maybe_child| {
-            if let Some(child) = maybe_child {
-                // This will fail to re-run hardly if there are no child inside.
-                use_child_fn(child);
-            } else {
-                log::warn!("Not child for SizedBox");
-            }
-        })
-    }
-}
-
-impl ReactiveSingleChildExt for NewWidget<SizedBox> {
-    fn child<Cf>(self, child_fn: Cf) -> Self
-    where
-        Cf: Fn() -> AnyNewWidget + 'static,
-    {
-        self.child_opt(move || Some(child_fn()))
     }
 }

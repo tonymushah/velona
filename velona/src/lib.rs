@@ -1,22 +1,32 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub mod app;
-pub mod collection;
+pub use velona_core;
+
+#[doc(inline)]
+pub use velona_core::app;
+#[doc(inline)]
+pub use velona_core::collection;
 pub mod components;
-pub(crate) mod convert_winit_event;
-pub mod error;
-pub mod manager;
-pub mod render_root;
-pub mod task;
+#[doc(inline)]
+pub use velona_core::error;
+#[doc(inline)]
+pub use velona_core::manager;
+#[doc(inline)]
+pub use velona_core::render_root;
+#[doc(inline)]
+pub use velona_core::task;
 pub mod utils;
-pub mod widget_ref;
+#[doc(inline)]
+pub use velona_core::widget_ref;
+#[doc(inline)]
+pub use velona_core::window;
+#[doc(inline)]
+pub use velona_core::window_event_handler;
 pub mod widgets;
-pub mod window;
-pub mod window_event_handler;
 // TODO add `layers` module
 
 #[doc(inline)]
-pub use reactive_graph as reactive;
+pub use velona_core::reactive;
 
 pub use masonry;
 

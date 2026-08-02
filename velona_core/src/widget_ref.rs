@@ -7,7 +7,7 @@ use std::{
 };
 
 use imaging::kurbo::{Affine, Point};
-use masonry::core::{LayerType, NewWidget, Widget, WidgetId, WidgetMut, WidgetRef};
+use masonry_core::core::{LayerType, NewWidget, Widget, WidgetId, WidgetMut, WidgetRef};
 use winit::window::WindowId;
 
 use crate::{
@@ -127,7 +127,7 @@ impl<W> VelonaWidgetRef<W>
 where
     W: Widget + 'static,
 {
-    pub(crate) fn disarm(mut self) -> Self {
+    pub fn disarm(mut self) -> Self {
         self.window.take();
         self
     }
@@ -274,10 +274,10 @@ where
     #[cfg_attr(docsrs, doc(cfg(test)))]
     /// Create an empty reference for testing purposes
     pub fn create_empty() -> Self {
-        use masonry::widgets::SizedBox;
+        use masonry_raw_box::RawBox;
 
         Self {
-            id: SizedBox::empty().prepare().id(),
+            id: RawBox::empty().prepare().id(),
             window: None,
             phantom: PhantomData,
             thread_id: thread::current().id(),

@@ -40,13 +40,13 @@
 //!
 //! _See the [widget](Canvas) documentation for more information_.
 
-use imaging::record::Scene;
+use masonry::imaging::record::Scene;
 use masonry::kurbo::Size;
 use masonry::{
     core::{ArcStr, MutateCtx, NewWidget},
     widgets::Canvas,
 };
-use reactive_graph::effect::Effect;
+use velona_core::reactive::effect::Effect;
 
 use crate::widget_ref::{EditWidgetLocalError, UseWidgetFromRefError, VelonaWidgetRef};
 use crate::{NewWidgetExt, utils::ConsumeResult};

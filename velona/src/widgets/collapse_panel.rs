@@ -18,7 +18,7 @@ use crate::NewWidgetExt;
 #[cfg(doc)]
 use super::{ReactiveSingleChildExt, SingleChildWidget};
 #[cfg(doc)]
-use reactive_graph::effect::Effect;
+use velona_core::reactive::effect::Effect;
 
 /// A [`CollapsePanel`] extension trait.
 ///

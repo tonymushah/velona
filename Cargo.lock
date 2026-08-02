@@ -5029,17 +5029,31 @@ dependencies = [
 name = "velona"
 version = "0.1.0"
 dependencies = [
- "accesskit_winit",
- "any_spawner",
  "anyhow",
- "async-task",
- "copypasta",
  "derive_more",
  "enum_all_variants",
  "env_logger",
- "futures-channel",
  "hotpath",
  "image",
+ "log",
+ "masonry",
+ "resvg",
+ "thiserror 2.0.19",
+ "tokio",
+ "velona_core",
+ "velona_renderer_vello",
+]
+
+[[package]]
+name = "velona_core"
+version = "0.1.0"
+dependencies = [
+ "accesskit_winit",
+ "any_spawner",
+ "async-task",
+ "copypasta",
+ "futures-channel",
+ "hotpath",
  "imaging",
  "log",
  "masonry",
@@ -5048,13 +5062,10 @@ dependencies = [
  "masonry_raw_box",
  "non-exhaustive",
  "reactive_graph",
- "resvg",
  "send_wrapper",
  "thiserror 2.0.19",
- "tokio",
  "ui-events-winit",
  "velona_renderer",
- "velona_renderer_vello",
  "winit",
 ]
 

@@ -2,7 +2,7 @@ use masonry::{
     core::{ArcStr, NewWidget, Widget},
     widgets::Checkbox,
 };
-use reactive_graph::graph::untrack;
+use velona_core::reactive::graph::untrack;
 
 use crate::widgets::checkbox::NewCheckboxExt;
 

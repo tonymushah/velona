@@ -7,11 +7,11 @@ use masonry::{
     peniko::{Blob, ImageBrush, ImageData, ImageSampler},
     widgets::{Flex, Label, SizedBox, Spinner},
 };
-use reactive_graph::{computed::Memo, signal::signal, traits::Read};
 use velona::{
     AnyNewWidget, Builder, WindowBuilder,
     components::{LazyImageOptions, lazy_image},
 };
+use velona_core::reactive::{computed::Memo, signal::signal, traits::Read};
 
 enum ImageState {
     Loading,
@@ -21,7 +21,7 @@ enum ImageState {
 
 fn new_view() -> AnyNewWidget {
     let (image_data, set_image_data) = signal(ImageState::Loading);
-    reactive_graph::spawn(async move {
+    velona_core::reactive::spawn(async move {
         // TODO Fix buffer overflow panic
         match image::open("assets/image1.png") {
             Ok(data) => {

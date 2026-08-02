@@ -2,7 +2,7 @@ use masonry::{
     core::{ArcStr, NewWidget, Widget},
     widgets::Label,
 };
-use reactive_graph::graph::untrack;
+use velona_core::reactive::graph::untrack;
 
 use crate::widgets::label::NewLabelExt;
 

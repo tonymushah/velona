@@ -8,6 +8,7 @@
 use imaging::kurbo::Axis;
 use masonry::{
     core::NewWidget,
+    imaging,
     properties::types::{CrossAxisAlignment, MainAxisAlignment},
     widgets::Flex,
 };

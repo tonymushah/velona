@@ -18,7 +18,7 @@ use std::{
 use crate::{app::executor::SpawnFn, window::builder::WindowBuilder};
 use any_spawner::PinnedFuture;
 use copypasta::ClipboardContext;
-use masonry::core::DefaultProperties;
+use masonry_core::core::DefaultProperties;
 use reactive_graph::owner::Owner;
 use winit::event_loop::{EventLoop, EventLoopBuilder};
 

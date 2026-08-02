@@ -4,7 +4,7 @@ use masonry::{
     properties::ObjectFit,
     widgets::{Image, SizedBox},
 };
-use reactive_graph::{
+use velona_core::reactive::{
     callback::{Callable, UnsyncCallback},
     effect::Effect,
 };

@@ -76,3 +76,5 @@ pub mod zstack;
 
 #[doc(inline)]
 pub use velona_core::widgets::*;
+
+pub use masonry::widgets as masonry_widgets;

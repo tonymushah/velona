@@ -590,5 +590,3 @@ mod reactive_typed_single_child_ext {
         }
     }
 }
-
-pub use masonry::widgets as masonry_widgets;

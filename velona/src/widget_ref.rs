@@ -6,8 +6,8 @@ use std::{
     thread::{self, ThreadId},
 };
 
-use imaging::kurbo::Affine;
-use masonry::core::{Widget, WidgetId, WidgetMut, WidgetRef};
+use imaging::kurbo::{Affine, Point};
+use masonry::core::{LayerType, NewWidget, Widget, WidgetId, WidgetMut, WidgetRef};
 use winit::window::WindowId;
 
 use crate::{
@@ -356,6 +356,24 @@ where
         self.edit(move |mut this| {
             this.ctx.set_transform(transform);
         })
+    }
+    pub async fn create_attached_layer<L, LFn>(
+        &self,
+        layer_type: LayerType,
+        layer: LFn,
+        position: Point,
+    ) -> Result<WidgetId, UseWidgetFromRefError>
+    where
+        LFn: FnOnce() -> NewWidget<L> + Send + 'static,
+        L: Widget + 'static,
+    {
+        self.edit_with_return(move |mut this| {
+            let layer = layer();
+            let layer_id = layer.id();
+            this.ctx.create_attached_layer(layer_type, layer, position);
+            layer_id
+        })
+        .await
     }
 }
 

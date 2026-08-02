@@ -76,6 +76,8 @@ pub mod zstack;
 
 use std::{any::type_name, marker::PhantomData, thread};
 
+#[cfg(docsrs)]
+use masonry::core::MutateCtx;
 use masonry::core::{NewWidget, Property, UsesProperty as HasProperty, Widget, WidgetMut};
 use reactive_graph::{effect::Effect, graph::untrack};
 
@@ -134,6 +136,28 @@ where
         T: FnOnce(W) -> W;
     /// Create a [`WidgetRef`](VelonaWidgetRef) that you can send safely between thread.
     fn create_velona_ref(&self) -> VelonaWidgetRef<W>;
+    /// Set class the new widget class reactively.
+    ///
+    /// When the value changes, the old one will be [removed](MutateCtx::remove_class).
+    ///
+    /// See [`MutateCtx::add_class`] and [`MutateCtx::remove_class`].
+    fn class<C>(self, class: C) -> Self
+    where
+        C: Fn() -> String + 'static;
+    /// Similar to [`NewWidgetExt::class`] but uses a [`Option<String>`] instead of [`String`].
+    ///
+    /// See [`MutateCtx::add_class`] and [`MutateCtx::remov_class`].
+    fn class_opt<C>(self, class: C) -> Self
+    where
+        C: Fn() -> Option<String> + 'static;
+    /// Similar to [`NewWidgetExt::class`] and [`NewWidgetExt::class_opt`] but uses a [`Vec<String>`] (aka a list of classes).
+    ///
+    /// When the values changes, the old classes with be [removed](MutateCtx::remove_class).
+    ///
+    /// See [`MutateCtx::add_class`] and [`MutateCtx::remove_class`].
+    fn classes<C>(self, classes: C) -> Self
+    where
+        C: Fn() -> Vec<String> + 'static;
 }
 
 impl<W> NewWidgetExt<W> for NewWidget<W>
@@ -220,6 +244,53 @@ where
             phantom: PhantomData::<W>,
             thread_id: thread::current().id(),
         }
+    }
+
+    fn class<C>(self, class: C) -> Self
+    where
+        C: Fn() -> String + 'static,
+    {
+        self.class_opt(move || Some(class()))
+    }
+
+    fn class_opt<C>(self, class: C) -> Self
+    where
+        C: Fn() -> Option<String> + 'static,
+    {
+        self.use_reactive_widget_mut_with_effect_val::<_, String>(move |mut widget, old_class| {
+            if let Some(old_class) = old_class {
+                widget.ctx.remove_class(&old_class);
+            }
+            let new_value = class();
+            if let Some(new_class) = new_value.as_ref() {
+                widget.ctx.add_class(new_class);
+            }
+            new_value
+        })
+    }
+
+    fn classes<C>(self, classes: C) -> Self
+    where
+        C: Fn() -> Vec<String> + 'static,
+    {
+        self.use_reactive_widget_mut_with_effect_val::<_, Vec<String>>(
+            move |mut widget, old_classes| {
+                if let Some(old_classes) = old_classes {
+                    for old_class in old_classes {
+                        widget.ctx.remove_class(&old_class);
+                    }
+                }
+                let new_value = classes();
+                if new_value.is_empty() {
+                    None
+                } else {
+                    for new_class in &new_value {
+                        widget.ctx.add_class(new_class);
+                    }
+                    Some(new_value)
+                }
+            },
+        )
     }
 }
 

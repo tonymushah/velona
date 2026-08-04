@@ -553,6 +553,12 @@ impl WindowHandle {
     pub fn focus_window(&self) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| window.focus_window())
     }
+    /// Gets whether the window has keyboard focus.
+    ///
+    /// See [`Window::has_focus`](winit::window::Window::has_focus) for more details.
+    pub fn has_focus(&self) -> Result<bool, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.has_focus())
+    }
     /// Requests user attention to the window,
     /// this has no effect if the application is already focused.
     /// How requesting for user attention manifests is platform dependent,

@@ -396,6 +396,17 @@ where
                         );
                     });
                 }
+                EventLoopEvent::UseWindowRenderRoot(use_window_render_root_on_main) => {
+                    self.use_window_render_root(
+                        use_window_render_root_on_main.window_id,
+                        use_window_render_root_on_main.use_fn,
+                    );
+                }
+                EventLoopEvent::UseWinitWindow(use_winit_window_on_main) => {
+                    self.use_window_ref(use_winit_window_on_main.window_id, |window| {
+                        (use_winit_window_on_main.use_fn)(&window.winit_window);
+                    });
+                }
             }
         }
     }

@@ -1,9 +1,10 @@
 use std::fmt::Debug;
 
 use async_task::Runnable;
+use masonry_core::app::RenderRoot;
 use masonry_core::{app::RenderRootSignal, core::WidgetId};
 use send_wrapper::SendWrapper;
-use winit::window::WindowId;
+use winit::window::{Window, WindowId};
 
 use crate::{
     app::proxy::{AppEventLoopProxy, AppProxySendError},
@@ -51,6 +52,34 @@ impl Debug for RegisterOnWindowDestroyHandler {
     }
 }
 
+pub(crate) struct UseWindowRenderRootOnMain {
+    pub(crate) window_id: WindowId,
+    pub(crate) use_fn: Box<dyn FnOnce(&mut RenderRoot) + Send>,
+}
+
+impl Debug for UseWindowRenderRootOnMain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UseWindowRenderRootOnMain")
+            .field("window_id", &self.window_id)
+            .field("use_fn", &"fn ()")
+            .finish()
+    }
+}
+
+pub(crate) struct UseWinitWindowOnMain {
+    pub(crate) window_id: WindowId,
+    pub(crate) use_fn: Box<dyn FnOnce(&Window) + Send>,
+}
+
+impl Debug for UseWinitWindowOnMain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UseWinitWindowOnMain")
+            .field("window_id", &self.window_id)
+            .field("use_fn", &"fn ()")
+            .finish()
+    }
+}
+
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<accesskit_winit::Event>),
     RunTask(Runnable),
@@ -63,6 +92,8 @@ pub(crate) enum EventLoopEvent {
     RegisterWidgetActionHandler(Box<RegisterWidgetActionHandler>),
     UnregisterEventHandler(Box<UnregisterHandler>),
     RegisterOnWindowDestroy(Box<RegisterOnWindowDestroyHandler>),
+    UseWindowRenderRoot(Box<UseWindowRenderRootOnMain>),
+    UseWinitWindow(Box<UseWinitWindowOnMain>),
 }
 
 impl Debug for EventLoopEvent {
@@ -93,6 +124,10 @@ impl Debug for EventLoopEvent {
                 .debug_tuple("RegisterOnWindowDestroy")
                 .field(arg0)
                 .finish(),
+            Self::UseWindowRenderRoot(arg0) => {
+                f.debug_tuple("UseWindowRenderRoot").field(arg0).finish()
+            }
+            Self::UseWinitWindow(arg0) => f.debug_tuple("UseWinitWindow").field(arg0).finish(),
         }
     }
 }

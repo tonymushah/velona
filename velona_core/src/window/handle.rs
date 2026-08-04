@@ -1,5 +1,6 @@
 use std::sync::Weak;
 
+use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::window::{Window, WindowId};
 
@@ -7,8 +8,11 @@ use crate::{
     Manager,
     app::{
         self, AppHandle, EventLoopEvent,
-        el_event::{EventProxyHandle, RegisterOnWindowDestroyHandler, RegisterWidgetActionHandler},
-        proxy::AppEventLoopProxy,
+        el_event::{
+            EventProxyHandle, RegisterOnWindowDestroyHandler, RegisterWidgetActionHandler,
+            UseWindowRenderRootOnMain, UseWinitWindowOnMain,
+        },
+        proxy::{AppEventLoopProxy, AppProxySendError},
     },
     window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
 };
@@ -27,25 +31,69 @@ pub enum WindowHandleActionError {
     AppExited,
 }
 
+impl From<AppProxySendError> for WindowHandleActionError {
+    fn from(_: AppProxySendError) -> Self {
+        Self::AppExited
+    }
+}
+
 impl WindowHandle {
-    fn use_raw_window<F, O>(&self, to_use: F) -> Option<O>
+    /// Use the underlying window handle right now.
+    pub fn use_raw_window_now<F, O>(&self, to_use: F) -> Option<O>
     where
         F: FnOnce(&Window) -> O,
     {
         self.window.upgrade().map(|window| to_use(&window))
     }
+    /// Use the underlying render root of the current window.
+    pub fn use_render_root<U>(&self, use_fn: U) -> Result<(), WindowHandleActionError>
+    where
+        U: FnOnce(&mut RenderRoot) + Send + 'static,
+    {
+        let window_id = self.id()?;
+        self.send_event(EventLoopEvent::UseWindowRenderRoot(Box::new(
+            UseWindowRenderRootOnMain {
+                window_id,
+                use_fn: Box::new(use_fn),
+            },
+        )))?;
+        Ok(())
+    }
+    /// Use the underlying render root of the current window.
+    pub fn use_winit_window_on_main<U>(&self, use_fn: U) -> Result<(), WindowHandleActionError>
+    where
+        U: FnOnce(&Window) + Send + 'static,
+    {
+        let window_id = self.id()?;
+        self.send_event(EventLoopEvent::UseWinitWindow(Box::new(
+            UseWinitWindowOnMain {
+                window_id,
+                use_fn: Box::new(use_fn),
+            },
+        )))?;
+        Ok(())
+    }
+}
+
+/// Base window functions
+impl WindowHandle {
+    /// Return the unique identifier of the window
     pub fn id(&self) -> Result<WindowId, WindowHandleActionError> {
-        self.use_raw_window(|window| window.id())
+        self.use_raw_window_now(|window| window.id())
             .ok_or(WindowHandleActionError::WindowClosed)
     }
     pub fn request_redraw(&self) -> Result<(), WindowHandleActionError> {
-        self.use_raw_window(|window| {
+        self.use_raw_window_now(|window| {
             window.request_redraw();
         })
         .ok_or(WindowHandleActionError::WindowClosed)
     }
+}
+
+/// Misc. attribute functions
+impl WindowHandle {
     pub fn set_title(&self, title: &str) -> Result<(), WindowHandleActionError> {
-        self.use_raw_window(|window| {
+        self.use_raw_window_now(|window| {
             window.set_title(title);
         })
         .ok_or(WindowHandleActionError::WindowClosed)

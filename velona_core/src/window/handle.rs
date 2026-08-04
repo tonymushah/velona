@@ -597,6 +597,12 @@ impl WindowHandle {
             window.set_content_protected(protected);
         })
     }
+    /// Gets the current title of the window.
+    ///
+    /// See [`Window::title`](winit::window::Window::title) for more details.
+    pub fn title(&self) -> Result<String, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.title())
+    }
 }
 
 /// Register event

@@ -13,6 +13,7 @@ pub(crate) fn todo_warn_of_something(something: &'static str) {
     }
 }
 
+#[allow(dead_code)]
 pub(crate) fn todo_warn() {
     todo_warn_of_something("");
 }

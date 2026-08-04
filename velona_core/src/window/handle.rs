@@ -305,7 +305,14 @@ impl WindowHandle {
     /// Sets a maximum dimension size for the window.
     ///
     /// See [`Window::set_max_inner_size`](winit::window::Window::max_inner_size) for more details.
-    pub fn set_max_inner_size(&self);
+    pub fn set_max_inner_size<S>(&self, max_size: Option<S>) -> Result<(), WindowHandleActionError>
+    where
+        S: Into<dpi::Size> + Send + 'static,
+    {
+        self.use_winit_window_on_main(move |window| {
+            window.set_max_inner_size(max_size);
+        })
+    }
     pub fn resize_increments(&self);
     pub fn set_resize_increment(&self);
 }

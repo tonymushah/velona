@@ -5,7 +5,7 @@ use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
     window::{
-        Fullscreen, Icon, ImePurpose, UserAttentionType, Window, WindowButtons, WindowId,
+        Fullscreen, Icon, ImePurpose, Theme, UserAttentionType, Window, WindowButtons, WindowId,
         WindowLevel,
     },
 };
@@ -572,6 +572,22 @@ impl WindowHandle {
         self.use_raw_window_now(|window| {
             window.request_user_attention(request_type);
         })
+    }
+    /// Set or override the window theme.
+    ///
+    /// Specify `None` to reset the theme to the system default.
+    ///
+    /// See [`Window::set_theme`](winit::window::Window::set_theme) for more details.
+    pub fn set_theme(&self, theme: Option<Theme>) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_theme(theme);
+        })
+    }
+    /// Returns the current window theme.
+    ///
+    /// See [`Window::theme`](winit::window::Window::theme) for more details.
+    pub fn theme(&self) -> Result<Option<Theme>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.theme())
     }
 }
 

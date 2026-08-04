@@ -313,8 +313,26 @@ impl WindowHandle {
             window.set_max_inner_size(max_size);
         })
     }
-    pub fn resize_increments(&self);
-    pub fn set_resize_increment(&self);
+    /// Returns window resize increments if any were set.
+    ///
+    /// See [`Window::resize_increments`](winit::window::Window::max_inner_size) for more details.
+    pub fn resize_increments(&self) -> Result<Option<PhysicalSize<u32>>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.resize_increments())
+    }
+    /// Sets window resize increments.
+    ///
+    /// See [`Window::set_resize_increments`](winit::window::Window::set_resize_increments) for more details.
+    pub fn set_resize_increment<S>(
+        &self,
+        increments: Option<S>,
+    ) -> Result<(), WindowHandleActionError>
+    where
+        S: Into<dpi::Size> + Send + 'static,
+    {
+        self.use_winit_window_on_main(move |window| {
+            window.set_resize_increments(increments);
+        })
+    }
 }
 
 /// Misc. attribute functions

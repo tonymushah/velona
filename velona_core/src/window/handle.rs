@@ -5,8 +5,8 @@ use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
     window::{
-        Cursor, Fullscreen, Icon, ImePurpose, Theme, UserAttentionType, Window, WindowButtons,
-        WindowId, WindowLevel,
+        Cursor, CursorGrabMode, Fullscreen, Icon, ImePurpose, Theme, UserAttentionType, Window,
+        WindowButtons, WindowId, WindowLevel,
     },
 };
 
@@ -638,6 +638,12 @@ impl WindowHandle {
         C: Into<dpi::Position>,
     {
         Ok(self.use_raw_window_now(|window| window.set_cursor_position(position))??)
+    }
+    /// Set grabbing [mode](CursorGrabMode) on the cursor preventing it from leaving the window.
+    ///
+    /// See [`Window::set_cursor_grab`](winit::window::Window::set_cursor_grab) for more details.
+    pub fn set_cursor_grab(&self, mode: CursorGrabMode) -> Result<(), WindowHandleActionError> {
+        Ok(self.use_raw_window_now(|window| window.set_cursor_grab(mode))??)
     }
 }
 

@@ -12,12 +12,12 @@ use std::{
     sync::{self, Mutex},
 };
 
+use crate::widgets::TypedSingleChildWidget;
 use masonry::{
     TextAlign,
     core::{ArcStr, NewWidget, StyleProperty},
     widgets::Label,
 };
-use velona_core::widgets::TypedSingleChildWidget;
 // use velona_core::widgets::TypedSingleChildWidget;
 
 use super::NewWidgetExt;

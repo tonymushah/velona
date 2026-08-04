@@ -7,7 +7,6 @@ edition.workspace = true
 accesskit_winit.workspace = true
 any_spawner.workspace = true
 async-task.workspace = true
-masonry = { workspace = true, optional = true}
 masonry_imaging.workspace = true
 masonry_core.workspace = true
 reactive_graph = { workspace = true, features = ["effects", "sandboxed-arenas"] }
@@ -33,5 +32,4 @@ velona_renderer.workspace = true
 masonry = { workspace = true }
 
 [features]
-masonry_widget_impls = ["dep:masonry"]
 hotpath = ["dep:hotpath"]

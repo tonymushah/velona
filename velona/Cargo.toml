@@ -10,7 +10,8 @@ log.workspace = true
 hotpath = { version = "0.16", optional = true }
 # TODO add anyrender for rendering simplicity
 resvg.workspace = true
-velona_core = { workspace = true, features = ["masonry_widget_impls"] }
+velona_core = { workspace = true }
+velona_core_child = { workspace = true, features = ["masonry_widget_impls"] }
 
 [features]
 hotpath = ["dep:hotpath", "velona_core/hotpath"]

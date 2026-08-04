@@ -1,0 +1,12 @@
+[package]
+name = "velona_core_child"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+masonry = { workspace = true, optional = true}
+log = { workspace = true }
+velona_core = { workspace = true }
+
+[features]
+masonry_widget_impls = ["dep:masonry"]

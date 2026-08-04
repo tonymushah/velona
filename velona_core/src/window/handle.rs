@@ -3,7 +3,8 @@ use std::sync::Weak;
 use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::{
-    dpi::{self, PhysicalPosition, PhysicalSize}, window::{Fullscreen, Icon, ImePurpose, Window, WindowButtons, WindowId, WindowLevel},
+    dpi::{self, PhysicalPosition, PhysicalSize},
+    window::{Fullscreen, Icon, ImePurpose, Window, WindowButtons, WindowId, WindowLevel},
 };
 
 use crate::{
@@ -531,12 +532,23 @@ impl WindowHandle {
         })
     }
     /// Sets the IME purpose for the window using [`ImePurpose`](winit::window::ImePurpose).
-    /// 
+    ///
     /// See [`Window::set_ime_purpose`](winit::window::Window::set_ime_purpose) for more details.
     pub fn set_ime_purpose(&self, purpose: ImePurpose) -> Result<(), WindowHandleActionError> {
-        self.use_raw_window_now(|window|{
+        self.use_raw_window_now(|window| {
             window.set_ime_purpose(purpose);
         })
+    }
+    /// Brings the window to the front and sets input focus.
+    /// Has no effect if the window is already in focus, minimized, or not visible.
+    ///
+    /// This method steals input focus from other applications.
+    /// Do not use this method unless you are certain that’s what the user wants.
+    /// Focus stealing can cause an extremely disruptive user experience.
+    ///
+    /// See [`Window::focus_window`](winit::window::Window::focus_window) for more details.
+    pub fn focus_window(&self) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.focus_window())
     }
 }
 

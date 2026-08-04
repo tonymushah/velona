@@ -505,6 +505,24 @@ impl WindowHandle {
             window.set_window_icon(level);
         })
     }
+    /// Set the IME cursor editing area,
+    /// where the `position` is the top left corner of that area
+    /// and `size` is the size of this area starting from the position.
+    ///
+    /// See [`Window::set_ime_cursor_area`](winit::window::Window::set_ime_cursor_area) for more details.
+    pub fn set_ime_cursor_area<P, S>(
+        &self,
+        position: P,
+        size: S,
+    ) -> Result<(), WindowHandleActionError>
+    where
+        P: Into<dpi::Position>,
+        S: Into<dpi::Size>,
+    {
+        self.use_raw_window_now(|window| {
+            window.set_ime_cursor_area(position, size);
+        })
+    }
 }
 
 /// Register event

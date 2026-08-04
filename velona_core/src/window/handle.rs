@@ -523,6 +523,14 @@ impl WindowHandle {
             window.set_ime_cursor_area(position, size);
         })
     }
+    /// Sets whether the window should get IME events
+    ///
+    /// See [`Window::set_ime_allowed`](winit::window::Window::set_ime_allowed) for more details.
+    pub fn set_ime_allowed(&self, allowed: bool) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_ime_allowed(allowed);
+        })
+    }
 }
 
 /// Register event

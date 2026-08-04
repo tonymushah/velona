@@ -7,6 +7,9 @@ pub mod error;
 pub mod manager;
 pub mod render_root;
 pub mod task;
+#[cfg(feature = "testing")]
+#[cfg_attr(docsrs, doc(feature = "testing"))]
+pub mod testing;
 pub mod utils;
 pub mod widget_ref;
 pub mod widgets;

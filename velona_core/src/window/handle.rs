@@ -3,8 +3,7 @@ use std::sync::Weak;
 use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::{
-    dpi::{self, PhysicalPosition, PhysicalSize},
-    window::{Fullscreen, Icon, Window, WindowButtons, WindowId, WindowLevel},
+    dpi::{self, PhysicalPosition, PhysicalSize}, window::{Fullscreen, Icon, ImePurpose, Window, WindowButtons, WindowId, WindowLevel},
 };
 
 use crate::{
@@ -529,6 +528,14 @@ impl WindowHandle {
     pub fn set_ime_allowed(&self, allowed: bool) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| {
             window.set_ime_allowed(allowed);
+        })
+    }
+    /// Sets the IME purpose for the window using [`ImePurpose`](winit::window::ImePurpose).
+    /// 
+    /// See [`Window::set_ime_purpose`](winit::window::Window::set_ime_purpose) for more details.
+    pub fn set_ime_purpose(&self, purpose: ImePurpose) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window|{
+            window.set_ime_purpose(purpose);
         })
     }
 }

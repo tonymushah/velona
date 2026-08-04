@@ -164,7 +164,7 @@ impl WindowHandle {
     ///
     /// See [`Window::inner_size`](winit::window::Window::inner_size) for more details.
     #[cfg(not(target_os = "ios"))]
-    #[cfg_attr(docsrs, doc(target_os = "ios"))]
+    #[cfg_attr(docsrs, doc(not(target_os = "ios")))]
     pub fn inner_size(&self) -> Result<PhysicalSize<u32>, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.inner_size())
     }

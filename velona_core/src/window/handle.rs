@@ -4,7 +4,7 @@ use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
-    window::{Fullscreen, Window, WindowButtons, WindowId},
+    window::{Fullscreen, Window, WindowButtons, WindowId, WindowLevel},
 };
 
 use crate::{
@@ -488,6 +488,14 @@ impl WindowHandle {
     /// See [`Window::is_decorated`](winit::window::Window::is_decorated) for more details.
     pub fn is_decorated(&self) -> Result<bool, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.is_maximized())
+    }
+    /// Change the window level.
+    ///
+    /// See [`Window::set_window_level`](winit::window::Window::set_window_level) for more details.
+    pub fn set_window_level(&self, level: WindowLevel) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_window_level(level);
+        })
     }
 }
 

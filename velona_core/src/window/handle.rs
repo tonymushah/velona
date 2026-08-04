@@ -605,7 +605,7 @@ impl WindowHandle {
     }
     /// Prevents the window contents from being captured by other apps.
     ///
-    /// See [`Window::set_ime_allowed`](winit::window::Window::set_ime_allowed) for more details.
+    /// See [`Window::set_content_protected`](winit::window::Window::set_content_protected) for more details.
     pub fn set_content_protected(&self, protected: bool) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| {
             window.set_content_protected(protected);

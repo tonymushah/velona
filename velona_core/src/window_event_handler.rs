@@ -8,7 +8,7 @@ use std::{
 // use parking_lot::RwLock;
 
 use log::{debug, warn};
-use masonry::core::{ErasedAction, Widget, WidgetId};
+use masonry_core::core::{ErasedAction, Widget, WidgetId};
 use reactive_graph::owner::on_cleanup;
 
 use crate::window::use_window;
@@ -80,7 +80,7 @@ impl WindowEventHandlers {
         });
         removed
     }
-    pub fn cleanup(&mut self, render_root: &masonry::app::RenderRoot) {
+    pub fn cleanup(&mut self, render_root: &masonry_core::app::RenderRoot) {
         self.widget_handlers
             .retain(|widget_id, _| render_root.has_widget(*widget_id));
     }

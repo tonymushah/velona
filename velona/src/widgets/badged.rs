@@ -16,12 +16,12 @@
 //! [`SingleChildWidget`]: super::SingleChildWidget
 //! [`ReactiveSingleChildExt`]: super::ReactiveSingleChildExt
 
-use imaging::kurbo::Vec2;
+use masonry::imaging::kurbo::Vec2;
 use masonry::{
     core::{NewWidget, Widget, WidgetMut},
     widgets::{BadgePlacement, Badged},
 };
-use reactive_graph::effect::Effect;
+use velona_core::reactive::effect::Effect;
 
 use crate::{AnyNewWidget, NewWidgetExt, utils::ConsumeResult};
 

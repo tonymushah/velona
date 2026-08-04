@@ -10,7 +10,7 @@ use masonry::{
     peniko::ImageBrush,
     widgets::Image,
 };
-use reactive_graph::effect::Effect;
+use velona_core::reactive::effect::Effect;
 
 use crate::{NewWidgetExt, utils::ConsumeResult};
 

@@ -8,11 +8,12 @@
 use imaging::kurbo::Axis;
 use masonry::{
     core::{FromDynWidget, NewWidget, Widget, WidgetMut},
+    imaging,
     layout::Length,
     widgets::{Split, SplitPoint},
 };
 
-use reactive_graph::effect::Effect;
+use velona_core::reactive::effect::Effect;
 
 use crate::{NewWidgetExt, utils::ConsumeResult};
 

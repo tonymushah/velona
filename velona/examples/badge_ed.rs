@@ -3,7 +3,7 @@ use std::{sync, time::Duration};
 use derive_more::{Display, FromStr};
 use enum_all_variants::AllVariants;
 use image::open;
-use imaging::peniko::{Blob, ImageBrush, ImageData, ImageSampler, color::AlphaColor};
+use masonry::imaging::peniko::{Blob, ImageBrush, ImageData, ImageSampler, color::AlphaColor};
 use masonry::{
     core::Widget,
     layout::Length,
@@ -13,14 +13,6 @@ use masonry::{
     theme::DEFAULT_SPACER_LEN,
     widgets::{Badged, Button, Flex, Label, Selector, SizedBox, Spinner},
 };
-use reactive_graph::{
-    callback::{Callable, UnsyncCallback},
-    computed::Memo,
-    effect::Effect,
-    signal::{WriteSignal, arc_signal, signal},
-    spawn,
-    traits::{Get, Read, Set, Update},
-};
 use tokio::runtime;
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder,
@@ -29,6 +21,14 @@ use velona::{
     widgets::{
         self, badged::NewBadgedTrait, button::NewButtonPressEventsExt, sized_box::NewSizedBoxExt,
     },
+};
+use velona_core::reactive::{
+    callback::{Callable, UnsyncCallback},
+    computed::Memo,
+    effect::Effect,
+    signal::{WriteSignal, arc_signal, signal},
+    spawn,
+    traits::{Get, Read, Set, Update},
 };
 use velona_renderer_vello::VelloWindowRenderer;
 

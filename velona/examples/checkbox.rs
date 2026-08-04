@@ -5,10 +5,10 @@ use masonry::{
     theme::DEFAULT_SPACER_LEN,
     widgets::{Align, Flex},
 };
-use reactive_graph::signal::signal;
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, components::checkbox as _checkbox,
 };
+use velona_core::reactive::signal::signal;
 
 fn view() -> AnyNewWidget {
     let (checked, set_checked) = signal(false);

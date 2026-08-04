@@ -1,5 +1,5 @@
 use futures_channel::oneshot;
-use masonry::{
+use masonry_core::{
     core::{NewWidget, Widget},
     peniko::color::{AlphaColor, Srgb},
 };

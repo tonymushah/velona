@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Instant};
 
 use imaging::RenderSource;
-use masonry::{
+use masonry_core::{
     app::{RenderRootOptions, VisualLayerKind},
     core::{DefaultProperties, NewWidget, Widget},
     palette::css::BLACK,
@@ -115,7 +115,7 @@ where
             RenderRootOptions {
                 default_properties,
                 use_system_fonts: true,
-                size_policy: masonry::app::WindowSizePolicy::User,
+                size_policy: masonry_core::app::WindowSizePolicy::User,
                 size,
                 scale_factor: window.scale_factor(),
                 test_font: None,
@@ -174,7 +174,7 @@ where
 
         self.render_root.use_inner_render_root_mut(|rr| {
             rr.tree
-                .handle_window_event(masonry::core::WindowEvent::AnimFrame(elapsed));
+                .handle_window_event(masonry_core::core::WindowEvent::AnimFrame(elapsed));
         });
 
         // If this animation will continue, store the time.

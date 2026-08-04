@@ -1,4 +1,4 @@
-use masonry::core::{CollectionWidget, NewWidget};
+use masonry_core::core::{CollectionWidget, NewWidget};
 use reactive_graph::effect::Effect;
 
 use crate::{NewWidgetExt, utils::ConsumeResult};

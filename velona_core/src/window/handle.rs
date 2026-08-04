@@ -1,6 +1,6 @@
 use std::sync::Weak;
 
-use masonry::core::WidgetId;
+use masonry_core::core::WidgetId;
 use winit::window::{Window, WindowId};
 
 use crate::{

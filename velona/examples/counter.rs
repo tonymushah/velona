@@ -9,15 +9,15 @@ use masonry::{
     theme::DEFAULT_SPACER_LEN,
     widgets::{Align, Button, Flex, Label},
 };
-use reactive_graph::{
-    signal::{WriteSignal, signal},
-    traits::{Get, Update},
-};
 use velona::{
     NewWidgetExt,
     components::label,
     widgets::{button::NewButtonPressEventsExt, resize_observer::BindResizeObserver},
     window::builder::WindowBuilder,
+};
+use velona_core::reactive::{
+    signal::{WriteSignal, signal},
+    traits::{Get, Update},
 };
 
 fn button<U>(set_count: WriteSignal<u32>, update: U, text: &'static str) -> NewWidget<Button>

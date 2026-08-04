@@ -8,12 +8,12 @@ use masonry::{
     theme::DEFAULT_SPACER_LEN,
     widgets::{Align, Flex, Label, Selector, SizedBox},
 };
-use reactive_graph::{
+use velona::{AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, widgets::align::NewAlignExt};
+use velona_core::reactive::{
     computed::Memo,
     signal::signal,
     traits::{Get, Set},
 };
-use velona::{AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, widgets::align::NewAlignExt};
 
 #[derive(Debug, Clone, Copy, Display, FromStr, AllVariants)]
 enum Alignment {

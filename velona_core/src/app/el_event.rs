@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use async_task::Runnable;
-use masonry::{app::RenderRootSignal, core::WidgetId};
+use masonry_core::{app::RenderRootSignal, core::WidgetId};
 use send_wrapper::SendWrapper;
 use winit::window::WindowId;
 

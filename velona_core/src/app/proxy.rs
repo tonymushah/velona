@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, mpsc},
 };
 
-use masonry::accesskit;
+use masonry_core::accesskit;
 use thiserror::Error;
 use winit::{event_loop::EventLoopProxy, window::WindowId};
 

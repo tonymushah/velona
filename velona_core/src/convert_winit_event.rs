@@ -1,9 +1,9 @@
-// Copyright 2025 the Xilem Authors
+// Copyright 2025 the Velona Authors
 // SPDX-License-Identifier: Apache-2.0
 //
 // Tony Mushah: I copied this file from mansory_winit cause i am lazy to do this myself.
 
-use masonry::core::{Ime, ResizeDirection};
+use masonry_core::core::{Ime, ResizeDirection};
 use winit::event::Ime as WinitIme;
 use winit::window::ResizeDirection as WinitResizeDirection;
 

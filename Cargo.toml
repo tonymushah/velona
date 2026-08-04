@@ -3,7 +3,14 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["velona", "velona_renderer", "velona_renderer_vello"]
+members = [
+    "masonry_raw_box",
+    "velona",
+    "velona_core",
+    "velona_core_child",
+    "velona_renderer",
+    "velona_renderer_vello"
+]
 default-members = ["velona"]
 resolver = "3"
 
@@ -14,7 +21,8 @@ async-task = "4"
 # TODO update to 0.5 if released
 masonry = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
 masonry_imaging = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
-masonry_core = { version = "0.4", git = "https://github.com/linebender/xilem.git" }
+masonry_core = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
+masonry_testing = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
 # TODO update to 0.3
 reactive_graph = { version = "0.3.0-beta2" }
 thiserror = "2"
@@ -46,7 +54,11 @@ imaging_vello = "0.0"
 derive_more = "2"
 enum_all_variants = "0.2"
 resvg = "0"
+tracing = { version = "0.1.44", default-features = false }
+masonry_raw_box = { path = "masonry_raw_box" }
 
 # velona tools
+velona_core = { path = "velona_core" }
 velona_renderer = { version = "0.1", path = "velona_renderer" }
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }
+velona_core_child = { path = "velona_core_child" }

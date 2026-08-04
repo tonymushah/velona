@@ -8,7 +8,8 @@ use std::{
 use async_task::Runnable;
 use copypasta::{ClipboardContext, ClipboardProvider};
 use log::warn;
-use masonry::{
+use masonry_core::app::RenderRootSignal;
+use masonry_core::{
     app::RenderRoot,
     core::{
         DefaultProperties, TextEvent, WindowEvent as MasonryWindowEvent,
@@ -125,13 +126,13 @@ where
         &mut self,
         _event_loop: &winit::event_loop::ActiveEventLoop,
         window_id: WindowId,
-        signal: masonry::app::RenderRootSignal,
+        signal: RenderRootSignal,
     ) {
         let event_loop_proxy = self.app_handle.get_proxy().clone();
 
         self.use_window(window_id, |window| {
             match signal {
-                masonry::app::RenderRootSignal::Action(any_debug, widget_id) => {
+                RenderRootSignal::Action(any_debug, widget_id) => {
                     let child_owner = window.create_children_owner();
 
                     child_owner.with(|| {
@@ -140,47 +141,47 @@ where
                             .handle_widget_action(widget_id, &any_debug)
                     });
                 }
-                masonry::app::RenderRootSignal::StartIme => {
+                RenderRootSignal::StartIme => {
                     window.winit_window.set_ime_allowed(true);
                 }
-                masonry::app::RenderRootSignal::EndIme => {
+                RenderRootSignal::EndIme => {
                     window.winit_window.set_ime_allowed(false);
                 }
-                masonry::app::RenderRootSignal::ImeMoved(logical_position, logical_size) => {
+                RenderRootSignal::ImeMoved(logical_position, logical_size) => {
                     window
                         .winit_window
                         .set_ime_cursor_area(logical_position, logical_size);
                 }
-                masonry::app::RenderRootSignal::ClipboardStore(text) => {
+                RenderRootSignal::ClipboardStore(text) => {
                     let _ = event_loop_proxy.send_event(EventLoopEvent::SetClipboardContent(text));
                 }
-                masonry::app::RenderRootSignal::RequestRedraw => {
+                RenderRootSignal::RequestRedraw => {
                     window.winit_window.request_redraw();
                 }
-                masonry::app::RenderRootSignal::RequestAnimFrame => {
+                RenderRootSignal::RequestAnimFrame => {
                     // TODO
                     window.winit_window.request_redraw();
                 }
-                masonry::app::RenderRootSignal::TakeFocus => {
+                RenderRootSignal::TakeFocus => {
                     window.winit_window.focus_window();
                 }
-                masonry::app::RenderRootSignal::SetCursor(cursor_icon) => {
+                RenderRootSignal::SetCursor(cursor_icon) => {
                     window.winit_window.set_cursor(cursor_icon);
                 }
-                masonry::app::RenderRootSignal::SetSize(physical_size) => {
+                RenderRootSignal::SetSize(physical_size) => {
                     // TODO handle return value ??
                     let _ = window.winit_window.request_inner_size(physical_size);
                 }
-                masonry::app::RenderRootSignal::SetTitle(title) => {
+                RenderRootSignal::SetTitle(title) => {
                     window.winit_window.set_title(&title);
                 }
-                masonry::app::RenderRootSignal::DragWindow => {
+                RenderRootSignal::DragWindow => {
                     // TODO handle return value ??
                     let _ = window.winit_window.drag_window().inspect_err(|err| {
                         log::error!("Unable to drag window => {}", err);
                     });
                 }
-                masonry::app::RenderRootSignal::DragResizeWindow(resize_direction) => {
+                RenderRootSignal::DragResizeWindow(resize_direction) => {
                     let dir = masonry_resize_direction_to_winit(resize_direction);
                     let _ = window
                         .winit_window
@@ -189,21 +190,21 @@ where
                             log::error!("Unable to drag window => {}", err);
                         });
                 }
-                masonry::app::RenderRootSignal::ToggleMaximized => {
+                RenderRootSignal::ToggleMaximized => {
                     window
                         .winit_window
                         .set_maximized(!window.winit_window.is_maximized());
                 }
-                masonry::app::RenderRootSignal::Minimize => {
+                RenderRootSignal::Minimize => {
                     window.winit_window.set_minimized(true);
                 }
-                masonry::app::RenderRootSignal::Exit => {
+                RenderRootSignal::Exit => {
                     let _ = event_loop_proxy.send_event(EventLoopEvent::CloseWindow(window_id));
                 }
-                masonry::app::RenderRootSignal::ShowWindowMenu(logical_position) => {
+                RenderRootSignal::ShowWindowMenu(logical_position) => {
                     window.winit_window.show_window_menu(logical_position);
                 }
-                masonry::app::RenderRootSignal::WidgetSelectedInInspector(widget_id) => {
+                RenderRootSignal::WidgetSelectedInInspector(widget_id) => {
                     window.render_root.use_render_root_ref(|render_root| {
                         let Some(widget) = render_root.get_widget(widget_id) else {
                             return;
@@ -217,18 +218,18 @@ where
                         log::info!("Widget selected in inspector: {widget_id} - {display_name}");
                     });
                 }
-                masonry::app::RenderRootSignal::NewLayer(_type, new_widget, point) => {
+                RenderRootSignal::NewLayer(_type, new_widget, point) => {
                     // TODO implement type
                     window.render_root.use_render_root_mut(|render_root| {
                         render_root.add_layer(new_widget, point);
                     });
                 }
-                masonry::app::RenderRootSignal::RemoveLayer(widget_id) => {
+                RenderRootSignal::RemoveLayer(widget_id) => {
                     window.render_root.use_render_root_mut(|render_root| {
                         render_root.remove_layer(widget_id);
                     });
                 }
-                masonry::app::RenderRootSignal::RepositionLayer(widget_id, point) => {
+                RenderRootSignal::RepositionLayer(widget_id, point) => {
                     window.render_root.use_render_root_mut(|render_root| {
                         render_root.reposition_layer(widget_id, point);
                     });
@@ -520,7 +521,7 @@ where
                         } else {
                             window.render_root.use_inner_render_root_mut(|rr| {
                                 rr.tree
-                                    .handle_text_event(masonry::core::TextEvent::Keyboard(k));
+                                    .handle_text_event(masonry_core::core::TextEvent::Keyboard(k));
                             });
                         }
                     }
@@ -548,7 +549,7 @@ where
             WindowEvent::Ime(ime) => {
                 let ime = winit_ime_to_masonry(ime);
                 self.use_window_render_root(window_id, |render_root| {
-                    render_root.handle_text_event(masonry::core::TextEvent::Ime(ime));
+                    render_root.handle_text_event(masonry_core::core::TextEvent::Ime(ime));
                 });
             }
 

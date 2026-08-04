@@ -3,7 +3,7 @@ use masonry::{
     parley::{FontWeight, StyleProperty},
     widgets::{Badge, BadgeCountOverflow, Label},
 };
-use reactive_graph::{computed::Memo, graph::untrack, traits::Get};
+use velona_core::reactive::{computed::Memo, graph::untrack, traits::Get};
 
 use crate::{
     utils::{badge::badge_count_overflow, memo::unsync_memo},

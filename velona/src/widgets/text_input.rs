@@ -19,7 +19,7 @@ use masonry::{
 };
 
 #[cfg(doc)]
-use reactive_graph::effect::Effect;
+use velona_core::reactive::effect::Effect;
 
 use crate::{
     NewWidgetExt, utils::register_typed_widget_action_handler, widgets::text_area::NewTextAreaExt,
@@ -221,6 +221,18 @@ pub trait NewTextInputActionExt {
         self.on_text_action(move |action| {
             if let TextAction::Entered(changes) = action {
                 on_entered(changes);
+            }
+        })
+    }
+    /// Handle the internal [`TextArea`] [`TextAction::Cancelled`]s.
+    fn on_text_action_cancelled<H>(self, on_entered: H) -> Self
+    where
+        H: Fn() + Send + 'static,
+        Self: Sized,
+    {
+        self.on_text_action(move |action| {
+            if let TextAction::Cancelled = action {
+                on_entered();
             }
         })
     }

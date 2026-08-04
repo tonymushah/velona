@@ -9,7 +9,7 @@ use masonry::{
     core::{ArcStr, NewWidget},
     widgets::Checkbox,
 };
-use reactive_graph::{computed::Memo, traits::Get};
+use velona_core::reactive::{computed::Memo, traits::Get};
 
 use crate::NewWidgetExt;
 

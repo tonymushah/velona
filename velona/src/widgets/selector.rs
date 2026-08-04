@@ -5,12 +5,9 @@
 //!
 //! _See the [widget](Selector) documentation for more information_.
 
-use masonry::{
-    core::NewWidget,
-    widgets::{Label, Selector},
-};
+use masonry::{core::NewWidget, widgets::Selector};
 
-use crate::{NewWidgetExt, widgets::TypedSingleChildWidget};
+use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Selector`] trait extension.
 // TODO Add example
@@ -51,19 +48,6 @@ impl NewSelectorExt for NewWidget<Selector> {
     {
         self.use_reactive_widget_mut(move |mut this| {
             Selector::select_option(&mut this, selected_option());
-        })
-    }
-}
-
-impl TypedSingleChildWidget for NewWidget<Selector> {
-    type Child = Label;
-
-    fn use_child<C>(self, mut use_child_fn: C) -> Self
-    where
-        C: FnMut(masonry::core::WidgetMut<'_, Self::Child>) + 'static,
-    {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_child_fn(Selector::child_mut(&mut this));
         })
     }
 }

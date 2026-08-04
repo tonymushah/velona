@@ -1,9 +1,9 @@
 //! Various [`Label`] implementations.
 //!
 //! The most important thing in the module is the [`NewLabelExt`]
-//! which are implemented for:
-//! - [`NewWidget<Label>`]
-//! - [`W: TypedSingleChildWidget<Child = Label> + 'static`](TypedSingleChildWidget) (for ease of use)
+//! which is implemented for [`NewWidget<Label>`].
+//!
+//! [`NewChildedLabelExt`] is just a [`NewLabelExt`] for [`W: TypedSingleChildWidget<Child = Label> + 'static`](TypedSingleChildWidget) (for ease of use)
 //!
 //! _See the [widget](Label) documentation for more information_.
 
@@ -12,13 +12,13 @@ use std::{
     sync::{self, Mutex},
 };
 
+use crate::widgets::TypedSingleChildWidget;
 use masonry::{
     TextAlign,
     core::{ArcStr, NewWidget, StyleProperty},
     widgets::Label,
 };
-
-use crate::widgets::TypedSingleChildWidget;
+// use velona_core::widgets::TypedSingleChildWidget;
 
 use super::NewWidgetExt;
 
@@ -110,7 +110,34 @@ impl NewLabelExt for NewWidget<Label> {
     }
 }
 
-impl<W> NewLabelExt for W
+/// [`NewLabelExt`] knock-off
+pub trait NewChildedLabelExt {
+    /// It is inefficient to call this function twice.
+    fn text<S, T>(self, text: S) -> Self
+    where
+        S: Fn() -> T + 'static,
+        T: Into<ArcStr>;
+    /// Reactive text styles.
+    fn style<S, T>(self, style: S) -> Self
+    where
+        S: Fn() -> T + 'static,
+        T: Into<StyleProperty>;
+    /// Reactive optional text styles.
+    fn style_opt<S, T>(self, style: S) -> Self
+    where
+        S: Fn() -> Option<T> + 'static,
+        T: Into<StyleProperty>;
+    /// The reactive equivalent of [`with_hint`](Label::with_hint).
+    fn hint<S>(self, hint: S) -> Self
+    where
+        S: Fn() -> bool + 'static;
+    /// The reactive equivalent of [`with_text_alignment`](Label::with_text_alignment).
+    fn text_alignment<S>(self, align: S) -> Self
+    where
+        S: Fn() -> TextAlign + 'static;
+}
+
+impl<W> NewChildedLabelExt for W
 where
     W: TypedSingleChildWidget<Child = Label> + 'static,
 {

@@ -475,6 +475,20 @@ impl WindowHandle {
             .await
             .map_err(|_| WindowHandleActionError::AppExited)
     }
+    /// Turn window decorations on or off.
+    ///
+    /// See [`Window::set_decorations`](winit::window::Window::set_decorations) for more details.
+    pub fn set_decorations(&self, minimized: bool) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_decorations(minimized);
+        })
+    }
+    /// Gets the window’s current decorations state.
+    ///
+    /// See [`Window::is_decorated`](winit::window::Window::is_decorated) for more details.
+    pub fn is_decorated(&self) -> Result<bool, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.is_maximized())
+    }
 }
 
 /// Register event

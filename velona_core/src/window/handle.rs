@@ -345,6 +345,36 @@ impl WindowHandle {
             window.set_title(title);
         })
     }
+    /// Change the window transparency state.
+    ///
+    /// See [`Window::set_transparent`](winit::window::Window::set_transparent) for more details.
+    pub fn set_transparent(&self, transparent: bool) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_transparent(transparent);
+        })
+    }
+    /// Change the window blur state.
+    ///
+    /// See [`Window::set_blur`](winit::window::Window::set_blur) for more details.
+    pub fn set_blur(&self, blur: bool) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_blur(blur);
+        })
+    }
+    /// Modifies the window’s visibility.
+    ///
+    /// See [`Window::set_visible`](winit::window::Window::set_visible) for more details.
+    pub fn set_visible(&self, visible: bool) -> Result<(), WindowHandleActionError> {
+        self.use_winit_window_on_main(move |window| {
+            window.set_visible(visible);
+        })
+    }
+    /// Gets the window’s current visibility state.
+    ///
+    /// See [`Window::is_visible`](winit::window::Window::is_visible) for more details.
+    pub fn is_visible(&self) -> Result<Option<bool>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.is_visible())
+    }
 }
 
 /// Register event

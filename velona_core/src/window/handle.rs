@@ -478,9 +478,9 @@ impl WindowHandle {
     /// Turn window decorations on or off.
     ///
     /// See [`Window::set_decorations`](winit::window::Window::set_decorations) for more details.
-    pub fn set_decorations(&self, minimized: bool) -> Result<(), WindowHandleActionError> {
+    pub fn set_decorations(&self, decorated: bool) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| {
-            window.set_decorations(minimized);
+            window.set_decorations(decorated);
         })
     }
     /// Gets the window’s current decorations state.

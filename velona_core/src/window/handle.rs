@@ -82,9 +82,24 @@ impl WindowHandle {
         self.use_raw_window_now(|window| window.id())
             .ok_or(WindowHandleActionError::WindowClosed)
     }
+    /// Returns the scale factor that can be used to map logical pixels to physical pixels, and vice versa.
+    ///
+    /// See [`Window::scale_factor`](winit::window::Window::scale_factor) for more details.
+    pub fn scale_factor(&self) -> Result<f64, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.scale_factor())
+            .ok_or(WindowHandleActionError::WindowClosed)
+    }
+    /// See [`Window::request_redraw`](winit::window::Window::request_redraw) for more details.
     pub fn request_redraw(&self) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| {
             window.request_redraw();
+        })
+        .ok_or(WindowHandleActionError::WindowClosed)
+    }
+    /// See [`Window::pre_present_notify`](winit::window::Window::pre_present_notify) for more details.
+    pub fn pre_present_notify(&self) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.pre_present_notify();
         })
         .ok_or(WindowHandleActionError::WindowClosed)
     }

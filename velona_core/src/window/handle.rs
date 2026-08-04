@@ -337,6 +337,9 @@ impl WindowHandle {
 
 /// Misc. attribute functions
 impl WindowHandle {
+    /// Modifies the title of the window.
+    ///
+    /// See [`Window::set_title`](winit::window::Window::set_title) for more details.
     pub fn set_title(&self, title: &str) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| {
             window.set_title(title);

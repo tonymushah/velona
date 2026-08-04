@@ -2,7 +2,10 @@ use std::sync::Weak;
 
 use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
-use winit::window::{Window, WindowId};
+use winit::{
+    dpi::PhysicalPosition,
+    window::{Window, WindowId},
+};
 
 use crate::{
     Manager,
@@ -29,6 +32,8 @@ pub enum WindowHandleActionError {
     WindowClosed,
     #[error("The app has already exited")]
     AppExited,
+    #[error("Not supported operation")]
+    NotSupported,
 }
 
 impl From<AppProxySendError> for WindowHandleActionError {
@@ -37,13 +42,22 @@ impl From<AppProxySendError> for WindowHandleActionError {
     }
 }
 
+impl From<winit::error::NotSupportedError> for WindowHandleActionError {
+    fn from(_: winit::error::NotSupportedError) -> Self {
+        Self::NotSupported
+    }
+}
+
 impl WindowHandle {
     /// Use the underlying window handle right now.
-    pub fn use_raw_window_now<F, O>(&self, to_use: F) -> Option<O>
+    pub fn use_raw_window_now<F, O>(&self, to_use: F) -> Result<O, WindowHandleActionError>
     where
         F: FnOnce(&Window) -> O,
     {
-        self.window.upgrade().map(|window| to_use(&window))
+        self.window
+            .upgrade()
+            .map(|window| to_use(&window))
+            .ok_or(WindowHandleActionError::WindowClosed)
     }
     /// Use the underlying render root of the current window.
     pub fn use_render_root<U>(&self, use_fn: U) -> Result<(), WindowHandleActionError>
@@ -80,29 +94,61 @@ impl WindowHandle {
     /// Return the unique identifier of the window
     pub fn id(&self) -> Result<WindowId, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.id())
-            .ok_or(WindowHandleActionError::WindowClosed)
     }
     /// Returns the scale factor that can be used to map logical pixels to physical pixels, and vice versa.
     ///
     /// See [`Window::scale_factor`](winit::window::Window::scale_factor) for more details.
     pub fn scale_factor(&self) -> Result<f64, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.scale_factor())
-            .ok_or(WindowHandleActionError::WindowClosed)
     }
     /// See [`Window::request_redraw`](winit::window::Window::request_redraw) for more details.
     pub fn request_redraw(&self) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| {
             window.request_redraw();
         })
-        .ok_or(WindowHandleActionError::WindowClosed)
     }
     /// See [`Window::pre_present_notify`](winit::window::Window::pre_present_notify) for more details.
     pub fn pre_present_notify(&self) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| {
             window.pre_present_notify();
         })
-        .ok_or(WindowHandleActionError::WindowClosed)
     }
+    /// Reset the dead key state of the keyboard.
+    ///
+    /// See [`Window::reset_dead_keys`](winit::window::Window::reset_dead_keys) for more details.
+    pub fn reset_dead_keys(&self) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.reset_dead_keys();
+        })
+    }
+}
+
+/// Position and size functions
+impl WindowHandle {
+    /// Returns the position of the top-left hand corner
+    /// of the window’s client area
+    /// relative to the top-left hand corner
+    /// of the desktop.
+    ///
+    /// See [`Window::inner_positions`](winit::window::Window::inner_positions) for more details.
+    pub fn inner_position(&self) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
+        Ok(self.use_raw_window_now(|window| window.inner_position())??)
+    }
+    /// Returns the position of the top-left hand corner of the window relative
+    /// to the top-left hand corner of the desktop.
+    ///
+    /// See [`Window::outer_position`](winit::window::Window::outer_position) for more details.
+    pub fn outer_position(&self) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
+        Ok(self.use_raw_window_now(|window| window.outer_position())??)
+    }
+    pub fn set_outer_position(&self);
+    pub fn inner_size(&self);
+    pub fn request_inner_size(&self);
+    pub fn outer_size(&self);
+    pub fn set_min_inner_size(&self);
+    pub fn set_max_inner_size(&self);
+    pub fn resize_increments(&self);
+    pub fn set_resize_increment(&self);
 }
 
 /// Misc. attribute functions
@@ -111,7 +157,6 @@ impl WindowHandle {
         self.use_raw_window_now(|window| {
             window.set_title(title);
         })
-        .ok_or(WindowHandleActionError::WindowClosed)
     }
 }
 
@@ -131,8 +176,7 @@ impl WindowHandle {
                     handler_fn,
                     handler_id,
                 },
-            )))
-            .map_err(|_| WindowHandleActionError::AppExited)?;
+            )))?;
 
         Ok(handler_id)
     }
@@ -143,8 +187,7 @@ impl WindowHandle {
                     handler_id,
                     window_id: Some(self.id()?),
                 },
-            )))
-            .map_err(|_| WindowHandleActionError::AppExited)?;
+            )))?;
         Ok(())
     }
     pub fn register_on_destroy_handler(
@@ -159,8 +202,7 @@ impl WindowHandle {
                     handler_id,
                     handler: handler_fn,
                 },
-            )))
-            .map_err(|_| WindowHandleActionError::AppExited)?;
+            )))?;
 
         Ok(handler_id)
     }

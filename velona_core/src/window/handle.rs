@@ -3,7 +3,7 @@ use std::sync::Weak;
 use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::{
-    dpi::PhysicalPosition,
+    dpi::{self, PhysicalPosition, PhysicalSize},
     window::{Window, WindowId},
 };
 
@@ -141,8 +141,49 @@ impl WindowHandle {
     pub fn outer_position(&self) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
         Ok(self.use_raw_window_now(|window| window.outer_position())??)
     }
-    pub fn set_outer_position(&self);
-    pub fn inner_size(&self);
+
+    /// Modifies the position of the window.
+    ///
+    /// See [`Window::set_outer_position`](winit::window::Window::set_outer_position) for more details.
+    pub fn set_outer_position<P>(&self, position: P) -> Result<(), WindowHandleActionError>
+    where
+        P: Into<dpi::Position> + Send + 'static,
+    {
+        self.use_winit_window_on_main(move |window| {
+            window.set_outer_position(position);
+        })
+    }
+
+    /// Request the new size for the window.
+    ///
+    /// Due to some limitation on iOS
+    /// (as [it](winit::window::Window::inner_size) can only be called on the main thread there),
+    /// this function is not available there.
+    ///
+    /// We recommend using [`inner_size_async`](Self::inner_size_async) instead.
+    ///
+    /// See [`Window::inner_size`](winit::window::Window::inner_size) for more details.
+    #[cfg(not(target_os = "ios"))]
+    #[cfg_attr(docsrs, doc(target_os = "ios"))]
+    pub fn inner_size(&self) -> Result<PhysicalSize<u32>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.inner_size())
+    }
+    /// Request the new size for the window.
+    ///
+    /// _Due to some limitation on iOS
+    /// (as [it](winit::window::Window::inner_size) can only be called on the main thread there),
+    /// this function is `async`_.
+    ///
+    /// See [`Window::inner_size`](winit::window::Window::inner_size) for more details.
+    pub async fn inner_size_async(&self) -> Result<PhysicalSize<u32>, WindowHandleActionError> {
+        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
+        self.use_winit_window_on_main(move |window| {
+            let _ = sender.send(window.inner_size());
+        })?;
+        receiver
+            .await
+            .map_err(|_| WindowHandleActionError::AppExited)
+    }
     pub fn request_inner_size(&self);
     pub fn outer_size(&self);
     pub fn set_min_inner_size(&self);

@@ -406,6 +406,34 @@ impl WindowHandle {
     pub fn enabled_buttons(&self) -> Result<WindowButtons, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.enabled_buttons())
     }
+    /// Sets the window to minimized or back.
+    ///
+    /// See [`Window::set_minimized`](winit::window::Window::set_minimized) for more details.
+    pub fn set_minimized(&self, minimized: bool) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_minimized(minimized);
+        })
+    }
+    /// Gets the window’s current minimized state.
+    ///
+    /// See [`Window::is_minimized`](winit::window::Window::is_minimized) for more details.
+    pub fn is_minimized(&self) -> Result<Option<bool>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.is_minimized())
+    }
+    /// Sets the window to maximized or back.
+    ///
+    /// See [`Window::set_maximized`](winit::window::Window::set_maximized) for more details.
+    pub fn set_maximized(&self, minimized: bool) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_maximized(minimized);
+        })
+    }
+    /// Gets the window’s current maximized state.
+    ///
+    /// See [`Window::is_maximized`](winit::window::Window::is_maximized) for more details.
+    pub fn is_maximized(&self) -> Result<bool, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.is_maximized())
+    }
 }
 
 /// Register event

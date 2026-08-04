@@ -92,7 +92,7 @@ impl WindowHandle {
     }
 }
 
-/// Base window functions
+/// [`winit::Window`](winit::window::Window) Base window functions
 impl WindowHandle {
     /// Return the unique identifier of the window
     pub fn id(&self) -> Result<WindowId, WindowHandleActionError> {
@@ -126,7 +126,7 @@ impl WindowHandle {
     }
 }
 
-/// Position and size functions
+/// [`winit::Window`](winit::window::Window) Position and size functions
 impl WindowHandle {
     /// Returns the position of the top-left hand corner
     /// of the window’s client area
@@ -338,7 +338,7 @@ impl WindowHandle {
     }
 }
 
-/// Misc. attribute functions
+/// [`winit::Window`](winit::window::Window) Misc. attribute functions
 impl WindowHandle {
     /// Modifies the title of the window.
     ///
@@ -588,6 +588,14 @@ impl WindowHandle {
     /// See [`Window::theme`](winit::window::Window::theme) for more details.
     pub fn theme(&self) -> Result<Option<Theme>, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.theme())
+    }
+    /// Prevents the window contents from being captured by other apps.
+    ///
+    /// See [`Window::set_ime_allowed`](winit::window::Window::set_ime_allowed) for more details.
+    pub fn set_content_protected(&self, protected: bool) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_content_protected(protected);
+        })
     }
 }
 

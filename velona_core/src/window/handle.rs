@@ -375,6 +375,14 @@ impl WindowHandle {
     pub fn is_visible(&self) -> Result<Option<bool>, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.is_visible())
     }
+    /// Sets whether the window is resizable or not.
+    ///
+    /// See [`Window::set_resizable`](winit::window::Window::set_resizable) for more details.
+    pub fn set_resizable(&self, resizable: bool) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_resizable(resizable);
+        })
+    }
 }
 
 /// Register event

@@ -32,6 +32,6 @@ velona_renderer.workspace = true
 masonry = { workspace = true }
 
 [features]
-default = ["testing"]
+# default = ["testing"]
 hotpath = ["dep:hotpath"]
-testing = []
+# testing = []

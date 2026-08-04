@@ -130,16 +130,71 @@ impl WindowHandle {
     /// relative to the top-left hand corner
     /// of the desktop.
     ///
-    /// See [`Window::inner_positions`](winit::window::Window::inner_positions) for more details.
+    /// Due to some limitation on iOS
+    /// (as [it](winit::window::Window::inner_position) can only be called on the main thread there),
+    /// this function is not available there.
+    ///
+    /// We recommend using [`inner_position_async`](Self::inner_position_async) instead.
+    ///
+    /// See [`Window::inner_position`](winit::window::Window::inner_position) for more details.
+    #[cfg(not(target_os = "ios"))]
+    #[cfg_attr(docsrs, doc(not(target_os = "ios")))]
     pub fn inner_position(&self) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
         Ok(self.use_raw_window_now(|window| window.inner_position())??)
+    }
+    /// Returns the position of the top-left hand corner
+    /// of the window’s client area
+    /// relative to the top-left hand corner
+    /// of the desktop.
+    ///
+    /// _Due to some limitation on iOS
+    /// (as [it](winit::window::Window::inner_position) can only be called on the main thread there),
+    /// this `async` function allow the [`inner_position`](winit::window::Window::inner_position) to be called on the main thread_.
+    ///
+    /// See [`Window::inner_position`](winit::window::Window::inner_position) for more details.
+    pub async fn inner_position_async(
+        &self,
+    ) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
+        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
+        self.use_winit_window_on_main(move |window| {
+            let _ = sender.send(window.inner_position());
+        })?;
+        Ok(receiver
+            .await
+            .map_err(|_| WindowHandleActionError::AppExited)??)
     }
     /// Returns the position of the top-left hand corner of the window relative
     /// to the top-left hand corner of the desktop.
     ///
+    /// Due to some limitation on iOS
+    /// (as [it](winit::window::Window::outer_position) can only be called on the main thread there),
+    /// this function is not available there.
+    ///
     /// See [`Window::outer_position`](winit::window::Window::outer_position) for more details.
+    #[cfg(not(target_os = "ios"))]
+    #[cfg_attr(docsrs, doc(not(target_os = "ios")))]
     pub fn outer_position(&self) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
         Ok(self.use_raw_window_now(|window| window.outer_position())??)
+    }
+
+    /// Returns the position of the top-left hand corner of the window relative
+    /// to the top-left hand corner of the desktop.
+    ///
+    /// _Due to some limitation on iOS
+    /// (as [it](winit::window::Window::outer_position) can only be called on the main thread there),
+    /// this `async` function allow the [`outerer_position`](winit::window::Window::outer_position) to be called on the main thread_.
+    ///
+    /// See [`Window::outer_position`](winit::window::Window::outer_position) for more details.
+    pub async fn outer_position_async(
+        &self,
+    ) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
+        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
+        self.use_winit_window_on_main(move |window| {
+            let _ = sender.send(window.outer_position());
+        })?;
+        Ok(receiver
+            .await
+            .map_err(|_| WindowHandleActionError::AppExited)??)
     }
 
     /// Modifies the position of the window.
@@ -187,14 +242,23 @@ impl WindowHandle {
     /// Request the new size for the window.
     ///
     /// See [`Window::request_inner_size`](winit::window::Window::request_inner_size) for more details.
-    pub fn request_inner_size<S>(
+    ///
+    /// _You can safely drop the future if you don't need it since it is just a [`futures_channel::oneshot::Receiver`]
+    /// awaiting for [`Window::request_inner_size`](winit::window::Window::request_inner_size) return value._
+    pub async fn request_inner_size<S>(
         &self,
         size: S,
     ) -> Result<Option<PhysicalSize<u32>>, WindowHandleActionError>
     where
-        S: Into<dpi::Size>,
+        S: Into<dpi::Size> + Send + 'static,
     {
-        self.use_raw_window_now(|window| window.request_inner_size(size))
+        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
+        self.use_winit_window_on_main(move |window| {
+            let _ = sender.send(window.request_inner_size(size));
+        })?;
+        receiver
+            .await
+            .map_err(|_| WindowHandleActionError::AppExited)
     }
     /// Returns the physical size of the entire window.
     ///

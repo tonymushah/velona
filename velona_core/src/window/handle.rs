@@ -4,7 +4,7 @@ use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
-    window::{Window, WindowButtons, WindowId},
+    window::{Fullscreen, Window, WindowButtons, WindowId},
 };
 
 use crate::{
@@ -433,6 +433,47 @@ impl WindowHandle {
     /// See [`Window::is_maximized`](winit::window::Window::is_maximized) for more details.
     pub fn is_maximized(&self) -> Result<bool, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.is_maximized())
+    }
+    /// Sets the window to fullscreen or back.
+    ///
+    /// See [`Window::set_fullscreen`](winit::window::Window::set_fullscreen) for more details.
+    pub fn set_fullscreen(
+        &self,
+        fullscreen: Option<Fullscreen>,
+    ) -> Result<(), WindowHandleActionError> {
+        self.use_winit_window_on_main(move |window| {
+            window.set_fullscreen(fullscreen);
+        })
+    }
+    /// Gets the window’s current fullscreen state.
+    ///
+    /// Due to some limitation on iOS
+    /// (as [it](winit::window::Window::fullscreen) can only be called on the main thread there),
+    /// this function is not available there.
+    ///
+    /// We recommend using [`fullscreen_async`](Self::fullscreen_async) instead.
+    ///
+    /// See [`Window::fullscreen`](winit::window::Window::fullscreen) for more details.
+    #[cfg(not(target_os = "ios"))]
+    #[cfg_attr(docsrs, doc(not(target_os = "ios")))]
+    pub fn fullscreen(&self) -> Result<Option<Fullscreen>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.fullscreen())
+    }
+    /// Gets the window’s current fullscreen state.
+    ///
+    /// _Due to some limitation on iOS
+    /// (as [it](winit::window::Window::fullscree) can only be called on the main thread there),
+    /// this function is `async`_.
+    ///
+    /// See [`Window::fullscreen`](winit::window::Window::fullscreen) for more details.
+    pub async fn fullscreen_async(&self) -> Result<Option<Fullscreen>, WindowHandleActionError> {
+        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
+        self.use_winit_window_on_main(move |window| {
+            let _ = sender.send(window.fullscreen());
+        })?;
+        receiver
+            .await
+            .map_err(|_| WindowHandleActionError::AppExited)
     }
 }
 

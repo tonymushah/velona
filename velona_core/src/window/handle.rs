@@ -35,8 +35,12 @@ pub enum WindowHandleActionError {
     WindowClosed,
     #[error("The app has already exited")]
     AppExited,
-    #[error("Not supported operation")]
+    #[error("The requested operation is not supported by Winit")]
     NotSupported,
+    #[error("The operation was ignored.")]
+    Ignored,
+    #[error(transparent)]
+    Os(#[from] winit::error::OsError),
 }
 
 impl From<AppProxySendError> for WindowHandleActionError {
@@ -48,6 +52,16 @@ impl From<AppProxySendError> for WindowHandleActionError {
 impl From<winit::error::NotSupportedError> for WindowHandleActionError {
     fn from(_: winit::error::NotSupportedError) -> Self {
         Self::NotSupported
+    }
+}
+
+impl From<winit::error::ExternalError> for WindowHandleActionError {
+    fn from(value: winit::error::ExternalError) -> Self {
+        match value {
+            winit::error::ExternalError::NotSupported(_) => WindowHandleActionError::NotSupported,
+            winit::error::ExternalError::Ignored => WindowHandleActionError::Ignored,
+            winit::error::ExternalError::Os(os_error) => WindowHandleActionError::Os(os_error),
+        }
     }
 }
 
@@ -615,6 +629,15 @@ impl WindowHandle {
         C: Into<Cursor>,
     {
         self.use_raw_window_now(|window| window.set_cursor(cursor))
+    }
+    /// Changes the position of the cursor in window coordinates.
+    ///
+    /// See [`Window::set_cursor_position`](winit::window::Window::set_cursor_position) for more details.
+    pub fn set_cursor_position<C>(&self, position: C) -> Result<(), WindowHandleActionError>
+    where
+        C: Into<dpi::Position>,
+    {
+        Ok(self.use_raw_window_now(|window| window.set_cursor_position(position))??)
     }
 }
 

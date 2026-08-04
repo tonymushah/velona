@@ -5,8 +5,8 @@ use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
     window::{
-        Fullscreen, Icon, ImePurpose, Theme, UserAttentionType, Window, WindowButtons, WindowId,
-        WindowLevel,
+        Cursor, Fullscreen, Icon, ImePurpose, Theme, UserAttentionType, Window, WindowButtons,
+        WindowId, WindowLevel,
     },
 };
 
@@ -602,6 +602,19 @@ impl WindowHandle {
     /// See [`Window::title`](winit::window::Window::title) for more details.
     pub fn title(&self) -> Result<String, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.title())
+    }
+}
+
+/// [`winit::Window`](winit::window::Window) Cursor functions.
+impl WindowHandle {
+    /// Modifies the cursor icon of the window.
+    ///
+    /// See [`Window::set_cursor`](winit::window::Window::set_cursor) for more details.
+    pub fn set_cursor<C>(&self, cursor: C) -> Result<(), WindowHandleActionError>
+    where
+        C: Into<Cursor>,
+    {
+        self.use_raw_window_now(|window| window.set_cursor(cursor))
     }
 }
 

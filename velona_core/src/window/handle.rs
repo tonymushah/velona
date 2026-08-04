@@ -4,7 +4,10 @@ use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
-    window::{Fullscreen, Icon, ImePurpose, Window, WindowButtons, WindowId, WindowLevel},
+    window::{
+        Fullscreen, Icon, ImePurpose, UserAttentionType, Window, WindowButtons, WindowId,
+        WindowLevel,
+    },
 };
 
 use crate::{
@@ -549,6 +552,20 @@ impl WindowHandle {
     /// See [`Window::focus_window`](winit::window::Window::focus_window) for more details.
     pub fn focus_window(&self) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| window.focus_window())
+    }
+    /// Requests user attention to the window,
+    /// this has no effect if the application is already focused.
+    /// How requesting for user attention manifests is platform dependent,
+    /// see [`UserAttentionType`] for details.
+    ///
+    /// See [`Window::request_user_attention`](winit::window::Window::request_user_attention) for more details.
+    pub fn request_user_attention(
+        &self,
+        request_type: Option<UserAttentionType>,
+    ) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.request_user_attention(request_type);
+        })
     }
 }
 

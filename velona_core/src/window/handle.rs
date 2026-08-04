@@ -168,7 +168,7 @@ impl WindowHandle {
     pub fn inner_size(&self) -> Result<PhysicalSize<u32>, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.inner_size())
     }
-    /// Request the new size for the window.
+    /// Returns the physical size of the window’s client area.
     ///
     /// _Due to some limitation on iOS
     /// (as [it](winit::window::Window::inner_size) can only be called on the main thread there),
@@ -184,8 +184,48 @@ impl WindowHandle {
             .await
             .map_err(|_| WindowHandleActionError::AppExited)
     }
-    pub fn request_inner_size(&self);
-    pub fn outer_size(&self);
+    /// Request the new size for the window.
+    ///
+    /// See [`Window::request_inner_size`](winit::window::Window::request_inner_size) for more details.
+    pub fn request_inner_size<S>(
+        &self,
+        size: S,
+    ) -> Result<Option<PhysicalSize<u32>>, WindowHandleActionError>
+    where
+        S: Into<dpi::Size>,
+    {
+        self.use_raw_window_now(|window| window.request_inner_size(size))
+    }
+    /// Returns the physical size of the entire window.
+    ///
+    /// Due to some limitation on iOS
+    /// (as [it](winit::window::Window::outer_size) can only be called on the main thread there),
+    /// this function is not available there.
+    ///
+    /// We recommend using [`outer_size_async`](Self::outer_size_async) instead.
+    ///
+    /// See [`Window::outer_size`](winit::window::Window::outer_size) for more details.
+    #[cfg(not(target_os = "ios"))]
+    #[cfg_attr(docsrs, doc(not(target_os = "ios")))]
+    pub fn outer_size(&self) -> Result<PhysicalSize<u32>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.outer_size())
+    }
+    /// Returns the physical size of the entire window.
+    ///
+    /// _Due to some limitation on iOS
+    /// (as [it](winit::window::Window::outer_size) can only be called on the main thread there),
+    /// this function is `async`_.
+    ///
+    /// See [`Window::outer_size`](winit::window::Window::outer_size) for more details.
+    pub async fn outer_size_async(&self) -> Result<PhysicalSize<u32>, WindowHandleActionError> {
+        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
+        self.use_winit_window_on_main(move |window| {
+            let _ = sender.send(window.outer_size());
+        })?;
+        receiver
+            .await
+            .map_err(|_| WindowHandleActionError::AppExited)
+    }
     pub fn set_min_inner_size(&self);
     pub fn set_max_inner_size(&self);
     pub fn resize_increments(&self);

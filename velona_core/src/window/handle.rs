@@ -4,7 +4,7 @@ use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
-    window::{Window, WindowId},
+    window::{Window, WindowButtons, WindowId},
 };
 
 use crate::{
@@ -388,6 +388,23 @@ impl WindowHandle {
     /// See [`Window::is_resizable`](winit::window::Window::is_resizable) for more details.
     pub fn is_resizable(&self) -> Result<bool, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.is_resizable())
+    }
+    /// Sets the enabled window buttons.
+    ///
+    /// See [`Window::set_enabled_buttons`](winit::window::Window::set_enabled_buttons) for more details.
+    pub fn set_enabled_buttons(
+        &self,
+        buttons: WindowButtons,
+    ) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_enabled_buttons(buttons);
+        })
+    }
+    /// Gets the enabled window buttons.
+    ///
+    /// See [`Window::enabled_buttons`](winit::window::Window::enabled_buttons) for more details.
+    pub fn enabled_buttons(&self) -> Result<WindowButtons, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.enabled_buttons())
     }
 }
 

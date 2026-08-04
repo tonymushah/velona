@@ -4,7 +4,7 @@ use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
-    window::{Fullscreen, Window, WindowButtons, WindowId, WindowLevel},
+    window::{Fullscreen, Icon, Window, WindowButtons, WindowId, WindowLevel},
 };
 
 use crate::{
@@ -495,6 +495,14 @@ impl WindowHandle {
     pub fn set_window_level(&self, level: WindowLevel) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| {
             window.set_window_level(level);
+        })
+    }
+    /// Sets the window icon.
+    ///
+    /// See [`Window::set_window_icon`](winit::window::Window::set_window_icon) for more details.
+    pub fn set_window_icon(&self, level: Option<Icon>) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_window_icon(level);
         })
     }
 }

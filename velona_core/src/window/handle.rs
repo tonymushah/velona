@@ -383,6 +383,12 @@ impl WindowHandle {
             window.set_resizable(resizable);
         })
     }
+    /// Gets the window’s current resizable state.
+    ///
+    /// See [`Window::is_resizable`](winit::window::Window::is_resizable) for more details.
+    pub fn is_resizable(&self) -> Result<bool, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.is_resizable())
+    }
 }
 
 /// Register event

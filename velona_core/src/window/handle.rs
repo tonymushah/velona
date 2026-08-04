@@ -290,7 +290,21 @@ impl WindowHandle {
             .await
             .map_err(|_| WindowHandleActionError::AppExited)
     }
-    pub fn set_min_inner_size(&self);
+    /// Sets a minimum dimension size for the window.
+    ///
+    /// See [`Window::set_min_size`](winit::window::Window::set_min_size) for more details.
+    pub fn set_min_inner_size<S>(&self, min_size: Option<S>) -> Result<(), WindowHandleActionError>
+    where
+        S: Into<dpi::Size> + Send + 'static,
+    {
+        self.use_winit_window_on_main(move |window| {
+            window.set_min_inner_size(min_size);
+        })
+    }
+
+    /// Sets a maximum dimension size for the window.
+    ///
+    /// See [`Window::set_max_inner_size`](winit::window::Window::max_inner_size) for more details.
     pub fn set_max_inner_size(&self);
     pub fn resize_increments(&self);
     pub fn set_resize_increment(&self);

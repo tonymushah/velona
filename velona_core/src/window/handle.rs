@@ -1,7 +1,8 @@
-use std::sync::Weak;
+use std::{marker::PhantomData, sync::Weak};
 
 use futures_channel::oneshot;
 use masonry_core::app::RenderRoot;
+use masonry_core::core::Widget;
 use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
@@ -22,6 +23,7 @@ use crate::{
         },
         proxy::{AppEventLoopProxy, AppProxySendError},
     },
+    widget_ref::VelonaWidgetRef,
     window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
 };
 
@@ -91,6 +93,25 @@ impl WindowHandle {
             },
         )))?;
         Ok(())
+    }
+    /// Use the underlying render root of the current window with a return value.
+    pub async fn use_render_root_with_return<U, O>(
+        &self,
+        use_fn: U,
+    ) -> Result<O, WindowHandleActionError>
+    where
+        U: FnOnce(&mut RenderRoot) -> O + Send + 'static,
+        O: Send + 'static,
+    {
+        let (sender, receiver) = oneshot::channel();
+        self.use_render_root(move |roots| {
+            if sender.send(use_fn(roots)).is_err() {
+                log::warn!("sent operation result");
+            }
+        })?;
+        receiver
+            .await
+            .map_err(|_| WindowHandleActionError::AppExited)
     }
     /// Use the underlying render root of the current window.
     pub fn use_winit_window_on_main<U>(&self, use_fn: U) -> Result<(), WindowHandleActionError>
@@ -729,6 +750,63 @@ impl WindowHandle {
         receiver
             .await
             .map_err(|_| WindowHandleActionError::AppExited)
+    }
+}
+
+/// [`RenderRoot`] getter functions
+impl WindowHandle {
+    /// Checks if a widget with the given id is in the tree.
+    pub async fn has_widget(&self, widget_id: WidgetId) -> Result<bool, WindowHandleActionError> {
+        self.use_render_root_with_return(move |root| root.has_widget(widget_id))
+            .await
+    }
+    /// Get a [`reference`](VelonaWidgetRef) of the current `widget_id`
+    pub fn get_widget_ref(&self, widget_id: WidgetId) -> VelonaWidgetRef<dyn Widget> {
+        VelonaWidgetRef {
+            id: widget_id,
+            window: Some(Box::new(self.clone())),
+            phantom: PhantomData::<dyn Widget>,
+            thread_id: std::thread::current().id(),
+        }
+    }
+
+    // TODO from tag?
+
+    /// Returns the [`WidgetId`] of the focused widget.
+    pub async fn focused_widget(&self) -> Result<Option<WidgetId>, WindowHandleActionError> {
+        self.use_render_root_with_return(|root| root.focused_widget())
+            .await
+    }
+    /// Returns the [`reference`](VelonaWidgetRef) of the focused widget.
+    pub async fn focused_widget_ref(
+        &self,
+    ) -> Result<Option<VelonaWidgetRef<dyn Widget>>, WindowHandleActionError> {
+        let Some(focused_id) = self
+            .use_render_root_with_return(|root| root.focused_widget())
+            .await?
+        else {
+            return Ok(None);
+        };
+        Ok(Some(self.get_widget_ref(focused_id)))
+    }
+    /// Returns the [`WidgetId`] of the widget which captures pointer events.
+    pub async fn pointer_capture_target(
+        &self,
+    ) -> Result<Option<WidgetId>, WindowHandleActionError> {
+        self.use_render_root_with_return(|root| root.pointer_capture_target())
+            .await
+    }
+    /// Returns the [`reference`](VelonaWidgetRef) of the widget which captures pointer events.
+    pub async fn pointer_capture_target_ref(
+        &self,
+    ) -> Result<Option<VelonaWidgetRef<dyn Widget>>, WindowHandleActionError> {
+        let Some(focused_id) = self
+            .use_render_root_with_return(|root| root.pointer_capture_target())
+            .await?
+        else {
+            return Ok(None);
+        };
+        Ok(Some(self.get_widget_ref(focused_id)))
     }
 }
 

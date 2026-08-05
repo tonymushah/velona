@@ -653,6 +653,12 @@ impl WindowHandle {
             window.set_cursor_visible(visible);
         })
     }
+    /// Moves the window with the left mouse button until the button is released.
+    ///
+    /// See [`Window::drag_window`](winit::window::Window::drag_window) for more details.
+    pub fn drag_window(&self) -> Result<(), WindowHandleActionError> {
+        Ok(self.use_raw_window_now(|window| window.drag_window())??)
+    }
 }
 
 /// Register event

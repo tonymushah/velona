@@ -696,6 +696,14 @@ impl WindowHandle {
     pub fn current_monitor(&self) -> Result<Option<MonitorHandle>, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.current_monitor())
     }
+    /// Returns the list of all the monitors available on the system.
+    ///
+    /// See [`Window::available_monitors`](winit::window::Window::available_monitors) for more details.
+    pub fn available_monitors(
+        &self,
+    ) -> Result<impl Iterator<Item = MonitorHandle>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.available_monitors())
+    }
 }
 
 /// Register event

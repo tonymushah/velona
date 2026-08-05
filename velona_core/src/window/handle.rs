@@ -645,6 +645,14 @@ impl WindowHandle {
     pub fn set_cursor_grab(&self, mode: CursorGrabMode) -> Result<(), WindowHandleActionError> {
         Ok(self.use_raw_window_now(|window| window.set_cursor_grab(mode))??)
     }
+    /// Modifies the cursor’s visibility.
+    ///
+    /// See [`Window::set_cursor_visible`](winit::window::Window::set_cursor_visible) for more details.
+    pub fn set_cursor_visible(&self, visible: bool) -> Result<(), WindowHandleActionError> {
+        self.use_raw_window_now(|window| {
+            window.set_cursor_visible(visible);
+        })
+    }
 }
 
 /// Register event

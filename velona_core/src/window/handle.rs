@@ -704,6 +704,12 @@ impl WindowHandle {
     ) -> Result<impl Iterator<Item = MonitorHandle>, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.available_monitors())
     }
+    /// Returns the primary monitor of the system.
+    ///
+    /// See [`Window::primary_monitor`](winit::window::Window::primary_monitor) for more details.
+    pub fn primary_monitor(&self) -> Result<Option<MonitorHandle>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.primary_monitor())
+    }
 }
 
 /// Register event

@@ -4,6 +4,7 @@ use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
+    monitor::MonitorHandle,
     window::{
         Cursor, CursorGrabMode, Fullscreen, Icon, ImePurpose, ResizeDirection, Theme,
         UserAttentionType, Window, WindowButtons, WindowId, WindowLevel,
@@ -684,6 +685,16 @@ impl WindowHandle {
     /// See [`Window::set_cursor_hittest`](winit::window::Window::set_cursor_hittest) for more details.
     pub fn set_cursor_hittest(&self, hittest: bool) -> Result<(), WindowHandleActionError> {
         Ok(self.use_raw_window_now(|window| window.set_cursor_hittest(hittest))??)
+    }
+}
+
+/// [`winit::Window`](winit::window::Window) Monitor info functions.
+impl WindowHandle {
+    /// Returns the monitor on which the window currently resides.
+    ///
+    /// See [`Window::current_monitor`](winit::window::Window::current_monitor) for more details.
+    pub fn current_monitor(&self) -> Result<Option<MonitorHandle>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.current_monitor())
     }
 }
 

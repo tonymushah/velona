@@ -5,8 +5,8 @@ use masonry_core::core::WidgetId;
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
     window::{
-        Cursor, CursorGrabMode, Fullscreen, Icon, ImePurpose, Theme, UserAttentionType, Window,
-        WindowButtons, WindowId, WindowLevel,
+        Cursor, CursorGrabMode, Fullscreen, Icon, ImePurpose, ResizeDirection, Theme,
+        UserAttentionType, Window, WindowButtons, WindowId, WindowLevel,
     },
 };
 
@@ -658,6 +658,15 @@ impl WindowHandle {
     /// See [`Window::drag_window`](winit::window::Window::drag_window) for more details.
     pub fn drag_window(&self) -> Result<(), WindowHandleActionError> {
         Ok(self.use_raw_window_now(|window| window.drag_window())??)
+    }
+    /// Resizes the window with the left mouse button until the button is released.
+    ///
+    /// See [`Window::drag_resize_window`](winit::window::Window::drag_resize_window) for more details.
+    pub fn drag_resize_window(
+        &self,
+        direction: ResizeDirection,
+    ) -> Result<(), WindowHandleActionError> {
+        Ok(self.use_raw_window_now(|window| window.drag_resize_window(direction))??)
     }
 }
 

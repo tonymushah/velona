@@ -3,7 +3,11 @@ use futures_channel::oneshot;
 
 use crate::{
     WindowBuilder,
-    app::{EventLoopEvent, el_event::EventProxyHandle},
+    app::{
+        EventLoopEvent,
+        el_event::{EventProxyHandle, GetAppChildReactiveOwner},
+        proxy::AppProxySendError,
+    },
     window::handle::WindowHandle,
 };
 
@@ -14,6 +18,18 @@ pub enum CreateWindowError {
     // TODO implement this properly
     #[error("Cannot create window because of other error")]
     OtherError,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum AppHandleActionError {
+    #[error("The app has already exited")]
+    AppExited,
+}
+
+impl From<AppProxySendError> for AppHandleActionError {
+    fn from(_: AppProxySendError) -> Self {
+        Self::AppExited
+    }
 }
 
 #[allow(private_bounds)]
@@ -47,5 +63,21 @@ pub trait Manager: EventProxyHandle {
         O: Send + 'static,
     {
         self.get_proxy().create_task(task)
+    }
+    /// Return a child [`Owner`](reactive_graph::owner::Owner) of this window handle
+    fn app_child_reactive_owner(
+        &self,
+    ) -> impl Future<Output = Result<reactive_graph::owner::Owner, AppHandleActionError>> + Send
+    {
+        let (sender, receiver) = oneshot::channel();
+        let res = self
+            .get_proxy()
+            .send_event(EventLoopEvent::GetAppChildReactiveOwner(Box::new(
+                GetAppChildReactiveOwner { sender },
+            )));
+        async move {
+            res?;
+            receiver.await.map_err(|_| AppHandleActionError::AppExited)
+        }
     }
 }

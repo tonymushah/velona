@@ -1,8 +1,10 @@
 use std::fmt::Debug;
 
 use async_task::Runnable;
+use futures_channel::oneshot;
 use masonry_core::app::RenderRoot;
 use masonry_core::{app::RenderRootSignal, core::WidgetId};
+use reactive_graph::owner::Owner;
 use send_wrapper::SendWrapper;
 use winit::window::{Window, WindowId};
 
@@ -80,6 +82,17 @@ impl Debug for UseWinitWindowOnMain {
     }
 }
 
+#[derive(Debug)]
+pub(crate) struct GetWindowChildReactiveOwner {
+    pub(crate) window_id: WindowId,
+    pub(crate) sender: oneshot::Sender<Owner>,
+}
+
+#[derive(Debug)]
+pub(crate) struct GetAppChildReactiveOwner {
+    pub(crate) sender: oneshot::Sender<Owner>,
+}
+
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<accesskit_winit::Event>),
     RunTask(Runnable),
@@ -94,6 +107,8 @@ pub(crate) enum EventLoopEvent {
     RegisterOnWindowDestroy(Box<RegisterOnWindowDestroyHandler>),
     UseWindowRenderRoot(Box<UseWindowRenderRootOnMain>),
     UseWinitWindow(Box<UseWinitWindowOnMain>),
+    GetWindowChildReactiveOwner(Box<GetWindowChildReactiveOwner>),
+    GetAppChildReactiveOwner(Box<GetAppChildReactiveOwner>),
 }
 
 impl Debug for EventLoopEvent {
@@ -128,6 +143,14 @@ impl Debug for EventLoopEvent {
                 f.debug_tuple("UseWindowRenderRoot").field(arg0).finish()
             }
             Self::UseWinitWindow(arg0) => f.debug_tuple("UseWinitWindow").field(arg0).finish(),
+            Self::GetAppChildReactiveOwner(arg0) => f
+                .debug_tuple("GetAppChildReactiveOwner")
+                .field(arg0)
+                .finish(),
+            Self::GetWindowChildReactiveOwner(arg0) => f
+                .debug_tuple("GetWindowChildReactiveOwner")
+                .field(arg0)
+                .finish(),
         }
     }
 }

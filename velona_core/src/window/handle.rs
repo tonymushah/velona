@@ -1,5 +1,6 @@
 use std::sync::Weak;
 
+use futures_channel::oneshot;
 use masonry_core::app::RenderRoot;
 use masonry_core::core::WidgetId;
 use winit::{
@@ -16,8 +17,8 @@ use crate::{
     app::{
         self, AppHandle, EventLoopEvent,
         el_event::{
-            EventProxyHandle, RegisterOnWindowDestroyHandler, RegisterWidgetActionHandler,
-            UseWindowRenderRootOnMain, UseWinitWindowOnMain,
+            EventProxyHandle, GetWindowChildReactiveOwner, RegisterOnWindowDestroyHandler,
+            RegisterWidgetActionHandler, UseWindowRenderRootOnMain, UseWinitWindowOnMain,
         },
         proxy::{AppEventLoopProxy, AppProxySendError},
     },
@@ -709,6 +710,25 @@ impl WindowHandle {
     /// See [`Window::primary_monitor`](winit::window::Window::primary_monitor) for more details.
     pub fn primary_monitor(&self) -> Result<Option<MonitorHandle>, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.primary_monitor())
+    }
+}
+
+impl WindowHandle {
+    /// Return a child [`Owner`](reactive_graph::owner::Owner) of this window handle
+    pub async fn child_reactive_owner(
+        &self,
+    ) -> Result<reactive_graph::owner::Owner, WindowHandleActionError> {
+        let (sender, receiver) = oneshot::channel();
+        self.get_proxy()
+            .send_event(EventLoopEvent::GetWindowChildReactiveOwner(Box::new(
+                GetWindowChildReactiveOwner {
+                    window_id: self.id()?,
+                    sender,
+                },
+            )))?;
+        receiver
+            .await
+            .map_err(|_| WindowHandleActionError::AppExited)
     }
 }
 

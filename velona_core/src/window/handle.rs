@@ -668,6 +668,18 @@ impl WindowHandle {
     ) -> Result<(), WindowHandleActionError> {
         Ok(self.use_raw_window_now(|window| window.drag_resize_window(direction))??)
     }
+    /// Show [window menu](https://en.wikipedia.org/wiki/Common_menus_in_Microsoft_Windows#System_menu) at a specified position.
+    ///
+    /// See [`Window::show_window_menu`](winit::window::Window::show_window_menu) for more details.
+    pub fn show_window_menu<P>(&self, position: P) -> Result<(), WindowHandleActionError>
+    where
+        P: Into<dpi::Position>,
+    {
+        self.use_raw_window_now(|window| {
+            window.show_window_menu(position);
+        })
+    }
+    pub fn 
 }
 
 /// Register event

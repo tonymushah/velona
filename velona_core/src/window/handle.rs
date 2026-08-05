@@ -679,7 +679,12 @@ impl WindowHandle {
             window.show_window_menu(position);
         })
     }
-    pub fn 
+    /// Modifies whether the window catches cursor events.
+    ///
+    /// See [`Window::set_cursor_hittest`](winit::window::Window::set_cursor_hittest) for more details.
+    pub fn set_cursor_hittest(&self, hittest: bool) -> Result<(), WindowHandleActionError> {
+        Ok(self.use_raw_window_now(|window| window.set_cursor_hittest(hittest))??)
+    }
 }
 
 /// Register event

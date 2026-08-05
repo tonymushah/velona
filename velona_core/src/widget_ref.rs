@@ -413,6 +413,14 @@ where
         };
         self.send_event(EventLoopEvent::UseWidget(Box::new(event)))
     }
+    /// Checks if the current widget is present in the tree.
+    pub async fn is_present(&self) -> bool {
+        if let Some(window) = self.window.as_ref() {
+            window.has_widget(self.id).await.unwrap_or_default()
+        } else {
+            false
+        }
+    }
 }
 
 unsafe impl<W> Send for VelonaWidgetRef<W> where W: Widget + ?Sized {}

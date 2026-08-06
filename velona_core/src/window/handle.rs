@@ -808,6 +808,13 @@ impl WindowHandle {
         };
         Ok(Some(self.get_widget_ref(focused_id)))
     }
+    /// Sets the [focused widget](masonry_core::doc::masonry_concepts#text-focus)
+    /// and the [focus anchor](masonry_core::doc::masonry_concepts#focus-anchor).
+    pub fn focus_on(&self, widget_id: Option<WidgetId>) -> Result<(), WindowHandleActionError> {
+        self.use_render_root(move |root| {
+            root.focus_on(widget_id);
+        })
+    }
 }
 
 /// Register event

@@ -815,6 +815,36 @@ impl WindowHandle {
             root.focus_on(widget_id);
         })
     }
+    /// Sets the [focused widget](masonry_core::doc::masonry_concepts#text-focus)
+    /// and the [focus anchor](masonry_core::doc::masonry_concepts#focus-anchor).
+    ///
+    /// Returns `false` if the widget is not found in the tree or can't be focused.
+    pub async fn focus_on_async(
+        &self,
+        widget_id: Option<WidgetId>,
+    ) -> Result<bool, WindowHandleActionError> {
+        self.use_render_root_with_return(move |root| root.focus_on(widget_id))
+            .await
+    }
+    /// Sets the [focus fallback](masonry_core::doc::masonry_concepts#focus-fallback).
+    pub fn set_focus_callback(
+        &self,
+        widget_id: Option<WidgetId>,
+    ) -> Result<(), WindowHandleActionError> {
+        self.use_render_root(move |root| {
+            root.set_focus_fallback(widget_id);
+        })
+    }
+    /// Sets the [focus fallback](masonry_core::doc::masonry_concepts#focus-fallback).
+    ///
+    /// Returns `false` if the widget is not found in the tree or can't be focused.
+    pub async fn set_focus_callback_async(
+        &self,
+        widget_id: Option<WidgetId>,
+    ) -> Result<bool, WindowHandleActionError> {
+        self.use_render_root_with_return(move |root| root.set_focus_fallback(widget_id))
+            .await
+    }
 }
 
 /// Register event

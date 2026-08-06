@@ -2,10 +2,12 @@ use std::sync::Arc;
 use std::{marker::PhantomData, sync::Weak};
 
 use futures_channel::oneshot;
+use imaging::peniko::Blob;
 use masonry_core::app::RenderRoot;
 use masonry_core::core::DefaultProperties;
 use masonry_core::core::Widget;
 use masonry_core::core::WidgetId;
+use masonry_core::parley::fontique::{FamilyId, FontInfo};
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
     monitor::MonitorHandle,
@@ -863,6 +865,16 @@ impl WindowHandle {
         self.use_render_root(move |root| {
             root.set_default_properties(default_properties);
         })
+    }
+    /// Registers all fonts that exist in the given data.
+    ///
+    /// Returns a list of pairs each containing the family identifier and fonts added to that family.
+    pub async fn register_fonts(
+        &self,
+        data: Blob<u8>,
+    ) -> Result<Vec<(FamilyId, Vec<FontInfo>)>, WindowHandleActionError> {
+        self.use_render_root_with_return(move |root| root.register_fonts(data))
+            .await
     }
 }
 

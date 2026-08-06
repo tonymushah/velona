@@ -7,6 +7,7 @@ use std::{
 };
 
 use imaging::kurbo::{Affine, Point};
+use masonry_core::core::PropertyStackId;
 use masonry_core::core::{LayerType, NewWidget, Widget, WidgetId, WidgetMut, WidgetRef};
 use winit::window::WindowId;
 
@@ -439,6 +440,14 @@ where
         if let Err(err) = window.set_focus_callback(Some(self.id)) {
             log::error!("cannot set focus callback on the current widget: {err}");
         }
+    }
+    pub fn set_property_stack_id(
+        &self,
+        property_stack_id: PropertyStackId,
+    ) -> Result<(), UseWidgetFromRefError> {
+        self.edit_erased(move |mut this| {
+            this.ctx.set_property_stack(property_stack_id);
+        })
     }
 }
 

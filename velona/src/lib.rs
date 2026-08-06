@@ -1,7 +1,5 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub use velona_core;
-
 #[doc(inline)]
 pub use velona_core::app;
 #[doc(inline)]

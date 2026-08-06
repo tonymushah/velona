@@ -7,6 +7,7 @@ use masonry_core::app::RenderRoot;
 use masonry_core::core::DefaultProperties;
 use masonry_core::core::Widget;
 use masonry_core::core::WidgetId;
+use masonry_core::core::{PropertyStack, PropertyStackId};
 use masonry_core::parley::fontique::{FamilyId, FontInfo};
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
@@ -874,6 +875,14 @@ impl WindowHandle {
         data: Blob<u8>,
     ) -> Result<Vec<(FamilyId, Vec<FontInfo>)>, WindowHandleActionError> {
         self.use_render_root_with_return(move |root| root.register_fonts(data))
+            .await
+    }
+    /// Inserts a `PropertyStack` into the arena and returns its unique `PropertyStackId`.
+    pub async fn register_property_stack(
+        &self,
+        property_stack: PropertyStack,
+    ) -> Result<PropertyStackId, WindowHandleActionError> {
+        self.use_render_root_with_return(move |root| root.property_arena().insert(property_stack))
             .await
     }
 }

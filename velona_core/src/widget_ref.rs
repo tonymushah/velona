@@ -421,6 +421,25 @@ where
             false
         }
     }
+    /// Sets this widget as the [focused widget](masonry_core::doc::masonry_concepts#text-focus)
+    /// and the [focus anchor](masonry_core::doc::masonry_concepts#focus-anchor).
+    pub fn set_focus(&self) {
+        let Some(window) = self.window.as_ref() else {
+            return;
+        };
+        if let Err(err) = window.focus_on(Some(self.id)) {
+            log::error!("cannot set focus on the current widget: {err}");
+        }
+    }
+    /// Sets this widget as the [focus fallback](masonry_core::doc::masonry_concepts#focus-fallback).
+    pub fn set_focus_callback(&self) {
+        let Some(window) = self.window.as_ref() else {
+            return;
+        };
+        if let Err(err) = window.set_focus_callback(Some(self.id)) {
+            log::error!("cannot set focus callback on the current widget: {err}");
+        }
+    }
 }
 
 unsafe impl<W> Send for VelonaWidgetRef<W> where W: Widget + ?Sized {}

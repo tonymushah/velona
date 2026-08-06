@@ -1,7 +1,9 @@
+use std::sync::Arc;
 use std::{marker::PhantomData, sync::Weak};
 
 use futures_channel::oneshot;
 use masonry_core::app::RenderRoot;
+use masonry_core::core::DefaultProperties;
 use masonry_core::core::Widget;
 use masonry_core::core::WidgetId;
 use winit::{
@@ -844,6 +846,23 @@ impl WindowHandle {
     ) -> Result<bool, WindowHandleActionError> {
         self.use_render_root_with_return(move |root| root.set_focus_fallback(widget_id))
             .await
+    }
+    /// Replace this window [`RenderRoot`] default properties at runtime.
+    ///
+    /// The default property set is normally fixed at construction. This lets
+    /// a host swap it mid-session, e.g. a light/dark theme toggle that
+    /// re-colors widgets relying on default `ContentColor` / `Background`.
+    ///
+    /// This invalidates the computed properties of the entire widget tree,
+    /// and calls [`Widget::property_changed`](masonry_core::core::Widget::property_changed) for every property previously
+    /// resolved by each widget.
+    pub fn set_default_properties(
+        &self,
+        default_properties: Arc<DefaultProperties>,
+    ) -> Result<(), WindowHandleActionError> {
+        self.use_render_root(move |root| {
+            root.set_default_properties(default_properties);
+        })
     }
 }
 

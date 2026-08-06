@@ -396,6 +396,36 @@ where
                         );
                     });
                 }
+                EventLoopEvent::UseWindowRenderRoot(use_window_render_root_on_main) => {
+                    self.use_window_render_root(
+                        use_window_render_root_on_main.window_id,
+                        use_window_render_root_on_main.use_fn,
+                    );
+                }
+                EventLoopEvent::UseWinitWindow(use_winit_window_on_main) => {
+                    self.use_window_ref(use_winit_window_on_main.window_id, |window| {
+                        (use_winit_window_on_main.use_fn)(&window.winit_window);
+                    });
+                }
+                EventLoopEvent::GetWindowChildReactiveOwner(get_window_child_reactive_owner) => {
+                    self.use_window_ref(get_window_child_reactive_owner.window_id, |window| {
+                        let res = get_window_child_reactive_owner
+                            .sender
+                            .send(window.create_children_owner());
+                        if res.is_err() {
+                            log::warn!("Cannot send window child owner");
+                        }
+                    });
+                }
+                EventLoopEvent::GetAppChildReactiveOwner(get_app_child_reactive_owner) => {
+                    if get_app_child_reactive_owner
+                        .sender
+                        .send(self.owner.child())
+                        .is_err()
+                    {
+                        log::warn!("Cannot send app child owner");
+                    }
+                }
             }
         }
     }

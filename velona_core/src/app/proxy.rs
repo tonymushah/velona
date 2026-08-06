@@ -21,7 +21,7 @@ pub struct EventLoopExisted;
 
 /// A trait from [`winit`] 0.31
 /// to ease the migration once it is released
-pub trait WinitEventLoopProxy: Debug + Send + Sync {
+pub(crate) trait WinitEventLoopProxy: Debug + Send + Sync {
     fn wake_up(&self) -> Result<(), EventLoopExisted>;
 }
 
@@ -38,7 +38,7 @@ impl From<EventLoopExisted> for AppProxySendError {
 }
 
 #[derive(Debug, Error)]
-pub enum AppProxySendError {
+pub(crate) enum AppProxySendError {
     #[error("The mpsc receiver has already closed")]
     ClosedChannel(EventLoopEvent),
     #[error("The event loop already ended")]

@@ -7,6 +7,7 @@ use std::{
 };
 
 use imaging::kurbo::{Affine, Point};
+use masonry_core::core::PropertyStackId;
 use masonry_core::core::{LayerType, NewWidget, Widget, WidgetId, WidgetMut, WidgetRef};
 use winit::window::WindowId;
 
@@ -412,6 +413,41 @@ where
             }),
         };
         self.send_event(EventLoopEvent::UseWidget(Box::new(event)))
+    }
+    /// Checks if the current widget is present in the tree.
+    pub async fn is_present(&self) -> bool {
+        if let Some(window) = self.window.as_ref() {
+            window.has_widget(self.id).await.unwrap_or_default()
+        } else {
+            false
+        }
+    }
+    /// Sets this widget as the [focused widget](masonry_core::doc::masonry_concepts#text-focus)
+    /// and the [focus anchor](masonry_core::doc::masonry_concepts#focus-anchor).
+    pub fn set_focus(&self) {
+        let Some(window) = self.window.as_ref() else {
+            return;
+        };
+        if let Err(err) = window.focus_on(Some(self.id)) {
+            log::error!("cannot set focus on the current widget: {err}");
+        }
+    }
+    /// Sets this widget as the [focus fallback](masonry_core::doc::masonry_concepts#focus-fallback).
+    pub fn set_focus_callback(&self) {
+        let Some(window) = self.window.as_ref() else {
+            return;
+        };
+        if let Err(err) = window.set_focus_callback(Some(self.id)) {
+            log::error!("cannot set focus callback on the current widget: {err}");
+        }
+    }
+    pub fn set_property_stack_id(
+        &self,
+        property_stack_id: PropertyStackId,
+    ) -> Result<(), UseWidgetFromRefError> {
+        self.edit_erased(move |mut this| {
+            this.ctx.set_property_stack(property_stack_id);
+        })
     }
 }
 

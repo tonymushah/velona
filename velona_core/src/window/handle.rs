@@ -332,7 +332,7 @@ impl WindowHandle {
     }
     /// Sets a minimum dimension size for the window.
     ///
-    /// See [`Window::set_min_size`](winit::window::Window::set_min_size) for more details.
+    /// See [`Window::set_min_inner_size`](winit::window::Window::set_min_inner_size) for more details.
     pub fn set_min_inner_size<S>(&self, min_size: Option<S>) -> Result<(), WindowHandleActionError>
     where
         S: Into<dpi::Size> + Send + 'static,
@@ -344,7 +344,7 @@ impl WindowHandle {
 
     /// Sets a maximum dimension size for the window.
     ///
-    /// See [`Window::set_max_inner_size`](winit::window::Window::max_inner_size) for more details.
+    /// See [`Window::set_max_inner_size`](winit::window::Window::set_max_inner_size) for more details.
     pub fn set_max_inner_size<S>(&self, max_size: Option<S>) -> Result<(), WindowHandleActionError>
     where
         S: Into<dpi::Size> + Send + 'static,
@@ -355,7 +355,7 @@ impl WindowHandle {
     }
     /// Returns window resize increments if any were set.
     ///
-    /// See [`Window::resize_increments`](winit::window::Window::max_inner_size) for more details.
+    /// See [`Window::resize_increments`](winit::window::Window::resize_increments) for more details.
     pub fn resize_increments(&self) -> Result<Option<PhysicalSize<u32>>, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.resize_increments())
     }
@@ -502,7 +502,7 @@ impl WindowHandle {
     /// Gets the window’s current fullscreen state.
     ///
     /// _Due to some limitation on iOS
-    /// (as [it](winit::window::Window::fullscree) can only be called on the main thread there),
+    /// (as [it](winit::window::Window::fullscreen) can only be called on the main thread there),
     /// this function is `async`_.
     ///
     /// See [`Window::fullscreen`](winit::window::Window::fullscreen) for more details.
@@ -571,7 +571,7 @@ impl WindowHandle {
             window.set_ime_allowed(allowed);
         })
     }
-    /// Sets the IME purpose for the window using [`ImePurpose`](winit::window::ImePurpose).
+    /// Sets the IME purpose for the window using [`ImePurpose`].
     ///
     /// See [`Window::set_ime_purpose`](winit::window::Window::set_ime_purpose) for more details.
     pub fn set_ime_purpose(&self, purpose: ImePurpose) -> Result<(), WindowHandleActionError> {

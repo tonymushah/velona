@@ -11,6 +11,7 @@ use velona::{
     widgets::{button::NewButtonPressEventsExt, text_input::NewTextInputActionExt},
 };
 use velona_core::reactive::{signal::signal, traits::Update};
+use velona_renderer_vello::create_wgpu_context;
 
 fn view() -> AnyNewWidget {
     let (todos, set_todos) = signal(Vec::<String>::new());
@@ -71,12 +72,15 @@ fn view() -> AnyNewWidget {
 #[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
     env_logger::init();
-    velona::Builder::new(|_| velona_renderer_vello::VelloWindowRenderer::new())
-        .window(
-            WindowBuilder::new(view)
-                .with_title("Todos")
-                .base_color(WHITE),
-        )
-        .run()
-        .unwrap()
+    let g_context = create_wgpu_context(None, None);
+    velona::Builder::new(move |_| {
+        velona_renderer_vello::VelloWindowRenderer::new(g_context.clone())
+    })
+    .window(
+        WindowBuilder::new(view)
+            .with_title("Todos")
+            .base_color(WHITE),
+    )
+    .run()
+    .unwrap()
 }

@@ -6,7 +6,7 @@ edition.workspace = true
 [dependencies]
 velona_renderer.workspace = true
 imaging_vello = { version = "0.0", features = ["vello-0-9"] }
-wgpu_context = "0.6.0"
+wgpu_context = "0.8.0"
 futures-channel.workspace = true
 peniko.workspace = true
 kurbo.workspace = true

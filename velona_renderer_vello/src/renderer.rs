@@ -3,23 +3,22 @@
 #[cfg(feature = "log_frame_times")]
 use debug_timer::debug_timer;
 use futures_channel::oneshot;
-use imaging_vello::vello::wgpu::{
-    self, Features, Limits, PresentMode, TextureFormat, TextureUsages,
-};
+use imaging_vello::vello::wgpu::{self, PresentMode, TextureFormat, TextureUsages};
 use imaging_vello::vello::{
     AaConfig, AaSupport, RenderParams, Renderer as VelloRenderer, RendererOptions,
     Scene as VelloScene,
 };
 use kurbo::Rect;
 use peniko::Color;
-use std::future::Future;
+use pollster::FutureExt;
 #[cfg(not(target_os = "macos"))]
 use std::num::NonZeroUsize;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use velona_renderer::WindowRenderer;
 use velona_renderer::window_handle::WindowHandle;
 use wgpu_context::{
-    DeviceHandle, SurfaceRenderer, SurfaceRendererConfiguration, TextureConfiguration, WGPUContext,
+    AlphaConversion, DeviceHandle, SurfaceRenderer, SurfaceRendererConfiguration,
+    TextureConfiguration, WGPUContext,
 };
 
 #[cfg(target_os = "macos")]
@@ -28,20 +27,6 @@ const DEFAULT_THREADS: Option<NonZeroUsize> = NonZeroUsize::new(1);
 const DEFAULT_THREADS: Option<NonZeroUsize> = None;
 
 use imaging_vello::VelloSceneSink;
-
-/// Drive the wgpu init future. On wasm32 we spawn it onto the JS microtask
-/// queue (blocking is not allowed). On native we drive it inline with
-/// `pollster::block_on` — there's no ambient async runtime to spawn onto, and
-/// `on_ready` then fires before `resume` returns.
-#[cfg(target_arch = "wasm32")]
-fn spawn_init<F: Future<Output = ()> + 'static>(f: F) {
-    wasm_bindgen_futures::spawn_local(f);
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn spawn_init<F: Future<Output = ()>>(f: F) {
-    pollster::block_on(f);
-}
 
 struct ActiveRenderState {
     renderer: VelloRenderer,
@@ -65,19 +50,17 @@ enum RenderState {
 
 #[derive(Clone)]
 pub struct VelloRendererOptions {
-    pub features: Option<Features>,
-    pub limits: Option<Limits>,
     pub base_color: Color,
     pub antialiasing_method: AaConfig,
+    pub alpha_conversion: Option<AlphaConversion>,
 }
 
 impl Default for VelloRendererOptions {
     fn default() -> Self {
         Self {
-            features: None,
-            limits: None,
             base_color: Color::WHITE,
             antialiasing_method: AaConfig::Msaa16,
+            alpha_conversion: None,
         }
     }
 }
@@ -88,25 +71,26 @@ pub struct VelloWindowRenderer {
     render_state: RenderState,
     window_handle: Option<Arc<dyn WindowHandle>>,
 
-    wgpu_context: WGPUContext,
+    wgpu_context: Arc<RwLock<WGPUContext>>,
     scene: VelloScene,
     config: VelloRendererOptions,
 }
 
 impl VelloWindowRenderer {
     #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
-        Self::with_options(VelloRendererOptions::default())
-    }
-
-    pub fn with_options(config: VelloRendererOptions) -> Self {
+    pub fn new(wgpu_context: Arc<RwLock<WGPUContext>>) -> Self {
         Self {
             render_state: RenderState::Suspended,
-            wgpu_context: build_wgpu_context(&config),
-            config,
+            wgpu_context,
+            config: VelloRendererOptions::default(),
             window_handle: None,
             scene: VelloScene::new(),
         }
+    }
+
+    pub fn options(mut self, config: VelloRendererOptions) -> Self {
+        self.config = config;
+        self
     }
 
     pub fn current_device_handle(&self) -> Option<&DeviceHandle> {
@@ -115,12 +99,6 @@ impl VelloWindowRenderer {
             _ => None,
         }
     }
-}
-
-fn build_wgpu_context(config: &VelloRendererOptions) -> WGPUContext {
-    let features =
-        config.features.unwrap_or_default() | Features::CLEAR_TEXTURE | Features::PIPELINE_CACHE;
-    WGPUContext::with_features_and_limits(Some(features), config.limits.clone())
 }
 
 impl WindowRenderer for VelloWindowRenderer {
@@ -137,13 +115,7 @@ impl WindowRenderer for VelloWindowRenderer {
         matches!(self.render_state, RenderState::Pending { .. })
     }
 
-    fn resume<F: FnOnce() + 'static>(
-        &mut self,
-        window_handle: Arc<dyn WindowHandle>,
-        width: u32,
-        height: u32,
-        on_ready: F,
-    ) {
+    fn resume(&mut self, window_handle: Arc<dyn WindowHandle>, width: u32, height: u32) {
         // Each `resume` must be preceded by `suspend` (or be the first call after
         // construction). Calling while `Pending` or `Active` is a state-machine bug
         // in the embedder: it would orphan the in-flight init's `WGPUContext` and
@@ -160,65 +132,68 @@ impl WindowRenderer for VelloWindowRenderer {
 
         let surface = self
             .wgpu_context
+            .write()
+            .unwrap()
             .create_surface(window_handle)
             .expect("Error creating surface");
-        let instance = self.wgpu_context.instance.clone();
-        let extra_features = self.wgpu_context.extra_features();
-        let override_limits = self.wgpu_context.override_limits();
+        let instance = self.wgpu_context.read().unwrap().instance.clone();
+        let extra_features = self.wgpu_context.read().unwrap().extra_features();
+        let override_limits = self.wgpu_context.read().unwrap().override_limits();
         let existing_device_handle = self
             .wgpu_context
+            .write()
+            .unwrap()
             .find_compatible_device_handle(Some(&surface));
 
-        spawn_init(async move {
-            let device_handle = match existing_device_handle {
-                Some(device_handle) => device_handle,
-                None => DeviceHandle::new_from_compatible_surface(
-                    instance,
-                    Some(&surface),
-                    extra_features,
-                    override_limits,
-                )
-                .await
-                .expect("Error creating DeviceHandle"),
-            };
-
-            let render_surface = SurfaceRenderer::new(
-                surface,
-                SurfaceRendererConfiguration {
-                    usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-                    formats: vec![TextureFormat::Rgba8Unorm, TextureFormat::Bgra8Unorm],
-                    width,
-                    height,
-                    present_mode: PresentMode::AutoVsync,
-                    desired_maximum_frame_latency: 2,
-                    alpha_mode: wgpu::CompositeAlphaMode::Auto,
-                    view_formats: vec![],
-                },
-                Some(TextureConfiguration {
-                    usage: TextureUsages::STORAGE_BINDING | TextureUsages::TEXTURE_BINDING,
-                }),
-                device_handle,
+        let device_handle = match existing_device_handle {
+            Some(device_handle) => device_handle,
+            None => DeviceHandle::new_from_compatible_surface(
+                instance,
+                Some(&surface),
+                extra_features,
+                override_limits,
             )
-            .expect("Error creating SurfaceRenderer");
+            .block_on()
+            .expect("Error creating DeviceHandle"),
+        };
 
-            let renderer = VelloRenderer::new(
-                render_surface.device(),
-                RendererOptions {
-                    antialiasing_support: AaSupport::all(),
-                    use_cpu: false,
-                    num_init_threads: DEFAULT_THREADS,
-                    pipeline_cache: None,
-                },
-            )
-            .unwrap();
+        let render_surface = SurfaceRenderer::new(
+            surface,
+            SurfaceRendererConfiguration {
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                formats: vec![TextureFormat::Rgba8Unorm, TextureFormat::Bgra8Unorm],
+                width,
+                height,
+                present_mode: PresentMode::AutoVsync,
+                desired_maximum_frame_latency: 2,
+                alpha_mode: wgpu::CompositeAlphaMode::Auto,
+                view_formats: vec![],
+            },
+            Some(TextureConfiguration {
+                usage: TextureUsages::STORAGE_BINDING | TextureUsages::TEXTURE_BINDING,
+                format: TextureFormat::Rgba8Unorm,
+                alpha_conversion: self.config.alpha_conversion,
+            }),
+            device_handle,
+        )
+        .expect("Error creating SurfaceRenderer");
 
-            let _ = sender.send(InitOutput {
-                active: ActiveRenderState {
-                    renderer,
-                    render_surface,
-                },
-            });
-            on_ready();
+        let renderer = VelloRenderer::new(
+            render_surface.device(),
+            RendererOptions {
+                antialiasing_support: AaSupport::all(),
+                use_cpu: false,
+                num_init_threads: DEFAULT_THREADS,
+                pipeline_cache: None,
+            },
+        )
+        .unwrap();
+
+        let _ = sender.send(InitOutput {
+            active: ActiveRenderState {
+                renderer,
+                render_surface,
+            },
         });
     }
 
@@ -229,7 +204,11 @@ impl WindowRenderer for VelloWindowRenderer {
             RenderState::Pending { receiver } => match receiver.try_recv() {
                 Ok(Some(InitOutput { active })) => {
                     let device_handle = active.render_surface.device_handle.clone();
-                    self.wgpu_context.device_pool.push(device_handle);
+                    self.wgpu_context
+                        .write()
+                        .unwrap()
+                        .device_pool
+                        .push(device_handle);
                     self.render_state = RenderState::Active(active);
                     true
                 }

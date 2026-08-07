@@ -1,9 +1,4 @@
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    rc::Rc,
-    sync::{Arc, mpsc::Receiver},
-};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
 use async_task::Runnable;
 use copypasta::{ClipboardContext, ClipboardProvider};
@@ -49,7 +44,7 @@ where
     pub(crate) window_renderer_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
     pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
     pub(crate) suspended: bool,
-    pub(crate) receiver: Receiver<EventLoopEvent>,
+    pub(crate) receiver: flume::Receiver<EventLoopEvent>,
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]

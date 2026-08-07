@@ -1,7 +1,4 @@
-use std::{
-    fmt::Debug,
-    sync::{Arc, mpsc},
-};
+use std::{fmt::Debug, sync::Arc};
 
 use masonry_core::accesskit;
 use thiserror::Error;
@@ -12,7 +9,7 @@ use crate::app::EventLoopEvent;
 #[derive(Debug, Clone)]
 pub struct AppEventLoopProxy {
     winit_proxy: Arc<dyn WinitEventLoopProxy>,
-    send: mpsc::Sender<EventLoopEvent>,
+    send: flume::Sender<EventLoopEvent>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -46,7 +43,7 @@ pub(crate) enum AppProxySendError {
 }
 
 impl AppEventLoopProxy {
-    pub fn new<T>(winit_proxy: T, send: mpsc::Sender<EventLoopEvent>) -> Self
+    pub fn new<T>(winit_proxy: T, send: flume::Sender<EventLoopEvent>) -> Self
     where
         T: WinitEventLoopProxy + 'static,
     {

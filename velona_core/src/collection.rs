@@ -8,7 +8,7 @@ pub type CollectIterItem<P> = (crate::AnyNewWidget, P);
 pub trait NewCollectionWidgetExt<P> {
     fn collect_reactive_iter<I, Ifn>(self, iter_fn: Ifn) -> Self
     where
-        I: Iterator<Item = CollectIterItem<P>>,
+        I: IntoIterator<Item = CollectIterItem<P>>,
         Ifn: Fn() -> I + 'static;
 }
 
@@ -19,7 +19,7 @@ where
 {
     fn collect_reactive_iter<I, Ifn>(self, iter_fn: Ifn) -> Self
     where
-        I: Iterator<Item = CollectIterItem<P>>,
+        I: IntoIterator<Item = CollectIterItem<P>>,
         Ifn: Fn() -> I + 'static,
     {
         let self_ref = self.create_velona_ref();

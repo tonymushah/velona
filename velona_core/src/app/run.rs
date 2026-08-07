@@ -1,9 +1,4 @@
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    rc::Rc,
-    sync::{Arc, mpsc::Receiver},
-};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
 use async_task::Runnable;
 use copypasta::{ClipboardContext, ClipboardProvider};
@@ -33,7 +28,7 @@ use crate::{
         window::WindowNew,
     },
     convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
-    utils::todo_warn_of_something,
+    utils::{FlumeReceiver, todo_warn_of_something},
     window::{builder::WindowBuilder, renderer::WindowRendererFactory},
 };
 
@@ -49,7 +44,7 @@ where
     pub(crate) window_renderer_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
     pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
     pub(crate) suspended: bool,
-    pub(crate) receiver: Receiver<EventLoopEvent>,
+    pub(crate) receiver: FlumeReceiver<EventLoopEvent>,
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]

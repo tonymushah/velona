@@ -12,6 +12,8 @@ peniko.workspace = true
 kurbo.workspace = true
 pollster.workspace = true
 debug_timer = "0.1"
+# hotpath = {workspace = true, optional=true}
 
 [features]
 log_frame_times = ["debug_timer/enable"]
+# hotpath = ["dep:hotpath"]

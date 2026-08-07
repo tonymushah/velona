@@ -2,6 +2,7 @@ pub(crate) mod el_event;
 mod executor;
 use crate::{
     app::proxy::AppEventLoopProxy,
+    utils,
     window::{renderer::WindowRendererFactory, runner as window},
 };
 mod handle;
@@ -9,11 +10,7 @@ mod run;
 use velona_renderer::WindowRenderer;
 pub(crate) mod proxy;
 
-use std::{
-    cell::RefCell,
-    rc::Rc,
-    sync::{Arc, mpsc},
-};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use crate::{app::executor::SpawnFn, window::builder::WindowBuilder};
 use any_spawner::PinnedFuture;
@@ -84,7 +81,7 @@ impl<W: WindowRenderer> Builder<W> {
         let event_loop = self.event_loop_builder.build()?;
         let proxy = event_loop.create_proxy();
 
-        let (send, receiver) = mpsc::channel::<EventLoopEvent>();
+        let (send, receiver) = utils::flume_channel::<EventLoopEvent>();
 
         let proxy = AppEventLoopProxy::new(proxy, send);
 

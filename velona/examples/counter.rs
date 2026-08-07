@@ -88,7 +88,7 @@ fn view() -> NewWidget<dyn Widget + 'static> {
     .erased()
 }
 
-#[cfg_attr(feature = "hotpath", hotpath::main)]
+#[cfg_attr(feature = "hotpath-run", hotpath::main)]
 fn main() {
     env_logger::init();
     let g_context = create_wgpu_context(None, None);

@@ -285,11 +285,11 @@ impl WindowRenderer for VelloWindowRenderer {
         #[cfg(feature = "log_frame_times")]
         timer.record_time("present");
 
-        #[cfg(feature = "log_frame_times")]
-        // render_surface
-        //     .device()
-        //     .poll(wgpu::PollType::wait_indefinitely())
-        //     .unwrap();
+        // #[cfg(feature = "log_frame_times")]
+        render_surface
+            .device()
+            .poll(wgpu::PollType::wait_indefinitely())
+            .unwrap();
         #[cfg(feature = "log_frame_times")]
         timer.record_time("wait");
         #[cfg(feature = "log_frame_times")]

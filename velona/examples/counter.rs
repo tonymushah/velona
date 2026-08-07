@@ -19,6 +19,7 @@ use velona_core::reactive::{
     signal::{WriteSignal, signal},
     traits::{Get, Update},
 };
+use velona_renderer_vello::create_wgpu_context;
 
 fn button<U>(set_count: WriteSignal<u32>, update: U, text: &'static str) -> NewWidget<Button>
 where
@@ -90,8 +91,11 @@ fn view() -> NewWidget<dyn Widget + 'static> {
 #[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
     env_logger::init();
-    velona::app::Builder::new(|_| velona_renderer_vello::VelloWindowRenderer::new())
-        .window(WindowBuilder::new(view).with_title("aaaaaa"))
-        .run()
-        .unwrap()
+    let g_context = create_wgpu_context(None, None);
+    velona::app::Builder::new(move |_| {
+        velona_renderer_vello::VelloWindowRenderer::new(g_context.clone())
+    })
+    .window(WindowBuilder::new(view).with_title("aaaaaa"))
+    .run()
+    .unwrap()
 }

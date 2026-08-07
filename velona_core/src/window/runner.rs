@@ -235,12 +235,12 @@ where
     pub fn get_handle(&self) -> WindowHandle {
         self.handle.clone()
     }
-    pub fn resume<F: FnOnce() + 'static>(&mut self, on_ready: F) {
+    pub fn resume(&mut self) {
         let Some(size) = self.render_root.use_render_root_ref(|root| root.size()) else {
             return;
         };
         self.renderer
-            .resume(self.winit_window.clone(), size.width, size.height, on_ready);
+            .resume(self.winit_window.clone(), size.width, size.height);
     }
     pub fn suspend(&mut self) {
         self.renderer.suspend();

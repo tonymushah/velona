@@ -30,7 +30,7 @@ use velona_core::reactive::{
     spawn,
     traits::{Get, Read, Set, Update},
 };
-use velona_renderer_vello::VelloWindowRenderer;
+use velona_renderer_vello::{VelloWindowRenderer, create_wgpu_context};
 
 struct TowaProps {
     show: UnsyncCallback<(), bool>,
@@ -264,7 +264,8 @@ fn main() {
         .enable_all()
         .build()
         .unwrap();
-    Builder::new(|_| VelloWindowRenderer::new())
+    let g_context = create_wgpu_context(None, None);
+    Builder::new(move |_| VelloWindowRenderer::new(g_context.clone()))
         .spawn_fn({
             let handle = runtime.handle().clone();
             move |fut| {

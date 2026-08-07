@@ -16,18 +16,8 @@ pub trait WindowRenderer {
     where
         Self: 'a;
 
-    /// Begin resuming the renderer. `on_ready` fires when initialization completes —
-    /// synchronously inside `resume` on native, asynchronously (via
-    /// `wasm_bindgen_futures::spawn_local`) on `wasm32-unknown-unknown`. After it
-    /// fires, the embedder must call [`complete_resume`](Self::complete_resume) to
-    /// transition the renderer to the active state.
-    fn resume<F: FnOnce() + 'static>(
-        &mut self,
-        window: Arc<dyn WindowHandle>,
-        width: u32,
-        height: u32,
-        on_ready: F,
-    );
+    /// Begin resuming the renderer.
+    fn resume(&mut self, window: Arc<dyn WindowHandle>, width: u32, height: u32);
 
     /// Finalize a previously-initiated resume. Returns `true` once the renderer is
     /// active and ready to render. Idempotent on already-active renderers; returns

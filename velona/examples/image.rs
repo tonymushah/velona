@@ -12,6 +12,7 @@ use velona::{
     components::{LazyImageOptions, lazy_image},
 };
 use velona_core::reactive::{computed::Memo, signal::signal, traits::Read};
+use velona_renderer_vello::create_wgpu_context;
 
 enum ImageState {
     Loading,
@@ -38,7 +39,7 @@ fn new_view() -> AnyNewWidget {
                         width,
                         height,
                     },
-                    sampler: ImageSampler::new().with_quality(masonry::peniko::ImageQuality::High),
+                    sampler: ImageSampler::new().with_quality(masonry::peniko::ImageQuality::Low),
                 }));
                 // println!("Runned shit");
             }
@@ -94,16 +95,18 @@ fn main() {
         .build()
         .unwrap();
     let runtime_handle = runtime.handle().clone();
-    if let Err(err) = Builder::new(|_| velona_renderer_vello::VelloWindowRenderer::new())
-        .spawn_fn(move |fut| {
-            runtime_handle.spawn(fut);
-        })
-        .window(
-            WindowBuilder::new(new_view)
-                .with_title("Image")
-                .base_color(WHITE),
-        )
-        .run()
+    let g_context = create_wgpu_context(None, None);
+    if let Err(err) =
+        Builder::new(move |_| velona_renderer_vello::VelloWindowRenderer::new(g_context.clone()))
+            .spawn_fn(move |fut| {
+                runtime_handle.spawn(fut);
+            })
+            .window(
+                WindowBuilder::new(new_view)
+                    .with_title("Image")
+                    .base_color(WHITE),
+            )
+            .run()
     {
         eprintln!("{err}");
         process::exit(1)

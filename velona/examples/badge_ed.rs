@@ -259,6 +259,7 @@ fn main_view() -> AnyNewWidget {
         .erased()
 }
 
+#[cfg_attr(feature = "hotpath-run", hotpath::main)]
 fn main() {
     let runtime = runtime::Builder::new_multi_thread()
         .enable_all()

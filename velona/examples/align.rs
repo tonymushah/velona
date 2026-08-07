@@ -95,6 +95,7 @@ fn main_view() -> AnyNewWidget {
         .erased()
 }
 
+#[cfg_attr(feature = "hotpath-run", hotpath::main)]
 fn main() {
     env_logger::init();
     let g_context = create_wgpu_context(None, None);

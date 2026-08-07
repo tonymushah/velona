@@ -39,7 +39,7 @@ fn new_view() -> AnyNewWidget {
                         width,
                         height,
                     },
-                    sampler: ImageSampler::new().with_quality(masonry::peniko::ImageQuality::High),
+                    sampler: ImageSampler::new().with_quality(masonry::peniko::ImageQuality::Low),
                 }));
                 // println!("Runned shit");
             }

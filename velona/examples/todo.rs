@@ -1,3 +1,4 @@
+// use log::trace;
 use masonry::{
     core::Widget,
     layout::{AsUnit, Length},
@@ -6,8 +7,10 @@ use masonry::{
     widgets::{Button, Flex, FlexParams, Label, Prose, TextInput},
 };
 use velona::{
-    AnyNewWidget, WindowBuilder,
+    AnyNewWidget,
+    WindowBuilder,
     collection::NewCollectionWidgetExt,
+    // reactive::{effect::Effect, traits::Read},
     widgets::{button::NewButtonPressEventsExt, text_input::NewTextInputActionExt},
 };
 use velona_core::reactive::{signal::signal, traits::Update};
@@ -15,6 +18,13 @@ use velona_renderer_vello::create_wgpu_context;
 
 fn view() -> AnyNewWidget {
     let (todos, set_todos) = signal(Vec::<String>::new());
+
+    // Effect::new(move || {
+    //     let todo_ref = todos.read();
+    //     trace!("todo len: {}", todo_ref.len());
+    //     trace!("todo capacity: {}", todo_ref.capacity());
+    //     trace!("todo real size: {}", size_of_val(&*todo_ref))
+    // });
 
     Flex::column()
         .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)

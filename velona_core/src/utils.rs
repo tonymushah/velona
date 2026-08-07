@@ -49,6 +49,7 @@ pub(crate) fn flume_channel<T: Send + 'static>() -> (FlumeSender<T>, FlumeReceiv
 }
 
 #[cfg(feature = "hotpath")]
-pub(crate) fn flume_channel<T: Send + 'static>() -> (FlumeSender<T>, FlumeReceiver<T>) {
-    hotpath::channel!(flume::unbounded())
+pub(crate) fn flume_channel<T: Send + std::fmt::Debug + 'static>()
+-> (FlumeSender<T>, FlumeReceiver<T>) {
+    hotpath::channel!(flume::unbounded(), log = true)
 }

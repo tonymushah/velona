@@ -37,3 +37,18 @@ where
 pub use crate::window_event_handler::{
     register_typed_widget_action_handler, register_widget_action_handler,
 };
+
+#[cfg(not(feature = "hotpath"))]
+pub(crate) use flume::{Receiver as FlumeReceiver, Sender as FlumeSender};
+#[cfg(feature = "hotpath")]
+pub(crate) use hotpath::wrap::flume::{Receiver as FlumeReceiver, Sender as FlumeSender};
+
+#[cfg(not(feature = "hotpath"))]
+pub(crate) fn flume_channel<T: Send + 'static>() -> (FlumeSender<T>, FlumeReceiver<T>) {
+    flume::unbounded()
+}
+
+#[cfg(feature = "hotpath")]
+pub(crate) fn flume_channel<T: Send + 'static>() -> (FlumeSender<T>, FlumeReceiver<T>) {
+    hotpath::channel!(flume::unbounded())
+}

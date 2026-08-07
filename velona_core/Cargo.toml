@@ -23,16 +23,17 @@ ui-events-winit.workspace = true
 # parking_lot = "0.12"
 copypasta.workspace = true
 futures-channel.workspace = true
-hotpath = { version = "0.16", optional = true }
+hotpath = { workspace = true, optional = true }
 # TODO add anyrender for rendering simplicity
 imaging.workspace = true
 velona_renderer.workspace = true
 flume.workspace = true
+derive_more = { workspace = true, features = ["debug"] }
 
 [dev-dependencies]
 masonry = { workspace = true }
 
 [features]
-# default = ["testing"]
-hotpath = ["dep:hotpath"]
+# default = ["hotpath"]
+hotpath = ["dep:hotpath", "hotpath/flume"]
 # testing = []

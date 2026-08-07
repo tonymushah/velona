@@ -51,12 +51,12 @@ kurbo = { default-features = false, version = "0.13.1" }
 peniko = { default-features = false, version = "0.6.1" }
 raw-window-handle = "0.6"
 imaging_vello = "0.0"
-derive_more = "2"
 enum_all_variants = "0.2"
 resvg = "0"
 tracing = { version = "0.1.44", default-features = false }
 masonry_raw_box = { path = "masonry_raw_box" }
 flume = { version = "0.12", default-features = false }
+derive_more = { version = "2", default-features = false }
 
 # velona tools
 velona_core = { path = "velona_core" }

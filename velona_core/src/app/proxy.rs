@@ -4,12 +4,13 @@ use masonry_core::accesskit;
 use thiserror::Error;
 use winit::{event_loop::EventLoopProxy, window::WindowId};
 
-use crate::app::EventLoopEvent;
+use crate::{app::EventLoopEvent, utils::FlumeSender};
 
-#[derive(Debug, Clone)]
+#[derive(derive_more::Debug, Clone)]
 pub struct AppEventLoopProxy {
     winit_proxy: Arc<dyn WinitEventLoopProxy>,
-    send: flume::Sender<EventLoopEvent>,
+    #[cfg_attr(feature = "hotpath", debug(ignore))]
+    send: FlumeSender<EventLoopEvent>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -43,7 +44,7 @@ pub(crate) enum AppProxySendError {
 }
 
 impl AppEventLoopProxy {
-    pub fn new<T>(winit_proxy: T, send: flume::Sender<EventLoopEvent>) -> Self
+    pub fn new<T>(winit_proxy: T, send: FlumeSender<EventLoopEvent>) -> Self
     where
         T: WinitEventLoopProxy + 'static,
     {

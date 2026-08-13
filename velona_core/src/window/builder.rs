@@ -221,4 +221,10 @@ impl WindowBuilder {
     pub fn with_content_protected(self, content_protected: bool) -> Self {
         self.update_window_attributes(|att| att.with_content_protected(content_protected))
     }
+    /// Whether the window will be initially focused or not.
+    ///
+    /// See [`WindowAttributes::with_active`] for details.
+    pub fn with_active(self, active: bool) -> Self {
+        self.update_window_attributes(|att| att.with_active(active))
+    }
 }

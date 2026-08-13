@@ -158,4 +158,12 @@ impl WindowBuilder {
     pub fn with_transparent(self, transparent: bool) -> Self {
         self.update_window_attributes(|att| att.with_transparent(transparent))
     }
+    /// Sets whether the background of the window should be blurred by the system.
+    ///
+    /// The default is `false`.
+    ///
+    /// See [`Window::set_blur`](winit::window::Window::set_blur) for details.
+    pub fn with_blur(self, blur: bool) -> Self {
+        self.update_window_attributes(|att| att.with_blur(blur))
+    }
 }

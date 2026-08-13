@@ -5,7 +5,7 @@ use masonry_core::{
 };
 use winit::{
     dpi::{Position, Size},
-    window::{WindowAttributes, WindowButtons},
+    window::{Fullscreen, WindowAttributes, WindowButtons},
 };
 
 use crate::window::handle::WindowHandle;
@@ -123,5 +123,13 @@ impl WindowBuilder {
         T: Into<String>,
     {
         self.update_window_attributes(|att| att.with_title(title))
+    }
+    /// Sets whether the window should be put into fullscreen upon creation.
+    ///
+    /// The default is `None`.
+    ///
+    /// See [`Window::set_fullscreen`](winit::window::Window::set_fullscreen) for details.
+    pub fn with_fullscreen(self, fullscreen: Option<Fullscreen>) -> Self {
+        self.update_window_attributes(|att| att.with_fullscreen(fullscreen))
     }
 }

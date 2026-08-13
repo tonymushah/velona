@@ -11,7 +11,7 @@ use winit::{
 use crate::window::handle::WindowHandle;
 
 pub struct WindowBuilder {
-    pub(crate) view: Box<dyn FnOnce() -> NewWidget<dyn Widget + 'static> + Send + Sync>,
+    pub(crate) view: Box<dyn FnOnce() -> NewWidget<dyn Widget + 'static> + Send>,
     pub(crate) window_attributes: WindowAttributes,
     pub(crate) base_color: Option<AlphaColor<Srgb>>,
     pub(crate) window_handle_send: Option<oneshot::Sender<WindowHandle>>,
@@ -20,7 +20,7 @@ pub struct WindowBuilder {
 impl WindowBuilder {
     pub fn new<F>(view_fn: F) -> Self
     where
-        F: FnOnce() -> NewWidget<dyn Widget + 'static> + Send + Sync + 'static,
+        F: FnOnce() -> NewWidget<dyn Widget + 'static> + Send + 'static,
     {
         Self {
             view: Box::new(view_fn),

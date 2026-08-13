@@ -166,4 +166,12 @@ impl WindowBuilder {
     pub fn with_blur(self, blur: bool) -> Self {
         self.update_window_attributes(|att| att.with_blur(blur))
     }
+    /// Sets whether the window should have a border, a title bar, etc.
+    ///
+    /// The default is `true`.
+    ///
+    /// See [`Window::set_decorations`](winit::window::Window::set_decorations) for details.
+    pub fn with_decorations(self, decoration: bool) -> Self {
+        self.update_window_attributes(|att| att.with_decorations(decoration))
+    }
 }

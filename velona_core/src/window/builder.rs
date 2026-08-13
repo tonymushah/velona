@@ -140,4 +140,12 @@ impl WindowBuilder {
     pub fn with_maximized(self, maximized: bool) -> Self {
         self.update_window_attributes(|att| att.with_maximized(maximized))
     }
+    /// Sets whether the window will be initially visible or hidden.
+    ///
+    /// The default is to show the window.
+    ///
+    /// See [`Window::set_visible`](winit::window::Window::set_visible) for details.
+    pub fn with_visible(self, visible: bool) -> Self {
+        self.update_window_attributes(|att| att.with_visible(visible))
+    }
 }

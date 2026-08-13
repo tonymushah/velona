@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use futures_channel::oneshot;
+use masonry_core::app::WindowSizePolicy;
 use masonry_core::core::DefaultProperties;
 use masonry_core::{
     core::{NewWidget, Widget},
@@ -19,6 +20,7 @@ pub struct WindowBuilder {
     pub(crate) base_color: Option<AlphaColor<Srgb>>,
     pub(crate) window_handle_send: Option<oneshot::Sender<WindowHandle>>,
     pub(crate) default_propreties: Option<Arc<DefaultProperties>>,
+    pub(crate) size_policy: Option<WindowSizePolicy>,
 }
 
 impl WindowBuilder {
@@ -32,6 +34,7 @@ impl WindowBuilder {
             base_color: None,
             window_handle_send: None,
             default_propreties: None,
+            size_policy: None,
         }
         .with_title("velona window")
     }
@@ -255,6 +258,11 @@ impl WindowBuilder {
         default_properties: Option<Arc<DefaultProperties>>,
     ) -> Self {
         self.default_propreties = default_properties;
+        self
+    }
+    /// Defines how the window size should be determined.
+    pub fn with_size_policy(mut self, size_policy: WindowSizePolicy) -> Self {
+        self.size_policy = Some(size_policy);
         self
     }
 }

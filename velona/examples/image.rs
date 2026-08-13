@@ -104,7 +104,7 @@ fn main() {
             .window(
                 WindowBuilder::new(new_view)
                     .with_title("Image")
-                    .base_color(WHITE),
+                    .with_base_color(WHITE),
             )
             .run()
     {

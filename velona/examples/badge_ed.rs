@@ -273,7 +273,7 @@ fn main() {
                 handle.spawn(fut);
             }
         })
-        .window(WindowBuilder::new(main_view).base_color(WHITE))
+        .window(WindowBuilder::new(main_view).with_base_color(WHITE))
         .run()
         .unwrap();
 }

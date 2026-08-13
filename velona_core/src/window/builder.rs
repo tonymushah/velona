@@ -50,12 +50,11 @@ impl WindowBuilder {
         self.window_attributes = update_fn(self.window_attributes);
         self
     }
-
-    pub fn base_color(mut self, base_color: AlphaColor<Srgb>) -> Self {
+    /// The base color (aka background color) of the window.
+    pub fn with_base_color(mut self, base_color: AlphaColor<Srgb>) -> Self {
         self.base_color = Some(base_color);
         self
     }
-    // TODO implement other winit and masonry builder options
 }
 
 /// Winit based methods

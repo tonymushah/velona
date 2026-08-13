@@ -44,7 +44,7 @@ fn main() {
         .window(
             WindowBuilder::new(view)
                 .with_title("Checkbox")
-                .base_color(WHITE),
+                .with_base_color(WHITE),
         )
         .run()
         .unwrap();

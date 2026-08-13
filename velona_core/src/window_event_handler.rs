@@ -13,18 +13,19 @@ use reactive_graph::owner::on_cleanup;
 
 use crate::window::use_window;
 
+/// An event handler id.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct HandlerId(pub(crate) NonZeroU64);
 
 impl HandlerId {
-    /// Allocates a new, unique `WidgetId`.
+    /// Allocates a new, unique `HandlerId`.
     ///
     /// All widgets are assigned ids automatically; you should only create
     /// an explicit id if you need to know it ahead of time, for instance
     /// if you want two sibling widgets to know each others' ids.
     ///
-    /// You must ensure that a given `WidgetId` is only ever used for one
-    /// widget at a time.
+    /// You must ensure that a given `HandlerId` is only ever used for one
+    /// handler at a time.
     pub(crate) fn next() -> Self {
         static HANDLER_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
         let id = HANDLER_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
@@ -118,60 +119,6 @@ impl Debug for WindowEventHandlers {
             .finish()
     }
 }
-
-// pub(crate) struct InternWindowEventHandler(SendWrapper<Rc<RefCell<WindowEventHandler>>>);
-
-// impl Default for InternWindowEventHandler {
-//     fn default() -> Self {
-//         Self(SendWrapper::new(Rc::new(RefCell::new(
-//             WindowEventHandler::default(),
-//         ))))
-//     }
-// }
-
-// impl Deref for InternWindowEventHandler {
-//     type Target = RefCell<WindowEventHandler>;
-//     fn deref(&self) -> &Self::Target {
-//         &self.0
-//     }
-// }
-
-// impl InternWindowEventHandler {
-//     pub fn get_weak(&self) -> WindowEventHandlerWrapper {
-//         WindowEventHandlerWrapper(SendWrapper::new(Rc::downgrade(&*self.0)))
-//     }
-// }
-
-// #[derive(Debug, Clone)]
-// pub struct WindowEventHandlerWrapper(SendWrapper<Weak<RefCell<WindowEventHandler>>>);
-
-// impl WindowEventHandlerWrapper {
-//     pub fn add_handler_fn(&self, widget_id: WidgetId, hander_fn: HandlerFn) -> Option<HandlerId> {
-//         if !self.0.valid() {
-//             log::error!("An window event handler was called outside the main thread");
-//             return None;
-//         }
-//         let arc = self.0.upgrade()?;
-//         Some(
-//             arc.try_borrow_mut()
-//                 .ok()?
-//                 .add_handler_fn(widget_id, hander_fn),
-//         )
-//     }
-//     pub fn remove_handler_fn(&self, handler_id: HandlerId) {
-//         if !self.0.valid() {
-//             log::error!("An window event handler was called outside the main thread");
-//             return;
-//         }
-//         let Some(arc) = self.0.upgrade() else {
-//             return;
-//         };
-//         let Ok(mut evs) = arc.try_borrow_mut() else {
-//             return;
-//         };
-//         evs.remove_handler_fn(handler_id);
-//     }
-// }
 
 // TODO add documentation
 pub fn register_widget_action_handler(widget_id: WidgetId, handler_fn: HandlerFn) {

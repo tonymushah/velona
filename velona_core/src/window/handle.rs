@@ -907,6 +907,7 @@ impl WindowHandle {
 
         Ok(handler_id)
     }
+    /// Remove an action/event handler
     pub fn remove_handler(&self, handler_id: HandlerId) -> Result<(), WindowHandleActionError> {
         self.app_handle
             .send_event(EventLoopEvent::UnregisterEventHandler(Box::new(

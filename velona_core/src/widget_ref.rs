@@ -424,6 +424,7 @@ where
             log::error!("cannot set focus callback on the current widget: {err}");
         }
     }
+    /// Sets which property stack this widget uses for property resolution.
     pub fn set_property_stack_id(
         &self,
         property_stack_id: PropertyStackId,

@@ -3,7 +3,10 @@ use masonry_core::{
     core::{NewWidget, Widget},
     peniko::color::{AlphaColor, Srgb},
 };
-use winit::{dpi::Size, window::WindowAttributes};
+use winit::{
+    dpi::{Position, Size},
+    window::WindowAttributes,
+};
 
 use crate::window::handle::WindowHandle;
 
@@ -81,6 +84,18 @@ impl WindowBuilder {
         S: Into<Size>,
     {
         self.update_window_attributes(|att| att.with_max_inner_size(size))
+    }
+    /// Sets a desired initial position for the window.
+    ///
+    /// If this is not set, some platform-specific position will be chosen.
+    ///
+    /// See [`Window::set_outer_position`](winit::window::Window::set_outer_position)
+    /// and [`WindowAttributes::with_position`] for details.
+    pub fn with_position<S>(self, size: S) -> Self
+    where
+        S: Into<Position>,
+    {
+        self.update_window_attributes(|att| att.with_position(size))
     }
     /// Sets the initial title of the window in the title bar.
     ///

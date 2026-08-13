@@ -174,7 +174,7 @@ fn main() {
         .window(
             WindowBuilder::new(main_view)
                 .with_title("Fragment")
-                .base_color(WHEAT),
+                .with_base_color(WHEAT),
         )
         .run()
         .unwrap();

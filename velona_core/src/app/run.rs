@@ -251,13 +251,17 @@ where
                 match Window::new(WindowNew {
                     window,
                     view: builder.view,
-                    default_properties: self.default_properties.clone(),
+                    default_properties: builder
+                        .default_propreties
+                        .unwrap_or(self.default_properties.clone()),
                     access_kit,
                     app_handle: self.app_handle.clone(),
                     parent_owner: &self.owner,
                     base_color: builder.base_color,
                     factory: &mut *self.window_renderer_factory
                         as &mut dyn WindowRendererFactory<WindowRenderer = W>,
+                    size_policy: builder.size_policy,
+                    use_system_fonts: builder.use_system_fonts,
                 }) {
                     Ok(mut new_instance) => {
                         if !self.suspended {

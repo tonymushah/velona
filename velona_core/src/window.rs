@@ -15,11 +15,11 @@ pub fn use_window() -> Option<handle::WindowHandle> {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::is_send_sync;
+    use crate::utils::{is_send, is_send_sync};
 
     #[test]
     fn test_if_window_builder_is_send_sync() {
-        is_send_sync::<super::builder::WindowBuilder>();
+        is_send::<super::builder::WindowBuilder>();
     }
 
     #[test]

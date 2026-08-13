@@ -1,6 +1,7 @@
 use std::{sync::Arc, time::Instant};
 
 use imaging::RenderSource;
+use masonry_core::app::WindowSizePolicy;
 use masonry_core::{
     app::{RenderRootOptions, VisualLayerKind},
     core::{DefaultProperties, NewWidget, Widget},
@@ -48,6 +49,8 @@ pub struct WindowNew<'i, V, W> {
     pub parent_owner: &'i Owner,
     pub base_color: Option<AlphaColor<Srgb>>,
     pub factory: &'i mut dyn WindowRendererFactory<WindowRenderer = W>,
+    pub(crate) size_policy: Option<WindowSizePolicy>,
+    pub(crate) use_system_fonts: bool,
 }
 
 impl<'i, V, W> WindowNew<'i, V, W> {
@@ -93,6 +96,8 @@ where
             parent_owner,
             base_color,
             factory,
+            size_policy,
+            use_system_fonts,
         } = args;
         let window_owner = parent_owner.child();
         let event_handlers = WindowEventHandlers::default();
@@ -114,8 +119,8 @@ where
             },
             RenderRootOptions {
                 default_properties,
-                use_system_fonts: true,
-                size_policy: masonry_core::app::WindowSizePolicy::User,
+                use_system_fonts,
+                size_policy: size_policy.unwrap_or(masonry_core::app::WindowSizePolicy::User),
                 size,
                 scale_factor: window.scale_factor(),
                 test_font: None,

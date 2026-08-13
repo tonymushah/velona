@@ -103,7 +103,7 @@ fn main() {
         .window(
             WindowBuilder::new(main_view)
                 .with_title("Align")
-                .base_color(WHITE),
+                .with_base_color(WHITE),
         )
         .run()
         .unwrap();

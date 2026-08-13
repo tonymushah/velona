@@ -103,7 +103,7 @@ fn main() {
     .window(
         WindowBuilder::new(view)
             .with_title("Todos")
-            .base_color(WHITE),
+            .with_base_color(WHITE),
     )
     .run()
     .unwrap()

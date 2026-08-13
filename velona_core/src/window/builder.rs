@@ -132,4 +132,12 @@ impl WindowBuilder {
     pub fn with_fullscreen(self, fullscreen: Option<Fullscreen>) -> Self {
         self.update_window_attributes(|att| att.with_fullscreen(fullscreen))
     }
+    /// Request that the window is maximized upon creation.
+    ///
+    /// The default is `false`.
+    ///
+    /// See [`Window::set_maximized`](winit::window::Window::set_maximized) for details.
+    pub fn with_maximized(self, maximized: bool) -> Self {
+        self.update_window_attributes(|att| att.with_maximized(maximized))
+    }
 }

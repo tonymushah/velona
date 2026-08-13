@@ -5,7 +5,7 @@ use masonry_core::{
 };
 use winit::{
     dpi::{Position, Size},
-    window::{Fullscreen, WindowAttributes, WindowButtons, WindowLevel},
+    window::{Fullscreen, Theme, WindowAttributes, WindowButtons, WindowLevel},
 };
 
 use crate::window::handle::WindowHandle;
@@ -191,5 +191,15 @@ impl WindowBuilder {
     /// See [`Window::set_window_icon`](winit::window::Window::set_window_icon) for details.
     pub fn with_window_icon(self, window_icon: Option<winit::window::Icon>) -> Self {
         self.update_window_attributes(|att| att.with_window_icon(window_icon))
+    }
+    /// Sets a specific theme for the window.
+    ///
+    /// If `None` is provided, the window will use the system theme.
+    ///
+    /// The default is `None`.
+    ///
+    /// See [`WindowAttributes::with_theme`] for details.
+    pub fn with_theme(self, theme: Option<Theme>) -> Self {
+        self.update_window_attributes(|att| att.with_theme(theme))
     }
 }

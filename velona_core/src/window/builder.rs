@@ -70,6 +70,18 @@ impl WindowBuilder {
     {
         self.update_window_attributes(|att| att.with_min_inner_size(size))
     }
+    /// Sets the maximum dimensions a window can have.
+    ///
+    /// If this is not set, the window will have no maximum or will be set
+    /// to the primary monitor’s dimensions by the platform.
+    ///
+    /// See [`Window::set_max_inner_size`](winit::window::Window::set_max_inner_size) for details.
+    pub fn with_max_inner_size<S>(self, size: S) -> Self
+    where
+        S: Into<Size>,
+    {
+        self.update_window_attributes(|att| att.with_max_inner_size(size))
+    }
     /// Sets the initial title of the window in the title bar.
     ///
     /// The default is "velona window".

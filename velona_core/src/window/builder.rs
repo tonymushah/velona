@@ -25,6 +25,7 @@ impl WindowBuilder {
             base_color: None,
             window_handle_send: None,
         }
+        .with_title("velona window")
     }
     pub fn window_attributes(mut self, window_attributes: WindowAttributes) -> Self {
         self.window_attributes = window_attributes;
@@ -37,21 +38,36 @@ impl WindowBuilder {
         self.window_attributes = update_fn(self.window_attributes);
         self
     }
-    pub fn with_title<T>(self, title: T) -> Self
-    where
-        T: Into<String>,
-    {
-        self.update_window_attributes(|att| att.with_title(title))
+
+    pub fn base_color(mut self, base_color: AlphaColor<Srgb>) -> Self {
+        self.base_color = Some(base_color);
+        self
     }
+    // TODO implement other winit and masonry builder options
+}
+
+/// Winit based methods
+impl WindowBuilder {
+    /// Requests the window to be of specific dimensions.
+    ///
+    /// If this is not set, some platform-specific dimensions will be used.
+    ///
+    /// See [`winit::Window::request_inner_size`](winit::window::Window::request_inner_size) for details.
     pub fn with_inner_size<S>(self, size: S) -> Self
     where
         S: Into<Size>,
     {
         self.update_window_attributes(|att| att.with_inner_size(size))
     }
-    pub fn base_color(mut self, base_color: AlphaColor<Srgb>) -> Self {
-        self.base_color = Some(base_color);
-        self
+    /// Sets the initial title of the window in the title bar.
+    ///
+    /// The default is "velona window".
+    ///
+    /// See [`window::Window::set_title`](winit::window::Window::set_title) for details.
+    pub fn with_title<T>(self, title: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.update_window_attributes(|att| att.with_title(title))
     }
-    // TODO implement other winit and masonry builder options
 }

@@ -7,6 +7,7 @@ use std::{
 };
 
 use imaging::kurbo::{Affine, Point};
+use masonry_core::core::ErasedAction;
 use masonry_core::core::PropertyStackId;
 use masonry_core::core::{LayerType, NewWidget, Widget, WidgetId, WidgetMut, WidgetRef};
 use winit::window::WindowId;
@@ -15,7 +16,8 @@ use crate::{
     app::{EventLoopEvent, el_event::EventProxyHandle},
     render_root::use_window_render_root_ref,
     utils::ConsumeResult,
-    window::handle::WindowHandle,
+    window::handle::{WindowHandle, WindowHandleActionError},
+    window_event_handler::HandlerId,
 };
 
 type EditFn = Box<dyn FnOnce(WidgetMut<dyn Widget>) + Send>;
@@ -448,6 +450,62 @@ where
         self.edit_erased(move |mut this| {
             this.ctx.set_property_stack(property_stack_id);
         })
+    }
+}
+
+#[derive(derive_more::Debug, thiserror::Error)]
+pub enum ListenToWidgetActionFromRefError {
+    #[error("This ref doesn't not have a internal WindowHandle")]
+    WindowHandleNotPresent,
+    #[error(transparent)]
+    WindowAction(#[from] WindowHandleActionError),
+}
+
+// ----- Event Handlers ------
+impl<W> VelonaWidgetRef<W>
+where
+    W: Widget + ?Sized,
+{
+    pub fn listen_to_widget_action_erased<H>(
+        &self,
+        handler: H,
+    ) -> Result<HandlerId, ListenToWidgetActionFromRefError>
+    where
+        H: Fn(&ErasedAction) + Send + 'static,
+    {
+        Ok(self
+            .window
+            .as_ref()
+            .ok_or(ListenToWidgetActionFromRefError::WindowHandleNotPresent)?
+            .register_action_handler(self.id, Box::new(handler))?)
+    }
+}
+
+impl<W> VelonaWidgetRef<W>
+where
+    W: Widget + 'static,
+{
+    pub fn listen_to_widget_action<H>(
+        &self,
+        handler: H,
+    ) -> Result<HandlerId, ListenToWidgetActionFromRefError>
+    where
+        H: Fn(&W::Action) + Send + 'static,
+    {
+        Ok(self
+            .window
+            .as_ref()
+            .ok_or(ListenToWidgetActionFromRefError::WindowHandleNotPresent)?
+            .register_action_handler(
+                self.id,
+                Box::new(move |action| {
+                    if let Some(action) = action.downcast_ref::<W::Action>() {
+                        handler(action);
+                    } else {
+                        log::warn!("Invalid widget action cast");
+                    }
+                }),
+            )?)
     }
 }
 

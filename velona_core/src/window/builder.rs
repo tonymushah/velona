@@ -21,6 +21,7 @@ pub struct WindowBuilder {
     pub(crate) window_handle_send: Option<oneshot::Sender<WindowHandle>>,
     pub(crate) default_propreties: Option<Arc<DefaultProperties>>,
     pub(crate) size_policy: Option<WindowSizePolicy>,
+    pub(crate) use_system_fonts: bool,
 }
 
 impl WindowBuilder {
@@ -35,6 +36,7 @@ impl WindowBuilder {
             window_handle_send: None,
             default_propreties: None,
             size_policy: None,
+            use_system_fonts: true,
         }
     }
     pub fn window_attributes(mut self, window_attributes: WindowAttributes) -> Self {
@@ -262,6 +264,11 @@ impl WindowBuilder {
     /// Defines how the window size should be determined.
     pub fn with_size_policy(mut self, size_policy: WindowSizePolicy) -> Self {
         self.size_policy = Some(size_policy);
+        self
+    }
+    /// If `true`, `fontique` will provide access to system fonts using platform-specific APIs.
+    pub fn with_system_fonts(mut self, use_system_fonts: bool) -> Self {
+        self.use_system_fonts = use_system_fonts;
         self
     }
 }

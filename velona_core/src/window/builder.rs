@@ -5,7 +5,7 @@ use masonry_core::{
 };
 use winit::{
     dpi::{Position, Size},
-    window::{Fullscreen, Theme, WindowAttributes, WindowButtons, WindowLevel},
+    window::{Cursor, Fullscreen, Theme, WindowAttributes, WindowButtons, WindowLevel},
 };
 
 use crate::window::handle::WindowHandle;
@@ -226,5 +226,16 @@ impl WindowBuilder {
     /// See [`WindowAttributes::with_active`] for details.
     pub fn with_active(self, active: bool) -> Self {
         self.update_window_attributes(|att| att.with_active(active))
+    }
+    /// Modifies the cursor icon of the window.
+    ///
+    /// The default is [`CursorIcon::Default`].
+    ///
+    /// See [`Window::set_cursor`](winit::window::Window::set_cursor) for more details.
+    pub fn with_cursor<C>(self, cursor: C) -> Self
+    where
+        C: Into<Cursor>,
+    {
+        self.update_window_attributes(|att| att.with_cursor(cursor))
     }
 }

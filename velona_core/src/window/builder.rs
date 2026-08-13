@@ -202,4 +202,15 @@ impl WindowBuilder {
     pub fn with_theme(self, theme: Option<Theme>) -> Self {
         self.update_window_attributes(|att| att.with_theme(theme))
     }
+    /// Build window with resize increments hint.
+    ///
+    /// The default is `None`.
+    ///
+    /// See [`Window::set_resize_increments`](winit::window::Window::set_resize_increments) for details.
+    pub fn with_resize_increments<S>(self, size: S) -> Self
+    where
+        S: Into<Size>,
+    {
+        self.update_window_attributes(|att| att.with_resize_increments(size))
+    }
 }

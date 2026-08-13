@@ -59,6 +59,17 @@ impl WindowBuilder {
     {
         self.update_window_attributes(|att| att.with_inner_size(size))
     }
+    /// Sets the minimum dimensions a window can have.
+    ///
+    /// If this is not set, the window will have no minimum dimensions (aside from reserved).
+    ///
+    /// See [`Window::set_min_inner_size`](winit::window::Window::set_min_inner_size) for details.
+    pub fn with_min_inner_size<S>(self, size: S) -> Self
+    where
+        S: Into<Size>,
+    {
+        self.update_window_attributes(|att| att.with_min_inner_size(size))
+    }
     /// Sets the initial title of the window in the title bar.
     ///
     /// The default is "velona window".

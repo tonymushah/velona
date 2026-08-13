@@ -277,26 +277,7 @@ where
             Err(UseWidgetFromRefError::WidgetNotFound)
         }
     }
-    /// Sets the contents of the platform clipboard.
-    ///
-    /// For example, text widgets should call this for "cut" and "copy" user interactions.
-    /// Note that we currently don't support the "Primary" selection buffer on X11/Wayland.
-    pub fn set_clipboard(&self, contents: String) -> Result<(), UseWidgetFromRefError> {
-        self.edit(move |mut this| {
-            this.ctx.set_clipboard(contents);
-        })
-    }
-    /// Sets the local transform for this widget.
-    ///
-    /// This maps this widget's border-box coordinate space
-    /// to the parent's border-box coordinate space.
-    ///
-    /// It behaves similarly as CSS transforms.
-    pub fn set_transform(&self, transform: Affine) -> Result<(), UseWidgetFromRefError> {
-        self.edit(move |mut this| {
-            this.ctx.set_transform(transform);
-        })
-    }
+
     pub async fn create_attached_layer<L, LFn>(
         &self,
         layer_type: LayerType,
@@ -449,6 +430,26 @@ where
     ) -> Result<(), UseWidgetFromRefError> {
         self.edit_erased(move |mut this| {
             this.ctx.set_property_stack(property_stack_id);
+        })
+    }
+    /// Sets the contents of the platform clipboard.
+    ///
+    /// For example, text widgets should call this for "cut" and "copy" user interactions.
+    /// Note that we currently don't support the "Primary" selection buffer on X11/Wayland.
+    pub fn set_clipboard(&self, contents: String) -> Result<(), UseWidgetFromRefError> {
+        self.edit_erased(move |mut this| {
+            this.ctx.set_clipboard(contents);
+        })
+    }
+    /// Sets the local transform for this widget.
+    ///
+    /// This maps this widget's border-box coordinate space
+    /// to the parent's border-box coordinate space.
+    ///
+    /// It behaves similarly as CSS transforms.
+    pub fn set_transform(&self, transform: Affine) -> Result<(), UseWidgetFromRefError> {
+        self.edit_erased(move |mut this| {
+            this.ctx.set_transform(transform);
         })
     }
 }

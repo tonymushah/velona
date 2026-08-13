@@ -261,6 +261,8 @@ impl WindowBuilder {
         self
     }
     /// Defines how the window size should be determined.
+    ///
+    /// Defaults to [`WindowSizePolicy::User`].
     pub fn with_size_policy(mut self, size_policy: WindowSizePolicy) -> Self {
         self.size_policy = Some(size_policy);
         self

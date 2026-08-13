@@ -102,7 +102,7 @@ impl WindowBuilder {
     /// The default is `true`.
     ///
     /// See [`Window::set_resizable`](winit::window::Window::set_resizable) for details.
-    pub fn with_resizable<S>(self, resizable: bool) -> Self {
+    pub fn with_resizable(self, resizable: bool) -> Self {
         self.update_window_attributes(|att| att.with_resizable(resizable))
     }
     /// Sets the enabled window buttons.
@@ -110,7 +110,7 @@ impl WindowBuilder {
     /// The default is [`WindowButtons::all`]
     ///
     /// See [`Window::set_enabled_buttons`](winit::window::Window::set_enabled_buttons) for details.
-    pub fn with_enabled_buttons<S>(self, buttons: WindowButtons) -> Self {
+    pub fn with_enabled_buttons(self, buttons: WindowButtons) -> Self {
         self.update_window_attributes(|att| att.with_enabled_buttons(buttons))
     }
     /// Sets the initial title of the window in the title bar.

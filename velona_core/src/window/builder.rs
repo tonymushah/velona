@@ -30,13 +30,12 @@ impl WindowBuilder {
     {
         Self {
             view: Box::new(view_fn),
-            window_attributes: WindowAttributes::default(),
+            window_attributes: WindowAttributes::default().with_title("velona window"),
             base_color: None,
             window_handle_send: None,
             default_propreties: None,
             size_policy: None,
         }
-        .with_title("velona window")
     }
     pub fn window_attributes(mut self, window_attributes: WindowAttributes) -> Self {
         self.window_attributes = window_attributes;

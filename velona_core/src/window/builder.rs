@@ -97,6 +97,14 @@ impl WindowBuilder {
     {
         self.update_window_attributes(|att| att.with_position(size))
     }
+    /// Sets whether the window is resizable or not.
+    ///
+    /// The default is `true`.
+    ///
+    /// See [`Window::set_resizable`](winit::window::Window::set_resizable) for details.
+    pub fn with_resizable<S>(self, resizable: bool) -> Self {
+        self.update_window_attributes(|att| att.with_resizable(resizable))
+    }
     /// Sets the initial title of the window in the title bar.
     ///
     /// The default is "velona window".

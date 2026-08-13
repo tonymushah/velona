@@ -148,4 +148,14 @@ impl WindowBuilder {
     pub fn with_visible(self, visible: bool) -> Self {
         self.update_window_attributes(|att| att.with_visible(visible))
     }
+    /// Sets whether the background of the window should be transparent.
+    ///
+    /// If this is `true`, writing colors with alpha values different than `1.0` will produce a transparent window.
+    /// On some platforms this is more of a hint for the system and you’d still have the alpha buffer.
+    /// To control it see [`Window::set_transparent`](winit::window::Window::set_transparent).
+    ///
+    /// The default is `false`.
+    pub fn with_transparent(self, transparent: bool) -> Self {
+        self.update_window_attributes(|att| att.with_transparent(transparent))
+    }
 }

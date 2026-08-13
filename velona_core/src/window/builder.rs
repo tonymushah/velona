@@ -213,4 +213,12 @@ impl WindowBuilder {
     {
         self.update_window_attributes(|att| att.with_resize_increments(size))
     }
+    /// Prevents the window contents from being captured by other apps.
+    ///
+    /// The default is `false`.
+    ///
+    /// See [`WindowAttributes::with_content_protected`] for details.
+    pub fn with_content_protected(self, content_protected: bool) -> Self {
+        self.update_window_attributes(|att| att.with_content_protected(content_protected))
+    }
 }

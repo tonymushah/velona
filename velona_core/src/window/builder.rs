@@ -5,7 +5,7 @@ use masonry_core::{
 };
 use winit::{
     dpi::{Position, Size},
-    window::{Fullscreen, WindowAttributes, WindowButtons},
+    window::{Fullscreen, WindowAttributes, WindowButtons, WindowLevel},
 };
 
 use crate::window::handle::WindowHandle;
@@ -173,5 +173,15 @@ impl WindowBuilder {
     /// See [`Window::set_decorations`](winit::window::Window::set_decorations) for details.
     pub fn with_decorations(self, decoration: bool) -> Self {
         self.update_window_attributes(|att| att.with_decorations(decoration))
+    }
+    /// Sets the window level.
+    ///
+    /// This is just a hint to the OS, and the system could ignore it.
+    ///
+    /// The default is [`WindowLevel::Normal`].
+    ///
+    /// See [`WindowLevel`] for details.
+    pub fn with_window_level(self, level: WindowLevel) -> Self {
+        self.update_window_attributes(|att| att.with_window_level(level))
     }
 }

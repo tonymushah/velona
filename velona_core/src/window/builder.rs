@@ -184,4 +184,12 @@ impl WindowBuilder {
     pub fn with_window_level(self, level: WindowLevel) -> Self {
         self.update_window_attributes(|att| att.with_window_level(level))
     }
+    /// Sets the window icon.
+    ///
+    /// The default is `None`.
+    ///
+    /// See [`Window::set_window_icon`](winit::window::Window::set_window_icon) for details.
+    pub fn with_window_icon<S>(self, window_icon: Option<winit::window::Icon>) -> Self {
+        self.update_window_attributes(|att| att.with_window_icon(window_icon))
+    }
 }

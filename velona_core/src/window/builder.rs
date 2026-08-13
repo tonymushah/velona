@@ -1,4 +1,7 @@
+use std::sync::Arc;
+
 use futures_channel::oneshot;
+use masonry_core::core::DefaultProperties;
 use masonry_core::{
     core::{NewWidget, Widget},
     peniko::color::{AlphaColor, Srgb},
@@ -15,6 +18,7 @@ pub struct WindowBuilder {
     pub(crate) window_attributes: WindowAttributes,
     pub(crate) base_color: Option<AlphaColor<Srgb>>,
     pub(crate) window_handle_send: Option<oneshot::Sender<WindowHandle>>,
+    pub(crate) default_propreties: Option<Arc<DefaultProperties>>,
 }
 
 impl WindowBuilder {
@@ -27,6 +31,7 @@ impl WindowBuilder {
             window_attributes: WindowAttributes::default(),
             base_color: None,
             window_handle_send: None,
+            default_propreties: None,
         }
         .with_title("velona window")
     }
@@ -237,5 +242,19 @@ impl WindowBuilder {
         C: Into<Cursor>,
     {
         self.update_window_attributes(|att| att.with_cursor(cursor))
+    }
+}
+
+/// Mansory related attributes
+impl WindowBuilder {
+    /// Set window [`RenderRoot`](masonry_core::app::RenderRoot) [`DefaultProperties`].
+    ///
+    /// See [`RenderRootOptions`](masonry_core::app::RenderRootOptions) for more details.
+    pub fn with_default_properties(
+        mut self,
+        default_properties: Option<Arc<DefaultProperties>>,
+    ) -> Self {
+        self.default_propreties = default_properties;
+        self
     }
 }

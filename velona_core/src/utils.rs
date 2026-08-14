@@ -1,7 +1,10 @@
 use log::warn;
 
+mod handler_id;
 pub mod memo;
 mod res_log;
+
+pub use handler_id::HandlerId;
 
 pub use res_log::ConsumeResult;
 

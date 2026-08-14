@@ -34,9 +34,9 @@ use crate::{
 
 /// A window handle.
 ///
-/// This type can be extracted with [`use_window_handle`](super::use_window_handle) function.
+/// This type can be extracted with [`use_window`](super::use_window) function.
 ///
-/// See [`use_window_handle`](super::use_window_handle) for more details.
+/// See [`use_window`](super::use_window) for more details.
 #[derive(Debug, Clone)]
 pub struct WindowHandle {
     pub(crate) window: Weak<Window>,
@@ -895,6 +895,7 @@ impl WindowHandle {
 
 /// Register event
 impl WindowHandle {
+    /// Register a widget action handler
     pub fn register_action_handler(
         &self,
         widget_id: WidgetId,

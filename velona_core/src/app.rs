@@ -31,11 +31,14 @@ pub struct Builder<W: WindowRenderer> {
 }
 
 impl<W: WindowRenderer> Builder<W> {
-    /// S
+    /// Default values that properties will have if not defined per-widget.
+    ///
+    /// This one is app global, Windows can changes their properties with [`WindowBuilder::with_default_properties`](crate::window::WindowBuilder::with_default_properties).
     pub fn with_default_properties(mut self, default_properties: DefaultProperties) -> Self {
         self.default_properties = default_properties;
         self
     }
+    /// Sets the [`any_spawner::Executor::spawn`] function
     pub fn with_spawn_fn<F>(mut self, spawn_fn: F) -> Self
     where
         F: Fn(PinnedFuture<()>) + Send + Sync + 'static,
@@ -43,10 +46,12 @@ impl<W: WindowRenderer> Builder<W> {
         self.spawn_fn = Some(Box::new(spawn_fn));
         self
     }
+    /// Run this app with a window.
     pub fn with_window(mut self, window_builder: WindowBuilder) -> Self {
         self.windows.push(window_builder);
         self
     }
+    /// Create a builder with a custom renderer factory.
     pub fn new_with_renderer_factory<F>(factory: F) -> Self
     where
         F: WindowRendererFactory<WindowRenderer = W> + 'static,
@@ -66,6 +71,7 @@ impl<W: WindowRenderer> Builder<W> {
     {
         Self::new_with_renderer_factory(factory)
     }
+    /// Provide global context data.
     pub fn provide_context<T: Send + Sync + 'static>(self, data: T) -> Self {
         self.owner.with(|| {
             reactive_graph::owner::provide_context(data);
@@ -75,6 +81,7 @@ impl<W: WindowRenderer> Builder<W> {
 }
 
 impl<W: WindowRenderer> Builder<W> {
+    /// Run the app.
     pub fn run(mut self) -> Result<(), crate::error::Error> {
         let spawn_fn = self
             .spawn_fn

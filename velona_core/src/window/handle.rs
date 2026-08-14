@@ -32,12 +32,18 @@ use crate::{
     window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
 };
 
+/// A window handle.
+///
+/// This type can be extracted with [`use_window_handle`](super::use_window_handle) function.
+///
+/// See [`use_window_handle`](super::use_window_handle) for more details.
 #[derive(Debug, Clone)]
 pub struct WindowHandle {
     pub(crate) window: Weak<Window>,
     pub(crate) app_handle: AppHandle,
 }
 
+/// Error encountered when doing some window actions.
 #[derive(Debug, thiserror::Error)]
 pub enum WindowHandleActionError {
     #[error("The window has already closed")]

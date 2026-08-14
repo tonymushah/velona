@@ -237,7 +237,7 @@ impl WindowBuilder {
     }
     /// Modifies the cursor icon of the window.
     ///
-    /// The default is [`CursorIcon::Default`].
+    /// The default is [`CursorIcon::Default`](winit::window::CursorIcon::Default).
     ///
     /// See [`Window::set_cursor`](winit::window::Window::set_cursor) for more details.
     pub fn with_cursor<C>(self, cursor: C) -> Self

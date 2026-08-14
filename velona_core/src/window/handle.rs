@@ -857,7 +857,7 @@ impl WindowHandle {
     /// re-colors widgets relying on default `ContentColor` / `Background`.
     ///
     /// This invalidates the computed properties of the entire widget tree,
-    /// and calls [`Widget::property_changed`](masonry_core::core::Widget::property_changed) for every property previously
+    /// and calls [`Widget::property_changed`] for every property previously
     /// resolved by each widget.
     pub fn set_default_properties(
         &self,

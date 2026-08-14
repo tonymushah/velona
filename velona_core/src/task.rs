@@ -6,7 +6,7 @@ use std::future::Future;
 
 /// Spawns a thread-safe [`Future`].
 ///
-/// This will be run without current reactive owner since it is a call of [`Builder::spawn_fn`](crate::Builder::spawn_fn)
+/// This will be run without current reactive owner since it is a call of [`Builder::with_spawn_fn`](crate::Builder::with_spawn_fn)
 // It is technically possible but I don't want you guys reporting
 // a bunch of [`SendWraper`] in the near feature
 #[track_caller]

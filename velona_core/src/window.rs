@@ -1,8 +1,14 @@
-pub mod builder;
-pub mod handle;
+pub(crate) mod builder;
+pub(crate) mod handle;
 // TODO report this as finished
-pub mod renderer;
+pub(crate) mod renderer;
 pub(crate) mod runner;
+
+pub use self::{
+    builder::WindowBuilder,
+    handle::{WindowHandle, WindowHandleActionError},
+    renderer::WindowRendererFactory,
+};
 
 use reactive_graph::owner::use_context;
 

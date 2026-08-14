@@ -13,7 +13,7 @@ use velona::{
     NewWidgetExt,
     components::label,
     widgets::{button::NewButtonPressEventsExt, resize_observer::BindResizeObserver},
-    window::builder::WindowBuilder,
+    window::WindowBuilder,
 };
 use velona_core::reactive::{
     signal::{WriteSignal, signal},

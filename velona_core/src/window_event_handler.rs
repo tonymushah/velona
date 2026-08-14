@@ -92,7 +92,14 @@ impl Debug for WindowEventHandlers {
     }
 }
 
-// TODO add documentation
+/// Register a widget action handler
+/// and automatically removes it [`on_cleanup`].
+///
+/// This function will fail if:
+/// - there is no [`WindowHandle`](crate::window::WindowHandle) in the current context (panics on debug mode, just [`log::warn!`] on non-debug)
+/// - the app or the window already closed (always panics)
+///
+/// For a typed version, use [`register_typed_widget_action_handler`].
 pub fn register_widget_action_handler(widget_id: WidgetId, handler_fn: HandlerFn) {
     let Some(window) = use_window() else {
         #[cfg(debug_assertions)]
@@ -116,7 +123,10 @@ pub fn register_widget_action_handler(widget_id: WidgetId, handler_fn: HandlerFn
     });
 }
 
-// TODO add documentation
+/// Very similar to [`register_widget_action_handler`]
+/// but automatically cast the [`ErasedAction`] to the [`Widget::Action`] type.
+///
+/// The `handler_fn` function will just not run if the cast fails.
 pub fn register_typed_widget_action_handler<W: Widget + 'static, H>(
     widget_id: WidgetId,
     handler_fn: H,

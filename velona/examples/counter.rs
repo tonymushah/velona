@@ -95,7 +95,7 @@ fn main() {
     velona::app::Builder::new(move |_| {
         velona_renderer_vello::VelloWindowRenderer::new(g_context.clone())
     })
-    .window(WindowBuilder::new(view).with_title("aaaaaa"))
+    .with_window(WindowBuilder::new(view).with_title("aaaaaa"))
     .run()
     .unwrap()
 }

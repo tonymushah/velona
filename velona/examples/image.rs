@@ -98,10 +98,10 @@ fn main() {
     let g_context = create_wgpu_context(None, None);
     if let Err(err) =
         Builder::new(move |_| velona_renderer_vello::VelloWindowRenderer::new(g_context.clone()))
-            .spawn_fn(move |fut| {
+            .with_spawn_fn(move |fut| {
                 runtime_handle.spawn(fut);
             })
-            .window(
+            .with_window(
                 WindowBuilder::new(new_view)
                     .with_title("Image")
                     .with_base_color(WHITE),

@@ -41,7 +41,7 @@ fn main() {
     env_logger::init();
     let g_context = create_wgpu_context(None, None);
     Builder::new(move |_| velona_renderer_vello::VelloWindowRenderer::new(g_context.clone()))
-        .window(
+        .with_window(
             WindowBuilder::new(view)
                 .with_title("Checkbox")
                 .with_base_color(WHITE),

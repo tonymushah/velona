@@ -31,18 +31,19 @@ pub struct Builder<W: WindowRenderer> {
 }
 
 impl<W: WindowRenderer> Builder<W> {
-    pub fn default_properties(mut self, default_properties: DefaultProperties) -> Self {
+    /// S
+    pub fn with_default_properties(mut self, default_properties: DefaultProperties) -> Self {
         self.default_properties = default_properties;
         self
     }
-    pub fn spawn_fn<F>(mut self, spawn_fn: F) -> Self
+    pub fn with_spawn_fn<F>(mut self, spawn_fn: F) -> Self
     where
         F: Fn(PinnedFuture<()>) + Send + Sync + 'static,
     {
         self.spawn_fn = Some(Box::new(spawn_fn));
         self
     }
-    pub fn window(mut self, window_builder: WindowBuilder) -> Self {
+    pub fn with_window(mut self, window_builder: WindowBuilder) -> Self {
         self.windows.push(window_builder);
         self
     }

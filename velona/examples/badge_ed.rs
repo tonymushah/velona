@@ -267,13 +267,13 @@ fn main() {
         .unwrap();
     let g_context = create_wgpu_context(None, None);
     Builder::new(move |_| VelloWindowRenderer::new(g_context.clone()))
-        .spawn_fn({
+        .with_spawn_fn({
             let handle = runtime.handle().clone();
             move |fut| {
                 handle.spawn(fut);
             }
         })
-        .window(WindowBuilder::new(main_view).with_base_color(WHITE))
+        .with_window(WindowBuilder::new(main_view).with_base_color(WHITE))
         .run()
         .unwrap();
 }

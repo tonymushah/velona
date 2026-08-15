@@ -21,6 +21,8 @@ use winit::event_loop::{ControlFlow, DeviceEvents, EventLoop, EventLoopBuilder};
 
 pub(crate) use el_event::EventLoopEvent;
 
+type OnEventLoopInitFns = Vec<Box<dyn FnOnce(&AppHandle)>>;
+
 pub struct Builder<W: WindowRenderer> {
     event_loop_builder: EventLoopBuilder<()>,
     window_render_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
@@ -30,6 +32,7 @@ pub struct Builder<W: WindowRenderer> {
     owner: Owner,
     allowed: Option<DeviceEvents>,
     control_flow: Option<ControlFlow>,
+    on_event_loop_init: OnEventLoopInitFns,
 }
 
 impl<W: WindowRenderer> Builder<W> {
@@ -67,6 +70,7 @@ impl<W: WindowRenderer> Builder<W> {
             owner: Owner::new(),
             allowed: None,
             control_flow: None,
+            on_event_loop_init: Vec::new(),
         }
     }
     pub fn new<F>(factory: F) -> Self
@@ -92,6 +96,16 @@ impl<W: WindowRenderer> Builder<W> {
     /// Sets the [`ControlFlow`].
     pub fn control_flow(mut self, controll_flow: ControlFlow) -> Self {
         self.control_flow = Some(controll_flow);
+        self
+    }
+    /// Register a callback that will run once the [winit::event_loop::EventLoop] has initiliazed.
+    ///
+    /// See [`winit::event::StartCause::Init`] for more details.
+    pub fn on_event_loop_init<F>(mut self, after_init: F) -> Self
+    where
+        F: FnOnce(&AppHandle) + 'static,
+    {
+        self.on_event_loop_init.push(Box::new(after_init));
         self
     }
 }
@@ -136,6 +150,13 @@ impl<W: WindowRenderer> Builder<W> {
             clipboard_context: Rc::new(RefCell::new(ClipboardContext::new().unwrap())),
             suspended: true,
             receiver,
+            on_event_loop_init: {
+                if self.on_event_loop_init.is_empty() {
+                    None
+                } else {
+                    Some(self.on_event_loop_init)
+                }
+            },
         };
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;

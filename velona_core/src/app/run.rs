@@ -21,6 +21,7 @@ use winit::{
 
 use super::window::Window;
 
+use crate::app::OnEventLoopInitFns;
 use crate::app::el_event::UnregisterType;
 use crate::utils::HandlerId;
 use crate::{
@@ -47,6 +48,7 @@ where
     pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
     pub(crate) suspended: bool,
     pub(crate) receiver: FlumeReceiver<EventLoopEvent>,
+    pub(crate) on_event_loop_init: Option<OnEventLoopInitFns>,
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
@@ -484,20 +486,25 @@ where
         event_loop: &winit::event_loop::ActiveEventLoop,
         cause: winit::event::StartCause,
     ) {
-        if cause == winit::event::StartCause::Init
-            && let Some(builder_windows) = self.builder_windows.take()
-        {
-            if builder_windows.is_empty() {
-                log::warn!("No window provided! Exiting...");
-                event_loop.exit();
-            } else {
-                for window in builder_windows {
-                    if self
-                        .app_handle
-                        .send_event(EventLoopEvent::NewWindow(Box::new(window)))
-                        .is_err()
-                    {
-                        log::warn!("the event loop is already dead lol");
+        if cause == winit::event::StartCause::Init {
+            if let Some(on_init) = self.on_event_loop_init.take() {
+                for func in on_init {
+                    func(&self.app_handle);
+                }
+            }
+            if let Some(builder_windows) = self.builder_windows.take() {
+                if builder_windows.is_empty() {
+                    log::warn!("No window provided! Exiting...");
+                    event_loop.exit();
+                } else {
+                    for window in builder_windows {
+                        if self
+                            .app_handle
+                            .send_event(EventLoopEvent::NewWindow(Box::new(window)))
+                            .is_err()
+                        {
+                            log::warn!("the event loop is already dead lol");
+                        }
                     }
                 }
             }

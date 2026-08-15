@@ -17,7 +17,7 @@ use any_spawner::PinnedFuture;
 use copypasta::ClipboardContext;
 use masonry_core::core::DefaultProperties;
 use reactive_graph::owner::Owner;
-use winit::event_loop::{DeviceEvents, EventLoop, EventLoopBuilder};
+use winit::event_loop::{ControlFlow, DeviceEvents, EventLoop, EventLoopBuilder};
 
 pub(crate) use el_event::EventLoopEvent;
 
@@ -29,6 +29,7 @@ pub struct Builder<W: WindowRenderer> {
     windows: Vec<WindowBuilder>,
     owner: Owner,
     allowed: Option<DeviceEvents>,
+    control_flow: Option<ControlFlow>,
 }
 
 impl<W: WindowRenderer> Builder<W> {
@@ -65,6 +66,7 @@ impl<W: WindowRenderer> Builder<W> {
             windows: Vec::with_capacity(1),
             owner: Owner::new(),
             allowed: None,
+            control_flow: None,
         }
     }
     pub fn new<F>(factory: F) -> Self
@@ -87,6 +89,11 @@ impl<W: WindowRenderer> Builder<W> {
         self.allowed = Some(allowed);
         self
     }
+    /// Sets the [`ControlFlow`].
+    pub fn control_flow(mut self, controll_flow: ControlFlow) -> Self {
+        self.control_flow = Some(controll_flow);
+        self
+    }
 }
 
 impl<W: WindowRenderer> Builder<W> {
@@ -100,6 +107,9 @@ impl<W: WindowRenderer> Builder<W> {
 
         if let Some(allowed) = self.allowed {
             event_loop.listen_device_events(allowed);
+        }
+        if let Some(control_flow) = self.control_flow {
+            event_loop.set_control_flow(control_flow);
         }
 
         let proxy = event_loop.create_proxy();

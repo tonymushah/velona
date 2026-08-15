@@ -17,7 +17,7 @@ use any_spawner::PinnedFuture;
 use copypasta::ClipboardContext;
 use masonry_core::core::DefaultProperties;
 use reactive_graph::owner::Owner;
-use winit::event_loop::{EventLoop, EventLoopBuilder};
+use winit::event_loop::{DeviceEvents, EventLoop, EventLoopBuilder};
 
 pub(crate) use el_event::EventLoopEvent;
 
@@ -28,6 +28,7 @@ pub struct Builder<W: WindowRenderer> {
     spawn_fn: Option<SpawnFn>,
     windows: Vec<WindowBuilder>,
     owner: Owner,
+    allowed: Option<DeviceEvents>,
 }
 
 impl<W: WindowRenderer> Builder<W> {
@@ -63,6 +64,7 @@ impl<W: WindowRenderer> Builder<W> {
             spawn_fn: None,
             windows: Vec::with_capacity(1),
             owner: Owner::new(),
+            allowed: None,
         }
     }
     pub fn new<F>(factory: F) -> Self
@@ -78,6 +80,13 @@ impl<W: WindowRenderer> Builder<W> {
         });
         self
     }
+    /// Change if or when [`DeviceEvent`](winit::event::DeviceEvent)s are captured.
+    ///
+    /// See [`ActiveEventLoop::listen_device_events`](winit::event_loop::ActiveEventLoop::listen_device_events) for details.
+    pub fn listen_device_events(mut self, allowed: DeviceEvents) -> Self {
+        self.allowed = Some(allowed);
+        self
+    }
 }
 
 impl<W: WindowRenderer> Builder<W> {
@@ -86,7 +95,13 @@ impl<W: WindowRenderer> Builder<W> {
         let spawn_fn = self
             .spawn_fn
             .unwrap_or_else(|| Box::new(|_| panic!("No spawn_fn provided")));
+
         let event_loop = self.event_loop_builder.build()?;
+
+        if let Some(allowed) = self.allowed {
+            event_loop.listen_device_events(allowed);
+        }
+
         let proxy = event_loop.create_proxy();
 
         let (send, receiver) = utils::flume_channel::<EventLoopEvent>();

@@ -21,6 +21,8 @@ use winit::{
 
 use super::window::Window;
 
+use crate::app::el_event::UnregisterType;
+use crate::utils::HandlerId;
 use crate::{
     app::{
         AppHandle, EventLoopEvent,
@@ -428,22 +430,26 @@ where
             }
         }
     }
-    fn handle_unregister_event_handler(&mut self, event: UnregisterHandler) {
-        if let Some(window_id) = event.window_id {
-            self.use_window(window_id, |window| {
-                window
-                    .window_event_handler
-                    .remove_handler_fn(event.handler_id);
-            });
-        } else {
-            for window in self.windows.values_mut() {
-                if window
-                    .window_event_handler
-                    .remove_handler_fn(event.handler_id)
-                {
-                    break;
-                }
+    fn unregister_handler_from_global(&mut self, handler_id: HandlerId) {
+        for window in self.windows.values_mut() {
+            if window.window_event_handler.remove_handler_fn(handler_id) {
+                break;
             }
+        }
+    }
+    fn handle_unregister_event_handler(&mut self, event: UnregisterHandler) {
+        match event.type_ {
+            None => {
+                self.unregister_handler_from_global(event.handler_id);
+            }
+            Some(UnregisterType::Window(window_id)) => {
+                self.use_window(window_id, |window| {
+                    window
+                        .window_event_handler
+                        .remove_handler_fn(event.handler_id);
+                });
+            }
+            Some(UnregisterType::DeviceEventListner) => todo!(),
         }
     }
     fn run_exiting_task(&self) -> usize {

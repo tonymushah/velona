@@ -18,6 +18,7 @@ use winit::{
     },
 };
 
+use crate::app::el_event::UnregisterType;
 use crate::{
     Manager,
     app::{
@@ -920,7 +921,7 @@ impl WindowHandle {
             .send_event(EventLoopEvent::UnregisterEventHandler(Box::new(
                 app::el_event::UnregisterHandler {
                     handler_id,
-                    window_id: Some(self.id()?),
+                    type_: Some(UnregisterType::Window(self.id()?)),
                 },
             )))?;
         Ok(())

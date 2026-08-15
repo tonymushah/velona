@@ -100,7 +100,7 @@ fn main() {
     velona::Builder::new(move |_| {
         velona_renderer_vello::VelloWindowRenderer::new(g_context.clone())
     })
-    .window(
+    .with_window(
         WindowBuilder::new(view)
             .with_title("Todos")
             .with_base_color(WHITE),

@@ -33,9 +33,15 @@ impl Debug for RegisterWidgetActionHandler {
 }
 
 #[derive(Debug)]
+pub(crate) enum UnregisterType {
+    Window(WindowId),
+    DeviceEventListner,
+}
+
+#[derive(Debug)]
 pub(crate) struct UnregisterHandler {
     pub(crate) handler_id: HandlerId,
-    pub(crate) window_id: Option<WindowId>,
+    pub(crate) type_: Option<UnregisterType>,
 }
 
 pub(crate) struct RegisterOnWindowDestroyHandler {

@@ -12,8 +12,13 @@ use winit::{
     window::{Cursor, Fullscreen, Theme, WindowAttributes, WindowButtons, WindowLevel},
 };
 
+use crate::Manager;
+use crate::manager::CreateWindowError;
 use crate::window::handle::WindowHandle;
 
+/// The `velona` window builder.
+///
+/// Use [`Manager::create_window`] or [`Self::build`] method to show it on the screen.
 pub struct WindowBuilder {
     pub(crate) view: Box<dyn FnOnce() -> NewWidget<dyn Widget + 'static> + Send>,
     pub(crate) window_attributes: WindowAttributes,
@@ -25,6 +30,7 @@ pub struct WindowBuilder {
 }
 
 impl WindowBuilder {
+    /// Create a new window that with this view.
     pub fn new<F>(view_fn: F) -> Self
     where
         F: FnOnce() -> NewWidget<dyn Widget + 'static> + Send + 'static,
@@ -39,10 +45,12 @@ impl WindowBuilder {
             use_system_fonts: true,
         }
     }
-    pub fn window_attributes(mut self, window_attributes: WindowAttributes) -> Self {
+    /// Set the [`winit::WindowAttributes`](WindowAttributes) of this window.
+    pub fn with_winit_window_attributes(mut self, window_attributes: WindowAttributes) -> Self {
         self.window_attributes = window_attributes;
         self
     }
+    /// Update the internal [`WindowAttributes`] of this builder.
     pub fn update_window_attributes<U>(mut self, update_fn: U) -> Self
     where
         U: FnOnce(WindowAttributes) -> WindowAttributes,
@@ -54,6 +62,13 @@ impl WindowBuilder {
     pub fn with_base_color(mut self, base_color: AlphaColor<Srgb>) -> Self {
         self.base_color = Some(base_color);
         self
+    }
+    /// Build (and show) this window.
+    pub fn build<M: Manager>(
+        self,
+        manager: &M,
+    ) -> impl Future<Output = Result<WindowHandle, CreateWindowError>> + Send {
+        manager.create_window(self)
     }
 }
 
@@ -237,7 +252,7 @@ impl WindowBuilder {
     }
     /// Modifies the cursor icon of the window.
     ///
-    /// The default is [`CursorIcon::Default`].
+    /// The default is [`CursorIcon::Default`](winit::window::CursorIcon::Default).
     ///
     /// See [`Window::set_cursor`](winit::window::Window::set_cursor) for more details.
     pub fn with_cursor<C>(self, cursor: C) -> Self

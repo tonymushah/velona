@@ -18,6 +18,7 @@ use winit::{
     },
 };
 
+use crate::app::el_event::UnregisterType;
 use crate::{
     Manager,
     app::{
@@ -32,12 +33,18 @@ use crate::{
     window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
 };
 
+/// A window handle.
+///
+/// This type can be extracted with [`use_window`](super::use_window) function.
+///
+/// See [`use_window`](super::use_window) for more details.
 #[derive(Debug, Clone)]
 pub struct WindowHandle {
     pub(crate) window: Weak<Window>,
     pub(crate) app_handle: AppHandle,
 }
 
+/// Error encountered when doing some window actions.
 #[derive(Debug, thiserror::Error)]
 pub enum WindowHandleActionError {
     #[error("The window has already closed")]
@@ -857,7 +864,7 @@ impl WindowHandle {
     /// re-colors widgets relying on default `ContentColor` / `Background`.
     ///
     /// This invalidates the computed properties of the entire widget tree,
-    /// and calls [`Widget::property_changed`](masonry_core::core::Widget::property_changed) for every property previously
+    /// and calls [`Widget::property_changed`] for every property previously
     /// resolved by each widget.
     pub fn set_default_properties(
         &self,
@@ -889,6 +896,7 @@ impl WindowHandle {
 
 /// Register event
 impl WindowHandle {
+    /// Register a widget action handler
     pub fn register_action_handler(
         &self,
         widget_id: WidgetId,
@@ -913,7 +921,7 @@ impl WindowHandle {
             .send_event(EventLoopEvent::UnregisterEventHandler(Box::new(
                 app::el_event::UnregisterHandler {
                     handler_id,
-                    window_id: Some(self.id()?),
+                    type_: Some(UnregisterType::Window(self.id()?)),
                 },
             )))?;
         Ok(())

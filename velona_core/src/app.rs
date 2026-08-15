@@ -17,9 +17,11 @@ use any_spawner::PinnedFuture;
 use copypasta::ClipboardContext;
 use masonry_core::core::DefaultProperties;
 use reactive_graph::owner::Owner;
-use winit::event_loop::{EventLoop, EventLoopBuilder};
+use winit::event_loop::{ControlFlow, DeviceEvents, EventLoop, EventLoopBuilder};
 
 pub(crate) use el_event::EventLoopEvent;
+
+type OnEventLoopInitFns = Vec<Box<dyn FnOnce(&AppHandle)>>;
 
 pub struct Builder<W: WindowRenderer> {
     event_loop_builder: EventLoopBuilder<()>,
@@ -28,24 +30,33 @@ pub struct Builder<W: WindowRenderer> {
     spawn_fn: Option<SpawnFn>,
     windows: Vec<WindowBuilder>,
     owner: Owner,
+    allowed: Option<DeviceEvents>,
+    control_flow: Option<ControlFlow>,
+    on_event_loop_init: OnEventLoopInitFns,
 }
 
 impl<W: WindowRenderer> Builder<W> {
-    pub fn default_properties(mut self, default_properties: DefaultProperties) -> Self {
+    /// Default values that properties will have if not defined per-widget.
+    ///
+    /// This one is app global, Windows can changes their properties with [`WindowBuilder::with_default_properties`](crate::window::WindowBuilder::with_default_properties).
+    pub fn with_default_properties(mut self, default_properties: DefaultProperties) -> Self {
         self.default_properties = default_properties;
         self
     }
-    pub fn spawn_fn<F>(mut self, spawn_fn: F) -> Self
+    /// Sets the [`any_spawner::Executor::spawn`] function
+    pub fn with_spawn_fn<F>(mut self, spawn_fn: F) -> Self
     where
         F: Fn(PinnedFuture<()>) + Send + Sync + 'static,
     {
         self.spawn_fn = Some(Box::new(spawn_fn));
         self
     }
-    pub fn window(mut self, window_builder: WindowBuilder) -> Self {
+    /// Run this app with a window.
+    pub fn with_window(mut self, window_builder: WindowBuilder) -> Self {
         self.windows.push(window_builder);
         self
     }
+    /// Create a builder with a custom renderer factory.
     pub fn new_with_renderer_factory<F>(factory: F) -> Self
     where
         F: WindowRendererFactory<WindowRenderer = W> + 'static,
@@ -57,6 +68,9 @@ impl<W: WindowRenderer> Builder<W> {
             spawn_fn: None,
             windows: Vec::with_capacity(1),
             owner: Owner::new(),
+            allowed: None,
+            control_flow: None,
+            on_event_loop_init: Vec::new(),
         }
     }
     pub fn new<F>(factory: F) -> Self
@@ -65,20 +79,53 @@ impl<W: WindowRenderer> Builder<W> {
     {
         Self::new_with_renderer_factory(factory)
     }
+    /// Provide global context data.
     pub fn provide_context<T: Send + Sync + 'static>(self, data: T) -> Self {
         self.owner.with(|| {
             reactive_graph::owner::provide_context(data);
         });
         self
     }
+    /// Change if or when [`DeviceEvent`](winit::event::DeviceEvent)s are captured.
+    ///
+    /// See [`ActiveEventLoop::listen_device_events`](winit::event_loop::ActiveEventLoop::listen_device_events) for details.
+    pub fn listen_device_events(mut self, allowed: DeviceEvents) -> Self {
+        self.allowed = Some(allowed);
+        self
+    }
+    /// Sets the [`ControlFlow`].
+    pub fn control_flow(mut self, controll_flow: ControlFlow) -> Self {
+        self.control_flow = Some(controll_flow);
+        self
+    }
+    /// Register a callback that will run once the [winit::event_loop::EventLoop] has initiliazed.
+    ///
+    /// See [`winit::event::StartCause::Init`] for more details.
+    pub fn on_event_loop_init<F>(mut self, after_init: F) -> Self
+    where
+        F: FnOnce(&AppHandle) + 'static,
+    {
+        self.on_event_loop_init.push(Box::new(after_init));
+        self
+    }
 }
 
 impl<W: WindowRenderer> Builder<W> {
+    /// Run the app.
     pub fn run(mut self) -> Result<(), crate::error::Error> {
         let spawn_fn = self
             .spawn_fn
             .unwrap_or_else(|| Box::new(|_| panic!("No spawn_fn provided")));
+
         let event_loop = self.event_loop_builder.build()?;
+
+        if let Some(allowed) = self.allowed {
+            event_loop.listen_device_events(allowed);
+        }
+        if let Some(control_flow) = self.control_flow {
+            event_loop.set_control_flow(control_flow);
+        }
+
         let proxy = event_loop.create_proxy();
 
         let (send, receiver) = utils::flume_channel::<EventLoopEvent>();
@@ -103,6 +150,13 @@ impl<W: WindowRenderer> Builder<W> {
             clipboard_context: Rc::new(RefCell::new(ClipboardContext::new().unwrap())),
             suspended: true,
             receiver,
+            on_event_loop_init: {
+                if self.on_event_loop_init.is_empty() {
+                    None
+                } else {
+                    Some(self.on_event_loop_init)
+                }
+            },
         };
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;

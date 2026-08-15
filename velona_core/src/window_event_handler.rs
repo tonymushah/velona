@@ -1,9 +1,4 @@
-use std::{
-    collections::HashMap,
-    fmt::Debug,
-    num::NonZeroU64,
-    sync::atomic::{AtomicU64, Ordering},
-};
+use std::{collections::HashMap, fmt::Debug};
 
 // use parking_lot::RwLock;
 
@@ -13,30 +8,7 @@ use reactive_graph::owner::on_cleanup;
 
 use crate::window::use_window;
 
-/// An event handler id.
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct HandlerId(pub(crate) NonZeroU64);
-
-impl HandlerId {
-    /// Allocates a new, unique `HandlerId`.
-    ///
-    /// All widgets are assigned ids automatically; you should only create
-    /// an explicit id if you need to know it ahead of time, for instance
-    /// if you want two sibling widgets to know each others' ids.
-    ///
-    /// You must ensure that a given `HandlerId` is only ever used for one
-    /// handler at a time.
-    pub(crate) fn next() -> Self {
-        static HANDLER_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
-        let id = HANDLER_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
-        Self(id.try_into().unwrap())
-    }
-
-    // Returns the integer value of the `WidgetId`.
-    // pub fn to_raw(self) -> u64 {
-    //     self.0.into()
-    // }
-}
+pub use crate::utils::HandlerId;
 
 pub type HandlerFn = Box<dyn Fn(&ErasedAction) + Send>;
 
@@ -120,7 +92,14 @@ impl Debug for WindowEventHandlers {
     }
 }
 
-// TODO add documentation
+/// Register a widget action handler
+/// and automatically removes it [`on_cleanup`].
+///
+/// This function will fail if:
+/// - there is no [`WindowHandle`](crate::window::WindowHandle) in the current context (panics on debug mode, just [`log::warn!`] on non-debug)
+/// - the app or the window already closed (always panics)
+///
+/// For a typed version, use [`register_typed_widget_action_handler`].
 pub fn register_widget_action_handler(widget_id: WidgetId, handler_fn: HandlerFn) {
     let Some(window) = use_window() else {
         #[cfg(debug_assertions)]
@@ -144,7 +123,10 @@ pub fn register_widget_action_handler(widget_id: WidgetId, handler_fn: HandlerFn
     });
 }
 
-// TODO add documentation
+/// Very similar to [`register_widget_action_handler`]
+/// but automatically cast the [`ErasedAction`] to the [`Widget::Action`] type.
+///
+/// The `handler_fn` function will just not run if the cast fails.
 pub fn register_typed_widget_action_handler<W: Widget + 'static, H>(
     widget_id: WidgetId,
     handler_fn: H,

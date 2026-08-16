@@ -5,7 +5,7 @@ use crate::{
     Manager,
     app::{
         EventLoopEvent,
-        event_listener::{RegisterAppEvent, RegisterAppEventType},
+        event_listener::{RegisterAppEvent, RegisterAppEventType, UnRegisterAppEventHandler},
         proxy::{AppEventLoopProxy, AppProxySendError, EventProxyHandle},
     },
     events::el_event::{RegisterEventHandler, UnregisterEventHandler},
@@ -54,6 +54,111 @@ impl AppHandle {
             }),
         )))?;
         Ok(handler_id)
+    }
+    pub fn unregister_device_event_listener(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), AppHandleActionError> {
+        self.send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+            UnregisterEventHandler::App(UnRegisterAppEventHandler {
+                handler_id,
+                type_: Some(super::event_listener::UnRegisterAppEventType::Device),
+            }),
+        )))?;
+        Ok(())
+    }
+    /// Register a callback that will run when a [memory warning](winit::application::ApplicationHandler::memory_warning) is emitted.
+    ///
+    /// Worth noting that this listener will not run inside of the current context owner.
+    pub fn register_memory_warning_event_listener<L>(
+        &self,
+        listener: L,
+    ) -> Result<HandlerId, AppHandleActionError>
+    where
+        L: Fn() + Send + 'static,
+    {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::App(RegisterAppEvent {
+                handler_id,
+                type_: RegisterAppEventType::MemoryWarning(Box::new(listener)),
+            }),
+        )))?;
+        Ok(handler_id)
+    }
+    pub fn unregister_memory_warning_listener(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), AppHandleActionError> {
+        self.send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+            UnregisterEventHandler::App(UnRegisterAppEventHandler {
+                handler_id,
+                type_: Some(super::event_listener::UnRegisterAppEventType::MemoryWarning),
+            }),
+        )))?;
+        Ok(())
+    }
+    /// Register a callback that will run when the app [resumes](winit::application::ApplicationHandler::resumed) its execution.
+    ///
+    /// Worth noting that this listener will not run inside of the current context owner.
+    pub fn register_app_resumed_event_listener<L>(
+        &self,
+        listener: L,
+    ) -> Result<HandlerId, AppHandleActionError>
+    where
+        L: Fn() + Send + 'static,
+    {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::App(RegisterAppEvent {
+                handler_id,
+                type_: RegisterAppEventType::Resumed(Box::new(listener)),
+            }),
+        )))?;
+        Ok(handler_id)
+    }
+    pub fn unregister_app_resumed_warning_listener(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), AppHandleActionError> {
+        self.send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+            UnregisterEventHandler::App(UnRegisterAppEventHandler {
+                handler_id,
+                type_: Some(super::event_listener::UnRegisterAppEventType::Resumed),
+            }),
+        )))?;
+        Ok(())
+    }
+    /// Register a callback that will run when the app got [suspended](winit::application::ApplicationHandler::suspended).
+    ///
+    /// Worth noting that this listener will not run inside of the current context owner.
+    pub fn register_app_suspended_event_listener<L>(
+        &self,
+        listener: L,
+    ) -> Result<HandlerId, AppHandleActionError>
+    where
+        L: Fn() + Send + 'static,
+    {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::App(RegisterAppEvent {
+                handler_id,
+                type_: RegisterAppEventType::Suspended(Box::new(listener)),
+            }),
+        )))?;
+        Ok(handler_id)
+    }
+    pub fn unregister_app_suspended_listener(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), AppHandleActionError> {
+        self.send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+            UnregisterEventHandler::App(UnRegisterAppEventHandler {
+                handler_id,
+                type_: Some(super::event_listener::UnRegisterAppEventType::Suspended),
+            }),
+        )))?;
+        Ok(())
     }
 }
 

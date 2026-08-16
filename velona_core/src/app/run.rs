@@ -30,7 +30,7 @@ use crate::{
         el_event::{EventProxyHandle, UnregisterHandler},
         window::WindowNew,
     },
-    convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
+    utils::convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
     utils::{FlumeReceiver, todo_warn_of_something},
     window::{builder::WindowBuilder, renderer::WindowRendererFactory},
 };

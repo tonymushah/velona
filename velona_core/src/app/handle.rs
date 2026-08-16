@@ -2,8 +2,24 @@ use reactive_graph::owner::use_context;
 
 use crate::{
     Manager,
-    app::proxy::{AppEventLoopProxy, EventProxyHandle},
+    app::{
+        EventLoopEvent,
+        proxy::{AppEventLoopProxy, AppProxySendError, EventProxyHandle},
+    },
+    events::el_event::UnregisterEventHandler,
 };
+
+#[derive(Debug, thiserror::Error)]
+pub enum AppHandleActionError {
+    #[error("The app has already exited")]
+    AppExited,
+}
+
+impl From<AppProxySendError> for AppHandleActionError {
+    fn from(_: AppProxySendError) -> Self {
+        Self::AppExited
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct AppHandle {

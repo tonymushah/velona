@@ -4,7 +4,7 @@ use futures_channel::oneshot;
 use crate::{
     WindowBuilder,
     app::{
-        AppHandle, EventLoopEvent,
+        AppHandle, AppHandleActionError, EventLoopEvent,
         proxy::{AppProxySendError, EventProxyHandle},
     },
     events::el_event::{GetAppChildReactiveOwner, UnregisterEventHandler},
@@ -19,18 +19,6 @@ pub enum CreateWindowError {
     // TODO implement this properly
     #[error("Cannot create window because of other error")]
     OtherError,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum AppHandleActionError {
-    #[error("The app has already exited")]
-    AppExited,
-}
-
-impl From<AppProxySendError> for AppHandleActionError {
-    fn from(_: AppProxySendError) -> Self {
-        Self::AppExited
-    }
 }
 
 #[allow(private_bounds)]

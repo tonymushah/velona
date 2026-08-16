@@ -169,4 +169,4 @@ impl<W: WindowRenderer> Builder<W> {
 
 // TODO add an Manager trait
 
-pub use handle::{AppHandle, use_app_handle};
+pub use handle::{AppHandle, AppHandleActionError, use_app_handle};

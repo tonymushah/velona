@@ -22,7 +22,7 @@ use winit::{
 use super::window::Window;
 
 use crate::app::OnEventLoopInitFns;
-use crate::app::event_handlers::AppEventHandlers;
+use crate::app::event_handlers::{AppEventHandlers, EmitAppEventToHandlers};
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
 use crate::utils::HandlerId;
 use crate::window;
@@ -557,6 +557,8 @@ where
     fn resumed(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         self.suspended = false;
         self.resume_windows();
+        self.app_event_handlers
+            .emit(EmitAppEventToHandlers::Resumed);
     }
 
     fn window_event(
@@ -646,7 +648,7 @@ where
                 self.use_window_render_root(window_id, |rr| {
                     rr.handle_window_event(masonry_core::core::WindowEvent::Rescale(scale_factor));
                 });
-            },
+            }
             _e => {
                 // log::trace!("event {:#?} handling is not implemented yet", _e);
             }
@@ -657,10 +659,15 @@ where
         self.windows
             .values_mut()
             .for_each(|w| w.on_memory_warning());
+        self.app_event_handlers
+            .emit(EmitAppEventToHandlers::MemoryWarning);
+        self.app_event_handlers.shrink_to_fit();
     }
     fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         self.suspended = true;
         self.suspend_windows();
+        self.app_event_handlers
+            .emit(EmitAppEventToHandlers::Suspended);
     }
     fn user_event(&mut self, event_loop: &winit::event_loop::ActiveEventLoop, _: ()) {
         // #[cfg(feature = "hotpath")]
@@ -671,5 +678,14 @@ where
         log::warn!("Exiting...");
         let task_runned = self.run_exiting_task();
         log::trace!("Number of exiting tasks: {task_runned}");
+    }
+    fn device_event(
+        &mut self,
+        _event_loop: &ActiveEventLoop,
+        device_id: winit::event::DeviceId,
+        event: winit::event::DeviceEvent,
+    ) {
+        self.app_event_handlers
+            .emit(EmitAppEventToHandlers::Device(device_id, &event));
     }
 }

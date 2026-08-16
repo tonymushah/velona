@@ -1,13 +1,11 @@
-use std::collections::HashMap;
-
-use winit::event::DeviceEvent;
+use winit::event::{DeviceEvent, DeviceId};
 
 use crate::utils::{
     HandlerId,
     events::{EventMap, NoParamHandler},
 };
 
-pub type DeviceEventHandler = Box<dyn Fn(&DeviceEvent) + Send>;
+pub type DeviceEventHandler = Box<dyn Fn(DeviceId, &DeviceEvent) + Send>;
 
 #[derive(Debug)]
 pub struct RegisterAppEvent {
@@ -49,8 +47,8 @@ pub struct AppEventHandlers {
     suspended: EventMap<NoParamHandler>,
 }
 
-pub enum EmitEventToHandlers<'a> {
-    Device(&'a DeviceEvent),
+pub enum EmitAppEventToHandlers<'a> {
+    Device(DeviceId, &'a DeviceEvent),
     MemoryWarning,
     Resumed,
     Suspended,
@@ -114,18 +112,18 @@ impl AppEventHandlers {
         }
         impl_shrink_fit!(device, memory_warning, resumed, suspended,);
     }
-    pub fn emit(&self, event: EmitEventToHandlers<'_>) {
+    pub fn emit(&self, event: EmitAppEventToHandlers<'_>) {
         match event {
-            EmitEventToHandlers::Device(device_event) => {
-                self.device.values().for_each(|h| h(device_event));
+            EmitAppEventToHandlers::Device(id, device_event) => {
+                self.device.values().for_each(|h| h(id, device_event));
             }
-            EmitEventToHandlers::MemoryWarning => {
+            EmitAppEventToHandlers::MemoryWarning => {
                 self.memory_warning.values().for_each(|h| h());
             }
-            EmitEventToHandlers::Resumed => {
+            EmitAppEventToHandlers::Resumed => {
                 self.resumed.values().for_each(|h| h());
             }
-            EmitEventToHandlers::Suspended => {
+            EmitAppEventToHandlers::Suspended => {
                 self.suspended.values().for_each(|h| h());
             }
         }

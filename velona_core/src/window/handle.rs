@@ -18,16 +18,17 @@ use winit::{
     },
 };
 
-use crate::app::el_event::UnregisterType;
+use crate::events;
+use crate::events::el_event::UnregisterType;
 use crate::{
     Manager,
     app::{
         self, AppHandle, EventLoopEvent,
-        el_event::{
-            EventProxyHandle, GetWindowChildReactiveOwner, RegisterOnWindowDestroyHandler,
-            RegisterWidgetActionHandler, UseWindowRenderRootOnMain, UseWinitWindowOnMain,
-        },
-        proxy::{AppEventLoopProxy, AppProxySendError},
+        proxy::{AppEventLoopProxy, AppProxySendError, EventProxyHandle},
+    },
+    events::el_event::{
+        GetWindowChildReactiveOwner, RegisterOnWindowDestroyHandler, RegisterWidgetActionHandler,
+        UseWindowRenderRootOnMain, UseWinitWindowOnMain,
     },
     widget_ref::VelonaWidgetRef,
     window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
@@ -919,7 +920,7 @@ impl WindowHandle {
     pub fn remove_handler(&self, handler_id: HandlerId) -> Result<(), WindowHandleActionError> {
         self.app_handle
             .send_event(EventLoopEvent::UnregisterEventHandler(Box::new(
-                app::el_event::UnregisterHandler {
+                events::el_event::UnregisterHandler {
                     handler_id,
                     type_: Some(UnregisterType::Window(self.id()?)),
                 },
@@ -944,7 +945,7 @@ impl WindowHandle {
     }
 }
 
-impl app::el_event::EventProxyHandle for WindowHandle {
+impl app::proxy::EventProxyHandle for WindowHandle {
     fn get_proxy(&self) -> &AppEventLoopProxy {
         self.app_handle.get_proxy()
     }

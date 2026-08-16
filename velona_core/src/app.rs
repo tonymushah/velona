@@ -1,4 +1,4 @@
-pub(crate) mod el_event;
+use crate::events::el_event;
 mod executor;
 use crate::{
     app::proxy::AppEventLoopProxy,

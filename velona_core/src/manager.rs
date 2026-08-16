@@ -3,11 +3,8 @@ use futures_channel::oneshot;
 
 use crate::{
     WindowBuilder,
-    app::{
-        EventLoopEvent,
-        el_event::{EventProxyHandle, GetAppChildReactiveOwner},
-        proxy::AppProxySendError,
-    },
+    app::{EventLoopEvent, proxy::AppProxySendError, proxy::EventProxyHandle},
+    events::el_event::GetAppChildReactiveOwner,
     window::handle::WindowHandle,
 };
 

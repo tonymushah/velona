@@ -16,7 +16,7 @@ use velona_renderer::WindowRenderer;
 use winit::window::Window as WinitWindow;
 
 use crate::{
-    app::{AppHandle, EventLoopEvent, el_event::EventProxyHandle},
+    app::{AppHandle, EventLoopEvent, proxy::EventProxyHandle},
     render_root::{InnerRenderRoot, WindowRenderRoot},
     window::{handle::WindowHandle, renderer::WindowRendererFactory},
     window_event_handler::WindowEventHandlers,

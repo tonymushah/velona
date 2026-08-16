@@ -9,7 +9,6 @@ use send_wrapper::SendWrapper;
 use winit::window::{Window, WindowId};
 
 use crate::{
-    app::proxy::{AppEventLoopProxy, AppProxySendError},
     widget_ref::{EditWidgetFnEvent, UseWidgetFnEvent},
     window::builder::WindowBuilder,
     window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
@@ -164,12 +163,5 @@ impl Debug for EventLoopEvent {
 impl From<accesskit_winit::Event> for EventLoopEvent {
     fn from(value: accesskit_winit::Event) -> Self {
         Self::AccessKitAction(Box::new(value))
-    }
-}
-
-pub(crate) trait EventProxyHandle {
-    fn get_proxy(&self) -> &AppEventLoopProxy;
-    fn send_event(&self, event: EventLoopEvent) -> Result<(), AppProxySendError> {
-        self.get_proxy().send_event(event)
     }
 }

@@ -3,6 +3,7 @@
 pub mod app;
 pub mod collection;
 pub mod error;
+pub(crate) mod events;
 pub mod manager;
 pub mod render_root;
 pub mod task;

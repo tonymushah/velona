@@ -23,13 +23,11 @@ use super::window::Window;
 
 use crate::app::OnEventLoopInitFns;
 use crate::app::el_event::UnregisterType;
+use crate::events::el_event::UnregisterHandler;
 use crate::utils::HandlerId;
 use crate::{
-    app::{
-        AppHandle, EventLoopEvent,
-        el_event::{EventProxyHandle, UnregisterHandler},
-        window::WindowNew,
-    },
+    app::proxy::EventProxyHandle,
+    app::{AppHandle, EventLoopEvent, window::WindowNew},
     utils::convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
     utils::{FlumeReceiver, todo_warn_of_something},
     window::{builder::WindowBuilder, renderer::WindowRendererFactory},

@@ -183,7 +183,7 @@ impl Debug for WindowEventHandlers {
 /// - the app or the window already closed (always panics)
 ///
 /// For a typed version, use [`register_typed_widget_action_handler`].
-pub fn register_widget_action_handler(widget_id: WidgetId, handler_fn: HandlerFn) {
+pub fn register_widget_action_listener(widget_id: WidgetId, handler_fn: HandlerFn) {
     let Some(window) = use_window() else {
         #[cfg(debug_assertions)]
         {
@@ -210,13 +210,13 @@ pub fn register_widget_action_handler(widget_id: WidgetId, handler_fn: HandlerFn
 /// but automatically cast the [`ErasedAction`] to the [`Widget::Action`] type.
 ///
 /// The `handler_fn` function will just not run if the cast fails.
-pub fn register_typed_widget_action_handler<W: Widget + 'static, H>(
+pub fn register_typed_widget_action_listener<W: Widget + 'static, H>(
     widget_id: WidgetId,
     handler_fn: H,
 ) where
     H: Fn(&<W as Widget>::Action) + Send + 'static,
 {
-    register_widget_action_handler(
+    register_widget_action_listener(
         widget_id,
         Box::new(move |ev| {
             let Some(ev) = ev.downcast_ref::<W::Action>() else {

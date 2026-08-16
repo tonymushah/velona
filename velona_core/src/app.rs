@@ -8,7 +8,7 @@ use crate::{
 mod handle;
 mod run;
 use velona_renderer::WindowRenderer;
-pub(crate) mod event_handlers;
+pub(crate) mod event_listener;
 pub(crate) mod proxy;
 
 use std::{cell::RefCell, rc::Rc, sync::Arc};
@@ -159,7 +159,7 @@ impl<W: WindowRenderer> Builder<W> {
                     Some(self.on_event_loop_init)
                 }
             },
-            app_event_handlers: Default::default(),
+            app_event_listeners: Default::default(),
         };
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;

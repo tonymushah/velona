@@ -132,7 +132,7 @@ impl AppEventHandlers {
 
 #[cfg(test)]
 mod tests {
-    use crate::app::event_handlers::AppEventHandlers;
+    use crate::app::event_listener::AppEventHandlers;
 
     #[test]
     fn test_app_event_handlers_dbg() {

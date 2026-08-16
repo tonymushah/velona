@@ -20,7 +20,7 @@ use winit::{
 
 use crate::events;
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
-use crate::window::event_handlers::{
+use crate::window::event_listener::{
     RegisterWindowEventHandler, RegisterWindowEventHandlerType, UnregisterWindowEventHandlerType,
 };
 use crate::{
@@ -33,7 +33,7 @@ use crate::{
         GetWindowChildReactiveOwner, UseWindowRenderRootOnMain, UseWinitWindowOnMain,
     },
     widget_ref::VelonaWidgetRef,
-    window::event_handlers::{HandlerFn, HandlerId, NoParamHandlerFn},
+    window::event_listener::{HandlerFn, HandlerId, NoParamHandlerFn},
 };
 
 /// A window handle.
@@ -931,7 +931,7 @@ impl WindowHandle {
                     window_id: self.id()?,
                     handler_id,
                     type_: Some(
-                        super::event_handlers::UnregisterWindowEventHandlerType::Widget(Some(
+                        super::event_listener::UnregisterWindowEventHandlerType::Widget(Some(
                             widget_id,
                         )),
                     ),

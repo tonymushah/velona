@@ -8,12 +8,12 @@ use reactive_graph::owner::Owner;
 use send_wrapper::SendWrapper;
 use winit::window::{Window, WindowId};
 
-use crate::app::event_handlers::{RegisterAppEvent, UnRegisterAppEventHandler};
-use crate::window::event_handlers::{RegisterWindowEventHandler, UnregisterWindowEventHandlerType};
+use crate::app::event_listener::{RegisterAppEvent, UnRegisterAppEventHandler};
+use crate::window::event_listener::{RegisterWindowEventHandler, UnregisterWindowEventHandlerType};
 use crate::{
     widget_ref::{EditWidgetFnEvent, UseWidgetFnEvent},
     window::builder::WindowBuilder,
-    window::event_handlers::HandlerId,
+    window::event_listener::HandlerId,
 };
 
 pub(crate) struct UseWindowRenderRootOnMain {

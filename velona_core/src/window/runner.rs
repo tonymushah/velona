@@ -18,7 +18,7 @@ use winit::window::Window as WinitWindow;
 use crate::{
     app::{AppHandle, EventLoopEvent, proxy::EventProxyHandle},
     render_root::{InnerRenderRoot, WindowRenderRoot},
-    window::event_handlers::WindowEventHandlers,
+    window::event_listener::WindowEventHandlers,
     window::{handle::WindowHandle, renderer::WindowRendererFactory},
 };
 
@@ -33,7 +33,7 @@ where
     pub(crate) event_reducer: WindowEventReducer,
     // Is `Some` if the most recently displayed frame was an animation frame.
     last_anim: Option<Instant>,
-    pub(crate) window_event_handler: WindowEventHandlers,
+    pub(crate) window_event_listeners: WindowEventHandlers,
     base_color: AlphaColor<Srgb>,
     pub(crate) winit_window: Arc<WinitWindow>,
     handle: WindowHandle,
@@ -78,8 +78,8 @@ where
 {
     pub fn on_memory_warning(&mut self) {
         self.render_root.use_inner_render_root_ref(|rr| {
-            self.window_event_handler.cleanup(&rr.tree);
-            self.window_event_handler.shrink_to_fit();
+            self.window_event_listeners.cleanup(&rr.tree);
+            self.window_event_listeners.shrink_to_fit();
         });
     }
     pub(crate) fn new<V>(args: WindowNew<'_, V, W>) -> Result<Self, crate::error::Error>
@@ -152,7 +152,7 @@ where
             access_kit,
             event_reducer: WindowEventReducer::default(),
             last_anim: None,
-            window_event_handler: event_handlers,
+            window_event_listeners: event_handlers,
             base_color: base_color.unwrap_or(BLACK),
             handle: window_handle,
         };

@@ -1,12 +1,15 @@
 use reactive_graph::owner::use_context;
+use winit::event::{DeviceEvent, DeviceId};
 
 use crate::{
     Manager,
     app::{
         EventLoopEvent,
+        event_listener::{RegisterAppEvent, RegisterAppEventType},
         proxy::{AppEventLoopProxy, AppProxySendError, EventProxyHandle},
     },
-    events::el_event::UnregisterEventHandler,
+    events::el_event::{RegisterEventHandler, UnregisterEventHandler},
+    utils::HandlerId,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -29,6 +32,28 @@ pub struct AppHandle {
 impl AppHandle {
     pub(crate) fn new(proxy: AppEventLoopProxy) -> AppHandle {
         AppHandle { event_proxy: proxy }
+    }
+}
+
+impl AppHandle {
+    /// Register an event listener that will listen to any [device event](winit::application::ApplicationHandler::device_event).
+    ///
+    /// Worth noting that this listener will not run inside of the current context owner.
+    pub fn register_device_event_listener<L>(
+        &self,
+        listener: L,
+    ) -> Result<HandlerId, AppHandleActionError>
+    where
+        L: Fn(DeviceId, &DeviceEvent) + Send + 'static,
+    {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::App(RegisterAppEvent {
+                handler_id,
+                type_: RegisterAppEventType::Device(Box::new(listener)),
+            }),
+        )))?;
+        Ok(handler_id)
     }
 }
 

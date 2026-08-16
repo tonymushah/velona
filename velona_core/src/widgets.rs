@@ -9,7 +9,7 @@ use masonry_core::{
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
-    widget_ref::VelonaWidgetRef, window::event_handlers::register_typed_widget_action_handler,
+    widget_ref::VelonaWidgetRef, window::event_listener::register_typed_widget_action_listener,
     window::use_window,
 };
 
@@ -166,7 +166,7 @@ where
     where
         F: Fn(&<W as Widget>::Action) + Send + 'static,
     {
-        register_typed_widget_action_handler::<W, _>(self.id(), fun);
+        register_typed_widget_action_listener::<W, _>(self.id(), fun);
     }
     fn on_action<F>(self, fun: F) -> Self
     where

@@ -39,8 +39,8 @@ where
 
 // pub(crate) fn noop() {}
 
-pub use crate::window::event_handlers::{
-    register_typed_widget_action_handler, register_widget_action_handler,
+pub use crate::window::event_listener::{
+    register_typed_widget_action_listener, register_widget_action_listener,
 };
 
 #[cfg(not(feature = "hotpath"))]

@@ -22,7 +22,7 @@ use masonry::{
 use velona_core::reactive::effect::Effect;
 
 use crate::{
-    NewWidgetExt, utils::register_typed_widget_action_handler, widgets::text_area::NewTextAreaExt,
+    NewWidgetExt, utils::register_typed_widget_action_listener, widgets::text_area::NewTextAreaExt,
 };
 
 /// A [new](NewWidget) [`TextInput`] trait extension.
@@ -243,7 +243,7 @@ impl NewTextInputActionExt for NewWidget<TextInput> {
     where
         H: Fn(&TextAction) + Send + 'static,
     {
-        register_typed_widget_action_handler::<TextArea<false>, _>(
+        register_typed_widget_action_listener::<TextArea<false>, _>(
             self.widget.area_pod().id(),
             on_action,
         );

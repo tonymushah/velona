@@ -22,7 +22,7 @@ use winit::{
 use super::window::Window;
 
 use crate::app::OnEventLoopInitFns;
-use crate::app::event_handlers::{AppEventHandlers, EmitAppEventToHandlers};
+use crate::app::event_listener::{AppEventHandlers, EmitAppEventToHandlers};
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
 use crate::utils::HandlerId;
 use crate::window;
@@ -48,7 +48,7 @@ where
     pub(crate) suspended: bool,
     pub(crate) receiver: FlumeReceiver<EventLoopEvent>,
     pub(crate) on_event_loop_init: Option<OnEventLoopInitFns>,
-    pub(crate) app_event_handlers: AppEventHandlers,
+    pub(crate) app_event_listeners: AppEventHandlers,
 }
 
 // ------- Utilities --------- //
@@ -172,18 +172,22 @@ where
     fn register_event_handler(&mut self, handler: RegisterEventHandler) {
         match handler {
             RegisterEventHandler::App(register_app_event) => {
-                self.app_event_handlers.register_handler(register_app_event);
+                self.app_event_listeners
+                    .register_handler(register_app_event);
             }
             RegisterEventHandler::Window { window_id, type_ } => {
                 self.use_window(window_id, |window| {
-                    window.window_event_handler.add_handler_fn(type_);
+                    window.window_event_listeners.add_handler_fn(type_);
                 });
             }
         }
     }
     fn unregister_handler_from_global(&mut self, handler_id: &HandlerId) {
         for window in self.windows.values_mut() {
-            if window.window_event_handler.remove_handler(handler_id, None) {
+            if window
+                .window_event_listeners
+                .remove_handler(handler_id, None)
+            {
                 break;
             }
         }
@@ -195,7 +199,7 @@ where
                 self.unregister_handler_from_global(&handler_id);
             }
             UnregisterEventHandler::App(un_register_app_event_handler) => {
-                self.app_event_handlers
+                self.app_event_listeners
                     .unregister_handler(un_register_app_event_handler);
             }
             UnregisterEventHandler::Window {
@@ -205,7 +209,7 @@ where
             } => {
                 self.use_window(window_id, |window| {
                     window
-                        .window_event_handler
+                        .window_event_listeners
                         .remove_handler(&handler_id, type_);
                 });
             }
@@ -282,8 +286,8 @@ where
                     let child_owner = window.create_children_owner();
 
                     child_owner.with(|| {
-                        window.window_event_handler.handle_event(
-                            window::event_handlers::HandleEvent::Widget {
+                        window.window_event_listeners.handle_event(
+                            window::event_listener::HandleEvent::Widget {
                                 widget_id,
                                 action: &any_debug,
                             },
@@ -557,7 +561,7 @@ where
     fn resumed(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         self.suspended = false;
         self.resume_windows();
-        self.app_event_handlers
+        self.app_event_listeners
             .emit(EmitAppEventToHandlers::Resumed);
     }
 
@@ -659,14 +663,14 @@ where
         self.windows
             .values_mut()
             .for_each(|w| w.on_memory_warning());
-        self.app_event_handlers
+        self.app_event_listeners
             .emit(EmitAppEventToHandlers::MemoryWarning);
-        self.app_event_handlers.shrink_to_fit();
+        self.app_event_listeners.shrink_to_fit();
     }
     fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         self.suspended = true;
         self.suspend_windows();
-        self.app_event_handlers
+        self.app_event_listeners
             .emit(EmitAppEventToHandlers::Suspended);
     }
     fn user_event(&mut self, event_loop: &winit::event_loop::ActiveEventLoop, _: ()) {
@@ -685,7 +689,7 @@ where
         device_id: winit::event::DeviceId,
         event: winit::event::DeviceEvent,
     ) {
-        self.app_event_handlers
+        self.app_event_listeners
             .emit(EmitAppEventToHandlers::Device(device_id, &event));
     }
 }

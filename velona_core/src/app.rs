@@ -1,4 +1,4 @@
-pub(crate) mod el_event;
+use crate::events::el_event;
 mod executor;
 use crate::{
     app::proxy::AppEventLoopProxy,
@@ -8,6 +8,7 @@ use crate::{
 mod handle;
 mod run;
 use velona_renderer::WindowRenderer;
+pub(crate) mod event_listener;
 pub(crate) mod proxy;
 
 use std::{cell::RefCell, rc::Rc, sync::Arc};
@@ -112,6 +113,7 @@ impl<W: WindowRenderer> Builder<W> {
 
 impl<W: WindowRenderer> Builder<W> {
     /// Run the app.
+    // TODO refactor this to add a `build` method
     pub fn run(mut self) -> Result<(), crate::error::Error> {
         let spawn_fn = self
             .spawn_fn
@@ -157,6 +159,7 @@ impl<W: WindowRenderer> Builder<W> {
                     Some(self.on_event_loop_init)
                 }
             },
+            app_event_listeners: Default::default(),
         };
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;
@@ -166,4 +169,4 @@ impl<W: WindowRenderer> Builder<W> {
 
 // TODO add an Manager trait
 
-pub use handle::{AppHandle, use_app_handle};
+pub use handle::{AppHandle, AppHandleActionError, use_app_handle};

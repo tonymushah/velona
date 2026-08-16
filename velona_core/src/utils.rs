@@ -1,5 +1,7 @@
 use log::warn;
 
+pub(crate) mod convert_winit_event;
+pub(crate) mod events;
 mod handler_id;
 pub mod memo;
 mod res_log;
@@ -37,8 +39,8 @@ where
 
 // pub(crate) fn noop() {}
 
-pub use crate::window_event_handler::{
-    register_typed_widget_action_handler, register_widget_action_handler,
+pub use crate::window::event_listener::{
+    register_typed_widget_action_listener, register_widget_action_listener,
 };
 
 #[cfg(not(feature = "hotpath"))]

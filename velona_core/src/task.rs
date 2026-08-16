@@ -8,7 +8,7 @@ use std::future::Future;
 ///
 /// This will be run without current reactive owner since it is a call of [`Builder::with_spawn_fn`](crate::Builder::with_spawn_fn)
 // It is technically possible but I don't want you guys reporting
-// a bunch of [`SendWraper`] in the near feature
+// a bunch of [`SendWraper`] related error in the near feature
 #[track_caller]
 #[inline(always)]
 pub fn spawn(fut: impl Future<Output = ()> + Send + 'static) {

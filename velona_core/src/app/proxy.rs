@@ -116,6 +116,13 @@ impl accesskit::DeactivationHandler for AccessKitAppEventLoopProxy {
     }
 }
 
+pub(crate) trait EventProxyHandle {
+    fn get_proxy(&self) -> &AppEventLoopProxy;
+    fn send_event(&self, event: EventLoopEvent) -> Result<(), AppProxySendError> {
+        self.get_proxy().send_event(event)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::utils::is_send_sync;

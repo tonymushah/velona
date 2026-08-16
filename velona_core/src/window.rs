@@ -1,6 +1,7 @@
 pub(crate) mod builder;
 pub(crate) mod handle;
 // TODO report this as finished
+pub mod event_listener;
 pub(crate) mod renderer;
 pub(crate) mod runner;
 

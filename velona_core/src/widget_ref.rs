@@ -13,11 +13,11 @@ use masonry_core::core::{LayerType, NewWidget, Widget, WidgetId, WidgetMut, Widg
 use winit::window::WindowId;
 
 use crate::{
-    app::{EventLoopEvent, el_event::EventProxyHandle},
+    app::{EventLoopEvent, proxy::EventProxyHandle},
     render_root::use_window_render_root_ref,
     utils::ConsumeResult,
+    window::event_listener::HandlerId,
     window::handle::{WindowHandle, WindowHandleActionError},
-    window_event_handler::HandlerId,
 };
 
 type EditFn = Box<dyn FnOnce(WidgetMut<dyn Widget>) + Send>;

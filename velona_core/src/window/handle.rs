@@ -18,19 +18,22 @@ use winit::{
     },
 };
 
-use crate::app::el_event::UnregisterType;
+use crate::events;
+use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
+use crate::window::event_listener::{
+    RegisterWindowEventHandler, RegisterWindowEventHandlerType, UnregisterWindowEventHandlerType,
+};
 use crate::{
     Manager,
     app::{
         self, AppHandle, EventLoopEvent,
-        el_event::{
-            EventProxyHandle, GetWindowChildReactiveOwner, RegisterOnWindowDestroyHandler,
-            RegisterWidgetActionHandler, UseWindowRenderRootOnMain, UseWinitWindowOnMain,
-        },
-        proxy::{AppEventLoopProxy, AppProxySendError},
+        proxy::{AppEventLoopProxy, AppProxySendError, EventProxyHandle},
+    },
+    events::el_event::{
+        GetWindowChildReactiveOwner, UseWindowRenderRootOnMain, UseWinitWindowOnMain,
     },
     widget_ref::VelonaWidgetRef,
-    window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
+    window::event_listener::{HandlerFn, HandlerId, NoParamHandlerFn},
 };
 
 /// A window handle.
@@ -904,24 +907,48 @@ impl WindowHandle {
     ) -> Result<HandlerId, WindowHandleActionError> {
         let handler_id = HandlerId::next();
         self.app_handle
-            .send_event(EventLoopEvent::RegisterWidgetActionHandler(Box::new(
-                RegisterWidgetActionHandler {
+            .send_event(EventLoopEvent::RegisterHandler(Box::new(
+                RegisterEventHandler::Window {
                     window_id: self.id()?,
-                    widget_id,
-                    handler_fn,
-                    handler_id,
+                    type_: RegisterWindowEventHandler {
+                        handler_id,
+                        type_: RegisterWindowEventHandlerType::Widget(widget_id, handler_fn),
+                    },
                 },
             )))?;
 
         Ok(handler_id)
     }
     /// Remove an action/event handler
-    pub fn remove_handler(&self, handler_id: HandlerId) -> Result<(), WindowHandleActionError> {
+    pub fn remove_widget_action_handler(
+        &self,
+        handler_id: HandlerId,
+        widget_id: WidgetId,
+    ) -> Result<(), WindowHandleActionError> {
         self.app_handle
-            .send_event(EventLoopEvent::UnregisterEventHandler(Box::new(
-                app::el_event::UnregisterHandler {
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                events::el_event::UnregisterEventHandler::Window {
+                    window_id: self.id()?,
                     handler_id,
-                    type_: Some(UnregisterType::Window(self.id()?)),
+                    type_: Some(
+                        super::event_listener::UnregisterWindowEventHandlerType::Widget(Some(
+                            widget_id,
+                        )),
+                    ),
+                },
+            )))?;
+        Ok(())
+    }
+    pub fn remove_on_destroy_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnDestroy),
                 },
             )))?;
         Ok(())
@@ -931,23 +958,43 @@ impl WindowHandle {
         handler_fn: NoParamHandlerFn,
     ) -> Result<HandlerId, WindowHandleActionError> {
         let handler_id = HandlerId::next();
-        self.app_handle
-            .send_event(EventLoopEvent::RegisterOnWindowDestroy(Box::new(
-                RegisterOnWindowDestroyHandler {
-                    window_id: self.id()?,
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::Window {
+                window_id: self.id()?,
+                type_: RegisterWindowEventHandler {
                     handler_id,
-                    handler: handler_fn,
+                    type_: RegisterWindowEventHandlerType::OnDestroy(handler_fn),
                 },
-            )))?;
+            },
+        )))?;
 
         Ok(handler_id)
     }
 }
 
-impl app::el_event::EventProxyHandle for WindowHandle {
+impl app::proxy::EventProxyHandle for WindowHandle {
     fn get_proxy(&self) -> &AppEventLoopProxy {
         self.app_handle.get_proxy()
     }
 }
 
-impl Manager for WindowHandle {}
+impl Manager for WindowHandle {
+    fn remove_handler(&self, handler_id: HandlerId) {
+        let res = if let Ok(window_id) = self.id() {
+            self.send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id,
+                    handler_id,
+                    type_: None,
+                },
+            )))
+        } else {
+            self.send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Any(handler_id),
+            )))
+        };
+        if let Err(err) = res {
+            log::error!("{err}");
+        }
+    }
+}

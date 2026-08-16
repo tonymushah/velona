@@ -1,6 +1,28 @@
 use reactive_graph::owner::use_context;
+use winit::event::{DeviceEvent, DeviceId};
 
-use crate::{Manager, app::proxy::AppEventLoopProxy};
+use crate::{
+    Manager,
+    app::{
+        EventLoopEvent,
+        event_listener::{RegisterAppEvent, RegisterAppEventType},
+        proxy::{AppEventLoopProxy, AppProxySendError, EventProxyHandle},
+    },
+    events::el_event::{RegisterEventHandler, UnregisterEventHandler},
+    utils::HandlerId,
+};
+
+#[derive(Debug, thiserror::Error)]
+pub enum AppHandleActionError {
+    #[error("The app has already exited")]
+    AppExited,
+}
+
+impl From<AppProxySendError> for AppHandleActionError {
+    fn from(_: AppProxySendError) -> Self {
+        Self::AppExited
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct AppHandle {
@@ -13,7 +35,29 @@ impl AppHandle {
     }
 }
 
-impl super::el_event::EventProxyHandle for AppHandle {
+impl AppHandle {
+    /// Register an event listener that will listen to any [device event](winit::application::ApplicationHandler::device_event).
+    ///
+    /// Worth noting that this listener will not run inside of the current context owner.
+    pub fn register_device_event_listener<L>(
+        &self,
+        listener: L,
+    ) -> Result<HandlerId, AppHandleActionError>
+    where
+        L: Fn(DeviceId, &DeviceEvent) + Send + 'static,
+    {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::App(RegisterAppEvent {
+                handler_id,
+                type_: RegisterAppEventType::Device(Box::new(listener)),
+            }),
+        )))?;
+        Ok(handler_id)
+    }
+}
+
+impl EventProxyHandle for AppHandle {
     fn get_proxy(&self) -> &AppEventLoopProxy {
         &self.event_proxy
     }

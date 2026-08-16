@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use async_task::Runnable;
 use futures_channel::oneshot;
 use masonry_core::app::RenderRoot;
-use masonry_core::{app::RenderRootSignal, core::WidgetId};
+use masonry_core::app::RenderRootSignal;
 use reactive_graph::owner::Owner;
 use send_wrapper::SendWrapper;
 use winit::window::{Window, WindowId};
@@ -13,53 +13,8 @@ use crate::window::event_handlers::{RegisterWindowEventHandler, UnregisterWindow
 use crate::{
     widget_ref::{EditWidgetFnEvent, UseWidgetFnEvent},
     window::builder::WindowBuilder,
-    window::event_handlers::{HandlerFn, HandlerId, NoParamHandlerFn},
+    window::event_handlers::HandlerId,
 };
-
-pub(crate) struct RegisterWidgetActionHandler {
-    pub(crate) handler_id: HandlerId,
-    pub(crate) window_id: WindowId,
-    pub(crate) widget_id: WidgetId,
-    pub(crate) handler_fn: HandlerFn,
-}
-
-impl Debug for RegisterWidgetActionHandler {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("RegisterWidgetActionHandler")
-            .field("handler_id", &self.handler_id)
-            .field("widget_id", &self.widget_id)
-            .field("handler_fn", &"fn ()")
-            .finish()
-    }
-}
-
-#[derive(Debug)]
-pub(crate) enum UnregisterType {
-    Window(WindowId),
-    DeviceEventListner,
-}
-
-#[derive(Debug)]
-pub(crate) struct UnregisterHandler {
-    pub(crate) handler_id: HandlerId,
-    pub(crate) type_: Option<UnregisterType>,
-}
-
-pub(crate) struct RegisterOnWindowDestroyHandler {
-    pub(crate) handler_id: HandlerId,
-    pub(crate) window_id: WindowId,
-    pub(crate) handler: NoParamHandlerFn,
-}
-
-impl Debug for RegisterOnWindowDestroyHandler {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("RegisterOnWindowDestroyHandler")
-            .field("handler_id", &self.handler_id)
-            .field("window_id", &self.window_id)
-            .field("handler", &"fn ()")
-            .finish()
-    }
-}
 
 pub(crate) struct UseWindowRenderRootOnMain {
     pub(crate) window_id: WindowId,

@@ -22,9 +22,10 @@ use winit::{
 use super::window::Window;
 
 use crate::app::OnEventLoopInitFns;
-use crate::app::el_event::UnregisterType;
-use crate::events::el_event::UnregisterHandler;
+use crate::app::event_handlers::AppEventHandlers;
+use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
 use crate::utils::HandlerId;
+use crate::window;
 use crate::{
     app::proxy::EventProxyHandle,
     app::{AppHandle, EventLoopEvent, window::WindowNew},
@@ -47,8 +48,10 @@ where
     pub(crate) suspended: bool,
     pub(crate) receiver: FlumeReceiver<EventLoopEvent>,
     pub(crate) on_event_loop_init: Option<OnEventLoopInitFns>,
+    pub(crate) app_event_handlers: AppEventHandlers,
 }
 
+// ------- Utilities --------- //
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
 impl<W> AppRunner<W>
 where
@@ -99,6 +102,152 @@ where
     fn create_window_owner_children(&self, window_id: WindowId) -> Option<Owner> {
         self.use_window_ref(window_id, |window| window.create_children_owner())
     }
+}
+
+// ------- Window creation -------- //
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
+impl<W> AppRunner<W>
+where
+    W: WindowRenderer,
+{
+    fn create_window(
+        &mut self,
+        builder: Box<WindowBuilder>,
+        event_loop: &winit::event_loop::ActiveEventLoop,
+    ) {
+        let window_attributes = builder.window_attributes;
+        match event_loop.create_window(window_attributes) {
+            Ok(window) => {
+                let window = Arc::new(window);
+                let access_kit = accesskit_winit::Adapter::with_direct_handlers(
+                    event_loop,
+                    &window,
+                    self.app_handle.get_proxy().accesskit_handler(window.id()),
+                    self.app_handle.get_proxy().accesskit_handler(window.id()),
+                    self.app_handle.get_proxy().accesskit_handler(window.id()),
+                );
+                match Window::new(WindowNew {
+                    window,
+                    view: builder.view,
+                    default_properties: builder
+                        .default_propreties
+                        .unwrap_or(self.default_properties.clone()),
+                    access_kit,
+                    app_handle: self.app_handle.clone(),
+                    parent_owner: &self.owner,
+                    base_color: builder.base_color,
+                    factory: &mut *self.window_renderer_factory
+                        as &mut dyn WindowRendererFactory<WindowRenderer = W>,
+                    size_policy: builder.size_policy,
+                    use_system_fonts: builder.use_system_fonts,
+                }) {
+                    Ok(mut new_instance) => {
+                        if !self.suspended {
+                            new_instance.resume();
+                        }
+                        if let Some(sender) = builder.window_handle_send {
+                            let _ = sender.send(new_instance.get_handle());
+                        }
+                        self.windows
+                            .insert(new_instance.winit_window.id(), Box::new(new_instance));
+                    }
+                    Err(err) => {
+                        log::error!("Cannot create new window ({err})")
+                    }
+                }
+            }
+            Err(err) => {
+                log::error!("Os error on creating new window {err}");
+            }
+        }
+    }
+}
+
+// ------- Event Handling --------- //
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
+impl<W> AppRunner<W>
+where
+    W: WindowRenderer,
+{
+    fn register_event_handler(&mut self, handler: RegisterEventHandler) {
+        match handler {
+            RegisterEventHandler::App(register_app_event) => {
+                self.app_event_handlers.register_handler(register_app_event);
+            }
+            RegisterEventHandler::Window { window_id, type_ } => {
+                self.use_window(window_id, |window| {
+                    window.window_event_handler.add_handler_fn(type_);
+                });
+            }
+        }
+    }
+    fn unregister_handler_from_global(&mut self, handler_id: &HandlerId) {
+        for window in self.windows.values_mut() {
+            if window.window_event_handler.remove_handler(handler_id, None) {
+                break;
+            }
+        }
+        todo!()
+    }
+    fn handle_unregister_event_handler(&mut self, event: UnregisterEventHandler) {
+        match event {
+            UnregisterEventHandler::Any(handler_id) => {
+                self.unregister_handler_from_global(&handler_id);
+            }
+            UnregisterEventHandler::App(un_register_app_event_handler) => {
+                self.app_event_handlers
+                    .unregister_handler(un_register_app_event_handler);
+            }
+            UnregisterEventHandler::Window {
+                window_id,
+                handler_id,
+                type_,
+            } => {
+                self.use_window(window_id, |window| {
+                    window
+                        .window_event_handler
+                        .remove_handler(&handler_id, type_);
+                });
+            }
+        }
+    }
+}
+
+// --- WINIT miscs --- //
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
+impl<W> AppRunner<W>
+where
+    W: WindowRenderer,
+{
+    fn run_task(&self, run: Runnable) {
+        run.run();
+    }
+    fn resume_windows(&mut self) {
+        for window in self.windows.values_mut() {
+            window.resume();
+        }
+    }
+    fn suspend_windows(&mut self) {
+        for window in self.windows.values_mut() {
+            window.suspend();
+        }
+    }
+    fn run_exiting_task(&self) -> usize {
+        let mut tasks = 0usize;
+        while let Some(EventLoopEvent::RunTask(run)) = self.receiver.try_iter().next() {
+            run.run();
+            tasks += 1;
+        }
+        tasks
+    }
+}
+
+// --- WINIT event loop handlers --- //
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
+impl<W> AppRunner<W>
+where
+    W: WindowRenderer,
+{
     fn handle_redraw_request(&mut self, window_id: WindowId) {
         self.use_window(window_id, |win| {
             if win.complete_resume() {
@@ -133,9 +282,12 @@ where
                     let child_owner = window.create_children_owner();
 
                     child_owner.with(|| {
-                        window
-                            .window_event_handler
-                            .handle_widget_action(widget_id, &any_debug)
+                        window.window_event_handler.handle_event(
+                            window::event_handlers::HandleEvent::Widget {
+                                widget_id,
+                                action: &any_debug,
+                            },
+                        )
                     });
                 }
                 RenderRootSignal::StartIme => {
@@ -234,70 +386,7 @@ where
             }
         });
     }
-    fn create_window(
-        &mut self,
-        builder: Box<WindowBuilder>,
-        event_loop: &winit::event_loop::ActiveEventLoop,
-    ) {
-        let window_attributes = builder.window_attributes;
-        match event_loop.create_window(window_attributes) {
-            Ok(window) => {
-                let window = Arc::new(window);
-                let access_kit = accesskit_winit::Adapter::with_direct_handlers(
-                    event_loop,
-                    &window,
-                    self.app_handle.get_proxy().accesskit_handler(window.id()),
-                    self.app_handle.get_proxy().accesskit_handler(window.id()),
-                    self.app_handle.get_proxy().accesskit_handler(window.id()),
-                );
-                match Window::new(WindowNew {
-                    window,
-                    view: builder.view,
-                    default_properties: builder
-                        .default_propreties
-                        .unwrap_or(self.default_properties.clone()),
-                    access_kit,
-                    app_handle: self.app_handle.clone(),
-                    parent_owner: &self.owner,
-                    base_color: builder.base_color,
-                    factory: &mut *self.window_renderer_factory
-                        as &mut dyn WindowRendererFactory<WindowRenderer = W>,
-                    size_policy: builder.size_policy,
-                    use_system_fonts: builder.use_system_fonts,
-                }) {
-                    Ok(mut new_instance) => {
-                        if !self.suspended {
-                            new_instance.resume();
-                        }
-                        if let Some(sender) = builder.window_handle_send {
-                            let _ = sender.send(new_instance.get_handle());
-                        }
-                        self.windows
-                            .insert(new_instance.winit_window.id(), Box::new(new_instance));
-                    }
-                    Err(err) => {
-                        log::error!("Cannot create new window ({err})")
-                    }
-                }
-            }
-            Err(err) => {
-                log::error!("Os error on creating new window {err}");
-            }
-        }
-    }
-    fn run_task(&self, run: Runnable) {
-        run.run();
-    }
-    fn resume_windows(&mut self) {
-        for window in self.windows.values_mut() {
-            window.resume();
-        }
-    }
-    fn suspend_windows(&mut self) {
-        for window in self.windows.values_mut() {
-            window.suspend();
-        }
-    }
+
     fn handle_app_events(&mut self, event_loop: &ActiveEventLoop) {
         while let Some(event) = self.receiver.try_iter().next() {
             match event {
@@ -377,26 +466,7 @@ where
                         }
                     });
                 }
-                EventLoopEvent::RegisterWidgetActionHandler(register_widget_action_handler) => {
-                    self.use_window(register_widget_action_handler.window_id, |window| {
-                        window.window_event_handler.add_widget_action_handler_fn(
-                            register_widget_action_handler.handler_id,
-                            register_widget_action_handler.widget_id,
-                            register_widget_action_handler.handler_fn,
-                        );
-                    });
-                }
-                EventLoopEvent::UnregisterEventHandler(unregister) => {
-                    self.handle_unregister_event_handler(*unregister);
-                }
-                EventLoopEvent::RegisterOnWindowDestroy(register_on_window_destroy_handler) => {
-                    self.use_window(register_on_window_destroy_handler.window_id, |window| {
-                        window.window_event_handler.add_on_destroy_handler(
-                            register_on_window_destroy_handler.handler_id,
-                            register_on_window_destroy_handler.handler,
-                        );
-                    });
-                }
+
                 EventLoopEvent::UseWindowRenderRoot(use_window_render_root_on_main) => {
                     self.use_window_render_root(
                         use_window_render_root_on_main.window_id,
@@ -427,38 +497,14 @@ where
                         log::warn!("Cannot send app child owner");
                     }
                 }
+                EventLoopEvent::RegisterHandler(register_event_handler) => {
+                    self.register_event_handler(*register_event_handler);
+                }
+                EventLoopEvent::UnRegisterHandler(unregister_event_handler) => {
+                    self.handle_unregister_event_handler(*unregister_event_handler)
+                }
             }
         }
-    }
-    fn unregister_handler_from_global(&mut self, handler_id: HandlerId) {
-        for window in self.windows.values_mut() {
-            if window.window_event_handler.remove_handler_fn(handler_id) {
-                break;
-            }
-        }
-    }
-    fn handle_unregister_event_handler(&mut self, event: UnregisterHandler) {
-        match event.type_ {
-            None => {
-                self.unregister_handler_from_global(event.handler_id);
-            }
-            Some(UnregisterType::Window(window_id)) => {
-                self.use_window(window_id, |window| {
-                    window
-                        .window_event_handler
-                        .remove_handler_fn(event.handler_id);
-                });
-            }
-            Some(UnregisterType::DeviceEventListner) => todo!(),
-        }
-    }
-    fn run_exiting_task(&self) -> usize {
-        let mut tasks = 0usize;
-        while let Some(EventLoopEvent::RunTask(run)) = self.receiver.try_iter().next() {
-            run.run();
-            tasks += 1;
-        }
-        tasks
     }
 }
 

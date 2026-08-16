@@ -19,7 +19,7 @@ use winit::{
 };
 
 use crate::events;
-use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler, UnregisterType};
+use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
 use crate::window::event_handlers::{
     RegisterWindowEventHandler, RegisterWindowEventHandlerType, UnregisterWindowEventHandlerType,
 };
@@ -30,8 +30,7 @@ use crate::{
         proxy::{AppEventLoopProxy, AppProxySendError, EventProxyHandle},
     },
     events::el_event::{
-        GetWindowChildReactiveOwner, RegisterOnWindowDestroyHandler, RegisterWidgetActionHandler,
-        UseWindowRenderRootOnMain, UseWinitWindowOnMain,
+        GetWindowChildReactiveOwner, UseWindowRenderRootOnMain, UseWinitWindowOnMain,
     },
     widget_ref::VelonaWidgetRef,
     window::event_handlers::{HandlerFn, HandlerId, NoParamHandlerFn},

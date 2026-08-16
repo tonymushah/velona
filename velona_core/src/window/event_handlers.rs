@@ -96,50 +96,58 @@ impl WindowEventHandlers {
         self.widget_handlers.shrink_to_fit();
         self.on_destroy_handler.shrink_to_fit();
     }
-    fn remove_handler_raw(&mut self, handler_id: &HandlerId) {
-        self.remove_widget_handler(handler_id, None);
-        self.remove_on_destroy_handler(handler_id);
+    fn remove_handler_raw(&mut self, handler_id: &HandlerId) -> bool {
+        if self.remove_widget_handler(handler_id, None) {
+            true
+        } else {
+            self.remove_on_destroy_handler(handler_id)
+        }
     }
     fn find_handler_widget_id(&self, handler_id: &HandlerId) -> Option<WidgetId> {
         self.widget_handlers
             .iter()
-            .find(|(_, handlers)| handlers.contains_key(&handler_id))
+            .find(|(_, handlers)| handlers.contains_key(handler_id))
             .map(|(w, _)| w)
             .cloned()
     }
-    fn remove_widget_handler(&mut self, handler_id: &HandlerId, widget_id: Option<WidgetId>) {
+    fn remove_widget_handler(
+        &mut self,
+        handler_id: &HandlerId,
+        widget_id: Option<WidgetId>,
+    ) -> bool {
         let Some(widget_id) = widget_id.or_else(|| self.find_handler_widget_id(handler_id)) else {
-            return;
+            return false;
         };
         let Some(handlers) = self.widget_handlers.get_mut(&widget_id) else {
-            return;
+            return false;
         };
-        handlers.remove(&handler_id);
+        handlers.remove(handler_id);
         let is_handlers_empty = handlers.is_empty();
-        drop(handlers);
+        let _ = handlers;
         if is_handlers_empty {
             self.widget_handlers.remove(&widget_id);
         }
+        true
     }
-    fn remove_on_destroy_handler(&mut self, handler_id: &HandlerId) {
-        self.on_destroy_handler.remove(&handler_id);
+    fn remove_on_destroy_handler(&mut self, handler_id: &HandlerId) -> bool {
+        self.on_destroy_handler.remove(handler_id).is_some()
     }
     pub(crate) fn remove_handler(
         &mut self,
         handler_id: &HandlerId,
         type_: Option<UnregisterWindowEventHandlerType>,
-    ) {
+    ) -> bool {
         if let Some(type_) = type_ {
             match type_ {
                 UnregisterWindowEventHandlerType::Widget(widget_id) => {
-                    self.remove_widget_handler(handler_id, widget_id);
+                    self.remove_widget_handler(handler_id, widget_id)
                 }
                 UnregisterWindowEventHandlerType::OnDestroy => {
-                    self.remove_on_destroy_handler(handler_id);
+                    self.remove_on_destroy_handler(handler_id)
                 }
             }
         } else {
-            self.remove_handler_raw(handler_id);
+            self.remove_handler_raw(handler_id)
         }
     }
 }
@@ -192,7 +200,7 @@ pub fn register_widget_action_handler(widget_id: WidgetId, handler_fn: HandlerFn
         .unwrap();
 
     on_cleanup(move || {
-        if let Err(err) = window.remove_handler(handler_id) {
+        if let Err(err) = window.remove_widget_action_handler(handler_id, widget_id) {
             log::error!("{err}");
         }
     });

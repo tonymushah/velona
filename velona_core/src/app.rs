@@ -113,6 +113,7 @@ impl<W: WindowRenderer> Builder<W> {
 
 impl<W: WindowRenderer> Builder<W> {
     /// Run the app.
+    // TODO refactor this to add a `build` method
     pub fn run(mut self) -> Result<(), crate::error::Error> {
         let spawn_fn = self
             .spawn_fn
@@ -158,6 +159,7 @@ impl<W: WindowRenderer> Builder<W> {
                     Some(self.on_event_loop_init)
                 }
             },
+            app_event_handlers: Default::default(),
         };
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;

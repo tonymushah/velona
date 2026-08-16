@@ -31,7 +31,7 @@ use crate::{
         UseWindowRenderRootOnMain, UseWinitWindowOnMain,
     },
     widget_ref::VelonaWidgetRef,
-    window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
+    window::event_handlers::{HandlerFn, HandlerId, NoParamHandlerFn},
 };
 
 /// A window handle.

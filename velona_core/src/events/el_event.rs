@@ -11,7 +11,7 @@ use winit::window::{Window, WindowId};
 use crate::{
     widget_ref::{EditWidgetFnEvent, UseWidgetFnEvent},
     window::builder::WindowBuilder,
-    window_event_handler::{HandlerFn, HandlerId, NoParamHandlerFn},
+    window::event_handlers::{HandlerFn, HandlerId, NoParamHandlerFn},
 };
 
 pub(crate) struct RegisterWidgetActionHandler {

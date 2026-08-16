@@ -16,8 +16,8 @@ use crate::{
     app::{EventLoopEvent, proxy::EventProxyHandle},
     render_root::use_window_render_root_ref,
     utils::ConsumeResult,
+    window::event_handlers::HandlerId,
     window::handle::{WindowHandle, WindowHandleActionError},
-    window_event_handler::HandlerId,
 };
 
 type EditFn = Box<dyn FnOnce(WidgetMut<dyn Widget>) + Send>;

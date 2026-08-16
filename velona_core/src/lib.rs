@@ -14,7 +14,6 @@ pub mod utils;
 pub mod widget_ref;
 pub mod widgets;
 pub mod window;
-pub mod window_event_handler;
 // TODO add `layers` module
 
 #[doc(inline)]

@@ -18,8 +18,8 @@ use winit::window::Window as WinitWindow;
 use crate::{
     app::{AppHandle, EventLoopEvent, proxy::EventProxyHandle},
     render_root::{InnerRenderRoot, WindowRenderRoot},
+    window::event_handlers::WindowEventHandlers,
     window::{handle::WindowHandle, renderer::WindowRendererFactory},
-    window_event_handler::WindowEventHandlers,
 };
 
 pub struct Window<W>

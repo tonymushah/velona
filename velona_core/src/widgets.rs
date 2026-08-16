@@ -9,8 +9,8 @@ use masonry_core::{
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
-    widget_ref::VelonaWidgetRef, window::use_window,
-    window_event_handler::register_typed_widget_action_handler,
+    widget_ref::VelonaWidgetRef, window::event_handlers::register_typed_widget_action_handler,
+    window::use_window,
 };
 
 // TODO add a `use_reactive_widget` with `WidgetRef` instead.

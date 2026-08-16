@@ -8,6 +8,8 @@ use reactive_graph::owner::Owner;
 use send_wrapper::SendWrapper;
 use winit::window::{Window, WindowId};
 
+use crate::app::event_handlers::{RegisterAppEvent, UnRegisterAppEventHandler};
+use crate::window::event_handlers::{RegisterWindowEventHandler, UnregisterWindowEventHandlerType};
 use crate::{
     widget_ref::{EditWidgetFnEvent, UseWidgetFnEvent},
     window::builder::WindowBuilder,
@@ -98,6 +100,26 @@ pub(crate) struct GetAppChildReactiveOwner {
     pub(crate) sender: oneshot::Sender<Owner>,
 }
 
+#[derive(Debug)]
+pub(crate) enum RegisterEventHandler {
+    App(RegisterAppEvent),
+    Window {
+        window_id: WindowId,
+        type_: RegisterWindowEventHandler,
+    },
+}
+
+#[derive(Debug)]
+pub(crate) enum UnregisterEventHandler {
+    Any(HandlerId),
+    App(UnRegisterAppEventHandler),
+    Window {
+        window_id: WindowId,
+        handler_id: HandlerId,
+        type_: Option<UnregisterWindowEventHandlerType>,
+    },
+}
+
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<accesskit_winit::Event>),
     RunTask(Runnable),
@@ -107,13 +129,12 @@ pub(crate) enum EventLoopEvent {
     HandleRenderRootSignals(WindowId, Box<SendWrapper<RenderRootSignal>>),
     EditWidget(Box<EditWidgetFnEvent>),
     UseWidget(Box<UseWidgetFnEvent>),
-    RegisterWidgetActionHandler(Box<RegisterWidgetActionHandler>),
-    UnregisterEventHandler(Box<UnregisterHandler>),
-    RegisterOnWindowDestroy(Box<RegisterOnWindowDestroyHandler>),
     UseWindowRenderRoot(Box<UseWindowRenderRootOnMain>),
     UseWinitWindow(Box<UseWinitWindowOnMain>),
     GetWindowChildReactiveOwner(Box<GetWindowChildReactiveOwner>),
     GetAppChildReactiveOwner(Box<GetAppChildReactiveOwner>),
+    RegisterHandler(Box<RegisterEventHandler>),
+    UnRegisterHandler(Box<UnregisterEventHandler>),
 }
 
 impl Debug for EventLoopEvent {
@@ -133,17 +154,6 @@ impl Debug for EventLoopEvent {
                 .finish(),
             Self::EditWidget(arg0) => f.debug_tuple("EditWidget").field(arg0).finish(),
             Self::UseWidget(arg0) => f.debug_tuple("UseWidget").field(arg0).finish(),
-            Self::RegisterWidgetActionHandler(arg0) => f
-                .debug_tuple("RegisterWidgetActionHandler")
-                .field(arg0)
-                .finish(),
-            Self::UnregisterEventHandler(arg0) => {
-                f.debug_tuple("UnregisterEventHandler").field(arg0).finish()
-            }
-            Self::RegisterOnWindowDestroy(arg0) => f
-                .debug_tuple("RegisterOnWindowDestroy")
-                .field(arg0)
-                .finish(),
             Self::UseWindowRenderRoot(arg0) => {
                 f.debug_tuple("UseWindowRenderRoot").field(arg0).finish()
             }
@@ -156,6 +166,10 @@ impl Debug for EventLoopEvent {
                 .debug_tuple("GetWindowChildReactiveOwner")
                 .field(arg0)
                 .finish(),
+            Self::RegisterHandler(arg0) => f.debug_tuple("RegisterHandler").field(arg0).finish(),
+            Self::UnRegisterHandler(arg0) => {
+                f.debug_tuple("UnregisterHandler").field(arg0).finish()
+            }
         }
     }
 }

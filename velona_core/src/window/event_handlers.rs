@@ -6,18 +6,48 @@ use log::{debug, warn};
 use masonry_core::core::{ErasedAction, Widget, WidgetId};
 use reactive_graph::owner::on_cleanup;
 
-use crate::window::use_window;
+use crate::{
+    utils::events::{EventMap, NoParamHandler},
+    window::use_window,
+};
 
 pub use crate::utils::HandlerId;
 
 pub type HandlerFn = Box<dyn Fn(&ErasedAction) + Send>;
 
-pub type NoParamHandlerFn = Box<dyn Fn() + Send>;
+pub type NoParamHandlerFn = NoParamHandler;
+
+#[derive(derive_more::Debug)]
+pub struct RegisterWindowEventHandler {
+    pub handler_id: HandlerId,
+    pub type_: RegisterWindowEventHandlerType,
+}
+
+#[derive(derive_more::Debug)]
+pub enum RegisterWindowEventHandlerType {
+    Widget(WidgetId, #[debug(skip)] HandlerFn),
+    OnDestroy(#[debug(skip)] NoParamHandlerFn),
+}
+
+#[derive(Debug)]
+pub enum UnregisterWindowEventHandlerType {
+    Widget(Option<WidgetId>),
+    OnDestroy,
+}
+
+#[derive(Debug)]
+pub enum HandleEvent<'a> {
+    Widget {
+        widget_id: WidgetId,
+        action: &'a ErasedAction,
+    },
+    OnDestroy,
+}
 
 #[derive(Default)]
 pub(crate) struct WindowEventHandlers {
-    widget_handlers: HashMap<WidgetId, HashMap<HandlerId, HandlerFn>>,
-    on_destroy_handler: HashMap<HandlerId, NoParamHandlerFn>,
+    widget_handlers: HashMap<WidgetId, EventMap<HandlerFn>>,
+    on_destroy_handler: EventMap<NoParamHandlerFn>,
     // TODO add on_mouseenter for widgets
     // TODO add on_mouseexit for widgets
     // TODO add on_keydown for window
@@ -26,36 +56,38 @@ pub(crate) struct WindowEventHandlers {
 }
 
 impl WindowEventHandlers {
-    pub fn handle_widget_action(&self, widget_id: WidgetId, ev: &ErasedAction) {
-        let Some(handlers) = self.widget_handlers.get(&widget_id) else {
-            debug!("no event handler registered for {:?}", widget_id);
-            return;
-        };
-        handlers.values().for_each(|h| (h)(ev));
+    pub fn handle_event(&self, ev: HandleEvent<'_>) {
+        match ev {
+            HandleEvent::Widget { widget_id, action } => {
+                let Some(handlers) = self.widget_handlers.get(&widget_id) else {
+                    debug!("no event handler registered for {:?}", widget_id);
+                    return;
+                };
+                handlers.values().for_each(|h| (h)(action));
+            }
+            HandleEvent::OnDestroy => {
+                self.on_destroy_handler.values().for_each(|h| (h)());
+            }
+        }
     }
-    pub fn add_widget_action_handler_fn(
-        &mut self,
-        handler_id: HandlerId,
-        widget_id: WidgetId,
-        hander_fn: HandlerFn,
-    ) {
-        self.widget_handlers
-            .entry(widget_id)
-            .or_default()
-            .entry(handler_id)
-            .insert_entry(hander_fn);
-    }
-    pub fn remove_handler_fn(&mut self, handler_id: HandlerId) -> bool {
-        let mut removed = false;
-        self.widget_handlers.retain(|_, v| {
-            removed = v.remove(&handler_id).is_some();
-            !v.is_empty()
-        });
-        removed
+    pub fn add_handler_fn(&mut self, handler: RegisterWindowEventHandler) {
+        match handler.type_ {
+            RegisterWindowEventHandlerType::Widget(widget_id, handler_fn) => {
+                self.widget_handlers
+                    .entry(widget_id)
+                    .or_default()
+                    .insert(handler.handler_id, handler_fn);
+            }
+            RegisterWindowEventHandlerType::OnDestroy(handler_fn) => {
+                self.on_destroy_handler
+                    .insert(handler.handler_id, handler_fn);
+            }
+        }
     }
     pub fn cleanup(&mut self, render_root: &masonry_core::app::RenderRoot) {
         self.widget_handlers
             .retain(|widget_id, _| render_root.has_widget(*widget_id));
+        self.widget_handlers.retain(|_, v| !v.is_empty());
     }
     pub(crate) fn shrink_to_fit(&mut self) {
         self.widget_handlers
@@ -64,8 +96,51 @@ impl WindowEventHandlers {
         self.widget_handlers.shrink_to_fit();
         self.on_destroy_handler.shrink_to_fit();
     }
-    pub fn add_on_destroy_handler(&mut self, handler_id: HandlerId, hander_fn: NoParamHandlerFn) {
-        self.on_destroy_handler.insert(handler_id, hander_fn);
+    fn remove_handler_raw(&mut self, handler_id: &HandlerId) {
+        self.remove_widget_handler(handler_id, None);
+        self.remove_on_destroy_handler(handler_id);
+    }
+    fn find_handler_widget_id(&self, handler_id: &HandlerId) -> Option<WidgetId> {
+        self.widget_handlers
+            .iter()
+            .find(|(_, handlers)| handlers.contains_key(&handler_id))
+            .map(|(w, _)| w)
+            .cloned()
+    }
+    fn remove_widget_handler(&mut self, handler_id: &HandlerId, widget_id: Option<WidgetId>) {
+        let Some(widget_id) = widget_id.or_else(|| self.find_handler_widget_id(handler_id)) else {
+            return;
+        };
+        let Some(handlers) = self.widget_handlers.get_mut(&widget_id) else {
+            return;
+        };
+        handlers.remove(&handler_id);
+        let is_handlers_empty = handlers.is_empty();
+        drop(handlers);
+        if is_handlers_empty {
+            self.widget_handlers.remove(&widget_id);
+        }
+    }
+    fn remove_on_destroy_handler(&mut self, handler_id: &HandlerId) {
+        self.on_destroy_handler.remove(&handler_id);
+    }
+    pub(crate) fn remove_handler(
+        &mut self,
+        handler_id: &HandlerId,
+        type_: Option<UnregisterWindowEventHandlerType>,
+    ) {
+        if let Some(type_) = type_ {
+            match type_ {
+                UnregisterWindowEventHandlerType::Widget(widget_id) => {
+                    self.remove_widget_handler(handler_id, widget_id);
+                }
+                UnregisterWindowEventHandlerType::OnDestroy => {
+                    self.remove_on_destroy_handler(handler_id);
+                }
+            }
+        } else {
+            self.remove_handler_raw(handler_id);
+        }
     }
 }
 

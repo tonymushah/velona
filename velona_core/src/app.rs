@@ -8,6 +8,7 @@ use crate::{
 mod handle;
 mod run;
 use velona_renderer::WindowRenderer;
+pub(crate) mod event_handlers;
 pub(crate) mod proxy;
 
 use std::{cell::RefCell, rc::Rc, sync::Arc};

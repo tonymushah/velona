@@ -3,8 +3,12 @@ use futures_channel::oneshot;
 
 use crate::{
     WindowBuilder,
-    app::{EventLoopEvent, proxy::AppProxySendError, proxy::EventProxyHandle},
-    events::el_event::GetAppChildReactiveOwner,
+    app::{
+        AppHandle, EventLoopEvent,
+        proxy::{AppProxySendError, EventProxyHandle},
+    },
+    events::el_event::{GetAppChildReactiveOwner, UnregisterEventHandler},
+    utils::HandlerId,
     window::handle::WindowHandle,
 };
 
@@ -31,6 +35,9 @@ impl From<AppProxySendError> for AppHandleActionError {
 
 #[allow(private_bounds)]
 pub trait Manager: EventProxyHandle {
+    fn app_handle(&self) -> AppHandle {
+        AppHandle::new(self.get_proxy().clone())
+    }
     /// Create a new window
     fn create_window(
         &self,
@@ -67,14 +74,19 @@ pub trait Manager: EventProxyHandle {
     ) -> impl Future<Output = Result<reactive_graph::owner::Owner, AppHandleActionError>> + Send
     {
         let (sender, receiver) = oneshot::channel();
-        let res = self
-            .get_proxy()
-            .send_event(EventLoopEvent::GetAppChildReactiveOwner(Box::new(
-                GetAppChildReactiveOwner { sender },
-            )));
+        let res = self.send_event(EventLoopEvent::GetAppChildReactiveOwner(Box::new(
+            GetAppChildReactiveOwner { sender },
+        )));
         async move {
             res?;
             receiver.await.map_err(|_| AppHandleActionError::AppExited)
+        }
+    }
+    fn remove_handler(&self, handler_id: HandlerId) {
+        if let Err(err) = self.send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+            UnregisterEventHandler::Any(handler_id),
+        ))) {
+            log::error!("{err}");
         }
     }
 }

@@ -9,6 +9,7 @@ use send_wrapper::SendWrapper;
 use winit::window::{Window, WindowId};
 
 use crate::app::event_listener::{RegisterAppEvent, UnRegisterAppEventHandler};
+use crate::manager::OtherManagerMethods;
 use crate::window::event_listener::{RegisterWindowEventHandler, UnregisterWindowEventHandlerType};
 use crate::{
     widget_ref::{EditWidgetFnEvent, UseWidgetFnEvent},
@@ -90,6 +91,7 @@ pub(crate) enum EventLoopEvent {
     GetAppChildReactiveOwner(Box<GetAppChildReactiveOwner>),
     RegisterHandler(Box<RegisterEventHandler>),
     UnRegisterHandler(Box<UnregisterEventHandler>),
+    ManagerMethods(Box<OtherManagerMethods>),
 }
 
 impl Debug for EventLoopEvent {
@@ -125,6 +127,7 @@ impl Debug for EventLoopEvent {
             Self::UnRegisterHandler(arg0) => {
                 f.debug_tuple("UnregisterHandler").field(arg0).finish()
             }
+            Self::ManagerMethods(arg0) => f.debug_tuple("ManagerMethods").field(arg0).finish(),
         }
     }
 }

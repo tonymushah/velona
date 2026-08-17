@@ -1,5 +1,10 @@
 use async_task::Task;
 use futures_channel::oneshot;
+use winit::{
+    event_loop::{ControlFlow, DeviceEvents, OwnedDisplayHandle},
+    monitor::MonitorHandle,
+    window::{CustomCursor, CustomCursorSource},
+};
 
 use crate::{
     WindowBuilder,
@@ -16,6 +21,18 @@ pub enum CreateWindowError {
     // TODO implement this properly
     #[error("Cannot create window because of other error")]
     OtherError,
+}
+
+#[derive(Debug)]
+pub(crate) enum OtherManagerMethods {
+    SetControlFlow(ControlFlow),
+    RegisterCustomCursor(CustomCursorSource, oneshot::Sender<CustomCursor>),
+    ListenDeviceEventsMode(DeviceEvents),
+    SystemTheme(oneshot::Sender<Option<winit::window::Theme>>),
+    PrimaryMonitor(oneshot::Sender<Option<MonitorHandle>>),
+    Exit,
+    AvailableMonitors(oneshot::Sender<Vec<MonitorHandle>>),
+    OwnedDisplayHandle(oneshot::Sender<OwnedDisplayHandle>),
 }
 
 #[allow(private_bounds)]
@@ -72,6 +89,85 @@ pub trait Manager: EventProxyHandle {
             UnregisterEventHandler::Any(handler_id),
         ))) {
             log::error!("{err}");
+        }
+    }
+    fn set_control_flow(&self, control_flow: ControlFlow) {
+        let _ = self.send_event(EventLoopEvent::ManagerMethods(Box::new(
+            OtherManagerMethods::SetControlFlow(control_flow),
+        )));
+    }
+    /// See [`winit::cursor::CustomCursor`] for more details
+    fn register_custom_cursor(
+        &self,
+        source: CustomCursorSource,
+    ) -> impl Future<Output = Result<CustomCursor, AppHandleActionError>> + Send {
+        let (send, receive) = oneshot::channel();
+        let res = self.send_event(EventLoopEvent::ManagerMethods(Box::new(
+            OtherManagerMethods::RegisterCustomCursor(source, send),
+        )));
+        async move {
+            res?;
+            receive.await.map_err(|_| AppHandleActionError::AppExited)
+        }
+    }
+    fn listen_device_events_mode(&self, mode: DeviceEvents) {
+        let _ = self.send_event(EventLoopEvent::ManagerMethods(Box::new(
+            OtherManagerMethods::ListenDeviceEventsMode(mode),
+        )));
+    }
+    fn system_theme(
+        &self,
+    ) -> impl Future<Output = Result<Option<winit::window::Theme>, AppHandleActionError>> + Send
+    {
+        let (send, receive) = oneshot::channel();
+        let res = self.send_event(EventLoopEvent::ManagerMethods(Box::new(
+            OtherManagerMethods::SystemTheme(send),
+        )));
+        async move {
+            res?;
+            receive.await.map_err(|_| AppHandleActionError::AppExited)
+        }
+    }
+    fn primary_monitor(
+        &self,
+    ) -> impl Future<Output = Result<Option<MonitorHandle>, AppHandleActionError>> + Send {
+        let (send, receive) = oneshot::channel();
+        let res = self.send_event(EventLoopEvent::ManagerMethods(Box::new(
+            OtherManagerMethods::PrimaryMonitor(send),
+        )));
+        async move {
+            res?;
+            receive.await.map_err(|_| AppHandleActionError::AppExited)
+        }
+    }
+    fn exit(&self) -> Result<(), AppHandleActionError> {
+        self.send_event(EventLoopEvent::ManagerMethods(Box::new(
+            OtherManagerMethods::Exit,
+        )))?;
+        Ok(())
+    }
+    fn available_monitors(
+        &self,
+    ) -> impl Future<Output = Result<Vec<MonitorHandle>, AppHandleActionError>> + Send {
+        let (send, receive) = oneshot::channel();
+        let res = self.send_event(EventLoopEvent::ManagerMethods(Box::new(
+            OtherManagerMethods::AvailableMonitors(send),
+        )));
+        async move {
+            res?;
+            receive.await.map_err(|_| AppHandleActionError::AppExited)
+        }
+    }
+    fn owned_display_handle(
+        &self,
+    ) -> impl Future<Output = Result<OwnedDisplayHandle, AppHandleActionError>> + Send {
+        let (send, receive) = oneshot::channel();
+        let res = self.send_event(EventLoopEvent::ManagerMethods(Box::new(
+            OtherManagerMethods::OwnedDisplayHandle(send),
+        )));
+        async move {
+            res?;
+            receive.await.map_err(|_| AppHandleActionError::AppExited)
         }
     }
 }

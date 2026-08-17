@@ -4,12 +4,13 @@ use derive_more::{Display, FromStr};
 use enum_all_variants::AllVariants;
 use image::open;
 use masonry::imaging::peniko::{Blob, ImageBrush, ImageData, ImageSampler, color::AlphaColor};
+use masonry::properties::TrackColor;
 use masonry::{
     core::Widget,
     layout::Length,
     palette::css::{BLACK, VIOLET, WHEAT, WHITE, WHITE_SMOKE},
     parley::{FontWeight, StyleProperty},
-    properties::{Background, BorderColor, BorderWidth, ContentColor, CornerRadius, Padding},
+    properties::{Background, BorderColor, BorderWidth, CornerRadius, Padding},
     theme::DEFAULT_SPACER_LEN,
     widgets::{Badged, Button, Flex, Label, Selector, SizedBox, Spinner},
 };
@@ -96,9 +97,10 @@ fn towa(TowaProps { show }: TowaProps) -> AnyNewWidget {
                     }
                     match *base_image.read() {
                         ImageState::Loading => SizedBox::new(
-                            Spinner::default()
-                                .prepare()
-                                .static_propeperty(ContentColor::new(VIOLET)),
+                            Spinner::default().prepare().static_propeperty(TrackColor {
+                                inactive: VIOLET,
+                                active: BLACK,
+                            }),
                         )
                         .height(Length::px(50.0))
                         .width(Length::px(50.0))

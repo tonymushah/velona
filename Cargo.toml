@@ -15,7 +15,7 @@ default-members = ["velona"]
 resolver = "3"
 
 [workspace.dependencies]
-accesskit_winit = "0.32"
+accesskit_winit = "0.33"
 any_spawner = "0.3"
 async-task = "4"
 # TODO update to 0.5 if released
@@ -29,7 +29,7 @@ thiserror = "2"
 # TODO update to 0.31 when stable
 winit = "0.30"
 log = "0.4"
-pollster = "0.4"
+pollster = "1"
 # TODO remove this
 non-exhaustive = "0.1"
 # TODO Remove this in favor of reactive_graph::send_option
@@ -52,7 +52,7 @@ peniko = { default-features = false, version = "0.6.1" }
 raw-window-handle = "0.6"
 imaging_vello = "0.0"
 enum_all_variants = "0.2"
-resvg = "0"
+resvg = "0.47"
 tracing = { version = "0.1.44", default-features = false }
 masonry_raw_box = { path = "masonry_raw_box" }
 flume = { version = "0.12", default-features = false }

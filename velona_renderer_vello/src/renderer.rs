@@ -3,17 +3,17 @@
 #[cfg(feature = "log_frame_times")]
 use debug_timer::debug_timer;
 use futures_channel::oneshot;
-use imaging_vello::vello::wgpu::{self, PresentMode, TextureFormat, TextureUsages};
-use imaging_vello::vello::{
-    AaConfig, AaSupport, RenderParams, Renderer as VelloRenderer, RendererOptions,
-    Scene as VelloScene,
-};
 use kurbo::Rect;
 use peniko::Color;
 use pollster::FutureExt;
 #[cfg(not(target_os = "macos"))]
 use std::num::NonZeroUsize;
 use std::sync::{Arc, RwLock};
+use vello::wgpu::{self, PresentMode, TextureFormat, TextureUsages};
+use vello::{
+    AaConfig, AaSupport, RenderParams, Renderer as VelloRenderer, RendererOptions,
+    Scene as VelloScene,
+};
 use velona_renderer::WindowRenderer;
 use velona_renderer::window_handle::WindowHandle;
 use wgpu_context::{
@@ -26,7 +26,7 @@ const DEFAULT_THREADS: Option<NonZeroUsize> = NonZeroUsize::new(1);
 #[cfg(not(target_os = "macos"))]
 const DEFAULT_THREADS: Option<NonZeroUsize> = None;
 
-use imaging_vello::VelloSceneSink;
+use super::scene_sink::VelloSceneSink;
 
 struct ActiveRenderState {
     renderer: VelloRenderer,

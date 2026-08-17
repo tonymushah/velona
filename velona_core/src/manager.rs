@@ -96,7 +96,7 @@ pub trait Manager: EventProxyHandle {
             OtherManagerMethods::SetControlFlow(control_flow),
         )));
     }
-    /// See [`winit::cursor::CustomCursor`] for more details
+    /// See [`winit::window::CustomCursor`] for more details
     fn register_custom_cursor(
         &self,
         source: CustomCursorSource,

@@ -5,39 +5,42 @@
 //!
 //! _See the [widget](Grid) documentation for more information_.
 
-use masonry::{core::NewWidget, widgets::Grid};
+use masonry::{
+    core::NewWidget,
+    widgets::{Grid, GridTrackSize},
+};
 
 use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Grid`] extension trait.
 // TODO add example
 pub trait NewGridExt {
-    /// [Set the grid column count](Grid::set_column_count) reactively.
-    fn column_count<C>(self, count: C) -> Self
+    /// [Set the grid columns](Grid::set_columns) reactively.
+    fn columns<C>(self, track_sizes: C) -> Self
     where
-        C: Fn() -> i32 + 'static;
-    /// [Set the row column count](Grid::set_row_count) reactively.
-    fn row_count<C>(self, count: C) -> Self
+        C: Fn() -> Vec<GridTrackSize> + 'static;
+    /// [Set the grid rows](Grid::set_rows) reactively.
+    fn rows<C>(self, track_sizes: C) -> Self
     where
-        C: Fn() -> i32 + 'static;
+        C: Fn() -> Vec<GridTrackSize> + 'static;
 }
 
 impl NewGridExt for NewWidget<Grid> {
-    fn column_count<C>(self, count: C) -> Self
+    fn columns<C>(self, track_sizes: C) -> Self
     where
-        C: Fn() -> i32 + 'static,
+        C: Fn() -> Vec<GridTrackSize> + 'static,
     {
         self.use_reactive_widget_mut(move |mut this| {
-            Grid::set_column_count(&mut this, count());
+            Grid::set_columns(&mut this, track_sizes());
         })
     }
 
-    fn row_count<C>(self, count: C) -> Self
+    fn rows<C>(self, track_sizes: C) -> Self
     where
-        C: Fn() -> i32 + 'static,
+        C: Fn() -> Vec<GridTrackSize> + 'static,
     {
         self.use_reactive_widget_mut(move |mut this| {
-            Grid::set_row_count(&mut this, count());
+            Grid::set_rows(&mut this, track_sizes());
         })
     }
 }

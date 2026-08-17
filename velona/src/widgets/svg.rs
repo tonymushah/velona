@@ -7,7 +7,6 @@
 //! we re-export [it](usvg) here for simplicity.
 //!
 //! _See the [widget](Svg) documentation for more information_.
-
 use std::sync::Arc;
 
 use masonry::{

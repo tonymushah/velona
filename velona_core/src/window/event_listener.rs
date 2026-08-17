@@ -182,7 +182,7 @@ impl Debug for WindowEventHandlers {
 /// - there is no [`WindowHandle`](crate::window::WindowHandle) in the current context (panics on debug mode, just [`log::warn!`] on non-debug)
 /// - the app or the window already closed (always panics)
 ///
-/// For a typed version, use [`register_typed_widget_action_handler`].
+/// For a typed version, use [`register_typed_widget_action_listener`].
 pub fn register_widget_action_listener(widget_id: WidgetId, handler_fn: HandlerFn) {
     let Some(window) = use_window() else {
         #[cfg(debug_assertions)]
@@ -206,7 +206,7 @@ pub fn register_widget_action_listener(widget_id: WidgetId, handler_fn: HandlerF
     });
 }
 
-/// Very similar to [`register_widget_action_handler`]
+/// Very similar to [`register_widget_action_listener`]
 /// but automatically cast the [`ErasedAction`] to the [`Widget::Action`] type.
 ///
 /// The `handler_fn` function will just not run if the cast fails.

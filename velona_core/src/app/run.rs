@@ -22,7 +22,9 @@ use winit::{
 use super::window::Window;
 
 use crate::app::OnEventLoopInitFns;
-use crate::app::event_listener::{AppEventHandlers, EmitAppEventToHandlers};
+use crate::app::event_listener::{
+    AppEventHandlers, EmitAppEventToHandlers, UnRegisterAppEventHandler,
+};
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
 use crate::utils::HandlerId;
 use crate::window;
@@ -188,10 +190,14 @@ where
                 .window_event_listeners
                 .remove_handler(handler_id, None)
             {
-                break;
+                return;
             }
         }
-        todo!()
+        self.app_event_listeners
+            .unregister_handler(UnRegisterAppEventHandler {
+                handler_id: *handler_id,
+                type_: None,
+            });
     }
     fn handle_unregister_event_handler(&mut self, event: UnregisterEventHandler) {
         match event {

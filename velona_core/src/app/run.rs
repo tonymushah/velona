@@ -26,6 +26,7 @@ use crate::app::event_listener::{
     AppEventHandlers, EmitAppEventToHandlers, UnRegisterAppEventHandler,
 };
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
+use crate::manager::OtherManagerMethods;
 use crate::utils::HandlerId;
 use crate::window;
 use crate::{
@@ -249,6 +250,42 @@ where
             tasks += 1;
         }
         tasks
+    }
+}
+
+// --- manager method handling --- //
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
+impl<W> AppRunner<W>
+where
+    W: WindowRenderer,
+{
+    fn execute_manager_methods(&self, ev: &ActiveEventLoop, cmd: OtherManagerMethods) {
+        match cmd {
+            OtherManagerMethods::SetControlFlow(control_flow) => {
+                ev.set_control_flow(control_flow);
+            }
+            OtherManagerMethods::RegisterCustomCursor(custom_cursor_source, sender) => {
+                let _ = sender.send(ev.create_custom_cursor(custom_cursor_source));
+            }
+            OtherManagerMethods::ListenDeviceEventsMode(device_events) => {
+                ev.listen_device_events(device_events);
+            }
+            OtherManagerMethods::SystemTheme(sender) => {
+                let _ = sender.send(ev.system_theme());
+            }
+            OtherManagerMethods::PrimaryMonitor(sender) => {
+                let _ = sender.send(ev.primary_monitor());
+            }
+            OtherManagerMethods::Exit => {
+                ev.exit();
+            }
+            OtherManagerMethods::AvailableMonitors(sender) => {
+                let _ = sender.send(ev.available_monitors().collect());
+            }
+            OtherManagerMethods::OwnedDisplayHandle(sender) => {
+                let _ = sender.send(ev.owned_display_handle());
+            }
+        }
     }
 }
 
@@ -512,6 +549,9 @@ where
                 }
                 EventLoopEvent::UnRegisterHandler(unregister_event_handler) => {
                     self.handle_unregister_event_handler(*unregister_event_handler)
+                }
+                EventLoopEvent::ManagerMethods(cmd) => {
+                    self.execute_manager_methods(event_loop, *cmd);
                 }
             }
         }

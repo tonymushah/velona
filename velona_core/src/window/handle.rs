@@ -5,6 +5,7 @@ use futures_channel::oneshot;
 use imaging::peniko::Blob;
 use masonry_core::app::RenderRoot;
 use masonry_core::core::DefaultProperties;
+use masonry_core::core::PropertyStackMut;
 use masonry_core::core::Widget;
 use masonry_core::core::WidgetId;
 use masonry_core::core::{PropertyStack, PropertyStackId};
@@ -20,6 +21,7 @@ use winit::{
 
 use crate::events;
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
+use crate::events::property_stack::{PropertyStackMethods, PropertyStackMethodsType};
 use crate::window::event_listener::{
     RegisterWindowEventHandler, RegisterWindowEventHandlerType, UnregisterWindowEventHandlerType,
 };
@@ -887,13 +889,87 @@ impl WindowHandle {
         self.use_render_root_with_return(move |root| root.register_fonts(data))
             .await
     }
-    /// Inserts a `PropertyStack` into the arena and returns its unique `PropertyStackId`.
-    pub async fn register_property_stack(
+    // /// Inserts a `PropertyStack` into the arena and returns its unique `PropertyStackId`.
+    // pub async fn register_property_stack(
+    //     &self,
+    //     property_stack: PropertyStack,
+    // ) -> Result<PropertyStackId, WindowHandleActionError> {
+    //     self.use_render_root_with_return(move |root| root.property_arena().insert(property_stack))
+    //         .await
+    // }
+}
+
+/// Property stack related things
+impl WindowHandle {
+    pub async fn add_property_stack(
         &self,
-        property_stack: PropertyStack,
+        stack: PropertyStack,
     ) -> Result<PropertyStackId, WindowHandleActionError> {
-        self.use_render_root_with_return(move |root| root.property_arena().insert(property_stack))
+        let (sender, receiver) = oneshot::channel();
+        self.send_event(
+            PropertyStackMethods {
+                window_id: self.id()?,
+                type_: PropertyStackMethodsType::Add { stack, sender },
+            }
+            .into(),
+        )?;
+        receiver
             .await
+            .map_err(|_| WindowHandleActionError::WindowClosed)
+    }
+    pub fn edit_property_stack<E>(
+        &self,
+        property_stack_id: PropertyStackId,
+        edit_fn: E,
+    ) -> Result<(), WindowHandleActionError>
+    where
+        E: FnOnce(&mut PropertyStackMut<'_>) + Send + 'static,
+    {
+        self.send_event(
+            PropertyStackMethods {
+                window_id: self.id()?,
+                type_: PropertyStackMethodsType::Edit {
+                    id: property_stack_id,
+                    edit_fn: Box::new(edit_fn),
+                },
+            }
+            .into(),
+        )?;
+        Ok(())
+    }
+    pub fn remove_property_stack(
+        &self,
+        property_stack_id: PropertyStackId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.send_event(
+            PropertyStackMethods {
+                window_id: self.id()?,
+                type_: PropertyStackMethodsType::Remove {
+                    id: property_stack_id,
+                },
+            }
+            .into(),
+        )?;
+        Ok(())
+    }
+    pub async fn has_property_stack(
+        &self,
+        property_stack_id: PropertyStackId,
+    ) -> Result<bool, WindowHandleActionError> {
+        let (sender, receiver) = oneshot::channel();
+        self.send_event(
+            PropertyStackMethods {
+                window_id: self.id()?,
+                type_: PropertyStackMethodsType::IsPresent {
+                    id: property_stack_id,
+                    sender,
+                },
+            }
+            .into(),
+        )?;
+        receiver
+            .await
+            .map_err(|_| WindowHandleActionError::AppExited)
     }
 }
 

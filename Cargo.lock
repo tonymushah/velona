@@ -2449,7 +2449,7 @@ dependencies = [
 [[package]]
 name = "linebender_include_doc_path"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git#7fe469d6bd1ddc486d406a6eb4f9e776b5ffe34d"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#dbcdffd896f12a3bc48025565ab5d4bfa6ba1c91"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2521,7 +2521,7 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#7fe469d6bd1ddc486d406a6eb4f9e776b5ffe34d"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#dbcdffd896f12a3bc48025565ab5d4bfa6ba1c91"
 dependencies = [
  "accesskit",
  "linebender_include_doc_path",
@@ -2535,7 +2535,7 @@ dependencies = [
 [[package]]
 name = "masonry_core"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#7fe469d6bd1ddc486d406a6eb4f9e776b5ffe34d"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#dbcdffd896f12a3bc48025565ab5d4bfa6ba1c91"
 dependencies = [
  "accesskit",
  "anymap3",
@@ -2562,7 +2562,7 @@ dependencies = [
 [[package]]
 name = "masonry_imaging"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#7fe469d6bd1ddc486d406a6eb4f9e776b5ffe34d"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#dbcdffd896f12a3bc48025565ab5d4bfa6ba1c91"
 dependencies = [
  "imaging",
  "imaging_wgpu",
@@ -2583,7 +2583,7 @@ dependencies = [
 [[package]]
 name = "masonry_testing"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#7fe469d6bd1ddc486d406a6eb4f9e776b5ffe34d"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#dbcdffd896f12a3bc48025565ab5d4bfa6ba1c91"
 dependencies = [
  "accesskit_consumer 0.35.0",
  "image",
@@ -4790,7 +4790,7 @@ dependencies = [
 [[package]]
 name = "tree_arena"
 version = "0.2.0"
-source = "git+https://github.com/linebender/xilem.git#7fe469d6bd1ddc486d406a6eb4f9e776b5ffe34d"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#dbcdffd896f12a3bc48025565ab5d4bfa6ba1c91"
 dependencies = [
  "hashbrown 0.17.1",
 ]

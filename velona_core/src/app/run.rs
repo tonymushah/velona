@@ -26,6 +26,7 @@ use crate::app::event_listener::{
     AppEventHandlers, EmitAppEventToHandlers, UnRegisterAppEventHandler,
 };
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
+use crate::events::property_stack::PropertyStackMethods;
 use crate::manager::OtherManagerMethods;
 use crate::utils::HandlerId;
 use crate::window;
@@ -284,6 +285,53 @@ where
             }
             OtherManagerMethods::OwnedDisplayHandle(sender) => {
                 let _ = sender.send(ev.owned_display_handle());
+            }
+        }
+    }
+}
+
+// --- Property Stack methods handling --- //
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
+impl<W> AppRunner<W>
+where
+    W: WindowRenderer,
+{
+    fn handle_property_stack_methods(&mut self, method: PropertyStackMethods) {
+        match method.type_ {
+            crate::events::property_stack::PropertyStackMethodsType::Add { stack, sender } => {
+                if sender.is_canceled() {
+                    log::warn!("Receiver already dropped, aborting");
+                    return;
+                }
+                self.use_window_render_root(method.window_id, |rr| {
+                    if let Err(err) = sender.send(rr.add_property_stack(stack)) {
+                        log::error!("Cannot send {} to its receiver", err);
+                        rr.remove_property_stack(err);
+                    }
+                });
+            }
+            crate::events::property_stack::PropertyStackMethodsType::Edit { id, edit_fn } => {
+                self.use_window_render_root(method.window_id, |rr| {
+                    if rr.has_property_stack(id) {
+                        rr.edit_property_stack(id, edit_fn);
+                    }
+                });
+            }
+            crate::events::property_stack::PropertyStackMethodsType::Remove { id } => {
+                self.use_window_render_root(method.window_id, |rr| {
+                    rr.remove_property_stack(id);
+                });
+            }
+            crate::events::property_stack::PropertyStackMethodsType::IsPresent { id, sender } => {
+                if sender.is_canceled() {
+                    log::warn!("Receiver already dropped, aborting");
+                    return;
+                }
+                self.use_window_render_root(method.window_id, |rr| {
+                    if sender.send(rr.has_property_stack(id)).is_err() {
+                        log::error!("Cannot send data to its receiver")
+                    }
+                });
             }
         }
     }
@@ -552,6 +600,9 @@ where
                 }
                 EventLoopEvent::ManagerMethods(cmd) => {
                     self.execute_manager_methods(event_loop, *cmd);
+                }
+                EventLoopEvent::PropertyStack(property_stack_methods) => {
+                    self.handle_property_stack_methods(*property_stack_methods);
                 }
             }
         }

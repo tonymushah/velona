@@ -9,6 +9,7 @@ use send_wrapper::SendWrapper;
 use winit::window::{Window, WindowId};
 
 use crate::app::event_listener::{RegisterAppEvent, UnRegisterAppEventHandler};
+use crate::events::property_stack::PropertyStackMethods;
 use crate::manager::OtherManagerMethods;
 use crate::window::event_listener::{RegisterWindowEventHandler, UnregisterWindowEventHandlerType};
 use crate::{
@@ -76,10 +77,11 @@ pub(crate) enum UnregisterEventHandler {
     },
 }
 
+#[derive(derive_more::Debug)]
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<accesskit_winit::Event>),
     RunTask(Runnable),
-    NewWindow(Box<WindowBuilder>),
+    NewWindow(#[debug(skip)] Box<WindowBuilder>),
     CloseWindow(WindowId),
     SetClipboardContent(String),
     HandleRenderRootSignals(WindowId, Box<SendWrapper<RenderRootSignal>>),
@@ -92,43 +94,12 @@ pub(crate) enum EventLoopEvent {
     RegisterHandler(Box<RegisterEventHandler>),
     UnRegisterHandler(Box<UnregisterEventHandler>),
     ManagerMethods(Box<OtherManagerMethods>),
+    PropertyStack(Box<PropertyStackMethods>),
 }
 
-impl Debug for EventLoopEvent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::AccessKitAction(arg0) => f.debug_tuple("AccessKitAction").field(arg0).finish(),
-            Self::RunTask(_) => write!(f, "RunTasks"),
-            Self::NewWindow(_) => f.debug_tuple("NewWindow").finish(),
-            Self::CloseWindow(arg0) => f.debug_tuple("CloseWindow").field(arg0).finish(),
-            Self::SetClipboardContent(arg0) => {
-                f.debug_tuple("SetClipboardContent").field(arg0).finish()
-            }
-            Self::HandleRenderRootSignals(id, _) => f
-                .debug_tuple("HandleRenderRootSignals")
-                .field(id)
-                .field(&"NonSend")
-                .finish(),
-            Self::EditWidget(arg0) => f.debug_tuple("EditWidget").field(arg0).finish(),
-            Self::UseWidget(arg0) => f.debug_tuple("UseWidget").field(arg0).finish(),
-            Self::UseWindowRenderRoot(arg0) => {
-                f.debug_tuple("UseWindowRenderRoot").field(arg0).finish()
-            }
-            Self::UseWinitWindow(arg0) => f.debug_tuple("UseWinitWindow").field(arg0).finish(),
-            Self::GetAppChildReactiveOwner(arg0) => f
-                .debug_tuple("GetAppChildReactiveOwner")
-                .field(arg0)
-                .finish(),
-            Self::GetWindowChildReactiveOwner(arg0) => f
-                .debug_tuple("GetWindowChildReactiveOwner")
-                .field(arg0)
-                .finish(),
-            Self::RegisterHandler(arg0) => f.debug_tuple("RegisterHandler").field(arg0).finish(),
-            Self::UnRegisterHandler(arg0) => {
-                f.debug_tuple("UnregisterHandler").field(arg0).finish()
-            }
-            Self::ManagerMethods(arg0) => f.debug_tuple("ManagerMethods").field(arg0).finish(),
-        }
+impl From<PropertyStackMethods> for EventLoopEvent {
+    fn from(value: PropertyStackMethods) -> Self {
+        Self::PropertyStack(Box::new(value))
     }
 }
 

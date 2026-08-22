@@ -195,6 +195,14 @@ pub fn register_widget_action_listener(widget_id: WidgetId, handler_fn: HandlerF
             return;
         }
     };
+    if let Some(current) = Owner::current() {
+        let to_send = current.child();
+        handler_fn = Box::new(move |e| {
+            to_send.with(|| {
+                handler_fn(e);
+            })
+        })
+    }
     let handler_id = window
         .register_action_handler(widget_id, handler_fn)
         .unwrap();

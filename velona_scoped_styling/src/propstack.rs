@@ -20,11 +20,11 @@ use crate::{ApplyToNewWidget, use_window_local};
 pub enum EditMode {
     /// Deferred means that the property editing will use the [`WindowHandle`] property stack modification API,
     /// which can sometimes put delays on the rendering if the event loop is exhausted.
+    #[default]
     Deferred,
     /// Immediate means that property editing will use the [`WindowRenderRootRef`] from the current context.
     ///
     /// Faster but can sometimes lock the [`WindowRenderRef`].
-    #[default]
     Immediate,
 }
 

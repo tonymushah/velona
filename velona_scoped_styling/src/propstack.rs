@@ -17,6 +17,9 @@ pub struct ScopedPropstack {
 }
 
 impl Default for ScopedPropstack {
+    /// Create a new scoped property stack.
+    ///
+    /// The property stack will be removed [`on_cleanup`].
     fn default() -> Self {
         let window = use_window_local();
         let (id, set_id) = arc_signal(None);
@@ -46,6 +49,9 @@ impl Default for ScopedPropstack {
 }
 
 impl ScopedPropstack {
+    pub fn get_id(&self) -> ArcReadSignal<Option<PropertyStackId>> {
+        self.id.clone()
+    }
     pub fn prop_opt<P, Pfn>(self, selector: Selector, prop: Pfn) -> Self
     where
         P: Property,

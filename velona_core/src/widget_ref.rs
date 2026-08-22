@@ -137,27 +137,15 @@ where
     where
         F: FnOnce(WidgetMut<W>) -> O,
     {
-        if self.thread_id != thread::current().id() {
-            return Err(EditWidgetLocalError::OutsideMainThread);
-        }
-        let weak_root = use_window_render_root_ref().ok_or(EditWidgetLocalError::OutsideTree)?;
-        weak_root
-            .use_inner_render_root_mut(|render_root| {
-                if render_root.tree.has_widget(self.id) {
-                    render_root.tree.edit_widget(self.id, |mut widget_mut| {
-                        let Some(widget_mut) = widget_mut.try_downcast::<W>() else {
-                            return Err(EditWidgetLocalError::InvalidWidgetCast {
-                                original_cast: TypeId::of::<W>(),
-                                current_cast: widget_mut.widget.type_id(),
-                            });
-                        };
-                        Ok(edit_fn(widget_mut))
-                    })
-                } else {
-                    Err(EditWidgetLocalError::WidgetNotFound)
-                }
-            })
-            .ok_or(EditWidgetLocalError::UnaccessibleTree)?
+        self.edit_erased_local_now(|mut widget_mut| -> Result<O, EditWidgetLocalError> {
+            let Some(widget_mut) = widget_mut.try_downcast::<W>() else {
+                return Err(EditWidgetLocalError::InvalidWidgetCast {
+                    original_cast: TypeId::of::<W>(),
+                    current_cast: widget_mut.widget.type_id(),
+                });
+            };
+            Ok(edit_fn(widget_mut))
+        })?
     }
 
     /// Edit the underlying widget "safely".
@@ -310,6 +298,30 @@ impl<W> VelonaWidgetRef<W>
 where
     W: Widget + ?Sized,
 {
+    /// Edit the current widget right now.
+    ///
+    /// This function will always fail if called outside the main thread.
+    pub fn edit_erased_local_now<F, O>(&self, edit_fn: F) -> Result<O, EditWidgetLocalError>
+    where
+        F: FnOnce(WidgetMut<dyn Widget>) -> O,
+    {
+        if self.thread_id != thread::current().id() {
+            return Err(EditWidgetLocalError::OutsideMainThread);
+        }
+        let weak_root = use_window_render_root_ref().ok_or(EditWidgetLocalError::OutsideTree)?;
+        weak_root
+            .use_inner_render_root_mut(|render_root| {
+                if render_root.tree.has_widget(self.id) {
+                    render_root
+                        .tree
+                        .edit_widget(self.id, |widget_mut| Ok(edit_fn(widget_mut)))
+                } else {
+                    Err(EditWidgetLocalError::WidgetNotFound)
+                }
+            })
+            .ok_or(EditWidgetLocalError::UnaccessibleTree)?
+    }
+
     /// Change the widget signature
     pub fn cast<W1: Widget + 'static>(self) -> VelonaWidgetRef<W1> {
         VelonaWidgetRef::<W1> {

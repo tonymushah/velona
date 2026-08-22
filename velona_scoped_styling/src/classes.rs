@@ -2,6 +2,7 @@ use velona_core::masonry_core::core::{Property, Selector};
 
 use crate::{ApplyScopedStyles, ApplyToNewWidget, ScopedPropstack};
 
+#[derive(Debug)]
 pub struct ScopedClasses<const N: usize> {
     classes: [&'static str; N],
     prop_stack: ScopedPropstack,

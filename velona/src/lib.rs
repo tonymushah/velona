@@ -18,6 +18,8 @@ pub mod utils;
 pub use velona_core::widget_ref;
 #[doc(inline)]
 pub use velona_core::window;
+#[doc(inline)]
+pub use velona_scoped_styling as scoped_styling;
 pub mod widgets;
 // TODO add `layers` module
 

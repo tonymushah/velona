@@ -1019,9 +1019,9 @@ dependencies = [
 
 [[package]]
 name = "crc32fast"
-version = "1.5.0"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9481c1c90cbf2ac953f07c8d4a58aa3945c425b7185c9154d67a65e4230da511"
+checksum = "8498c871161e1742aaa9d52551b2d6ebdd4c3d45a3be423e3728f33b955be550"
 dependencies = [
  "cfg-if",
 ]
@@ -2443,13 +2443,13 @@ dependencies = [
  "bitflags 2.13.1",
  "libc",
  "plain",
- "redox_syscall 0.9.2",
+ "redox_syscall 0.9.3",
 ]
 
 [[package]]
 name = "linebender_include_doc_path"
 version = "0.1.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#7010dec8b5ea695379dae6cc7ab32ca15dd3c778"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2521,7 +2521,7 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#7010dec8b5ea695379dae6cc7ab32ca15dd3c778"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
 dependencies = [
  "accesskit",
  "linebender_include_doc_path",
@@ -2535,7 +2535,7 @@ dependencies = [
 [[package]]
 name = "masonry_core"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#7010dec8b5ea695379dae6cc7ab32ca15dd3c778"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
 dependencies = [
  "accesskit",
  "anymap3",
@@ -2562,7 +2562,7 @@ dependencies = [
 [[package]]
 name = "masonry_imaging"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#7010dec8b5ea695379dae6cc7ab32ca15dd3c778"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
 dependencies = [
  "imaging",
  "imaging_wgpu",
@@ -2583,7 +2583,7 @@ dependencies = [
 [[package]]
 name = "masonry_testing"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#7010dec8b5ea695379dae6cc7ab32ca15dd3c778"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
 dependencies = [
  "accesskit_consumer 0.35.0",
  "image",
@@ -3872,9 +3872,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.9.2"
+version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1c93da5bb2c5d4e6c0ef7abeead62c89169a0a4882bfb83ac892f2423aea2fe"
+checksum = "d678d17679829e73d371e96880897e98fee2ded7acc0a50bdf8af2affa4b2fe5"
 dependencies = [
  "bitflags 2.13.1",
 ]
@@ -4790,7 +4790,7 @@ dependencies = [
 [[package]]
 name = "tree_arena"
 version = "0.2.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#7010dec8b5ea695379dae6cc7ab32ca15dd3c778"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
 dependencies = [
  "hashbrown 0.17.1",
 ]

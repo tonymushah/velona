@@ -329,6 +329,7 @@ fn main_view() -> AnyNewWidget {
 
 #[cfg_attr(feature = "hotpath-run", hotpath::main)]
 fn main() {
+    env_logger::init();
     let runtime = runtime::Builder::new_multi_thread()
         .enable_all()
         .build()

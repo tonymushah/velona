@@ -3,9 +3,12 @@ use std::{sync, time::Duration};
 use derive_more::{Display, FromStr};
 use enum_all_variants::AllVariants;
 use image::open;
+use masonry::core::DefaultProperties;
 use masonry::imaging::peniko::{Blob, ImageBrush, ImageData, ImageSampler, color::AlphaColor};
+use masonry::layers::SelectorMenu;
 use masonry::palette::css::BISQUE;
 use masonry::properties::TrackColor;
+use masonry::widgets::SelectorItem;
 use masonry::{
     core::Widget,
     layout::Length,
@@ -291,6 +294,16 @@ fn main() {
             }
         })
         .with_window(WindowBuilder::new(main_view).with_base_color(WHITE))
+        .with_default_properties(default_properties())
         .run()
         .unwrap();
+}
+
+fn default_properties() -> DefaultProperties {
+    let mut p = DefaultProperties::default();
+    p.insert::<SelectorMenu, _>(Background::Color(WHITE_SMOKE));
+    p.insert::<SelectorMenu, _>(BorderWidth::all(Length::px(1.0)));
+    p.insert::<SelectorMenu, _>(BorderColor::new(BLACK));
+    p.insert::<SelectorItem, _>(Padding::from_vh(Length::px(2.5), Length::px(5.0)));
+    p
 }

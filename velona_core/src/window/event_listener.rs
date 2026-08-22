@@ -4,7 +4,7 @@ use std::{collections::HashMap, fmt::Debug};
 
 use log::{debug, warn};
 use masonry_core::core::{ErasedAction, Widget, WidgetId};
-use reactive_graph::owner::on_cleanup;
+use reactive_graph::owner::{Owner, on_cleanup};
 
 use crate::{
     utils::events::{EventMap, NoParamHandler},
@@ -183,7 +183,7 @@ impl Debug for WindowEventHandlers {
 /// - the app or the window already closed (always panics)
 ///
 /// For a typed version, use [`register_typed_widget_action_listener`].
-pub fn register_widget_action_listener(widget_id: WidgetId, handler_fn: HandlerFn) {
+pub fn register_widget_action_listener(widget_id: WidgetId, mut handler_fn: HandlerFn) {
     let Some(window) = use_window() else {
         #[cfg(debug_assertions)]
         {

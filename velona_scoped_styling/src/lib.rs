@@ -7,7 +7,7 @@ mod classes;
 mod propstack;
 
 pub use classes::{ScopedClasses, ScopedClassesState};
-pub use propstack::ScopedPropstack;
+pub use propstack::{EditMode, ScopedPropstack};
 
 pub(crate) fn use_window_local() -> WindowHandle {
     use_window().expect("Cannot find current window handle in the current context")

@@ -1,6 +1,6 @@
 use velona_core::masonry_core::core::{Property, Selector};
 
-use crate::{ApplyScopedStyles, ApplyToNewWidget, ScopedPropstack};
+use crate::{ApplyScopedStyles, ApplyToNewWidget, ScopedPropstack, propstack::EditMode};
 
 #[derive(Debug)]
 pub struct ScopedClasses<const N: usize> {
@@ -86,6 +86,10 @@ impl<const N: usize> ScopedClasses<N> {
     }
     pub fn propstack_ref(&self) -> &ScopedPropstack {
         &self.prop_stack
+    }
+    pub fn with_edit_mode(mut self, edit_mode: EditMode) -> Self {
+        self.prop_stack = self.prop_stack.with_edit_mode(edit_mode);
+        self
     }
 }
 

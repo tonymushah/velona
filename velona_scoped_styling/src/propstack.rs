@@ -7,31 +7,14 @@ use velona_core::{
         signal::{ArcReadSignal, arc_signal},
         traits::GetUntracked,
     },
-    render_root::use_window_render_root_ref,
     task::spawn_local_scoped_with_cancellation,
 };
 
-#[cfg(doc)]
-use velona_core::{render_root::WindowRenderRootRef, window::WindowHandle};
-
 use crate::{ApplyToNewWidget, use_window_local};
-
-#[derive(Debug, Clone, Copy, Default)]
-pub enum EditMode {
-    /// Deferred means that the property editing will use the [`WindowHandle`] property stack modification API,
-    /// which can sometimes put delays on the rendering if the event loop is exhausted.
-    #[default]
-    Deferred,
-    /// Immediate means that property editing will use the [`WindowRenderRootRef`] from the current context.
-    ///
-    /// Faster but can sometimes lock the [`WindowRenderRef`].
-    Immediate,
-}
 
 #[derive(Debug)]
 pub struct ScopedPropstack {
     id: ArcReadSignal<Option<PropertyStackId>>,
-    mode: EditMode,
 }
 
 impl Default for ScopedPropstack {
@@ -41,10 +24,7 @@ impl Default for ScopedPropstack {
     fn default() -> Self {
         let window = use_window_local();
         let (id, set_id) = arc_signal(None);
-        let data = Self {
-            id: id.clone(),
-            mode: Default::default(),
-        };
+        let data = Self { id: id.clone() };
         {
             let window = window.clone();
             spawn_local_scoped_with_cancellation(async move {
@@ -73,32 +53,31 @@ impl ScopedPropstack {
     pub fn get_id(&self) -> ArcReadSignal<Option<PropertyStackId>> {
         self.id.clone()
     }
-    pub fn with_edit_mode(mut self, edit_mode: EditMode) -> Self {
-        self.mode = edit_mode;
-        self
-    }
+    // pub fn with_edit_mode(mut self, edit_mode: EditMode) -> Self {
+    //     self.mode = edit_mode;
+    //     self
+    // }
     pub fn prop_opt<P, Pfn>(self, selector: Selector, prop: Pfn) -> Self
     where
         P: Property,
         Pfn: Fn(Option<P>) -> Option<P> + 'static,
     {
-        let mode = self.mode;
         let id = self.id.clone();
         let window = use_window_local();
-        let tree = use_window_render_root_ref()
-            .expect("Cannot get the tree render root in the current context");
+        // let tree = use_window_render_root_ref()
+        //     .expect("Cannot get the tree render root in the current context");
         Effect::new(move |old_property: Option<Option<P>>| -> Option<P> {
             let id = id()?;
             let old_property = old_property.flatten();
             let new_property = prop(old_property);
-            match mode {
-                EditMode::Deferred => {
-                    derrefed_edit(&selector, &window, id, &new_property);
-                }
-                EditMode::Immediate => {
-                    immediate_edit(&selector, &tree, id, &new_property);
-                }
-            };
+            // match mode {
+            //     EditMode::Deferred => {
+            derrefed_edit(&selector, &window, id, &new_property);
+            //     }
+            //     EditMode::Immediate => {
+            //         immediate_edit(&selector, &tree, id, &new_property);
+            //     }
+            // };
 
             new_property
         });
@@ -147,42 +126,42 @@ fn derrefed_edit<P>(
     }
 }
 
-fn immediate_edit<P>(
-    selector: &Selector,
-    tree: &velona_core::render_root::WindowRenderRootRef,
-    id: PropertyStackId,
-    new_property: &Option<P>,
-) where
-    P: Property,
-{
-    let new_property = new_property.clone();
-    let selector = selector.clone();
-    let res = tree.use_inner_render_root_mut(|inner| {
-        inner.tree.edit_property_stack(id, |edit| {
-            match (edit.has_selector(&selector), new_property) {
-                (true, None) => {
-                    edit.edit_last_selector_property_set(&selector, |e| {
-                        e.remove::<P>();
-                    });
-                }
-                (true, Some(property)) => {
-                    edit.edit_last_selector_property_set(&selector, |e| {
-                        e.insert(property);
-                    });
-                }
-                (false, None) => {
-                    // Nothing...
-                }
-                (false, Some(property)) => {
-                    edit.push(selector, property);
-                }
-            }
-        });
-    });
-    if res.is_none() {
-        log::warn!("cannot change property stack value");
-    }
-}
+// fn immediate_edit<P>(
+//     selector: &Selector,
+//     tree: &velona_core::render_root::WindowRenderRootRef,
+//     id: PropertyStackId,
+//     new_property: &Option<P>,
+// ) where
+//     P: Property,
+// {
+//     let new_property = new_property.clone();
+//     let selector = selector.clone();
+//     let res = tree.use_inner_render_root_mut(|inner| {
+//         inner.tree.edit_property_stack(id, |edit| {
+//             match (edit.has_selector(&selector), new_property) {
+//                 (true, None) => {
+//                     edit.edit_last_selector_property_set(&selector, |e| {
+//                         e.remove::<P>();
+//                     });
+//                 }
+//                 (true, Some(property)) => {
+//                     edit.edit_last_selector_property_set(&selector, |e| {
+//                         e.insert(property);
+//                     });
+//                 }
+//                 (false, None) => {
+//                     // Nothing...
+//                 }
+//                 (false, Some(property)) => {
+//                     edit.push(selector, property);
+//                 }
+//             }
+//         });
+//     });
+//     if res.is_none() {
+//         log::warn!("cannot change property stack value");
+//     }
+// }
 
 impl ApplyToNewWidget for ScopedPropstack {
     fn apply_to_widget<W>(

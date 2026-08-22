@@ -4,6 +4,7 @@ use derive_more::{Display, FromStr};
 use enum_all_variants::AllVariants;
 use image::open;
 use masonry::imaging::peniko::{Blob, ImageBrush, ImageData, ImageSampler, color::AlphaColor};
+use masonry::palette::css::BISQUE;
 use masonry::properties::TrackColor;
 use masonry::{
     core::Widget,
@@ -32,6 +33,7 @@ use velona_core::reactive::{
     traits::{Get, Read, Set, Update},
 };
 use velona_renderer_vello::{VelloWindowRenderer, create_wgpu_context};
+use velona_scoped_styling::{ApplyScopedStyles, ScopedClasses};
 
 struct TowaProps {
     show: UnsyncCallback<(), bool>,
@@ -198,7 +200,16 @@ fn main_view() -> AnyNewWidget {
     }
 
     let (placement, set_placement) = signal(BadgePlacement::TopRight);
+    // let (badge_color, set_bagde_color) = signal()
 
+    let badge_style = ScopedClasses::new(["badge"])
+        .prop(Default::default(), |_| Background::Color(BISQUE))
+        .prop(Default::default(), |_| {
+            Padding::from_vh(Length::px(2.5), Length::px(5.0))
+        })
+        .prop(Default::default(), |_| BorderColor::new(BLACK))
+        .prop(Default::default(), |_| BorderWidth::all(Length::px(1.0)))
+        .prop(Default::default(), |_| CornerRadius::all(Length::px(3.0)));
     Flex::column()
         .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
         // The actual badge
@@ -225,7 +236,11 @@ fn main_view() -> AnyNewWidget {
             .prepare()
             .badge(move || {
                 if !is_zero.get() {
-                    Some(badge_count(move || count.get()).erased())
+                    Some(
+                        badge_count(move || count.get())
+                            .apply(&badge_style)
+                            .erased(),
+                    )
                 } else {
                     None
                 }

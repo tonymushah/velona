@@ -1,4 +1,5 @@
 use velona_core::{
+    NewWidgetExt,
     masonry_core::core::{Property, PropertyStack, PropertyStackId, Selector},
     reactive::{
         effect::Effect,
@@ -9,7 +10,7 @@ use velona_core::{
     task::spawn_local_scoped_with_cancellation,
 };
 
-use crate::use_window_local;
+use crate::{ApplyToNewWidget, use_window_local};
 
 #[derive(Debug)]
 pub struct ScopedPropstack {
@@ -99,5 +100,22 @@ impl ScopedPropstack {
         Pfn: Fn(Option<P>) -> P + 'static,
     {
         self.prop_opt(selector, move |old_prop| Some(prop(old_prop)))
+    }
+}
+
+impl ApplyToNewWidget for ScopedPropstack {
+    fn apply_to_widget<W>(
+        &self,
+        new_widget: velona_core::masonry_core::core::NewWidget<W>,
+    ) -> velona_core::masonry_core::core::NewWidget<W>
+    where
+        W: velona_core::masonry_core::core::Widget + 'static,
+    {
+        let id = self.get_id();
+        new_widget.use_reactive_widget_mut(move |mut this| {
+            if let Some(id) = id() {
+                this.ctx.set_property_stack(id);
+            }
+        })
     }
 }

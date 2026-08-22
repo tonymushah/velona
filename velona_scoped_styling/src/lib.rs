@@ -3,8 +3,10 @@ use velona_core::{
     window::{WindowHandle, use_window},
 };
 
+mod classes;
 mod propstack;
 
+pub use classes::{ScopedClasses, ScopedClassesState};
 pub use propstack::ScopedPropstack;
 
 pub(crate) fn use_window_local() -> WindowHandle {

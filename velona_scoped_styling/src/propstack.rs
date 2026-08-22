@@ -1,5 +1,5 @@
 use velona_core::{
-    NewWidgetExt,
+    NewWidgetBaseExt,
     masonry_core::core::{Property, PropertyStack, PropertyStackId, Selector},
     reactive::{
         effect::Effect,
@@ -109,10 +109,10 @@ impl ApplyToNewWidget for ScopedPropstack {
         new_widget: velona_core::masonry_core::core::NewWidget<W>,
     ) -> velona_core::masonry_core::core::NewWidget<W>
     where
-        W: velona_core::masonry_core::core::Widget + 'static,
+        W: velona_core::masonry_core::core::Widget + ?Sized,
     {
         let id = self.get_id();
-        new_widget.use_reactive_widget_mut(move |mut this| {
+        new_widget.use_reactive_widget_erased_mut(move |mut this| {
             if let Some(id) = id() {
                 this.ctx.set_property_stack(id);
             }

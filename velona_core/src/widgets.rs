@@ -15,7 +15,7 @@ use crate::{
     window::{event_listener::register_typed_widget_action_listener, use_window},
 };
 
-pub trait NewWidgetExtBase {
+pub trait NewWidgetBaseExt {
     /// Create a [`WidgetRef`](VelonaWidgetRef) that you can send safely between thread.
     fn create_erased_velona_ref(&self) -> VelonaWidgetRef<dyn Widget>;
     /// Use [`WidgetMut`] inside an [`Effect`] with a value.
@@ -23,7 +23,7 @@ pub trait NewWidgetExtBase {
     /// Since its runs inside an [effect](Effect), any signal changes (subscription) will (re-)run the `fun`.
     ///
     /// The return value might useful if you want to track values between re-runs.
-    fn use_reactive_widget_mut_erased_with_effect_val<F, V>(self, fun: F) -> Self
+    fn use_reactive_widget_erased_mut_with_effect_val<F, V>(self, fun: F) -> Self
     where
         F: FnMut(WidgetMut<'_, dyn Widget>, Option<V>) -> Option<V> + 'static,
         V: 'static;
@@ -100,11 +100,11 @@ pub trait NewWidgetExtBase {
         P: Fn() -> PropertyStackId + 'static;
 }
 
-impl<W> NewWidgetExtBase for NewWidget<W>
+impl<W> NewWidgetBaseExt for NewWidget<W>
 where
-    W: Widget,
+    W: Widget + ?Sized,
 {
-    fn use_reactive_widget_mut_erased_with_effect_val<F, V>(self, mut fun: F) -> Self
+    fn use_reactive_widget_erased_mut_with_effect_val<F, V>(self, mut fun: F) -> Self
     where
         F: FnMut(WidgetMut<'_, dyn Widget>, Option<V>) -> Option<V> + 'static,
         V: 'static,
@@ -126,7 +126,7 @@ where
     where
         F: FnMut(WidgetMut<'_, dyn Widget>) + 'static,
     {
-        self.use_reactive_widget_mut_erased_with_effect_val::<_, ()>(move |this, _| {
+        self.use_reactive_widget_erased_mut_with_effect_val::<_, ()>(move |this, _| {
             fun(this);
             None
         })
@@ -142,23 +142,25 @@ where
     where
         C: Fn() -> Option<String> + 'static,
     {
-        self.use_reactive_widget_mut_with_effect_val::<_, String>(move |mut widget, old_class| {
-            if let Some(old_class) = old_class {
-                widget.ctx.remove_class(&old_class);
-            }
-            let new_value = class();
-            if let Some(new_class) = new_value.as_ref() {
-                widget.ctx.add_class(new_class);
-            }
-            new_value
-        })
+        self.use_reactive_widget_erased_mut_with_effect_val::<_, String>(
+            move |mut widget, old_class| {
+                if let Some(old_class) = old_class {
+                    widget.ctx.remove_class(&old_class);
+                }
+                let new_value = class();
+                if let Some(new_class) = new_value.as_ref() {
+                    widget.ctx.add_class(new_class);
+                }
+                new_value
+            },
+        )
     }
 
     fn classes<C>(self, classes: C) -> Self
     where
         C: Fn() -> Vec<String> + 'static,
     {
-        self.use_reactive_widget_mut_with_effect_val::<_, Vec<String>>(
+        self.use_reactive_widget_erased_mut_with_effect_val::<_, Vec<String>>(
             move |mut widget, old_classes| {
                 if let Some(old_classes) = old_classes {
                     for old_class in old_classes {
@@ -189,7 +191,7 @@ where
     where
         T: Fn() -> Affine + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
+        self.use_reactive_widget_erased_mut(move |mut this| {
             this.ctx.set_transform(transform());
         })
     }
@@ -198,7 +200,7 @@ where
     where
         P: Fn() -> PropertyStackId + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
+        self.use_reactive_widget_erased_mut(move |mut this| {
             this.ctx.set_property_stack(property_stack_id());
         })
     }
@@ -206,7 +208,7 @@ where
     where
         D: Fn(bool) -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
+        self.use_reactive_widget_erased_mut(move |mut this| {
             let disabled = disabled(this.ctx.is_disabled());
             this.ctx.set_disabled(disabled);
         })
@@ -235,7 +237,7 @@ where
 }
 
 // TODO add documentation for this trait and its methods.
-pub trait NewWidgetExt<W>: NewWidgetExtBase
+pub trait NewWidgetExt<W>: NewWidgetBaseExt
 where
     W: Widget + 'static,
 {

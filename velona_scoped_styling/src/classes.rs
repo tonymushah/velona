@@ -95,7 +95,7 @@ impl<const N: usize> ApplyToNewWidget for ScopedClasses<N> {
         new_widget: velona_core::masonry_core::core::NewWidget<W>,
     ) -> velona_core::masonry_core::core::NewWidget<W>
     where
-        W: velona_core::masonry_core::core::Widget + 'static,
+        W: velona_core::masonry_core::core::Widget + ?Sized,
     {
         new_widget
             .with_classes(self.classes.into_iter().map(String::from))

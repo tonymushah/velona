@@ -16,7 +16,7 @@ pub(crate) fn use_window_local() -> WindowHandle {
 pub trait ApplyToNewWidget {
     fn apply_to_widget<W>(&self, new_widget: NewWidget<W>) -> NewWidget<W>
     where
-        W: Widget + 'static;
+        W: Widget + ?Sized;
 }
 
 pub trait ApplyScopedStyles {
@@ -27,7 +27,7 @@ pub trait ApplyScopedStyles {
 
 impl<W> ApplyScopedStyles for NewWidget<W>
 where
-    W: Widget + 'static,
+    W: Widget + ?Sized,
 {
     fn apply<A>(self, styles: &A) -> Self
     where

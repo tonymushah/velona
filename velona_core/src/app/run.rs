@@ -304,7 +304,7 @@ where
                     return;
                 }
                 self.use_window_render_root(method.window_id, |rr| {
-                    if let Err(err) = sender.send(rr.add_property_stack(stack)) {
+                    if let Err(err) = sender.send(rr.insert_property_stack(stack)) {
                         log::error!("Cannot send {} to its receiver", err);
                         rr.remove_property_stack(err);
                     }

@@ -4,8 +4,8 @@ use velona_core::{
     reactive::{
         effect::Effect,
         owner::on_cleanup,
-        signal::{ArcReadSignal, arc_signal},
-        traits::GetUntracked,
+        signal::{ArcReadSignal, ArcWriteSignal, arc_signal},
+        traits::{GetUntracked, Update},
     },
     task::spawn_local_scoped_with_cancellation,
 };
@@ -15,22 +15,54 @@ use crate::{ApplyToNewWidget, use_window_local};
 #[derive(Debug)]
 pub struct ScopedPropstack {
     id: ArcReadSignal<Option<PropertyStackId>>,
+    stack: ArcWriteSignal<PropertyStack>,
 }
 
 impl Default for ScopedPropstack {
-    /// Create a new scoped property stack.
+    /// Create an empty scoped property stack.
     ///
     /// The property stack will be removed [`on_cleanup`].
     fn default() -> Self {
+        Self::new(PropertyStack::default())
+    }
+}
+
+impl ScopedPropstack {
+    /// Create a new scoped property stack.
+    ///
+    /// The property stack will be removed [`on_cleanup`].
+    pub fn new(property_stack: PropertyStack) -> Self {
         let window = use_window_local();
         let (id, set_id) = arc_signal(None);
-        let data = Self { id: id.clone() };
+        let (property_stack, set_property_stack) = arc_signal(property_stack);
+        let data = Self {
+            id: id.clone(),
+            stack: set_property_stack,
+        };
         {
             let window = window.clone();
+            let property_stack = property_stack.clone();
             spawn_local_scoped_with_cancellation(async move {
-                match window.add_property_stack(PropertyStack::default()).await {
+                match window
+                    .add_property_stack(property_stack.get_untracked())
+                    .await
+                {
                     Ok(pid) => set_id(Some(pid)),
                     Err(err) => log::error!("Cannot create property stack: {err}"),
+                }
+            });
+        }
+        {
+            let window = window.clone();
+            let id = id.clone();
+            Effect::new(move || {
+                let property_stack = property_stack();
+                let id = id();
+                if let Some(property_stack_id) = id {
+                    let res = window.replace_property_stack(property_stack_id, property_stack);
+                    if let Err(err) = res {
+                        log::error!("{err}");
+                    }
                 }
             });
         }
@@ -47,9 +79,7 @@ impl Default for ScopedPropstack {
         }
         data
     }
-}
 
-impl ScopedPropstack {
     pub fn get_id(&self) -> ArcReadSignal<Option<PropertyStackId>> {
         self.id.clone()
     }
@@ -62,22 +92,37 @@ impl ScopedPropstack {
         P: Property,
         Pfn: Fn(Option<P>) -> Option<P> + 'static,
     {
-        let id = self.id.clone();
-        let window = use_window_local();
+        let stack = self.stack.clone();
         // let tree = use_window_render_root_ref()
         //     .expect("Cannot get the tree render root in the current context");
         Effect::new(move |old_property: Option<Option<P>>| -> Option<P> {
-            let id = id()?;
             let old_property = old_property.flatten();
             let new_property = prop(old_property);
-            // match mode {
-            //     EditMode::Deferred => {
-            derrefed_edit(&selector, &window, id, &new_property);
-            //     }
-            //     EditMode::Immediate => {
-            //         immediate_edit(&selector, &tree, id, &new_property);
-            //     }
-            // };
+            let selector = selector.clone();
+            stack.update(|stack| {
+                match (stack.has_selector(&selector), &new_property) {
+                    (true, None) => {
+                        if let Some(set) = stack.get_last_selector_property_set_mut(&selector) {
+                            set.remove::<P>();
+                        } else {
+                            unreachable!("The property set is already in stack");
+                        }
+                    }
+                    (true, Some(property)) => {
+                        if let Some(set) = stack.get_last_selector_property_set_mut(&selector) {
+                            set.insert(property.clone());
+                        } else {
+                            unreachable!("The property set is already in stack");
+                        }
+                    }
+                    (false, None) => {
+                        // Nothing...
+                    }
+                    (false, Some(property)) => {
+                        stack.push(selector, property.clone());
+                    }
+                }
+            });
 
             new_property
         });
@@ -91,77 +136,6 @@ impl ScopedPropstack {
         self.prop_opt(selector, move |old_prop| Some(prop(old_prop)))
     }
 }
-
-fn derrefed_edit<P>(
-    selector: &Selector,
-    window: &velona_core::window::WindowHandle,
-    id: PropertyStackId,
-    new_property: &Option<P>,
-) where
-    P: Property,
-{
-    let selector = selector.clone();
-    let new_property = new_property.clone();
-    if let Err(err) = window.edit_property_stack(id, move |edit| {
-        match (edit.has_selector(&selector), new_property) {
-            (true, None) => {
-                edit.edit_last_selector_property_set(&selector, |e| {
-                    e.remove::<P>();
-                });
-            }
-            (true, Some(property)) => {
-                edit.edit_last_selector_property_set(&selector, |e| {
-                    e.insert(property);
-                });
-            }
-            (false, None) => {
-                // Nothing...
-            }
-            (false, Some(property)) => {
-                edit.push(selector, property);
-            }
-        }
-    }) {
-        log::warn!("cannot change property stack value {err}");
-    }
-}
-
-// fn immediate_edit<P>(
-//     selector: &Selector,
-//     tree: &velona_core::render_root::WindowRenderRootRef,
-//     id: PropertyStackId,
-//     new_property: &Option<P>,
-// ) where
-//     P: Property,
-// {
-//     let new_property = new_property.clone();
-//     let selector = selector.clone();
-//     let res = tree.use_inner_render_root_mut(|inner| {
-//         inner.tree.edit_property_stack(id, |edit| {
-//             match (edit.has_selector(&selector), new_property) {
-//                 (true, None) => {
-//                     edit.edit_last_selector_property_set(&selector, |e| {
-//                         e.remove::<P>();
-//                     });
-//                 }
-//                 (true, Some(property)) => {
-//                     edit.edit_last_selector_property_set(&selector, |e| {
-//                         e.insert(property);
-//                     });
-//                 }
-//                 (false, None) => {
-//                     // Nothing...
-//                 }
-//                 (false, Some(property)) => {
-//                     edit.push(selector, property);
-//                 }
-//             }
-//         });
-//     });
-//     if res.is_none() {
-//         log::warn!("cannot change property stack value");
-//     }
-// }
 
 impl ApplyToNewWidget for ScopedPropstack {
     fn apply_to_widget<W>(

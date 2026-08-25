@@ -505,7 +505,7 @@ checksum = "82f6aeea286b8eb4dd3431a1be1b59d290ace00f5bfd8e2a159bc2a05e2c1667"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -701,9 +701,9 @@ dependencies = [
 
 [[package]]
 name = "blocking"
-version = "1.6.2"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e83f8d02be6967315521be875afa792a316e28d57b5a2d401897e2a7921b7f21"
+checksum = "a70e4329df6cb94385eed412ec92375c3cdd8a6e502493d1229b6414e4036dfa"
 dependencies = [
  "async-channel",
  "async-task",
@@ -741,7 +741,7 @@ checksum = "fc0e56a716f1e132ff6bf4bdac1c944a3fcdc1cae65f70a4a2a1ac3b401d2d1f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -1189,7 +1189,7 @@ checksum = "c6232dd377dcc64799954cbd3a9bb882e9cdc1308ccd87b1c098f1fb2eaf82a8"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -1539,7 +1539,7 @@ checksum = "ea5190182e6915eb873ddbc16e23b711b6eb1f9c00a0d0a3a91b5f6228475225"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -1634,7 +1634,7 @@ checksum = "9fb9654ba8355388abeb8dcb4fc62f511300867002afc858860463bdd9fe0c44"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -2392,18 +2392,18 @@ checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 
 [[package]]
 name = "libdeflate-sys"
-version = "1.25.2"
+version = "1.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72753e0008ea87963d2f0770042d0df7abe51fafbb8dcaf618ac440f2f1fec0a"
+checksum = "6949d73714ba8c32d2757405b89c94e427f64f078a4041debe07e1b8e9e850e9"
 dependencies = [
  "cc",
 ]
 
 [[package]]
 name = "libdeflater"
-version = "1.25.2"
+version = "1.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1ee41cf6fb1bb6030dfb59ffb7bc01ab26aade44142084c87f0fc7a1658fe71"
+checksum = "0b72b274104f747cb65358c918e38c6cd4a69937937a36c8ad3cfd516c9c471e"
 dependencies = [
  "libdeflate-sys",
 ]
@@ -2449,7 +2449,7 @@ dependencies = [
 [[package]]
 name = "linebender_include_doc_path"
 version = "0.1.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#1d3be7aa9bdb431061257cda500412d72f843eb1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2521,7 +2521,7 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#1d3be7aa9bdb431061257cda500412d72f843eb1"
 dependencies = [
  "accesskit",
  "linebender_include_doc_path",
@@ -2535,7 +2535,7 @@ dependencies = [
 [[package]]
 name = "masonry_core"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#1d3be7aa9bdb431061257cda500412d72f843eb1"
 dependencies = [
  "accesskit",
  "anymap3",
@@ -2562,7 +2562,7 @@ dependencies = [
 [[package]]
 name = "masonry_imaging"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#1d3be7aa9bdb431061257cda500412d72f843eb1"
 dependencies = [
  "imaging",
  "imaging_wgpu",
@@ -2583,7 +2583,7 @@ dependencies = [
 [[package]]
 name = "masonry_testing"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#1d3be7aa9bdb431061257cda500412d72f843eb1"
 dependencies = [
  "accesskit_consumer 0.35.0",
  "image",
@@ -4119,7 +4119,7 @@ checksum = "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -4143,7 +4143,7 @@ checksum = "8d3b1629de253c70a0508c3899572da79ca359fdab27c7920ff00406df418906"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -4407,9 +4407,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "3.0.3"
+version = "3.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53e9bae58849f64dfa4f5d5ae372c8341f7305f82a3868709269343628b659a3"
+checksum = "e6275cddf4610d1775e6d1fe9469b2e77d0f39fd98fb7450901b821e0c53649f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4503,7 +4503,7 @@ checksum = "bc04cd3e1236dd4a98afca4569f2deb3f120e5422a4023be2cb683f8486292af"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -4666,7 +4666,7 @@ checksum = "78773a2a397f451582ce068015985c33193cf6dea8b74d2a639fe457b2f07b0e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -4790,7 +4790,7 @@ dependencies = [
 [[package]]
 name = "tree_arena"
 version = "0.2.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#568aee27f89c966b42a320f88e3815c70f889190"
+source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#1d3be7aa9bdb431061257cda500412d72f843eb1"
 dependencies = [
  "hashbrown 0.17.1",
 ]
@@ -6226,7 +6226,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
  "zbus_names",
  "zvariant",
  "zvariant_utils",
@@ -6337,7 +6337,7 @@ checksum = "34df6fc39dbd26ddc9c10e6a2984476e13acce22e64e4487636ef494369225da"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
 ]
 
 [[package]]
@@ -6394,7 +6394,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 3.0.3",
+ "syn 3.0.4",
  "zvariant_utils",
 ]
 
@@ -6407,6 +6407,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
- "syn 3.0.3",
+ "syn 3.0.4",
  "winnow",
 ]

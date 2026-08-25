@@ -1,8 +1,6 @@
 use futures_channel::oneshot;
-use masonry_core::core::{PropertyStack, PropertyStackId, PropertyStackMut};
+use masonry_core::core::{PropertyStack, PropertyStackId};
 use winit::window::WindowId;
-
-pub type EditFn = Box<dyn FnOnce(&mut PropertyStackMut<'_>) + Send + 'static>;
 
 #[derive(Debug)]
 pub struct PropertyStackMethods {
@@ -16,10 +14,10 @@ pub enum PropertyStackMethodsType {
         stack: PropertyStack,
         sender: oneshot::Sender<PropertyStackId>,
     },
-    Edit {
+    Replace {
         id: PropertyStackId,
         #[debug(ignore)]
-        edit_fn: EditFn,
+        stack: PropertyStack,
     },
     Remove {
         id: PropertyStackId,

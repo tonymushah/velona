@@ -5,7 +5,6 @@ use futures_channel::oneshot;
 use imaging::peniko::Blob;
 use masonry_core::app::RenderRoot;
 use masonry_core::core::DefaultProperties;
-use masonry_core::core::PropertyStackMut;
 use masonry_core::core::Widget;
 use masonry_core::core::WidgetId;
 use masonry_core::core::{PropertyStack, PropertyStackId};
@@ -917,20 +916,17 @@ impl WindowHandle {
             .await
             .map_err(|_| WindowHandleActionError::WindowClosed)
     }
-    pub fn edit_property_stack<E>(
+    pub fn replace_property_stack(
         &self,
         property_stack_id: PropertyStackId,
-        edit_fn: E,
-    ) -> Result<(), WindowHandleActionError>
-    where
-        E: FnOnce(&mut PropertyStackMut<'_>) + Send + 'static,
-    {
+        stack: PropertyStack,
+    ) -> Result<(), WindowHandleActionError> {
         self.send_event(
             PropertyStackMethods {
                 window_id: self.id()?,
-                type_: PropertyStackMethodsType::Edit {
+                type_: PropertyStackMethodsType::Replace {
                     id: property_stack_id,
-                    edit_fn: Box::new(edit_fn),
+                    stack,
                 },
             }
             .into(),

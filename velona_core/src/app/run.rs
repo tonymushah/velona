@@ -311,10 +311,10 @@ where
                     }
                 });
             }
-            crate::events::property_stack::PropertyStackMethodsType::Edit { id, edit_fn } => {
+            crate::events::property_stack::PropertyStackMethodsType::Replace { id, stack } => {
                 self.use_window_render_root(method.window_id, |rr| {
                     if rr.has_property_stack(id) {
-                        rr.edit_property_stack(id, edit_fn);
+                        rr.replace_property_stack(id, stack);
                     }
                 });
             }

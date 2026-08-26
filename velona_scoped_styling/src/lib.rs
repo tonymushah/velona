@@ -1,5 +1,5 @@
 use velona_core::{
-    masonry_core::core::{NewWidget, Widget},
+    masonry_core::core::{NewWidget, PropertySet, PropertyStack, Selector, Widget},
     window::{WindowHandle, use_window},
 };
 
@@ -34,5 +34,31 @@ where
         A: ApplyToNewWidget,
     {
         styles.apply_to_widget(self)
+    }
+}
+
+pub(crate) trait PropertyStackUtils {
+    fn has_selector(&self, selector: &Selector) -> bool;
+    fn get_last_selector_property_set_mut(
+        &mut self,
+        selector: &Selector,
+    ) -> Option<&mut PropertySet>;
+}
+
+impl PropertyStackUtils for PropertyStack {
+    fn has_selector(&self, selector: &Selector) -> bool {
+        self.get_layers().iter().any(|(sel, _)| sel == selector)
+    }
+    fn get_last_selector_property_set_mut(
+        &mut self,
+        selector: &Selector,
+    ) -> Option<&mut PropertySet> {
+        let index = self
+            .get_layers()
+            .iter()
+            .enumerate()
+            .rev()
+            .find_map(|(index, (selector_in, _))| (selector_in == selector).then_some(index))?;
+        self.get_layer_mut(index)
     }
 }

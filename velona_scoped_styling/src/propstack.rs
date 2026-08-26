@@ -10,7 +10,7 @@ use velona_core::{
     task::spawn_local_scoped_with_cancellation,
 };
 
-use crate::{ApplyToNewWidget, use_window_local};
+use crate::{ApplyToNewWidget, PropertyStackUtils, use_window_local};
 
 #[derive(Debug)]
 pub struct ScopedPropstack {

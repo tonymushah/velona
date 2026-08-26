@@ -112,14 +112,12 @@ impl<W: WindowRenderer> Builder<W> {
 }
 
 impl<W: WindowRenderer> Builder<W> {
-    /// Run the app.
+    /// Run the app in a custom event loop
     // TODO refactor this to add a `build` method
-    pub fn run(mut self) -> Result<(), crate::error::Error> {
+    pub fn run_in(self, event_loop: EventLoop<()>) -> Result<(), crate::error::Error> {
         let spawn_fn = self
             .spawn_fn
             .unwrap_or_else(|| Box::new(|_| panic!("No spawn_fn provided")));
-
-        let event_loop = self.event_loop_builder.build()?;
 
         if let Some(allowed) = self.allowed {
             event_loop.listen_device_events(allowed);
@@ -164,6 +162,14 @@ impl<W: WindowRenderer> Builder<W> {
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;
         Ok(())
+    }
+
+    /// Run the app.
+    // TODO refactor this to add a `build` method
+    pub fn run(mut self) -> Result<(), crate::error::Error> {
+        let event_loop = self.event_loop_builder.build()?;
+
+        self.run_in(event_loop)
     }
 }
 

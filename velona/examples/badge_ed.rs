@@ -1,10 +1,17 @@
+use std::fmt::Display;
+use std::str::FromStr;
 use std::{sync, time::Duration};
 
 use derive_more::{Display, FromStr};
 use enum_all_variants::AllVariants;
 use image::open;
+use masonry::core::DefaultProperties;
 use masonry::imaging::peniko::{Blob, ImageBrush, ImageData, ImageSampler, color::AlphaColor};
+use masonry::layers::SelectorMenu;
+use masonry::palette::css::{BEIGE, ORANGE, RED};
+use masonry::peniko::color::Srgb;
 use masonry::properties::TrackColor;
+use masonry::widgets::SelectorItem;
 use masonry::{
     core::Widget,
     layout::Length,
@@ -32,6 +39,7 @@ use velona_core::reactive::{
     traits::{Get, Read, Set, Update},
 };
 use velona_renderer_vello::{VelloWindowRenderer, create_wgpu_context};
+use velona_scoped_styling::{ApplyScopedStyles, ScopedClasses};
 
 struct TowaProps {
     show: UnsyncCallback<(), bool>,
@@ -126,6 +134,45 @@ fn towa(TowaProps { show }: TowaProps) -> AnyNewWidget {
     .erased()
 }
 
+trait SelectableVal: Sized {
+    const LABEL: &'static str;
+    fn all_variants_value() -> &'static [Self];
+}
+
+fn selector<T>(set_val: WriteSignal<T>) -> AnyNewWidget
+where
+    T: SelectableVal + Display + FromStr + Send + Sync + 'static,
+{
+    Flex::row()
+        .with_fixed(Label::new(format!("{}: ", T::LABEL)).prepare())
+        .with_fixed_spacer(DEFAULT_SPACER_LEN)
+        .with_fixed(
+            SizedBox::new(
+                Selector::new(
+                    T::all_variants_value()
+                        .iter()
+                        .map(|d| d.to_string())
+                        .collect(),
+                )
+                .prepare()
+                .on_action(move |changes| {
+                    if let Ok(val) = changes.selected_content.parse::<T>() {
+                        set_val.set(val);
+                    }
+                })
+                .static_propeperty(BorderColor::new(BLACK))
+                .static_propeperty(BorderWidth::all(Length::px(3.0)))
+                .static_propeperty(CornerRadius::all(Length::px(8.0)))
+                .static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
+                .static_propeperty(Background::Color(WHITE_SMOKE)),
+            )
+            .prepare(),
+        )
+        .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
+        .prepare()
+        .erased()
+}
+
 #[derive(Debug, Clone, Copy, Display, FromStr, AllVariants)]
 enum BadgePlacement {
     TopLeft,
@@ -145,35 +192,37 @@ impl From<BadgePlacement> for widgets::masonry_widgets::BadgePlacement {
     }
 }
 
-fn badge_placement(set_placement: WriteSignal<BadgePlacement>) -> AnyNewWidget {
-    Flex::row()
-        .with_fixed(Label::new("Placement: ").prepare())
-        .with_fixed_spacer(DEFAULT_SPACER_LEN)
-        .with_fixed(
-            SizedBox::new(
-                Selector::new(
-                    BadgePlacement::all_variants()
-                        .iter()
-                        .map(|d| d.to_string())
-                        .collect(),
-                )
-                .prepare()
-                .on_action(move |changes| {
-                    if let Ok(align) = changes.selected_content.parse::<BadgePlacement>() {
-                        set_placement.set(align);
-                    }
-                })
-                .static_propeperty(BorderColor::new(BLACK))
-                .static_propeperty(BorderWidth::all(Length::px(3.0)))
-                .static_propeperty(CornerRadius::all(Length::px(8.0)))
-                .static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
-                .static_propeperty(Background::Color(WHITE_SMOKE)),
-            )
-            .prepare(),
-        )
-        .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
-        .prepare()
-        .erased()
+impl SelectableVal for BadgePlacement {
+    const LABEL: &'static str = "Placement";
+    fn all_variants_value() -> &'static [Self] {
+        BadgePlacement::all_variants()
+    }
+}
+
+#[derive(Debug, Clone, Copy, Display, FromStr, AllVariants)]
+enum BadgeColor {
+    Beige,
+    White,
+    Orange,
+    Red,
+}
+
+impl From<BadgeColor> for AlphaColor<Srgb> {
+    fn from(value: BadgeColor) -> Self {
+        match value {
+            BadgeColor::Beige => BEIGE,
+            BadgeColor::White => WHITE,
+            BadgeColor::Orange => ORANGE,
+            BadgeColor::Red => RED,
+        }
+    }
+}
+
+impl SelectableVal for BadgeColor {
+    const LABEL: &'static str = "Badge Color";
+    fn all_variants_value() -> &'static [Self] {
+        BadgeColor::all_variants()
+    }
 }
 
 fn main_view() -> AnyNewWidget {
@@ -198,7 +247,18 @@ fn main_view() -> AnyNewWidget {
     }
 
     let (placement, set_placement) = signal(BadgePlacement::TopRight);
+    let (badge_color, set_bagde_color) = signal(BadgeColor::Beige);
 
+    let badge_style = ScopedClasses::new(["badge"])
+        .prop(Default::default(), move |_| {
+            Background::Color(badge_color().into())
+        })
+        .prop(Default::default(), |_| {
+            Padding::from_vh(Length::px(2.5), Length::px(5.0))
+        })
+        .prop(Default::default(), |_| BorderColor::new(BLACK))
+        .prop(Default::default(), |_| BorderWidth::all(Length::px(1.0)))
+        .prop(Default::default(), |_| CornerRadius::all(Length::px(3.0)));
     Flex::column()
         .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
         // The actual badge
@@ -225,7 +285,11 @@ fn main_view() -> AnyNewWidget {
             .prepare()
             .badge(move || {
                 if !is_zero.get() {
-                    Some(badge_count(move || count.get()).erased())
+                    Some(
+                        badge_count(move || count.get())
+                            .apply(&badge_style)
+                            .erased(),
+                    )
                 } else {
                     None
                 }
@@ -234,7 +298,9 @@ fn main_view() -> AnyNewWidget {
         )
         .with_fixed_spacer(Length::px(10.0))
         // the badge placement
-        .with_fixed(badge_placement(set_placement))
+        .with_fixed(selector(set_placement))
+        .with_fixed_spacer(Length::px(10.0))
+        .with_fixed(selector(set_bagde_color))
         .with_fixed_spacer(Length::px(10.0))
         // reset button
         .with_fixed(
@@ -263,6 +329,7 @@ fn main_view() -> AnyNewWidget {
 
 #[cfg_attr(feature = "hotpath-run", hotpath::main)]
 fn main() {
+    env_logger::init();
     let runtime = runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -276,6 +343,16 @@ fn main() {
             }
         })
         .with_window(WindowBuilder::new(main_view).with_base_color(WHITE))
+        .with_default_properties(default_properties())
         .run()
         .unwrap();
+}
+
+fn default_properties() -> DefaultProperties {
+    let mut p = DefaultProperties::default();
+    p.insert::<SelectorMenu, _>(Background::Color(WHITE_SMOKE));
+    p.insert::<SelectorMenu, _>(BorderWidth::all(Length::px(1.0)));
+    p.insert::<SelectorMenu, _>(BorderColor::new(BLACK));
+    p.insert::<SelectorItem, _>(Padding::from_vh(Length::px(2.5), Length::px(5.0)));
+    p
 }

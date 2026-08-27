@@ -1,5 +1,6 @@
 use std::{marker::PhantomData, thread};
 
+use masonry_core::core::ErasedAction;
 #[cfg(doc)]
 use masonry_core::core::MutateCtx;
 use masonry_core::{
@@ -9,60 +10,39 @@ use masonry_core::{
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
-    widget_ref::VelonaWidgetRef, window::event_listener::register_typed_widget_action_listener,
-    window::use_window,
+    utils::register_widget_action_listener,
+    widget_ref::VelonaWidgetRef,
+    window::{event_listener::register_typed_widget_action_listener, use_window},
 };
 
-// TODO add a `use_reactive_widget` with `WidgetRef` instead.
-// TODO add a `use_reactive_widget_with_effect_val` with `WidgetRef` instead.
-// TODO add documentation for this trait and its methods.
-pub trait NewWidgetExt<W>
-where
-    W: Widget + 'static,
-{
+pub trait NewWidgetBaseExt {
+    /// Create a [`WidgetRef`](VelonaWidgetRef) that you can send safely between thread.
+    fn create_erased_velona_ref(&self) -> VelonaWidgetRef<dyn Widget>;
     /// Use [`WidgetMut`] inside an [`Effect`] with a value.
     ///
     /// Since its runs inside an [effect](Effect), any signal changes (subscription) will (re-)run the `fun`.
     ///
     /// The return value might useful if you want to track values between re-runs.
-    fn use_reactive_widget_mut_with_effect_val<F, V>(self, fun: F) -> Self
+    fn use_reactive_widget_erased_mut_with_effect_val<F, V>(self, fun: F) -> Self
     where
-        F: FnMut(WidgetMut<'_, W>, Option<V>) -> Option<V> + 'static,
+        F: FnMut(WidgetMut<'_, dyn Widget>, Option<V>) -> Option<V> + 'static,
         V: 'static;
     /// Very similar to [`Self::use_reactive_widget_mut_with_effect_val`],
     /// but doesn't require a return value.
-    fn use_reactive_widget_mut<F>(self, fun: F) -> Self
+    fn use_reactive_widget_erased_mut<F>(self, fun: F) -> Self
     where
-        F: FnMut(WidgetMut<'_, W>) + 'static;
+        F: FnMut(WidgetMut<'_, dyn Widget>) + 'static;
 
     /// Very similar to [`on`](Self::on_action) but uses a [`&self`](self) instead of [`self`].
     /// _You get the idea._
-    fn on_action_ref_self<F>(&self, fun: F)
+    fn on_erased_action_ref_self<F>(&self, fun: F)
     where
-        F: Fn(&W::Action) + Send + 'static;
-    /// Listen to the [`Widget::Action`]
-    fn on_action<F>(self, fun: F) -> Self
+        F: Fn(&ErasedAction) + Send + 'static;
+    /// Listen to the [`Widget::Action`] but it is [erased](ErasedAction).
+    fn on_erased_action<F>(self, fun: F) -> Self
     where
-        F: Fn(&W::Action) + Send + 'static;
-    /// Set a [widget](Widget) [property](Property) reactively.
-    fn property<F, P>(self, prop: F) -> Self
-    where
-        F: Fn() -> P + 'static,
-        P: Property,
-        W: HasProperty<P>;
-    /// Use [`property`](Self::property) for reactive values
-    fn static_propeperty<P>(self, prop: P) -> Self
-    where
-        P: Property,
-        W: HasProperty<P>;
-    /// Update the internal [`NewWidget::widget`].
-    // **NOTE: Please be smart and always use [`untrack`](reactive_graph::graph::untrack) if you use decide to bring a reactive closure on using this.**
-    // Weird thing might happen if you do that.
-    fn update_inner_widget<T>(self, update_fn: T) -> Self
-    where
-        T: FnOnce(W) -> W;
-    /// Create a [`WidgetRef`](VelonaWidgetRef) that you can send safely between thread.
-    fn create_velona_ref(&self) -> VelonaWidgetRef<W>;
+        F: Fn(&ErasedAction) + Send + 'static;
+
     /// Set class the new widget class reactively.
     ///
     /// When the value changes, the old one will be [removed](MutateCtx::remove_class).
@@ -118,6 +98,192 @@ where
     fn property_stack_id<P>(self, property_stack_id: P) -> Self
     where
         P: Fn() -> PropertyStackId + 'static;
+}
+
+impl<W> NewWidgetBaseExt for NewWidget<W>
+where
+    W: Widget + ?Sized,
+{
+    fn use_reactive_widget_erased_mut_with_effect_val<F, V>(self, mut fun: F) -> Self
+    where
+        F: FnMut(WidgetMut<'_, dyn Widget>, Option<V>) -> Option<V> + 'static,
+        V: 'static,
+    {
+        let widget_ref = self.create_erased_velona_ref().disarm();
+        Effect::new(move |v: Option<Option<V>>| {
+            let v = v.flatten();
+            match widget_ref.edit_erased_local_now(|widget_mut| (fun)(widget_mut, v)) {
+                Ok(val) => val,
+                Err(err) => {
+                    log::warn!("cannot edit widget reactivelt => {err}");
+                    None
+                }
+            }
+        });
+        self
+    }
+    fn use_reactive_widget_erased_mut<F>(self, mut fun: F) -> Self
+    where
+        F: FnMut(WidgetMut<'_, dyn Widget>) + 'static,
+    {
+        self.use_reactive_widget_erased_mut_with_effect_val::<_, ()>(move |this, _| {
+            fun(this);
+            None
+        })
+    }
+    fn class<C>(self, class: C) -> Self
+    where
+        C: Fn() -> String + 'static,
+    {
+        self.class_opt(move || Some(class()))
+    }
+
+    fn class_opt<C>(self, class: C) -> Self
+    where
+        C: Fn() -> Option<String> + 'static,
+    {
+        self.use_reactive_widget_erased_mut_with_effect_val::<_, String>(
+            move |mut widget, old_class| {
+                if let Some(old_class) = old_class {
+                    widget.ctx.remove_class(&old_class);
+                }
+                let new_value = class();
+                if let Some(new_class) = new_value.as_ref() {
+                    widget.ctx.add_class(new_class);
+                }
+                new_value
+            },
+        )
+    }
+
+    fn classes<C>(self, classes: C) -> Self
+    where
+        C: Fn() -> Vec<String> + 'static,
+    {
+        self.use_reactive_widget_erased_mut_with_effect_val::<_, Vec<String>>(
+            move |mut widget, old_classes| {
+                if let Some(old_classes) = old_classes {
+                    for old_class in old_classes {
+                        widget.ctx.remove_class(&old_class);
+                    }
+                }
+                let new_value = classes();
+                if new_value.is_empty() {
+                    None
+                } else {
+                    for new_class in &new_value {
+                        widget.ctx.add_class(new_class);
+                    }
+                    Some(new_value)
+                }
+            },
+        )
+    }
+
+    fn disabled<D>(self, disabled: D) -> Self
+    where
+        D: Fn() -> bool + 'static,
+    {
+        self.disabled_with_current(move |_| disabled())
+    }
+
+    fn transform<T>(self, transform: T) -> Self
+    where
+        T: Fn() -> Affine + 'static,
+    {
+        self.use_reactive_widget_erased_mut(move |mut this| {
+            this.ctx.set_transform(transform());
+        })
+    }
+
+    fn property_stack_id<P>(self, property_stack_id: P) -> Self
+    where
+        P: Fn() -> PropertyStackId + 'static,
+    {
+        self.use_reactive_widget_erased_mut(move |mut this| {
+            this.ctx.set_property_stack(property_stack_id());
+        })
+    }
+    fn disabled_with_current<D>(self, disabled: D) -> Self
+    where
+        D: Fn(bool) -> bool + 'static,
+    {
+        self.use_reactive_widget_erased_mut(move |mut this| {
+            let disabled = disabled(this.ctx.is_disabled());
+            this.ctx.set_disabled(disabled);
+        })
+    }
+    fn on_erased_action_ref_self<F>(&self, fun: F)
+    where
+        F: Fn(&ErasedAction) + Send + 'static,
+    {
+        register_widget_action_listener(self.id(), Box::new(fun));
+    }
+    fn on_erased_action<F>(self, fun: F) -> Self
+    where
+        F: Fn(&ErasedAction) + Send + 'static,
+    {
+        self.on_erased_action_ref_self(fun);
+        self
+    }
+    fn create_erased_velona_ref(&self) -> VelonaWidgetRef<dyn Widget> {
+        VelonaWidgetRef {
+            id: self.id(),
+            window: use_window().map(Box::new),
+            phantom: PhantomData::<dyn Widget>,
+            thread_id: thread::current().id(),
+        }
+    }
+}
+
+// TODO add documentation for this trait and its methods.
+pub trait NewWidgetExt<W>: NewWidgetBaseExt
+where
+    W: Widget + 'static,
+{
+    /// Use [`WidgetMut`] inside an [`Effect`] with a value.
+    ///
+    /// Since its runs inside an [effect](Effect), any signal changes (subscription) will (re-)run the `fun`.
+    ///
+    /// The return value might useful if you want to track values between re-runs.
+    fn use_reactive_widget_mut_with_effect_val<F, V>(self, fun: F) -> Self
+    where
+        F: FnMut(WidgetMut<'_, W>, Option<V>) -> Option<V> + 'static,
+        V: 'static;
+    /// Very similar to [`Self::use_reactive_widget_mut_with_effect_val`],
+    /// but doesn't require a return value.
+    fn use_reactive_widget_mut<F>(self, fun: F) -> Self
+    where
+        F: FnMut(WidgetMut<'_, W>) + 'static;
+
+    /// Very similar to [`on`](Self::on_action) but uses a [`&self`](self) instead of [`self`].
+    /// _You get the idea._
+    fn on_action_ref_self<F>(&self, fun: F)
+    where
+        F: Fn(&W::Action) + Send + 'static;
+    /// Listen to the [`Widget::Action`]
+    fn on_action<F>(self, fun: F) -> Self
+    where
+        F: Fn(&W::Action) + Send + 'static;
+    /// Set a [widget](Widget) [property](Property) reactively.
+    fn property<F, P>(self, prop: F) -> Self
+    where
+        F: Fn() -> P + 'static,
+        P: Property,
+        W: HasProperty<P>;
+    /// Use [`property`](Self::property) for reactive values
+    fn static_propeperty<P>(self, prop: P) -> Self
+    where
+        P: Property,
+        W: HasProperty<P>;
+    /// Update the internal [`NewWidget::widget`].
+    // **NOTE: Please be smart and always use [`untrack`](reactive_graph::graph::untrack) if you use decide to bring a reactive closure on using this.**
+    // Weird thing might happen if you do that.
+    fn update_inner_widget<T>(self, update_fn: T) -> Self
+    where
+        T: FnOnce(W) -> W;
+    /// Create a [`WidgetRef`](VelonaWidgetRef) that you can send safely between thread.
+    fn create_velona_ref(&self) -> VelonaWidgetRef<W>;
     /// Queues a callback that will be called with a [`WidgetMut`] for this widget.
     ///
     /// The callbacks will be run in the order they were submitted during the mutate pass.
@@ -217,77 +383,6 @@ where
         }
     }
 
-    fn class<C>(self, class: C) -> Self
-    where
-        C: Fn() -> String + 'static,
-    {
-        self.class_opt(move || Some(class()))
-    }
-
-    fn class_opt<C>(self, class: C) -> Self
-    where
-        C: Fn() -> Option<String> + 'static,
-    {
-        self.use_reactive_widget_mut_with_effect_val::<_, String>(move |mut widget, old_class| {
-            if let Some(old_class) = old_class {
-                widget.ctx.remove_class(&old_class);
-            }
-            let new_value = class();
-            if let Some(new_class) = new_value.as_ref() {
-                widget.ctx.add_class(new_class);
-            }
-            new_value
-        })
-    }
-
-    fn classes<C>(self, classes: C) -> Self
-    where
-        C: Fn() -> Vec<String> + 'static,
-    {
-        self.use_reactive_widget_mut_with_effect_val::<_, Vec<String>>(
-            move |mut widget, old_classes| {
-                if let Some(old_classes) = old_classes {
-                    for old_class in old_classes {
-                        widget.ctx.remove_class(&old_class);
-                    }
-                }
-                let new_value = classes();
-                if new_value.is_empty() {
-                    None
-                } else {
-                    for new_class in &new_value {
-                        widget.ctx.add_class(new_class);
-                    }
-                    Some(new_value)
-                }
-            },
-        )
-    }
-
-    fn disabled<D>(self, disabled: D) -> Self
-    where
-        D: Fn() -> bool + 'static,
-    {
-        self.disabled_with_current(move |_| disabled())
-    }
-
-    fn transform<T>(self, transform: T) -> Self
-    where
-        T: Fn() -> Affine + 'static,
-    {
-        self.use_reactive_widget_mut(move |mut this| {
-            this.ctx.set_transform(transform());
-        })
-    }
-
-    fn property_stack_id<P>(self, property_stack_id: P) -> Self
-    where
-        P: Fn() -> PropertyStackId + 'static,
-    {
-        self.use_reactive_widget_mut(move |mut this| {
-            this.ctx.set_property_stack(property_stack_id());
-        })
-    }
     fn mutate_later<Fn>(self, mutate_fn: Fn) -> Self
     where
         Fn: FnOnce(WidgetMut<'_, W>) + Send + 'static,
@@ -296,15 +391,5 @@ where
             log::error!("{err}");
         }
         self
-    }
-
-    fn disabled_with_current<D>(self, disabled: D) -> Self
-    where
-        D: Fn(bool) -> bool + 'static,
-    {
-        self.use_reactive_widget_mut(move |mut this| {
-            let disabled = disabled(this.ctx.is_disabled());
-            this.ctx.set_disabled(disabled);
-        })
     }
 }

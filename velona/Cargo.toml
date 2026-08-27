@@ -12,6 +12,7 @@ hotpath = { workspace = true, optional = true }
 resvg.workspace = true
 velona_core = { workspace = true }
 velona_core_child = { workspace = true, features = ["masonry_widget_impls"] }
+velona_scoped_styling = { workspace = true }
 
 [features]
 hotpath = ["dep:hotpath", "velona_core/hotpath"]

@@ -20,6 +20,7 @@ use winit::{
 
 use crate::events;
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
+use crate::events::property_stack::{PropertyStackMethods, PropertyStackMethodsType};
 use crate::window::event_listener::{
     RegisterWindowEventHandler, RegisterWindowEventHandlerType, UnregisterWindowEventHandlerType,
 };
@@ -887,13 +888,84 @@ impl WindowHandle {
         self.use_render_root_with_return(move |root| root.register_fonts(data))
             .await
     }
-    /// Inserts a `PropertyStack` into the arena and returns its unique `PropertyStackId`.
-    pub async fn register_property_stack(
+    // /// Inserts a `PropertyStack` into the arena and returns its unique `PropertyStackId`.
+    // pub async fn register_property_stack(
+    //     &self,
+    //     property_stack: PropertyStack,
+    // ) -> Result<PropertyStackId, WindowHandleActionError> {
+    //     self.use_render_root_with_return(move |root| root.property_arena().insert(property_stack))
+    //         .await
+    // }
+}
+
+/// Property stack related things
+impl WindowHandle {
+    pub async fn add_property_stack(
         &self,
-        property_stack: PropertyStack,
+        stack: PropertyStack,
     ) -> Result<PropertyStackId, WindowHandleActionError> {
-        self.use_render_root_with_return(move |root| root.property_arena().insert(property_stack))
+        let (sender, receiver) = oneshot::channel();
+        self.send_event(
+            PropertyStackMethods {
+                window_id: self.id()?,
+                type_: PropertyStackMethodsType::Add { stack, sender },
+            }
+            .into(),
+        )?;
+        receiver
             .await
+            .map_err(|_| WindowHandleActionError::WindowClosed)
+    }
+    pub fn replace_property_stack(
+        &self,
+        property_stack_id: PropertyStackId,
+        stack: PropertyStack,
+    ) -> Result<(), WindowHandleActionError> {
+        self.send_event(
+            PropertyStackMethods {
+                window_id: self.id()?,
+                type_: PropertyStackMethodsType::Replace {
+                    id: property_stack_id,
+                    stack,
+                },
+            }
+            .into(),
+        )?;
+        Ok(())
+    }
+    pub fn remove_property_stack(
+        &self,
+        property_stack_id: PropertyStackId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.send_event(
+            PropertyStackMethods {
+                window_id: self.id()?,
+                type_: PropertyStackMethodsType::Remove {
+                    id: property_stack_id,
+                },
+            }
+            .into(),
+        )?;
+        Ok(())
+    }
+    pub async fn has_property_stack(
+        &self,
+        property_stack_id: PropertyStackId,
+    ) -> Result<bool, WindowHandleActionError> {
+        let (sender, receiver) = oneshot::channel();
+        self.send_event(
+            PropertyStackMethods {
+                window_id: self.id()?,
+                type_: PropertyStackMethodsType::IsPresent {
+                    id: property_stack_id,
+                    sender,
+                },
+            }
+            .into(),
+        )?;
+        receiver
+            .await
+            .map_err(|_| WindowHandleActionError::AppExited)
     }
 }
 

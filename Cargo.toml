@@ -6,6 +6,7 @@ edition = "2024"
 members = [
     "masonry_raw_box",
     "velona",
+    "velona_scoped_styling",
     "velona_core",
     "velona_core_child",
     "velona_renderer",
@@ -63,3 +64,4 @@ velona_core = { path = "velona_core" }
 velona_renderer = { version = "0.1", path = "velona_renderer" }
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }
 velona_core_child = { path = "velona_core_child" }
+velona_scoped_styling = { path = "velona_scoped_styling" }

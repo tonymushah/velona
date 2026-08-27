@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
 use async_task::Runnable;
@@ -26,6 +27,7 @@ use crate::app::event_listener::{
     AppEventHandlers, EmitAppEventToHandlers, UnRegisterAppEventHandler,
 };
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
+use crate::events::property_stack::PropertyStackMethods;
 use crate::manager::OtherManagerMethods;
 use crate::utils::HandlerId;
 use crate::window;
@@ -289,6 +291,53 @@ where
     }
 }
 
+// --- Property Stack methods handling --- //
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
+impl<W> AppRunner<W>
+where
+    W: WindowRenderer,
+{
+    fn handle_property_stack_methods(&mut self, method: PropertyStackMethods) {
+        match method.type_ {
+            crate::events::property_stack::PropertyStackMethodsType::Add { stack, sender } => {
+                if sender.is_canceled() {
+                    log::warn!("Receiver already dropped, aborting");
+                    return;
+                }
+                self.use_window_render_root(method.window_id, |rr| {
+                    if let Err(err) = sender.send(rr.insert_property_stack(stack)) {
+                        log::error!("Cannot send {} to its receiver", err);
+                        rr.remove_property_stack(err);
+                    }
+                });
+            }
+            crate::events::property_stack::PropertyStackMethodsType::Replace { id, stack } => {
+                self.use_window_render_root(method.window_id, |rr| {
+                    if rr.has_property_stack(id) {
+                        rr.replace_property_stack(id, stack);
+                    }
+                });
+            }
+            crate::events::property_stack::PropertyStackMethodsType::Remove { id } => {
+                self.use_window_render_root(method.window_id, |rr| {
+                    rr.remove_property_stack(id);
+                });
+            }
+            crate::events::property_stack::PropertyStackMethodsType::IsPresent { id, sender } => {
+                if sender.is_canceled() {
+                    log::warn!("Receiver already dropped, aborting");
+                    return;
+                }
+                self.use_window_render_root(method.window_id, |rr| {
+                    if sender.send(rr.has_property_stack(id)).is_err() {
+                        log::error!("Cannot send data to its receiver")
+                    }
+                });
+            }
+        }
+    }
+}
+
 // --- WINIT event loop handlers --- //
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
 impl<W> AppRunner<W>
@@ -320,6 +369,7 @@ where
         _event_loop: &winit::event_loop::ActiveEventLoop,
         window_id: WindowId,
         signal: RenderRootSignal,
+        to_redraw: &mut HashSet<WindowId>,
     ) {
         let event_loop_proxy = self.app_handle.get_proxy().clone();
 
@@ -352,11 +402,10 @@ where
                     let _ = event_loop_proxy.send_event(EventLoopEvent::SetClipboardContent(text));
                 }
                 RenderRootSignal::RequestRedraw => {
-                    window.winit_window.request_redraw();
+                    to_redraw.insert(window_id);
                 }
                 RenderRootSignal::RequestAnimFrame => {
-                    // TODO
-                    window.winit_window.request_redraw();
+                    to_redraw.insert(window_id);
                 }
                 RenderRootSignal::TakeFocus => {
                     window.winit_window.focus_window();
@@ -435,6 +484,7 @@ where
     }
 
     fn handle_app_events(&mut self, event_loop: &ActiveEventLoop) {
+        let mut need_redraw = HashSet::<WindowId>::default();
         while let Some(event) = self.receiver.try_iter().next() {
             match event {
                 EventLoopEvent::AccessKitAction(event) => {
@@ -477,7 +527,7 @@ where
                         .inspect_err(|err| log::error!("cannot set clipboard content => {err}"));
                 }
                 EventLoopEvent::HandleRenderRootSignals(window_id, signal) => {
-                    self.handle_signal(event_loop, window_id, signal.take());
+                    self.handle_signal(event_loop, window_id, signal.take(), &mut need_redraw);
                 }
                 EventLoopEvent::EditWidget(edit_widget_fn_event) => {
                     let maybe_owner =
@@ -553,7 +603,15 @@ where
                 EventLoopEvent::ManagerMethods(cmd) => {
                     self.execute_manager_methods(event_loop, *cmd);
                 }
+                EventLoopEvent::PropertyStack(property_stack_methods) => {
+                    self.handle_property_stack_methods(*property_stack_methods);
+                }
             }
+        }
+        for window_id in need_redraw {
+            self.use_window(window_id, |window| {
+                window.winit_window.request_redraw();
+            });
         }
     }
 }

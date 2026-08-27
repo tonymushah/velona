@@ -25,7 +25,7 @@ use masonry_core::core::{NewWidget, Widget};
 
 pub use app::Builder;
 pub use manager::Manager;
-pub use widgets::NewWidgetExt;
+pub use widgets::{NewWidgetBaseExt, NewWidgetExt};
 pub use window::builder::WindowBuilder;
 pub use window::renderer::WindowRendererFactory;
 

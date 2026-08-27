@@ -1,0 +1,8 @@
+[package]
+name = "velona_scoped_styling"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona_core.workspace = true
+log.workspace = true

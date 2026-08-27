@@ -119,7 +119,7 @@ impl ScopedPropstack {
                         // Nothing...
                     }
                     (false, Some(property)) => {
-                        stack.push(selector, property.clone());
+                        stack.push_layer(selector, property.clone());
                     }
                 }
             });

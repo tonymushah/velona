@@ -20,10 +20,10 @@ accesskit_winit = "0.33"
 any_spawner = "0.3"
 async-task = "4"
 # TODO update to 0.5 if released
-masonry = { version = "0.4", git = "https://github.com/tonymushah/xilem.git", default-features = false, branch = "property-stack-mutator" }
-masonry_imaging = { version = "0.4", git = "https://github.com/tonymushah/xilem.git", default-features = false, branch = "property-stack-mutator" }
-masonry_core = { version = "0.4", git = "https://github.com/tonymushah/xilem.git", default-features = false, branch = "property-stack-mutator" }
-masonry_testing = { version = "0.4", git = "https://github.com/tonymushah/xilem.git", default-features = false, branch = "property-stack-mutator" }
+masonry = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
+masonry_imaging = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
+masonry_core = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
+masonry_testing = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
 # TODO update to 0.3
 reactive_graph = { version = "0.3.0-beta2" }
 thiserror = "2"

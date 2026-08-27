@@ -2449,7 +2449,7 @@ dependencies = [
 [[package]]
 name = "linebender_include_doc_path"
 version = "0.1.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#b3e208f9c8a6924045ac30ee36b7d397c3632317"
+source = "git+https://github.com/linebender/xilem.git#45c5a9f5ccab6542d3917a56ed01d62297b29248"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2521,7 +2521,7 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#b3e208f9c8a6924045ac30ee36b7d397c3632317"
+source = "git+https://github.com/linebender/xilem.git#45c5a9f5ccab6542d3917a56ed01d62297b29248"
 dependencies = [
  "accesskit",
  "linebender_include_doc_path",
@@ -2535,7 +2535,7 @@ dependencies = [
 [[package]]
 name = "masonry_core"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#b3e208f9c8a6924045ac30ee36b7d397c3632317"
+source = "git+https://github.com/linebender/xilem.git#45c5a9f5ccab6542d3917a56ed01d62297b29248"
 dependencies = [
  "accesskit",
  "anymap3",
@@ -2562,7 +2562,7 @@ dependencies = [
 [[package]]
 name = "masonry_imaging"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#b3e208f9c8a6924045ac30ee36b7d397c3632317"
+source = "git+https://github.com/linebender/xilem.git#45c5a9f5ccab6542d3917a56ed01d62297b29248"
 dependencies = [
  "imaging",
  "imaging_wgpu",
@@ -2583,7 +2583,7 @@ dependencies = [
 [[package]]
 name = "masonry_testing"
 version = "0.4.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#b3e208f9c8a6924045ac30ee36b7d397c3632317"
+source = "git+https://github.com/linebender/xilem.git#45c5a9f5ccab6542d3917a56ed01d62297b29248"
 dependencies = [
  "accesskit_consumer 0.35.0",
  "image",
@@ -4790,7 +4790,7 @@ dependencies = [
 [[package]]
 name = "tree_arena"
 version = "0.2.0"
-source = "git+https://github.com/tonymushah/xilem.git?branch=property-stack-mutator#b3e208f9c8a6924045ac30ee36b7d397c3632317"
+source = "git+https://github.com/linebender/xilem.git#45c5a9f5ccab6542d3917a56ed01d62297b29248"
 dependencies = [
  "hashbrown 0.17.1",
 ]
@@ -4951,9 +4951,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.25.0"
+version = "1.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f053576934f05a761a402421fbbe3d425d9366f75f978806a037b3ca481abecc"
+checksum = "b5772d71c9be8a8a6ac2117d949c5b224c1b72241bb611d9a3012edcf8af7812"
 dependencies = [
  "js-sys",
  "serde_core",

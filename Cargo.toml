@@ -12,7 +12,7 @@ members = [
     "velona_renderer",
     "velona_renderer_vello",
     "velona_executor"
-, "examples/counter", "examples/align", "examples/checkbox", "examples/fragment", "examples/image"]
+, "examples/counter", "examples/align", "examples/checkbox", "examples/fragment", "examples/image", "examples/badge_ed"]
 default-members = ["velona"]
 resolver = "3"
 

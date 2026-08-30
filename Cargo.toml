@@ -10,7 +10,8 @@ members = [
     "velona_core",
     "velona_core_child",
     "velona_renderer",
-    "velona_renderer_vello"
+    "velona_renderer_vello",
+    "velona_executor"
 ]
 default-members = ["velona"]
 resolver = "3"
@@ -65,3 +66,4 @@ velona_renderer = { version = "0.1", path = "velona_renderer" }
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }
 velona_core_child = { path = "velona_core_child" }
 velona_scoped_styling = { path = "velona_scoped_styling" }
+velona_executor = { path = "velona_executor" }

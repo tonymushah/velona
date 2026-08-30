@@ -5120,6 +5120,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "velona_executor"
+version = "0.1.0"
+dependencies = [
+ "log",
+]
+
+[[package]]
 name = "velona_renderer"
 version = "0.1.0"
 dependencies = [

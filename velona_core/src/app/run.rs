@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
-use async_task::Runnable;
+use any_spawner::{PinnedFuture, PinnedLocalFuture};
 use copypasta::{ClipboardContext, ClipboardProvider};
 use log::warn;
 use masonry_core::app::RenderRootSignal;
@@ -14,6 +14,7 @@ use masonry_core::{
 };
 use reactive_graph::owner::Owner;
 use ui_events_winit::WindowEventTranslation;
+use velona_executor::{TaskId, VelonaTasksExecutor};
 use velona_renderer::WindowRenderer;
 use winit::{
     application::ApplicationHandler, dpi::PhysicalSize, event::WindowEvent,
@@ -54,6 +55,7 @@ where
     pub(crate) receiver: FlumeReceiver<EventLoopEvent>,
     pub(crate) on_event_loop_init: Option<OnEventLoopInitFns>,
     pub(crate) app_event_listeners: AppEventHandlers,
+    pub(crate) fut_executor: VelonaTasksExecutor,
 }
 
 // ------- Utilities --------- //
@@ -232,9 +234,6 @@ impl<W> AppRunner<W>
 where
     W: WindowRenderer,
 {
-    fn run_task(&self, run: Runnable) {
-        run.run();
-    }
     fn resume_windows(&mut self) {
         for window in self.windows.values_mut() {
             window.resume();
@@ -245,14 +244,36 @@ where
             window.suspend();
         }
     }
-    fn run_exiting_task(&self) -> usize {
+}
+
+// --- Future executor --- //
+#[cfg_attr(feature = "hotpath", hotpath::measure_all)]
+impl<W> AppRunner<W>
+where
+    W: WindowRenderer,
+{
+    fn poll_task(&mut self, task_id: TaskId) {
+        self.fut_executor.poll_task(task_id);
+    }
+    fn run_exiting_task(&mut self) -> usize {
         let mut tasks = 0usize;
-        while let Some(EventLoopEvent::RunTask(run)) = self.receiver.try_iter().next() {
-            run.run();
+        while let Some(EventLoopEvent::PollTask(task_id)) = self.receiver.try_iter().next() {
+            self.poll_task(task_id);
             tasks += 1;
         }
         tasks
     }
+    fn spawn_task(&mut self, task: TaskType<()>) {
+        self.fut_executor.spawn(match task {
+            TaskType::Send(pin) => pin,
+            TaskType::NonSend(pin) => pin,
+        });
+    }
+}
+
+enum TaskType<T> {
+    Send(PinnedFuture<T>),
+    NonSend(PinnedLocalFuture<T>),
 }
 
 // --- manager method handling --- //
@@ -510,9 +531,6 @@ where
                         }
                     });
                 }
-                EventLoopEvent::RunTask(run) => {
-                    self.run_task(run);
-                }
                 EventLoopEvent::NewWindow(builder) => {
                     self.create_window(builder, event_loop);
                 }
@@ -605,6 +623,15 @@ where
                 }
                 EventLoopEvent::PropertyStack(property_stack_methods) => {
                     self.handle_property_stack_methods(*property_stack_methods);
+                }
+                EventLoopEvent::PollTask(task_id) => {
+                    self.poll_task(task_id);
+                }
+                EventLoopEvent::SpawnTaskLocal(send_wrapper) => {
+                    self.spawn_task(TaskType::NonSend(send_wrapper.take()));
+                }
+                EventLoopEvent::SpawnTask(pin) => {
+                    self.spawn_task(TaskType::Send(pin));
                 }
             }
         }

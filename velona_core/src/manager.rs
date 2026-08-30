@@ -1,4 +1,3 @@
-use async_task::Task;
 use futures_channel::oneshot;
 use winit::{
     event_loop::{ControlFlow, DeviceEvents, OwnedDisplayHandle},
@@ -63,12 +62,13 @@ pub trait Manager: EventProxyHandle {
         }
     }
     /// Run a [`task`](Future) that will run on the main thread
-    fn run_task<F, O>(&self, task: F) -> Task<O>
+    fn run_task<F>(&self, task: F)
     where
-        F: Future<Output = O> + Send + 'static,
-        O: Send + 'static,
+        F: Future<Output = ()> + Send + 'static,
     {
-        self.get_proxy().create_task(task)
+        let _ = self
+            .get_proxy()
+            .send_event(EventLoopEvent::SpawnTask(Box::pin(task)));
     }
     /// Return a child [`Owner`](reactive_graph::owner::Owner) of this window handle
     fn app_child_reactive_owner(

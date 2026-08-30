@@ -5089,7 +5089,6 @@ version = "0.1.0"
 dependencies = [
  "accesskit_winit",
  "any_spawner",
- "async-task",
  "copypasta",
  "derive_more",
  "flume",
@@ -5106,6 +5105,7 @@ dependencies = [
  "send_wrapper",
  "thiserror 2.0.20",
  "ui-events-winit",
+ "velona_executor",
  "velona_renderer",
  "winit",
 ]

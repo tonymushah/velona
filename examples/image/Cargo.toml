@@ -1,0 +1,19 @@
+[package]
+name = "image_example"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona.workspace = true
+velona_renderer_vello.workspace = true
+env_logger.workspace = true
+log.workspace = true
+hotpath = { workspace = true, optional = true }
+anyhow = { workspace = true }
+image = { workspace = true }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "time"] }
+
+[features]
+hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]

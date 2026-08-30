@@ -1,0 +1,7 @@
+[package]
+name = "masonry_imaging_lite"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+imaging.workspace = true

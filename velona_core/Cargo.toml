@@ -6,7 +6,7 @@ edition.workspace = true
 [dependencies]
 accesskit_winit.workspace = true
 any_spawner.workspace = true
-masonry_imaging.workspace = true
+masonry_imaging_lite.workspace = true
 masonry_core.workspace = true
 reactive_graph = { workspace = true, features = ["effects", "sandboxed-arenas"] }
 masonry_raw_box = { workspace = true }

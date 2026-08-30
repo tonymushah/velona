@@ -12,7 +12,7 @@ members = [
     "velona_renderer",
     "velona_renderer_vello",
     "velona_executor"
-, "examples/counter", "examples/align", "examples/checkbox", "examples/fragment", "examples/image", "examples/badge_ed", "examples/todo"]
+, "examples/counter", "examples/align", "examples/checkbox", "examples/fragment", "examples/image", "examples/badge_ed", "examples/todo", "masonry_imaging_lite"]
 default-members = ["velona"]
 resolver = "3"
 
@@ -22,7 +22,7 @@ any_spawner = "0.3"
 # async-task = "4"
 # TODO update to 0.5 if released
 masonry = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
-masonry_imaging = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
+# masonry_imaging = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
 masonry_core = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
 masonry_testing = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
 # TODO update to 0.3
@@ -56,9 +56,12 @@ imaging_vello = "0.0"
 enum_all_variants = "0.2"
 resvg = "0.47"
 tracing = { version = "0.1.44", default-features = false }
-masonry_raw_box = { path = "masonry_raw_box" }
 flume = { version = "0.12", default-features = false }
 derive_more = { version = "2", default-features = false }
+
+# masonry related tools
+masonry_raw_box = { path = "masonry_raw_box" }
+masonry_imaging_lite = { path = "masonry_imaging_lite" }
 
 # velona tools
 velona_core = { path = "velona_core" }

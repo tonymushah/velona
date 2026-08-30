@@ -8,7 +8,10 @@ pub(crate) type SpawnFn = Box<dyn Fn(PinnedFuture<()>) + Send + Sync>;
 impl AppEventLoopProxy {
     pub fn create_task(&self, fut: PinnedLocalFuture<()>) {
         #[cfg(feature = "hotpath")]
-        let fut = hotpath::future!(fut);
+        let fut = {
+            let fut = hotpath::future!(fut);
+            Box::pin(fut)
+        };
         if let Err(err) = self.send_event(EventLoopEvent::SpawnTaskLocal(SendWrapper::new(fut))) {
             log::error!("{err}")
         }

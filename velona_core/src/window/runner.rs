@@ -8,7 +8,7 @@ use masonry_core::{
     palette::css::BLACK,
     peniko::color::{AlphaColor, Srgb},
 };
-use masonry_imaging::{Layer as ImagingLayer, PreparedFrame};
+use masonry_imaging_lite::{Layer as ImagingLayer, PreparedFrame};
 use reactive_graph::owner::{Owner, provide_context};
 use send_wrapper::SendWrapper;
 use ui_events_winit::WindowEventReducer;

@@ -1,4 +1,5 @@
-use masonry::{
+use velona::masonry::{
+    self,
     core::{NewWidget, Widget},
     kurbo::Point,
     layout::Length,
@@ -9,15 +10,15 @@ use masonry::{
     theme::DEFAULT_SPACER_LEN,
     widgets::{Align, Button, Flex, Label},
 };
+use velona::reactive::{
+    signal::{WriteSignal, signal},
+    traits::{Get, Update},
+};
 use velona::{
     NewWidgetExt,
     components::label,
     widgets::{button::NewButtonPressEventsExt, resize_observer::BindResizeObserver},
     window::WindowBuilder,
-};
-use velona_core::reactive::{
-    signal::{WriteSignal, signal},
-    traits::{Get, Update},
 };
 use velona_renderer_vello::create_wgpu_context;
 
@@ -88,7 +89,7 @@ fn view() -> NewWidget<dyn Widget + 'static> {
     .erased()
 }
 
-#[cfg_attr(feature = "hotpath-run", hotpath::main)]
+#[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
     env_logger::init();
     let g_context = create_wgpu_context(None, None);

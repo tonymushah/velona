@@ -19,7 +19,7 @@ resolver = "3"
 [workspace.dependencies]
 accesskit_winit = "0.33"
 any_spawner = "0.3"
-async-task = "4"
+# async-task = "4"
 # TODO update to 0.5 if released
 masonry = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
 masonry_imaging = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }

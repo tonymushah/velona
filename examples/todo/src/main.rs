@@ -1,19 +1,20 @@
 use std::sync::Arc;
 
 // use log::trace;
-use masonry::{
+use velona::masonry::{
+    self,
     core::Widget,
     layout::{AsUnit, Length},
     palette::css::{BEIGE, BLACK, WHITE},
     properties::{Background, BorderColor, BorderWidth, Padding},
     widgets::{Button, Flex, FlexParams, Label, Prose, TextInput},
 };
+use velona::reactive::{signal::signal, traits::Update};
 use velona::{
     AnyNewWidget, WindowBuilder,
     collection::NewCollectionWidgetExt,
     widgets::{button::NewButtonPressEventsExt, text_input::NewTextInputActionExt},
 };
-use velona_core::reactive::{signal::signal, traits::Update};
 use velona_renderer_vello::create_wgpu_context;
 
 fn view() -> AnyNewWidget {

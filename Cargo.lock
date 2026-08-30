@@ -4725,6 +4725,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
+name = "todo"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "hotpath",
+ "log",
+ "velona",
+ "velona_renderer_vello",
+]
+
+[[package]]
 name = "tokio"
 version = "1.53.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5142,20 +5153,13 @@ dependencies = [
 name = "velona"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "derive_more",
- "enum_all_variants",
- "env_logger",
  "hotpath",
- "image",
  "log",
  "masonry",
  "resvg",
  "thiserror 2.0.20",
- "tokio",
  "velona_core",
  "velona_core_child",
- "velona_renderer_vello",
  "velona_scoped_styling",
 ]
 

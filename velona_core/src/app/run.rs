@@ -378,11 +378,11 @@ where
         });
     }
     fn handle_resize_event(&mut self, window_id: WindowId, size: PhysicalSize<u32>) {
+        self.use_window(window_id, |window| {
+            window.set_rendered_size(size);
+        });
         self.use_window_render_root(window_id, |render_root| {
             render_root.handle_window_event(MasonryWindowEvent::Resize(size));
-        });
-        self.use_window(window_id, |window| {
-            window.sync_surface_render_root_size();
         });
     }
     fn handle_signal(

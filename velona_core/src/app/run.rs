@@ -734,13 +734,19 @@ where
                             && action_mod
                             && k.state == KeyState::Down
                         {
-                            window.render_root.use_inner_render_root_mut(|_rr| {
-                                todo_warn_of_something("Clipboard Paste");
+                            match clipboard_context.borrow_mut().get_contents() {
+                                Ok(content) => {
+                                    window.render_root.use_inner_render_root_mut(|_rr| {
+                                        todo_warn_of_something("Clipboard Paste");
 
-                                _rr.tree.handle_text_event(TextEvent::ClipboardPaste(
-                                    clipboard_context.borrow_mut().get_contents().unwrap(),
-                                ));
-                            });
+                                        _rr.tree
+                                            .handle_text_event(TextEvent::ClipboardPaste(content));
+                                    });
+                                }
+                                Err(err) => {
+                                    log::error!("Cannot get clipboard content: {err}")
+                                }
+                            }
                         } else {
                             window.render_root.use_inner_render_root_mut(|rr| {
                                 rr.tree

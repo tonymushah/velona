@@ -14,7 +14,7 @@ run_bin:
 run_example_with_hotpath:
     cargo run -p {{ to_run }} -F hotpath,hotpath-cpu,hotpath-alloc
 
-cargo-clean:
+clean:
     cargo clean
 
 hack-clippy:

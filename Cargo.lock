@@ -165,6 +165,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "align"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "enum_all_variants",
+ "env_logger",
+ "hotpath",
+ "log",
+ "velona",
+ "velona_renderer_vello",
+]
+
+[[package]]
 name = "aligned"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

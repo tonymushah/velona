@@ -4,15 +4,29 @@ edition = "2024"
 
 [workspace]
 members = [
+    # Masonry utils
     "masonry_raw_box",
-    "velona",
+    "masonry_imaging_lite",
+    # Velona core deps
     "velona_scoped_styling",
+    "velona_executor",
     "velona_core",
     "velona_core_child",
+    "velona",
+    # Renderers
     "velona_renderer",
     "velona_renderer_vello",
-    "velona_executor"
-, "examples/counter", "examples/align", "examples/checkbox", "examples/fragment", "examples/image", "examples/badge_ed", "examples/todo", "masonry_imaging_lite"]
+    "velona_renderer_vello_cpu",
+    # examples
+    "examples/counter",
+    "examples/align",
+    "examples/checkbox",
+    "examples/fragment",
+    "examples/image",
+    "examples/badge_ed",
+    "examples/todo",
+    "examples/todo_softbuffer"
+]
 default-members = ["velona"]
 resolver = "3"
 
@@ -52,12 +66,18 @@ anyrender_vello = "0.11"
 kurbo = { default-features = false, version = "0.13.1" }
 peniko = { default-features = false, version = "0.6.1" }
 raw-window-handle = "0.6"
-imaging_vello = "0.0"
 enum_all_variants = "0.2"
 resvg = "0.47"
 tracing = { version = "0.1.44", default-features = false }
 flume = { version = "0.12", default-features = false }
 derive_more = { version = "2", default-features = false }
+softbuffer = { git = "https://github.com/rust-windowing/softbuffer.git" }
+vello_cpu = { version = "0.2", default-features = false }
+wgpu_context = "0.9.0"
+vello = { version = "0.10" }
+
+# Rendering utils
+vello_common = { version = "0.2", default-features = false }
 
 # masonry related tools
 masonry_raw_box = { path = "masonry_raw_box" }
@@ -66,10 +86,13 @@ masonry_imaging_lite = { path = "masonry_imaging_lite" }
 # velona tools
 velona_core = { path = "velona_core" }
 velona_renderer = { version = "0.1", path = "velona_renderer" }
-velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }
 velona_core_child = { path = "velona_core_child" }
 velona_scoped_styling = { path = "velona_scoped_styling" }
 velona_executor = { path = "velona_executor" }
+
+# velona renderers
+velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }
+velona_renderer_vello_cpu = { path = "velona_renderer_vello_cpu" }
 
 # velona itself
 velona = { path = "velona" }

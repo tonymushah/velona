@@ -1,0 +1,16 @@
+[package]
+name = "velona_renderer_vello_cpu"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona_renderer.workspace = true
+vello_cpu = { version = "0.2", default-features = false, features = ["std", "text", "u8_pipeline"] }
+softbuffer = { workspace = true }
+imaging.workspace = true
+kurbo.workspace = true
+peniko.workspace = true
+vello_common = { workspace = true, features = ["std"] }
+raw-window-handle.workspace = true
+winit.workspace = true
+# log.workspace = true

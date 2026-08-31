@@ -159,16 +159,16 @@ where
         };
         Ok(this)
     }
-    // pub fn sync_surface_render_root_size(&mut self) -> bool {
-    //     let Some(size) = self
-    //         .render_root
-    //         .use_inner_render_root_ref(|root| root.tree.size())
-    //     else {
-    //         return false;
-    //     };
-    //     self.renderer.set_size(size.width, size.height);
-    //     true
-    // }
+    pub fn sync_surface_render_root_size(&mut self) -> bool {
+        let Some(size) = self
+            .render_root
+            .use_inner_render_root_ref(|root| root.tree.size())
+        else {
+            return false;
+        };
+        self.set_rendered_size(size);
+        true
+    }
     pub fn set_rendered_size(&mut self, size: PhysicalSize<u32>) {
         self.renderer.set_size(size.width, size.height);
     }

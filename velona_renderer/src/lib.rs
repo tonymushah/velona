@@ -40,4 +40,6 @@ pub trait WindowRenderer {
 
     fn set_size(&mut self, width: u32, height: u32);
     fn render<F: FnOnce(&mut Self::ScenePainter<'_>)>(&mut self, draw_fn: F);
+
+    fn on_memory_warning(&mut self) {}
 }

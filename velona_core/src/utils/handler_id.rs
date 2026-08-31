@@ -10,9 +10,8 @@ pub struct HandlerId(pub(crate) NonZeroU64);
 impl HandlerId {
     /// Allocates a new, unique `HandlerId`.
     ///
-    /// All widgets are assigned ids automatically; you should only create
-    /// an explicit id if you need to know it ahead of time, for instance
-    /// if you want two sibling widgets to know each others' ids.
+    /// All handlers are assigned ids automatically; you should only create
+    /// an explicit id if you need to know it ahead of time.
     ///
     /// You must ensure that a given `HandlerId` is only ever used for one
     /// handler at a time.

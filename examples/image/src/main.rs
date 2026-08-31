@@ -1,17 +1,18 @@
 use std::{process, sync};
 
-use masonry::{
+use velona::masonry::{
+    self,
     core::Widget,
     layout::Length,
     palette::css::WHITE,
     peniko::{Blob, ImageBrush, ImageData, ImageSampler},
     widgets::{Flex, Label, SizedBox, Spinner},
 };
+use velona::reactive::{computed::Memo, signal::signal, traits::Read};
 use velona::{
     AnyNewWidget, Builder, WindowBuilder,
     components::{LazyImageOptions, lazy_image},
 };
-use velona_core::reactive::{computed::Memo, signal::signal, traits::Read};
 use velona_renderer_vello::create_wgpu_context;
 
 enum ImageState {
@@ -22,7 +23,7 @@ enum ImageState {
 
 fn new_view() -> AnyNewWidget {
     let (image_data, set_image_data) = signal(ImageState::Loading);
-    velona_core::reactive::spawn(async move {
+    velona::reactive::spawn(async move {
         // TODO Fix buffer overflow panic
         match image::open("assets/image1.png") {
             Ok(data) => {

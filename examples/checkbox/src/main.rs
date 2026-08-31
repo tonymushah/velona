@@ -1,14 +1,14 @@
-use masonry::{
+use velona::masonry::{
     core::Widget,
     palette::css::WHITE,
     properties::types::MainAxisAlignment,
     theme::DEFAULT_SPACER_LEN,
     widgets::{Align, Flex},
 };
+use velona::reactive::signal::signal;
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, components::checkbox as _checkbox,
 };
-use velona_core::reactive::signal::signal;
 use velona_renderer_vello::create_wgpu_context;
 
 fn view() -> AnyNewWidget {
@@ -36,7 +36,7 @@ fn view() -> AnyNewWidget {
     .erased()
 }
 
-#[cfg_attr(feature = "hotpath-run", hotpath::main)]
+#[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
     env_logger::init();
     let g_context = create_wgpu_context(None, None);

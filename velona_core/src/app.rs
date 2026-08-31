@@ -7,6 +7,7 @@ use crate::{
 };
 mod handle;
 mod run;
+use velona_executor::VelonaTasksExecutor;
 use velona_renderer::WindowRenderer;
 pub(crate) mod event_listener;
 pub(crate) mod proxy;
@@ -141,7 +142,7 @@ impl<W: WindowRenderer> Builder<W> {
         }
 
         let mut app = run::AppRunner {
-            app_handle: AppHandle::new(proxy),
+            app_handle: AppHandle::new(proxy.clone()),
             windows: Default::default(),
             window_renderer_factory: self.window_render_factory,
             default_properties: Arc::new(self.default_properties),
@@ -158,6 +159,9 @@ impl<W: WindowRenderer> Builder<W> {
                 }
             },
             app_event_listeners: Default::default(),
+            fut_executor: VelonaTasksExecutor::new(move |task_id| {
+                let _ = proxy.send_event(EventLoopEvent::PollTask(task_id));
+            }),
         };
         // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;

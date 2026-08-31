@@ -1,11 +1,13 @@
 use std::fmt::Debug;
 
-use async_task::Runnable;
+use any_spawner::PinnedFuture;
+use any_spawner::PinnedLocalFuture;
 use futures_channel::oneshot;
 use masonry_core::app::RenderRoot;
 use masonry_core::app::RenderRootSignal;
 use reactive_graph::owner::Owner;
 use send_wrapper::SendWrapper;
+use velona_executor::TaskId;
 use winit::window::{Window, WindowId};
 
 use crate::app::event_listener::{RegisterAppEvent, UnRegisterAppEventHandler};
@@ -80,7 +82,6 @@ pub(crate) enum UnregisterEventHandler {
 #[derive(derive_more::Debug)]
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<accesskit_winit::Event>),
-    RunTask(Runnable),
     NewWindow(#[debug(skip)] Box<WindowBuilder>),
     CloseWindow(WindowId),
     SetClipboardContent(String),
@@ -95,6 +96,9 @@ pub(crate) enum EventLoopEvent {
     UnRegisterHandler(Box<UnregisterEventHandler>),
     ManagerMethods(Box<OtherManagerMethods>),
     PropertyStack(Box<PropertyStackMethods>),
+    PollTask(TaskId),
+    SpawnTaskLocal(#[debug(skip)] SendWrapper<PinnedLocalFuture<()>>),
+    SpawnTask(#[debug(skip)] PinnedFuture<()>),
 }
 
 impl From<PropertyStackMethods> for EventLoopEvent {

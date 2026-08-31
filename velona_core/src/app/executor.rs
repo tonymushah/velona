@@ -1,27 +1,20 @@
-use any_spawner::{CustomExecutor, PinnedFuture};
-use async_task::Task;
+use any_spawner::{CustomExecutor, PinnedFuture, PinnedLocalFuture};
+use send_wrapper::SendWrapper;
 
 use crate::app::{EventLoopEvent, proxy::AppEventLoopProxy};
 
 pub(crate) type SpawnFn = Box<dyn Fn(PinnedFuture<()>) + Send + Sync>;
 
 impl AppEventLoopProxy {
-    pub fn create_task<F>(&self, fut: F) -> Task<F::Output>
-    where
-        F: Future + 'static,
-        F::Output: 'static,
-    {
-        let proxy = self.clone();
+    pub fn create_task(&self, fut: PinnedLocalFuture<()>) {
         #[cfg(feature = "hotpath")]
-        let fut = hotpath::future!(fut);
-        let (run, task) = async_task::spawn_local(fut, move |run| {
-            let res = proxy.send_event(EventLoopEvent::RunTask(run));
-            if res.is_err() {
-                log::warn!("the event loop is already closed!");
-            }
-        });
-        run.schedule();
-        task
+        let fut = {
+            let fut = hotpath::future!(fut);
+            Box::pin(fut)
+        };
+        if let Err(err) = self.send_event(EventLoopEvent::SpawnTaskLocal(SendWrapper::new(fut))) {
+            log::error!("{err}")
+        }
     }
 }
 
@@ -39,8 +32,7 @@ impl CustomExecutor for AppExecutor {
     }
 
     fn spawn_local(&self, fut: any_spawner::PinnedLocalFuture<()>) {
-        let task = self.proxy.create_task(fut);
-        task.detach();
+        self.proxy.create_task(fut);
     }
 
     fn poll_local(&self) {}

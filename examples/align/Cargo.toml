@@ -1,0 +1,18 @@
+[package]
+name = "align"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona.workspace = true
+velona_renderer_vello.workspace = true
+env_logger.workspace = true
+log.workspace = true
+hotpath = { workspace = true, optional = true }
+enum_all_variants.workspace = true
+derive_more = { workspace = true, features = ["display", "from_str"] }
+
+[features]
+hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]

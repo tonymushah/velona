@@ -5,23 +5,33 @@ use std::{sync, time::Duration};
 use derive_more::{Display, FromStr};
 use enum_all_variants::AllVariants;
 use image::open;
-use masonry::core::DefaultProperties;
-use masonry::imaging::peniko::{Blob, ImageBrush, ImageData, ImageSampler, color::AlphaColor};
-use masonry::layers::SelectorMenu;
-use masonry::palette::css::{BEIGE, ORANGE, RED};
-use masonry::peniko::color::Srgb;
-use masonry::properties::TrackColor;
-use masonry::widgets::SelectorItem;
-use masonry::{
+use tokio::runtime;
+use velona::masonry::{
+    self,
+    core::DefaultProperties,
     core::Widget,
+    imaging::peniko::{Blob, ImageBrush, ImageData, ImageSampler, color::AlphaColor},
+    layers::SelectorMenu,
     layout::Length,
+    palette::css::{BEIGE, ORANGE, RED},
     palette::css::{BLACK, VIOLET, WHEAT, WHITE, WHITE_SMOKE},
     parley::{FontWeight, StyleProperty},
+    peniko::color::Srgb,
+    properties::TrackColor,
     properties::{Background, BorderColor, BorderWidth, CornerRadius, Padding},
     theme::DEFAULT_SPACER_LEN,
+    widgets::SelectorItem,
     widgets::{Badged, Button, Flex, Label, Selector, SizedBox, Spinner},
 };
-use tokio::runtime;
+use velona::reactive::{
+    callback::{Callable, UnsyncCallback},
+    computed::Memo,
+    effect::Effect,
+    signal::{WriteSignal, arc_signal, signal},
+    spawn,
+    traits::{Get, Read, Set, Update},
+};
+use velona::scoped_styling::{ApplyScopedStyles, ScopedClasses};
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder,
     components::{LazyImageOptions, badge_count, label, lazy_image},
@@ -30,16 +40,7 @@ use velona::{
         self, badged::NewBadgedTrait, button::NewButtonPressEventsExt, sized_box::NewSizedBoxExt,
     },
 };
-use velona_core::reactive::{
-    callback::{Callable, UnsyncCallback},
-    computed::Memo,
-    effect::Effect,
-    signal::{WriteSignal, arc_signal, signal},
-    spawn,
-    traits::{Get, Read, Set, Update},
-};
 use velona_renderer_vello::{VelloWindowRenderer, create_wgpu_context};
-use velona_scoped_styling::{ApplyScopedStyles, ScopedClasses};
 
 struct TowaProps {
     show: UnsyncCallback<(), bool>,
@@ -327,7 +328,7 @@ fn main_view() -> AnyNewWidget {
         .erased()
 }
 
-#[cfg_attr(feature = "hotpath-run", hotpath::main)]
+#[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
     env_logger::init();
     let runtime = runtime::Builder::new_multi_thread()

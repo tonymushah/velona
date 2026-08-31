@@ -8,11 +8,12 @@ use masonry_core::{
     palette::css::BLACK,
     peniko::color::{AlphaColor, Srgb},
 };
-use masonry_imaging::{Layer as ImagingLayer, PreparedFrame};
+use masonry_imaging_lite::{Layer as ImagingLayer, PreparedFrame};
 use reactive_graph::owner::{Owner, provide_context};
 use send_wrapper::SendWrapper;
 use ui_events_winit::WindowEventReducer;
 use velona_renderer::WindowRenderer;
+use winit::dpi::PhysicalSize;
 use winit::window::Window as WinitWindow;
 
 use crate::{
@@ -158,15 +159,18 @@ where
         };
         Ok(this)
     }
-    pub fn sync_surface_render_root_size(&mut self) -> bool {
-        let Some(size) = self
-            .render_root
-            .use_inner_render_root_ref(|root| root.tree.size())
-        else {
-            return false;
-        };
+    // pub fn sync_surface_render_root_size(&mut self) -> bool {
+    //     let Some(size) = self
+    //         .render_root
+    //         .use_inner_render_root_ref(|root| root.tree.size())
+    //     else {
+    //         return false;
+    //     };
+    //     self.renderer.set_size(size.width, size.height);
+    //     true
+    // }
+    pub fn set_rendered_size(&mut self, size: PhysicalSize<u32>) {
         self.renderer.set_size(size.width, size.height);
-        true
     }
     pub fn render(&mut self) -> Result<(), crate::error::Error> {
         let now = Instant::now();

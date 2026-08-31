@@ -1,6 +1,7 @@
 use derive_more::{Display, FromStr};
 use enum_all_variants::AllVariants;
-use masonry::{
+use velona::masonry::{
+    self,
     core::Widget,
     layout::{Length, UnitPoint},
     palette::css::{BLACK, WHITE, WHITE_SMOKE},
@@ -8,12 +9,12 @@ use masonry::{
     theme::DEFAULT_SPACER_LEN,
     widgets::{Align, Flex, Label, Selector, SizedBox},
 };
-use velona::{AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, widgets::align::NewAlignExt};
-use velona_core::reactive::{
+use velona::reactive::{
     computed::Memo,
     signal::signal,
     traits::{Get, Set},
 };
+use velona::{AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, widgets::align::NewAlignExt};
 use velona_renderer_vello::create_wgpu_context;
 
 #[derive(Debug, Clone, Copy, Display, FromStr, AllVariants)]
@@ -95,7 +96,7 @@ fn main_view() -> AnyNewWidget {
         .erased()
 }
 
-#[cfg_attr(feature = "hotpath-run", hotpath::main)]
+#[cfg_attr(feature = "hotpath", hotpath::main)]
 fn main() {
     env_logger::init();
     let g_context = create_wgpu_context(None, None);

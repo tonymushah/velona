@@ -1,0 +1,21 @@
+[package]
+name = "badge_ed"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona.workspace = true
+velona_renderer_vello.workspace = true
+env_logger.workspace = true
+log.workspace = true
+hotpath = { workspace = true, optional = true }
+image = { workspace = true }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "time"] }
+derive_more = { workspace = true, features = ["display", "from_str"] }
+enum_all_variants = { workspace = true }
+anyhow = { workspace = true }
+
+[features]
+hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]

@@ -4,12 +4,14 @@ set lazy
 
 to_run := env('TO_RUN')
 
+features := env('FEATURES', ",")
+
 [group("utils")]
 cloc-project:
     cloc --vcs git
 
 run_bin:
-    cargo run -p {{ to_run }}
+    cargo run -p {{ to_run }} -F {{ features }}
 
 run_example_with_hotpath:
     cargo run -p {{ to_run }} -F hotpath,hotpath-cpu,hotpath-alloc

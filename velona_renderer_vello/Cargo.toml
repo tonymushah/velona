@@ -6,14 +6,14 @@ edition.workspace = true
 [dependencies]
 velona_renderer.workspace = true
 imaging = { workspace = true }
-wgpu_context = "0.9.0"
+wgpu_context.workspace = true
 futures-channel.workspace = true
 peniko.workspace = true
 kurbo.workspace = true
 pollster.workspace = true
 debug_timer = "0.1"
 # hotpath = {workspace = true, optional=true}
-vello = { version = "0.10", features = ["wgpu"] }
+vello = { workspace = true, features = ["wgpu"] }
 
 [features]
 log_frame_times = ["debug_timer/enable"]

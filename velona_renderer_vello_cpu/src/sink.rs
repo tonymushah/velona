@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-use std::num::TryFromIntError;
 
 use imaging::record::{Scene, replay_transformed};
 use imaging::{
@@ -13,14 +12,14 @@ use softbuffer::Buffer;
 use vello_common::filter_effects::{EdgeMode, Filter as VelloFilter, FilterGraph, FilterPrimitive};
 use vello_common::paint::Image as VelloImage;
 use vello_cpu::{
-    Glyph as VelloGlyph, ImageSource, Pixmap, PixmapMut, RasterizerSettings, RenderContext,
-    Resources,
+    Glyph as VelloGlyph, ImageSource, Pixmap, RasterizerSettings, RenderContext, Resources,
 };
 
 use crate::imaging_vello_cpu::CachedMask;
 use crate::imaging_vello_cpu::{RendererError, VelloCpuRenderer};
 use crate::utils::{f64_to_f32, unpremultiply_rgba8_in_place};
 
+#[derive(Debug)]
 pub struct BufferSurfaceSink<'surface> {
     pub(crate) buffer: Buffer<'surface>,
     pub(crate) ctx: &'surface mut RenderContext,
@@ -33,6 +32,7 @@ pub struct BufferSurfaceSink<'surface> {
     pub(crate) error: Option<RendererError>,
     pub(crate) clip_depth: u32,
     pub(crate) group_depth: u32,
+    // pub(crate) pixmap_mut: &'surface mut Pixmap,
 }
 
 impl<'surface> BufferSurfaceSink<'surface> {
@@ -233,7 +233,10 @@ impl<'surface> BufferSurfaceSink<'surface> {
             return None;
         }
 
-        let mut pixmap = Pixmap::new(self.width, self.height);
+        let mut pixmap = Pixmap::new(
+            self.buffer.width().get() as _,
+            self.buffer.height().get() as _,
+        );
         renderer.ctx.flush();
         renderer.ctx.render(&mut pixmap, &mut renderer.resources);
         let mask = match mode {
@@ -287,30 +290,28 @@ impl<'surface> BufferSurfaceSink<'surface> {
         }
 
         self.ctx.flush();
-        self.ctx.render_with(
-            PixmapMut::new(
-                self.buffer
-                    .width()
-                    .get()
-                    .try_into()
-                    .map_err(|_: TryFromIntError| {
-                        RendererError::Internal("Cannot transform a u32 to u16")
-                    })?,
-                self.buffer
-                    .height()
-                    .get()
-                    .try_into()
-                    .map_err(|_: TryFromIntError| {
-                        RendererError::Internal("Cannot transform a u32 to u16")
-                    })?,
-                self.buffer.data_u8(),
-            )
-            .ok_or(RendererError::Internal("Cannot build a PixmapMut"))?,
-            self.ressources,
-            self.rasterizer_settings,
-        );
-        unpremultiply_rgba8_in_place(self.buffer.data_u8());
 
+        let mut pixmap = Pixmap::new(
+            self.buffer.width().get() as _,
+            self.buffer.width().get() as _,
+        );
+        self.ctx
+            .render_with(pixmap.as_mut(), self.ressources, self.rasterizer_settings);
+        unpremultiply_rgba8_in_place(pixmap.data_as_u8_slice_mut());
+        for (x, y, pixel) in self.buffer.pixels_iter() {
+            let idx = self.width as usize * y as usize + x as usize;
+            let Some(pixto_render) = pixmap.data().get(idx) else {
+                continue;
+            };
+            pixel.r = pixto_render.r;
+            pixel.b = pixto_render.b;
+            pixel.g = pixto_render.g;
+            pixel.a = pixto_render.a;
+        }
+
+        // log::trace!("buffer size: {}", self.buffer.pixels().len());
+
+        self.ctx.flush();
         Ok(())
     }
 }

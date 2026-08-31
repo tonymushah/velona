@@ -57,11 +57,16 @@ impl Surface {
             group_depth: 0,
         })
     }
+    fn sync_size(&mut self) {
+        self.ctx
+            .reset_and_resize(self.width.get() as _, self.height.get() as _);
+        self.inner_surface.resize(self.width, self.height).unwrap();
+    }
 
     pub fn set_size(&mut self, width: NonZero<u32>, height: NonZero<u32>) {
-        self.inner_surface.resize(width, height).unwrap();
-        self.ctx
-            .reset_and_resize(width.get() as _, height.get() as _);
+        self.height = height;
+        self.width = width;
+        self.sync_size();
     }
 
     /// Drop any realized mask artifacts cached by the renderer.

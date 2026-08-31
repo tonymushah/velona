@@ -87,12 +87,24 @@ impl WindowRenderer for VelloSoftbufferRenderer {
             let mut buffer = active.next_sink().unwrap();
             draw_fn(&mut buffer);
             buffer.write_in_buffer().unwrap();
+            // buffer.pixmap_mut.shrink_to_fit();
+            // log::trace!(
+            //     "masks cache: ({}, {})",
+            //     buffer.mask_cache.len(),
+            //     buffer.mask_cache.capacity()
+            // );
+            // log::trace!(
+            //     "pixmap: ({}, {})",
+            //     buffer.pixmap_mut.data().len(),
+            //     buffer.pixmap_mut.capacity()
+            // );
             buffer.buffer.present().unwrap();
         };
     }
     fn on_memory_warning(&mut self) {
         if let RenderState::Active(active) = &mut self.render_state {
             active.clear_cached_masks();
+            // active.pixmap.shrink_to_fit();
         }
     }
 }

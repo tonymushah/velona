@@ -5551,8 +5551,11 @@ version = "0.1.0"
 dependencies = [
  "dioxus-cli-config",
  "dioxus-devtools-types",
+ "log",
+ "or_poisoned",
  "reactive_graph",
  "rustc-hash 2.1.3",
+ "send_wrapper",
  "serde_json",
  "subsecond",
  "tungstenite",

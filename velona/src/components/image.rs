@@ -4,10 +4,9 @@ use masonry::{
     properties::ObjectFit,
     widgets::{Image, SizedBox},
 };
-use velona_core::reactive::{
-    callback::{Callable, UnsyncCallback},
-    effect::Effect,
-};
+use velona_core::reactive::callback::{Callable, UnsyncCallback};
+#[cfg(doc)]
+use velona_core::reactive::effect::Effect;
 
 use crate::{
     AnyNewWidget, NewWidgetExt,
@@ -59,7 +58,7 @@ where
     } = options;
     let s_box = SizedBox::empty().prepare();
     let s_box_ref = s_box.create_velona_ref();
-    Effect::new(
+    velona_core::utils::local_effect(
         move |maybe_current_image: Option<Option<VelonaWidgetRef<Image>>>| {
             // We are reusing the Widget Ref here from the last effect run to prevent reallocating a new widget Image everytime
             let maybe_current_image_ref = maybe_current_image.flatten();
@@ -71,7 +70,7 @@ where
                     let s_box_ref = s_box_ref.clone();
                     // We warp the fallback inside a fallback to p
                     // I could have used another SizedBox but it would be more efficient that way
-                    Effect::new(move || {
+                    velona_core::utils::local_effect(move || {
                         // I know that i should have used `run` but i want to be safe here.
                         let maybe_fallback = fallback.try_run(());
                         let _ = change_box_child_element(&s_box_ref, maybe_fallback);
@@ -101,7 +100,7 @@ where
             // Change the object fit reactivly in another effect for effiency
             if let Some(object_fit) = object_fit {
                 let image_ref = image_ref.clone();
-                Effect::new(move || {
+                velona_core::utils::local_effect(move || {
                     let object_fit = object_fit.try_run(());
                     if let Some(object_fit) = object_fit {
                         let _ = image_ref

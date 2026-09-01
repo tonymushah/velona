@@ -11,3 +11,6 @@ serde_json.workspace = true
 dioxus-devtools-types.workspace = true
 reactive_graph.workspace = true
 rustc-hash.workspace = true
+log.workspace = true
+or_poisoned.workspace = true
+send_wrapper.workspace = true

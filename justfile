@@ -20,7 +20,7 @@ run_bin:
 run_example_with_hotpath:
     cargo run -p {{ to_run }} -F hotpath,hotpath-cpu,hotpath-alloc
 
-run_hot_reload:
+run_hot_patch:
     dx serve -p {{ to_run }} \
         --features {{ features }} \
         --hot-patch

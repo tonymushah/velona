@@ -95,7 +95,7 @@ impl ScopedPropstack {
         let stack = self.stack.clone();
         // let tree = use_window_render_root_ref()
         //     .expect("Cannot get the tree render root in the current context");
-        Effect::new(move |old_property: Option<Option<P>>| -> Option<P> {
+        velona_core::utils::local_effect(move |old_property: Option<Option<P>>| -> Option<P> {
             let old_property = old_property.flatten();
             let new_property = prop(old_property);
             let selector = selector.clone();

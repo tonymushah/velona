@@ -10,7 +10,7 @@ use masonry_core::{
 use reactive_graph::{effect::Effect, graph::untrack};
 
 use crate::{
-    utils::register_widget_action_listener,
+    utils::{local_effect::local_effect, register_widget_action_listener},
     widget_ref::VelonaWidgetRef,
     window::{event_listener::register_typed_widget_action_listener, use_window},
 };
@@ -110,7 +110,7 @@ where
         V: 'static,
     {
         let widget_ref = self.create_erased_velona_ref().disarm();
-        Effect::new(move |v: Option<Option<V>>| {
+        local_effect(move |v: Option<Option<V>>| {
             let v = v.flatten();
             match widget_ref.edit_erased_local_now(|widget_mut| (fun)(widget_mut, v)) {
                 Ok(val) => val,
@@ -307,7 +307,7 @@ where
         V: 'static,
     {
         let widget_ref = self.create_velona_ref().disarm();
-        Effect::new(move |v: Option<Option<V>>| {
+        local_effect(move |v: Option<Option<V>>| {
             let v = v.flatten();
             match widget_ref.edit_local_now(|widget_mut| (fun)(widget_mut, v)) {
                 Ok(val) => val,

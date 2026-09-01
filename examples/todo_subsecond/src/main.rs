@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
-use velona::subsecond;
+use log::trace;
+use velona::reactive::traits::Read;
 // use log::trace;
 use velona::reactive::{signal::signal, traits::Update};
+use velona::utils::local_effect;
 use velona::{
     AnyNewWidget, WindowBuilder,
     collection::NewCollectionWidgetExt,
@@ -24,12 +26,12 @@ use velona_renderer_vello::create_wgpu_context;
 fn view() -> AnyNewWidget {
     let (todos, set_todos) = signal(Vec::<Arc<str>>::new());
 
-    // Effect::new(move || {
-    //     let todo_ref = todos.read();
-    //     trace!("todo len: {}", todo_ref.len());
-    //     trace!("todo capacity: {}", todo_ref.capacity());
-    //     trace!("todo real size: {}", size_of_val(&*todo_ref))
-    // });
+    local_effect(move || {
+        let todo_ref = todos.read();
+        trace!("todo len: {}", todo_ref.len());
+        trace!("todo capacity: {}", todo_ref.capacity());
+        trace!("todo real size: {}", size_of_val(&*todo_ref))
+    });
 
     Flex::column()
         .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
@@ -37,7 +39,7 @@ fn view() -> AnyNewWidget {
         .with_fixed(
             Prose::new("Todos")
                 .prepare()
-                .text(|| subsecond::call(|| String::from("Some todos"))),
+                .text(|| subsecond::call(|| String::from("Some todd"))),
         )
         .with_fixed(Flex::column().prepare().collect_reactive_iter(move || {
             todos()

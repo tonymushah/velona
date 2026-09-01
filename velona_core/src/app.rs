@@ -141,6 +141,15 @@ impl<W: WindowRenderer> Builder<W> {
             Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
         }
 
+        #[cfg(feature = "subsecond")]
+        {
+            use crate::events::el_event::EventLoopEvent;
+            let proxy = proxy.clone();
+            velona_subsecond::connect_to_dx_cli(move |msg| {
+                let _ = proxy.send_event(EventLoopEvent::DxCliMessages(msg));
+            });
+        }
+
         let mut app = run::AppRunner {
             app_handle: AppHandle::new(proxy.clone()),
             windows: Default::default(),

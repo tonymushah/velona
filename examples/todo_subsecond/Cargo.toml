@@ -1,0 +1,17 @@
+[package]
+name = "todo_subsecond"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona = { workspace = true, features = ["subsecond"] }
+subsecond = { workspace = true }
+velona_renderer_vello.workspace = true
+env_logger.workspace = true
+log.workspace = true
+hotpath = { workspace = true, optional = true }
+
+[features]
+hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]

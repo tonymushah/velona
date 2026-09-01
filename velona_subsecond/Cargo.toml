@@ -1,0 +1,12 @@
+[package]
+name = "velona_subsecond"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+subsecond.workspace = true
+tungstenite.workspace = true
+dioxus-cli-config.workspace = true
+serde_json.workspace = true
+dioxus-devtools-types.workspace = true
+reactive_graph.workspace = true

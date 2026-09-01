@@ -16,6 +16,4 @@ velona_scoped_styling = { workspace = true }
 
 [features]
 hotpath = ["dep:hotpath", "velona_core/hotpath"]
-hotpath-run = ["hotpath", "hotpath/hotpath"]
-hotpath-cpu = ["hotpath/hotpath-cpu"]
-hotpath-alloc = ["hotpath/hotpath-alloc"]
+subsecond = ["velona_core/subsecond"]

@@ -99,6 +99,8 @@ pub(crate) enum EventLoopEvent {
     PollTask(TaskId),
     SpawnTaskLocal(#[debug(skip)] SendWrapper<PinnedLocalFuture<()>>),
     SpawnTask(#[debug(skip)] PinnedFuture<()>),
+    #[cfg(feature = "subsecond")]
+    DxCliMessages(velona_subsecond::DevserverMsg),
 }
 
 impl From<PropertyStackMethods> for EventLoopEvent {

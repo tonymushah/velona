@@ -1,14 +1,18 @@
 use std::sync::Arc;
+mod views;
 
 use log::trace;
+use velona::NewWidgetExt;
+use velona::components::label;
+use velona::masonry::properties::CornerRadius;
 use velona::reactive::traits::Read;
 // use log::trace;
 use velona::reactive::{signal::signal, traits::Update};
-use velona::utils::local_effect;
+use velona::subsecond::{hot_value_with_memo, hot_value_with_memo_raw};
+use velona::utils::{hot_view, local_effect};
 use velona::{
-    AnyNewWidget, WindowBuilder,
-    collection::NewCollectionWidgetExt,
-    widgets::{button::NewButtonPressEventsExt, text_input::NewTextInputActionExt},
+    AnyNewWidget, WindowBuilder, collection::NewCollectionWidgetExt,
+    widgets::button::NewButtonPressEventsExt,
 };
 use velona::{
     masonry::{
@@ -17,7 +21,7 @@ use velona::{
         layout::{AsUnit, Length},
         palette::css::{BEIGE, BLACK, WHITE},
         properties::{Background, BorderColor, BorderWidth, Padding},
-        widgets::{Button, Flex, FlexParams, Label, Prose, TextInput},
+        widgets::{Button, Flex, FlexParams, Label, Prose},
     },
     widgets::text_area::NewTextAreaExt,
 };
@@ -30,8 +34,10 @@ fn view() -> AnyNewWidget {
         let todo_ref = todos.read();
         trace!("todo len: {}", todo_ref.len());
         trace!("todo capacity: {}", todo_ref.capacity());
-        trace!("todo real size: {}", size_of_val(&*todo_ref))
+        trace!("todo rea size: {}", size_of_val(&*todo_ref))
     });
+
+    let text = hot_value_with_memo_raw(|| String::from("Remove?"));
 
     Flex::column()
         .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
@@ -39,7 +45,7 @@ fn view() -> AnyNewWidget {
         .with_fixed(
             Prose::new("Todos")
                 .prepare()
-                .text(|| subsecond::call(|| String::from("Some todosas"))),
+                .text(hot_value_with_memo(|| String::from("Some todos"))),
         )
         .with_fixed(Flex::column().prepare().collect_reactive_iter(move || {
             todos()
@@ -47,58 +53,43 @@ fn view() -> AnyNewWidget {
                 .enumerate()
                 .map(move |(index, item)| {
                     (
-                        Flex::row()
-                            .cross_axis_alignment(
-                                masonry::properties::types::CrossAxisAlignment::Center,
-                            )
-                            .main_axis_alignment(
-                                masonry::properties::types::MainAxisAlignment::Center,
-                            )
-                            .with_fixed(Label::new(item.clone()).prepare())
-                            .with_fixed_spacer(Length::px(20.0))
-                            .with_fixed(
-                                Button::with_text("Remove")
-                                    .prepare()
-                                    .on_primary(move || {
-                                        set_todos.update(|todos| {
-                                            todos.swap_remove(index);
-                                        });
-                                    })
-                                    .with_props(BorderColor::new(BLACK))
-                                    .with_props(Background::Color(BEIGE))
-                                    .with_props(BorderWidth::all(Length::px(1.0)))
-                                    .with_props(Padding::from_vh(4.0.px(), 12.0.px())),
-                            )
-                            .prepare()
-                            .erased(),
+                        hot_view(move || {
+                            Flex::row()
+                                .cross_axis_alignment(
+                                    masonry::properties::types::CrossAxisAlignment::Center,
+                                )
+                                .main_axis_alignment(
+                                    masonry::properties::types::MainAxisAlignment::Start,
+                                )
+                                .with_fixed(Label::new(item.clone()).prepare())
+                                .with_fixed_spacer(Length::px(20.0))
+                                .with_fixed(
+                                    Button::new(label(move || (*text)()))
+                                        .prepare()
+                                        .on_primary(move || {
+                                            set_todos.update(|todos| {
+                                                todos.swap_remove(index);
+                                            });
+                                        })
+                                        .with_props(BorderColor::new(BLACK))
+                                        .with_props(Background::Color(BEIGE))
+                                        .with_props(BorderWidth::all(Length::px(1.0)))
+                                        .with_props(Padding::from_vh(4.0.px(), 12.0.px()))
+                                        .with_props(CornerRadius::all(Length::px(2.0))),
+                                )
+                                .prepare()
+                                .static_propeperty(Padding::from_vh(
+                                    Length::px(2.0),
+                                    Length::default(),
+                                ))
+                                .erased()
+                        }),
                         FlexParams::default(),
                     )
                 })
                 .collect::<Vec<_>>()
         }))
-        .with_fixed(
-            TextInput::new("")
-                .with_placeholder("Put something...")
-                .prepare()
-                .with_props(BorderColor::new(BLACK))
-                .with_props(BorderWidth::all(Length::px(1.0)))
-                .with_props(Padding::from_vh(Length::px(4.0), Length::px(12.0)))
-                .on_text_action(move |a| match a {
-                    masonry::widgets::TextAction::Changed(e) => log::trace!("Changed input {e}"),
-                    masonry::widgets::TextAction::Entered(todo) => {
-                        set_todos.update(|todos| {
-                            if let Some(already) =
-                                todos.iter().find(|inside| &***inside == todo).cloned()
-                            {
-                                todos.push(already);
-                            } else {
-                                todos.push(todo.as_str().into());
-                            }
-                        });
-                    }
-                    _ => {}
-                }),
-        )
+        .with_fixed(views::text_input(set_todos))
         .prepare()
         .with_props(Padding::all(Length::px(12.0)))
         .erased()

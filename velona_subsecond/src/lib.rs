@@ -4,13 +4,13 @@ pub use dioxus_devtools_types::DevserverMsg;
 use or_poisoned::OrPoisoned;
 use reactive_graph::{
     effect::{Effect, EffectFunction},
-    graph::{AnySource, ToAnySource},
+    graph::{AnySource, ToAnySource, untrack},
     owner::{LocalStorage, on_cleanup},
-    signal::Trigger,
+    signal::{ReadSignal, Trigger, signal},
     traits::{Notify, Track},
 };
 use rustc_hash::FxHashMap;
-use subsecond::HotFnPtr;
+use subsecond::{HotFn, HotFnPtr};
 
 pub fn connect_to_dx_cli<C>(callback: C) -> bool
 where
@@ -76,12 +76,54 @@ pub fn shrink_fit_subscribers_map() {
     HOT_RELOAD_SUBSCRIBERS.lock().or_poisoned().shrink_to_fit();
 }
 
+pub fn hot_signal_value<F, V>(val_fn: F) -> ReadSignal<V>
+where
+    F: Fn() -> V + 'static,
+    V: Send + Sync + 'static,
+{
+    let (hot_fn_ptr, fun) = {
+        let fun = Arc::new(Mutex::new(subsecond::HotFn::current(val_fn)));
+        (
+            {
+                let fun = Arc::downgrade(&fun);
+                let wrapped = send_wrapper::SendWrapper::new(move || {
+                    fun.upgrade().map(|n| n.lock().or_poisoned().ptr_address())
+                });
+                // it's not redundant, it's due to the SendWrapper deref
+                #[allow(clippy::redundant_closure)]
+                Box::new(move || wrapped())
+            },
+            move || fun.lock().or_poisoned().call(()),
+        )
+    };
+    let mut fun = HotFn::current(fun);
+    let (val, set_val) = signal(untrack(|| fun.call(())));
+    let trigger = Trigger::default();
+    let initial_ptr = hot_fn_ptr().unwrap();
+    HOT_RELOAD_SUBSCRIBERS
+        .lock()
+        .or_poisoned()
+        .insert(trigger.to_any_source(), (trigger, initial_ptr, hot_fn_ptr));
+    Effect::new(move || {
+        trigger.track();
+        set_val(fun.call(()))
+    });
+
+    on_cleanup({
+        let source = trigger.to_any_source();
+        move || {
+            HOT_RELOAD_SUBSCRIBERS.lock().or_poisoned().remove(&source);
+        }
+    });
+    val
+}
+
 pub fn hot_local_effect<F, T, M>(mut fun: F) -> Effect<LocalStorage>
 where
     F: EffectFunction<T, M> + 'static,
     T: 'static,
 {
-    let (hot_fn_ptr, mut fun) = {
+    let (hot_fn_ptr, fun) = {
         let fun = Arc::new(Mutex::new(subsecond::HotFn::current(
             move |last_val: Option<T>| fun.run(last_val),
         )));
@@ -98,7 +140,7 @@ where
             move |prev| fun.lock().or_poisoned().call((prev,)),
         )
     };
-    // let mut fun = HotFn::current(fun);
+    let mut fun = HotFn::current(fun);
     let trigger = Trigger::default();
     let initial_ptr = hot_fn_ptr().unwrap();
     HOT_RELOAD_SUBSCRIBERS
@@ -107,7 +149,7 @@ where
         .insert(trigger.to_any_source(), (trigger, initial_ptr, hot_fn_ptr));
     let effect = Effect::new(move |old_value: Option<T>| {
         trigger.track();
-        fun.run(old_value)
+        fun.call((old_value,))
     });
 
     on_cleanup({

@@ -6,8 +6,6 @@ pub mod error;
 pub(crate) mod events;
 pub mod manager;
 pub mod render_root;
-#[cfg(feature = "subsecond")]
-#[cfg_attr(docsrs, doc(feature = "subsecond"))]
 pub mod subsecond;
 pub mod task;
 pub mod utils;

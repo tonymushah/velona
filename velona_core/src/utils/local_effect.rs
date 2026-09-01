@@ -8,14 +8,7 @@ where
     F: EffectFunction<T, M> + 'static,
     T: 'static,
 {
-    #[cfg(feature = "subsecond")]
-    {
-        velona_subsecond::hot_local_effect(fun)
-    }
-    #[cfg(not(feature = "subsecond"))]
-    {
-        use reactive_graph::effect::Effect;
+    use reactive_graph::effect::Effect;
 
-        Effect::new(fun)
-    }
+    Effect::new(fun)
 }

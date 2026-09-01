@@ -3,11 +3,14 @@ use log::warn;
 pub(crate) mod convert_winit_event;
 pub(crate) mod events;
 mod handler_id;
+mod hot_view;
 pub(crate) mod local_effect;
 pub mod memo;
 mod res_log;
 
 pub use local_effect::local_effect;
+
+pub use hot_view::hot_view;
 
 pub use handler_id::HandlerId;
 

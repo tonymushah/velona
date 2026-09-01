@@ -7,7 +7,10 @@ use masonry_core::{
     core::{NewWidget, Property, PropertyStackId, UsesProperty as HasProperty, Widget, WidgetMut},
     kurbo::Affine,
 };
-use reactive_graph::{effect::Effect, graph::untrack};
+#[cfg(doc)]
+use reactive_graph::effect::Effect;
+
+use reactive_graph::graph::untrack;
 
 use crate::{
     utils::{local_effect::local_effect, register_widget_action_listener},
@@ -27,13 +30,13 @@ pub trait NewWidgetBaseExt {
     where
         F: FnMut(WidgetMut<'_, dyn Widget>, Option<V>) -> Option<V> + 'static,
         V: 'static;
-    /// Very similar to [`Self::use_reactive_widget_mut_with_effect_val`],
+    /// Very similar to [`Self::use_reactive_widget_erased_mut_with_effect_val`],
     /// but doesn't require a return value.
     fn use_reactive_widget_erased_mut<F>(self, fun: F) -> Self
     where
         F: FnMut(WidgetMut<'_, dyn Widget>) + 'static;
 
-    /// Very similar to [`on`](Self::on_action) but uses a [`&self`](self) instead of [`self`].
+    /// Very similar to [`on`](Self::on_erased_action) but uses a [`&self`](self) instead of [`self`].
     /// _You get the idea._
     fn on_erased_action_ref_self<F>(&self, fun: F)
     where
@@ -51,13 +54,13 @@ pub trait NewWidgetBaseExt {
     fn class<C>(self, class: C) -> Self
     where
         C: Fn() -> String + 'static;
-    /// Similar to [`NewWidgetExt::class`] but uses a [`Option<String>`] instead of [`String`].
+    /// Similar to [`class`](Self::class) but uses a [`Option<String>`] instead of [`String`].
     ///
     /// See [`MutateCtx::add_class`] and [`MutateCtx::remove_class`].
     fn class_opt<C>(self, class: C) -> Self
     where
         C: Fn() -> Option<String> + 'static;
-    /// Similar to [`NewWidgetExt::class`] and [`NewWidgetExt::class_opt`] but uses a [`Vec<String>`] (aka a list of classes).
+    /// Similar to [`class`](Self::class) and [`class_opt`](Self::class_opt) but uses a [`Vec<String>`] (aka a list of classes).
     ///
     /// When the values changes, the old classes with be [removed](MutateCtx::remove_class).
     ///

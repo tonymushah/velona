@@ -39,7 +39,7 @@ fn view() -> AnyNewWidget {
         .with_fixed(
             Prose::new("Todos")
                 .prepare()
-                .text(|| subsecond::call(|| String::from("Some todd"))),
+                .text(|| subsecond::call(|| String::from("Some todosas"))),
         )
         .with_fixed(Flex::column().prepare().collect_reactive_iter(move || {
             todos()

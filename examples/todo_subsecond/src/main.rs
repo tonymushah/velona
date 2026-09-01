@@ -1,16 +1,16 @@
 use std::sync::Arc;
 mod views;
 
-use log::trace;
+// use log::trace;
 use velona::NewWidgetExt;
 use velona::components::label;
 use velona::masonry::properties::CornerRadius;
 use velona::masonry::widgets::Portal;
-use velona::reactive::traits::Read;
+// use velona::reactive::traits::Read;
 // use log::trace;
 use velona::reactive::{signal::signal, traits::Update};
 use velona::subsecond::{hot_value_with_memo, hot_value_with_memo_raw};
-use velona::utils::{hot_view, local_effect};
+use velona::utils::hot_view;
 use velona::{
     AnyNewWidget, WindowBuilder, collection::NewCollectionWidgetExt,
     widgets::button::NewButtonPressEventsExt,
@@ -47,12 +47,12 @@ use velona_renderer_vello::create_wgpu_context;
 fn view() -> AnyNewWidget {
     let (todos, set_todos) = signal(Vec::<Arc<str>>::new());
 
-    local_effect(move || {
-        let todo_ref = todos.read();
-        trace!("todo len: {}", todo_ref.len());
-        trace!("todo capacity: {}", todo_ref.capacity());
-        trace!("todo rea size: {}", size_of_val(&*todo_ref))
-    });
+    // local_effect(move || {
+    //     let todo_ref = todos.read();
+    //     trace!("todo len: {}", todo_ref.len());
+    //     trace!("todo capacity: {}", todo_ref.capacity());
+    //     trace!("todo rea size: {}", size_of_val(&*todo_ref))
+    // });
 
     let text = hot_value_with_memo_raw(|| String::from("Remove?"));
 

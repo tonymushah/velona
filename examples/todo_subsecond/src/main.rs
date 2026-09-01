@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use subsecond::call;
+use velona::subsecond;
 // use log::trace;
 use velona::reactive::{signal::signal, traits::Update};
 use velona::{

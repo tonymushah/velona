@@ -38,7 +38,7 @@ impl From<EventLoopExisted> for AppProxySendError {
 #[derive(Debug, Error)]
 pub(crate) enum AppProxySendError {
     #[error("The mpsc receiver has already closed")]
-    ClosedChannel(EventLoopEvent),
+    ClosedChannel(Box<EventLoopEvent>),
     #[error("The event loop already ended")]
     EventLoopExited,
 }
@@ -56,7 +56,7 @@ impl AppEventLoopProxy {
     pub fn send_event(&self, event: EventLoopEvent) -> Result<(), AppProxySendError> {
         self.send
             .send(event)
-            .map_err(|err| AppProxySendError::ClosedChannel(err.0))?;
+            .map_err(|err| AppProxySendError::ClosedChannel(Box::new(err.0)))?;
         self.winit_proxy.wake_up()?;
         Ok(())
     }

@@ -85,6 +85,7 @@ tungstenite = "0.30"
 serde_json = "1"
 dioxus-cli-config = "0.7"
 dioxus-devtools-types = "0.7"
+rustc-hash = "2"
 
 # Rendering utils
 vello_common = { version = "0.2", default-features = false }

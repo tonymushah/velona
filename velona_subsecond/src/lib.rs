@@ -1,5 +1,13 @@
+use std::sync::{Arc, LazyLock, Mutex};
+
 pub use dioxus_devtools_types::DevserverMsg;
-use reactive_graph::owner::Owner;
+use reactive_graph::{
+    owner::Owner,
+    signal::Trigger,
+    traits::{Notify, Track},
+};
+use rustc_hash::FxHashMap;
+use subsecond::{HotFn, HotFnPtr, register_handler};
 
 pub fn connect_to_dx_cli<C>(callback: C) -> bool
 where
@@ -32,6 +40,8 @@ where
     true
 }
 
+type CurrentHotPtr = Box<dyn Fn() -> Option<subsecond::HotFnPtr> + Send + Sync>;
+
 pub fn call<F, O>(fun: F) -> O
 where
     F: FnMut() -> O,
@@ -39,6 +49,14 @@ where
     if Owner::current().is_none() {
         subsecond::call(fun)
     } else {
-        todo!()
+        let mut current_hot_fun = { HotFn::current(fun) };
+        let trigger = Trigger::default();
+        trigger.track();
+        {
+            register_handler(Arc::new(move || {
+                trigger.notify();
+            }));
+        }
+        current_hot_fun.call(())
     }
 }

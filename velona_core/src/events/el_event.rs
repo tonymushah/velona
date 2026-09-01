@@ -97,6 +97,7 @@ pub(crate) enum EventLoopEvent {
     ManagerMethods(Box<OtherManagerMethods>),
     PropertyStack(Box<PropertyStackMethods>),
     PollTask(TaskId),
+    PollAll,
     SpawnTaskLocal(#[debug(skip)] SendWrapper<PinnedLocalFuture<()>>),
     SpawnTask(#[debug(skip)] PinnedFuture<()>),
     #[cfg(feature = "subsecond")]

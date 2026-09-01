@@ -661,6 +661,10 @@ where
                     }
                     _ => {}
                 },
+                EventLoopEvent::PollAll => {
+                    let res = self.fut_executor.poll_all();
+                    log::trace!("{:#?}", res);
+                }
             }
         }
         for window_id in need_redraw {
@@ -831,6 +835,7 @@ where
         self.app_event_listeners
             .emit(EmitAppEventToHandlers::MemoryWarning);
         self.app_event_listeners.shrink_to_fit();
+        self.fut_executor.shrink_to_fit();
     }
     fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         self.suspended = true;

@@ -144,10 +144,19 @@ impl<W: WindowRenderer> Builder<W> {
         #[cfg(feature = "subsecond")]
         {
             use crate::events::el_event::EventLoopEvent;
-            let proxy = proxy.clone();
-            velona_subsecond::connect_to_dx_cli(move |msg| {
-                let _ = proxy.send_event(EventLoopEvent::DxCliMessages(msg));
-            });
+            // Changes fut
+            {
+                let proxy = proxy.clone();
+                velona_subsecond::connect_to_dx_cli(move |msg| {
+                    let _ = proxy.send_event(EventLoopEvent::DxCliMessages(msg));
+                });
+            }
+            {
+                let proxy = proxy.clone();
+                subsecond::register_handler(Arc::new(move || {
+                    let _ = proxy.send_event(EventLoopEvent::PollAll);
+                }));
+            }
         }
 
         let mut app = run::AppRunner {

@@ -21,6 +21,10 @@ pub use velona_core::window;
 #[doc(inline)]
 pub use velona_scoped_styling as scoped_styling;
 pub mod widgets;
+#[doc(inline)]
+#[cfg(feature = "subsecond")]
+#[cfg_attr(docsrs, doc(feature = "subsecond"))]
+pub use velona_core::subsecond;
 // TODO add `layers` module
 
 #[doc(inline)]

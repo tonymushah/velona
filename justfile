@@ -23,9 +23,7 @@ run_example_with_hotpath:
 run_hot_reload:
     dx serve -p {{ to_run }} \
         --features {{ features }} \
-        --hot-patch \
-        --port {{ hot_reload_port }} \
-        --addr {{ hot_reload_address }} \
+        --hot-patch
 
 clean:
     cargo clean

@@ -170,4 +170,7 @@ pub trait Manager: EventProxyHandle {
             receive.await.map_err(|_| AppHandleActionError::AppExited)
         }
     }
+    fn try_poll_all_futures(&self) {
+        let _ = self.send_event(EventLoopEvent::PollAll);
+    }
 }

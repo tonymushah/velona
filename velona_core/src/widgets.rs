@@ -269,14 +269,9 @@ where
     where
         F: Fn(&W::Action) + Send + 'static;
     /// Set a [widget](Widget) [property](Property) reactively.
-    fn property<F, P>(self, prop: F) -> Self
+    fn with_props_reactive<F, P>(self, prop: F) -> Self
     where
         F: Fn() -> P + 'static,
-        P: Property,
-        W: HasProperty<P>;
-    /// Use [`property`](Self::property) for reactive values
-    fn static_propeperty<P>(self, prop: P) -> Self
-    where
         P: Property,
         W: HasProperty<P>;
     /// Update the internal [`NewWidget::widget`].
@@ -346,7 +341,7 @@ where
     }
     /// It is worth mentioning that the `prop` function will be called immediately (inside an [`untrack`]) to set the property beforehand.
     /// After that, it will just passed inside a [`use_reactive_widget_mut`](Self::use_reactive_widget_mut).
-    fn property<F, P>(mut self, prop: F) -> Self
+    fn with_props_reactive<F, P>(mut self, prop: F) -> Self
     where
         F: Fn() -> P + 'static,
         P: Property,
@@ -356,17 +351,6 @@ where
         self.use_reactive_widget_mut(move |mut this| {
             this.insert_prop::<P>(prop());
         })
-    }
-
-    // TODO remove this
-    fn static_propeperty<P>(mut self, prop: P) -> Self
-    where
-        P: Property,
-        W: HasProperty<P>,
-    {
-        self.properties.insert(prop);
-
-        self
     }
 
     fn update_inner_widget<T>(mut self, update_fn: T) -> Self

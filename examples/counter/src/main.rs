@@ -15,7 +15,6 @@ use velona::reactive::{
     traits::{Get, Update},
 };
 use velona::{
-    NewWidgetExt,
     components::label,
     widgets::{button::NewButtonPressEventsExt, resize_observer::BindResizeObserver},
     window::WindowBuilder,
@@ -31,18 +30,18 @@ where
         .on_primary(move || {
             set_count.update(&update);
         })
-        .static_propeperty(Padding::from_vh(Length::px(3.0), Length::px(8.0)))
-        .static_propeperty(CornerRadius::all(Length::px(8.0)))
-        .static_propeperty(Background::Color(WHITE))
+        .with_props(Padding::from_vh(Length::px(3.0), Length::px(8.0)))
+        .with_props(CornerRadius::all(Length::px(8.0)))
+        .with_props(Background::Color(WHITE))
         // .append_static_propeperty(ActiveBackground(Background::Color(WHITE_SMOKE)))
-        .static_propeperty(BorderColor::new(
+        .with_props(BorderColor::new(
             masonry::peniko::color::AlphaColor::from_rgb8(255, 0, 41),
         ))
         // .append_static_propeperty(HoveredBorderColor(BorderColor::new(
         //     masonry::peniko::color::AlphaColor::from_rgb8(255, 0, 41),
         // )))
-        .static_propeperty(BorderWidth::all(Length::px(3.0)))
-        .static_propeperty(BoxShadow::new(
+        .with_props(BorderWidth::all(Length::px(3.0)))
+        .with_props(BoxShadow::new(
             masonry::peniko::color::AlphaColor::from_rgb8(255, 0, 41),
             Point::new(0.0, 4.0),
         ))
@@ -62,7 +61,7 @@ fn view() -> NewWidget<dyn Widget + 'static> {
             .with_fixed_spacer(DEFAULT_SPACER_LEN)
             .with_fixed(
                 label(move || format!("Count: {}", count.get()))
-                    .static_propeperty(ContentColor::new(WHITE)),
+                    .with_props(ContentColor::new(WHITE)),
             )
             .with_fixed_spacer(DEFAULT_SPACER_LEN)
             .with_fixed(button(

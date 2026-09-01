@@ -2,7 +2,7 @@ use std::sync::Arc;
 mod views;
 
 // use log::trace;
-use velona::NewWidgetExt;
+// use velona::NewWidgetExt;
 use velona::components::label;
 use velona::masonry::properties::CornerRadius;
 use velona::masonry::widgets::Portal;
@@ -96,7 +96,7 @@ fn view() -> AnyNewWidget {
                                             .with_props(CornerRadius::all(Length::px(2.0))),
                                     )
                                     .prepare()
-                                    .static_propeperty(Padding::from_vh(
+                                    .with_props(Padding::from_vh(
                                         Length::px(2.0),
                                         Length::default(),
                                     ))

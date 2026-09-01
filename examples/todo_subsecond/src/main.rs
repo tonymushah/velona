@@ -4,7 +4,7 @@ mod views;
 use log::trace;
 use velona::NewWidgetExt;
 use velona::components::label;
-use velona::masonry::properties::{CornerRadius, Dimensions};
+use velona::masonry::properties::CornerRadius;
 use velona::masonry::widgets::Portal;
 use velona::reactive::traits::Read;
 // use log::trace;
@@ -27,6 +27,22 @@ use velona::{
     widgets::text_area::NewTextAreaExt,
 };
 use velona_renderer_vello::create_wgpu_context;
+
+// trait FnTransMut<T> {
+//     fn into_opt_arg_fn(self) -> impl Fn(Option<T>) -> T + 'static
+//     where
+//         T: 'static;
+// }
+
+// impl<T, F> FnTransMut<T> for F
+// where
+//     T: 'static,
+//     F: Fn() -> T + 'static,
+// {
+//     fn into_opt_arg_fn(self) -> impl Fn(Option<T>) -> T + 'static {
+//         move |_| self()
+//     }
+// }
 
 fn view() -> AnyNewWidget {
     let (todos, set_todos) = signal(Vec::<Arc<str>>::new());
@@ -96,8 +112,8 @@ fn view() -> AnyNewWidget {
             .with_props(Padding::all(Length::px(12.0)))
             .erased(),
     )
+    .content_must_fill(true)
     .prepare()
-    .with_props(Dimensions::MAX)
     .erased()
 }
 

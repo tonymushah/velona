@@ -4,7 +4,8 @@ mod views;
 use log::trace;
 use velona::NewWidgetExt;
 use velona::components::label;
-use velona::masonry::properties::CornerRadius;
+use velona::masonry::properties::{CornerRadius, Dimensions};
+use velona::masonry::widgets::Portal;
 use velona::reactive::traits::Read;
 // use log::trace;
 use velona::reactive::{signal::signal, traits::Update};
@@ -39,60 +40,65 @@ fn view() -> AnyNewWidget {
 
     let text = hot_value_with_memo_raw(|| String::from("Remove?"));
 
-    Flex::column()
-        .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Center)
-        .cross_axis_alignment(masonry::properties::types::CrossAxisAlignment::Center)
-        .with_fixed(
-            Prose::new("Todos")
-                .prepare()
-                .text(hot_value_with_memo(|| String::from("Some todos"))),
-        )
-        .with_fixed(Flex::column().prepare().collect_reactive_iter(move || {
-            todos()
-                .into_iter()
-                .enumerate()
-                .map(move |(index, item)| {
-                    (
-                        hot_view(move || {
-                            Flex::row()
-                                .cross_axis_alignment(
-                                    masonry::properties::types::CrossAxisAlignment::Center,
-                                )
-                                .main_axis_alignment(
-                                    masonry::properties::types::MainAxisAlignment::Start,
-                                )
-                                .with_fixed(Label::new(item.clone()).prepare())
-                                .with_fixed_spacer(Length::px(20.0))
-                                .with_fixed(
-                                    Button::new(label(move || (*text)()))
-                                        .prepare()
-                                        .on_primary(move || {
-                                            set_todos.update(|todos| {
-                                                todos.swap_remove(index);
-                                            });
-                                        })
-                                        .with_props(BorderColor::new(BLACK))
-                                        .with_props(Background::Color(BEIGE))
-                                        .with_props(BorderWidth::all(Length::px(1.0)))
-                                        .with_props(Padding::from_vh(4.0.px(), 12.0.px()))
-                                        .with_props(CornerRadius::all(Length::px(2.0))),
-                                )
-                                .prepare()
-                                .static_propeperty(Padding::from_vh(
-                                    Length::px(2.0),
-                                    Length::default(),
-                                ))
-                                .erased()
-                        }),
-                        FlexParams::default(),
-                    )
-                })
-                .collect::<Vec<_>>()
-        }))
-        .with_fixed(views::text_input(set_todos))
-        .prepare()
-        .with_props(Padding::all(Length::px(12.0)))
-        .erased()
+    Portal::new(
+        Flex::column()
+            .main_axis_alignment(masonry::properties::types::MainAxisAlignment::Start)
+            .cross_axis_alignment(masonry::properties::types::CrossAxisAlignment::Center)
+            .with_fixed(
+                Prose::new("Todos")
+                    .prepare()
+                    .text(hot_value_with_memo(|| String::from("Some todos"))),
+            )
+            .with_fixed(Flex::column().prepare().collect_reactive_iter(move || {
+                todos()
+                    .into_iter()
+                    .enumerate()
+                    .map(move |(index, item)| {
+                        (
+                            hot_view(move || {
+                                Flex::row()
+                                    .cross_axis_alignment(
+                                        masonry::properties::types::CrossAxisAlignment::Center,
+                                    )
+                                    .main_axis_alignment(
+                                        masonry::properties::types::MainAxisAlignment::Start,
+                                    )
+                                    .with_fixed(Label::new(item.clone()).prepare())
+                                    .with_fixed_spacer(Length::px(20.0))
+                                    .with_fixed(
+                                        Button::new(label(move || (*text)()))
+                                            .prepare()
+                                            .on_primary(move || {
+                                                set_todos.update(|todos| {
+                                                    todos.swap_remove(index);
+                                                });
+                                            })
+                                            .with_props(BorderColor::new(BLACK))
+                                            .with_props(Background::Color(BEIGE))
+                                            .with_props(BorderWidth::all(Length::px(1.0)))
+                                            .with_props(Padding::from_vh(4.0.px(), 12.0.px()))
+                                            .with_props(CornerRadius::all(Length::px(2.0))),
+                                    )
+                                    .prepare()
+                                    .static_propeperty(Padding::from_vh(
+                                        Length::px(2.0),
+                                        Length::default(),
+                                    ))
+                                    .erased()
+                            }),
+                            FlexParams::default(),
+                        )
+                    })
+                    .collect::<Vec<_>>()
+            }))
+            .with_fixed(views::text_input(set_todos))
+            .prepare()
+            .with_props(Padding::all(Length::px(12.0)))
+            .erased(),
+    )
+    .prepare()
+    .with_props(Dimensions::MAX)
+    .erased()
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::main)]

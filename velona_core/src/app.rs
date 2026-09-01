@@ -151,12 +151,6 @@ impl<W: WindowRenderer> Builder<W> {
                     let _ = proxy.send_event(EventLoopEvent::DxCliMessages(msg));
                 });
             }
-            {
-                let proxy = proxy.clone();
-                subsecond::register_handler(Arc::new(move || {
-                    let _ = proxy.send_event(EventLoopEvent::PollAll);
-                }));
-            }
         }
 
         let mut app = run::AppRunner {

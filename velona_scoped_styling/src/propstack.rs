@@ -10,7 +10,7 @@ use velona_core::{
     task::spawn_local_scoped_with_cancellation,
 };
 
-use crate::{ApplyToNewWidget, PropertyStackUtils, use_window_local};
+use crate::{ApplyToNewWidget, ApplyToWidgetMut, PropertyStackUtils, use_window_local};
 
 #[derive(Debug)]
 pub struct ScopedPropstack {
@@ -151,5 +151,18 @@ impl ApplyToNewWidget for ScopedPropstack {
                 this.ctx.set_property_stack(id);
             }
         })
+    }
+}
+
+impl ApplyToWidgetMut for ScopedPropstack {
+    /// You must only call this inside an [`Effect`]
+    fn apply_to_widget_mut<W>(&self, mut widget_mut: velona_core::masonry_core::core::WidgetMut<W>)
+    where
+        W: velona_core::masonry_core::core::Widget + ?Sized,
+    {
+        let id = self.get_id();
+        if let Some(id) = id() {
+            widget_mut.ctx.set_property_stack(id);
+        }
     }
 }

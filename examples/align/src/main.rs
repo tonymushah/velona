@@ -70,11 +70,11 @@ fn main_view() -> AnyNewWidget {
                                 set_align.set(align);
                             }
                         })
-                        .static_propeperty(BorderColor::new(BLACK))
-                        .static_propeperty(BorderWidth::all(Length::px(3.0)))
-                        .static_propeperty(CornerRadius::all(Length::px(8.0)))
-                        .static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
-                        .static_propeperty(Background::Color(WHITE_SMOKE)),
+                        .with_props(BorderColor::new(BLACK))
+                        .with_props(BorderWidth::all(Length::px(3.0)))
+                        .with_props(CornerRadius::all(Length::px(8.0)))
+                        .with_props(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
+                        .with_props(Background::Color(WHITE_SMOKE)),
                     )
                     .prepare()
                     .erased(),

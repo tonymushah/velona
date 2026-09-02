@@ -1,5 +1,6 @@
 use std::any::type_name;
 
+use masonry::core::FromDynWidget;
 use velona_core::{
     AnyNewWidget,
     masonry_core::core::{NewWidget, Widget, WidgetMut},
@@ -95,7 +96,7 @@ mod single_impl {
 /// Similar to [`SingleChildWidget`] but the child is typed instead of erased.
 // TODO implement for [`Portal`](masonry::widgets::Portal)
 pub trait TypedSingleChildWidget {
-    type Child: Widget + 'static;
+    type Child: Widget + FromDynWidget + ?Sized;
     fn use_child<C>(self, use_child_fn: C) -> Self
     where
         C: FnMut(WidgetMut<'_, Self::Child>) + 'static;
@@ -104,7 +105,7 @@ pub trait TypedSingleChildWidget {
 #[cfg(feature = "masonry_widget_impls")]
 mod typed_single_child_widget_impl {
     use masonry::{
-        core::{NewWidget, Widget, WidgetMut},
+        core::{FromDynWidget, NewWidget, Widget, WidgetMut},
         widgets::*,
     };
     use velona_core::NewWidgetExt;
@@ -142,7 +143,7 @@ mod typed_single_child_widget_impl {
     #[cfg_attr(docsrs, doc(feature = "masonry_child_widget_impls"))]
     impl<W> TypedSingleChildWidget for NewWidget<Portal<W>>
     where
-        W: Widget + 'static,
+        W: Widget + FromDynWidget + ?Sized,
     {
         type Child = W;
 

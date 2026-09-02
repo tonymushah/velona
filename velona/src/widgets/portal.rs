@@ -6,7 +6,7 @@
 //! _See the [widget](Portal) documentation for more information_.
 use imaging::kurbo::{Rect, Vec2};
 use masonry::{
-    core::{NewWidget, Widget, WidgetMut},
+    core::{FromDynWidget, NewWidget, Widget, WidgetMut},
     imaging,
     kurbo::Point,
     widgets::{Portal, ScrollBar},
@@ -21,7 +21,7 @@ use super::NewWidgetExt;
 // TODO add example
 pub trait NewPortalExt<W>
 where
-    W: Widget + 'static,
+    W: Widget + FromDynWidget + ?Sized,
 {
     /// Use the [`Portal` horizontal scrollbar](Portal::horizontal_scrollbar_mut).
     ///
@@ -64,7 +64,7 @@ where
 
 impl<W> NewPortalExt<W> for NewWidget<Portal<W>>
 where
-    W: Widget + 'static,
+    W: Widget + FromDynWidget + ?Sized,
 {
     fn use_horizontal_scrollbar_mut<U>(self, mut use_fn: U) -> Self
     where

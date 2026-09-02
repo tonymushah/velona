@@ -1,6 +1,6 @@
 use velona_core::masonry_core::core::{Property, Selector};
 
-use crate::{ApplyScopedStyles, ApplyToNewWidget, ScopedPropstack};
+use crate::{ApplyScopedStyles, ApplyToNewWidget, ApplyToWidgetMut, ScopedPropstack};
 
 #[derive(Debug)]
 pub struct ScopedClasses<const N: usize> {
@@ -100,5 +100,17 @@ impl<const N: usize> ApplyToNewWidget for ScopedClasses<N> {
         new_widget
             .with_classes(self.classes.into_iter().map(String::from))
             .apply(self.propstack_ref())
+    }
+}
+
+impl<const N: usize> ApplyToWidgetMut for ScopedClasses<N> {
+    fn apply_to_widget_mut<W>(&self, mut widget_mut: velona_core::masonry_core::core::WidgetMut<W>)
+    where
+        W: velona_core::masonry_core::core::Widget + ?Sized,
+    {
+        for class in self.classes {
+            widget_mut.ctx.add_class(class);
+        }
+        self.prop_stack.apply_to_widget_mut(widget_mut);
     }
 }

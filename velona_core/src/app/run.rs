@@ -633,6 +633,38 @@ where
                 EventLoopEvent::SpawnTask(pin) => {
                     self.spawn_task(TaskType::Send(pin));
                 }
+                #[cfg(feature = "subsecond")]
+                EventLoopEvent::DxCliMessages(msg) => match msg {
+                    velona_subsecond::DevserverMsg::HotReload(hot_reload_msg) => {
+                        if let Some(jump_table) = hot_reload_msg.jump_table.as_ref().cloned()
+                            && hot_reload_msg.for_build_id == Some(dioxus_cli_config::build_id())
+                        {
+                            let our_pid = if cfg!(target_family = "wasm") {
+                                None
+                            } else {
+                                Some(std::process::id())
+                            };
+
+                            if hot_reload_msg.for_pid == our_pid {
+                                let res = unsafe { subsecond::apply_patch(jump_table) };
+                                if let Err(err) = res {
+                                    log::error!("cannot hotreload {err}");
+                                }
+                            }
+                        }
+                    }
+                    velona_subsecond::DevserverMsg::FullReloadCommand => {
+                        log::info!("Should reload but it can't hehe...")
+                    }
+                    velona_subsecond::DevserverMsg::Shutdown => {
+                        event_loop.exit();
+                    }
+                    _ => {}
+                },
+                EventLoopEvent::PollAll => {
+                    let res = self.fut_executor.poll_all();
+                    log::trace!("{:#?}", res);
+                }
             }
         }
         for window_id in need_redraw {
@@ -803,6 +835,7 @@ where
         self.app_event_listeners
             .emit(EmitAppEventToHandlers::MemoryWarning);
         self.app_event_listeners.shrink_to_fit();
+        self.fut_executor.shrink_to_fit();
     }
     fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
         self.suspended = true;

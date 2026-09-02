@@ -10,6 +10,7 @@ use masonry::{
     peniko::ImageBrush,
     widgets::Image,
 };
+#[cfg(doc)]
 use velona_core::reactive::effect::Effect;
 
 use crate::{NewWidgetExt, utils::ConsumeResult};
@@ -47,7 +48,7 @@ impl NewImageExt for NewWidget<Image> {
         I: Into<ImageBrush>,
     {
         let wref = self.create_velona_ref().disarm();
-        Effect::new(move || {
+        velona_core::utils::local_effect(move || {
             let new_image = img();
             wref.edit_local_now(|mut widget_mut| {
                 Image::set_image_data(&mut widget_mut, new_image);
@@ -62,7 +63,7 @@ impl NewImageExt for NewWidget<Image> {
         F: Fn() -> bool + 'static,
     {
         let wref = self.create_velona_ref().disarm();
-        Effect::new(move || {
+        velona_core::utils::local_effect(move || {
             let decorative = is_decorative();
             wref.edit_local_now(|mut widget_mut| {
                 Image::set_decorative(&mut widget_mut, decorative);
@@ -78,7 +79,7 @@ impl NewImageExt for NewWidget<Image> {
         S: Into<ArcStr> + 'static,
     {
         let wref = self.create_velona_ref().disarm();
-        Effect::new(move || {
+        velona_core::utils::local_effect(move || {
             let alt_text = alt_text();
             wref.edit_local_now(|mut widget_mut| {
                 Image::set_alt_text(&mut widget_mut, alt_text);

@@ -6,6 +6,10 @@ to_run := env('TO_RUN')
 
 features := env('FEATURES', ",")
 
+hot_reload_port := env("HOT_RELOAD_PORT", "8009")
+
+hot_reload_address := env("HOT_RELOAD_ADDRESS", "127.0.0.1")
+
 [group("utils")]
 cloc-project:
     cloc --vcs git
@@ -15,6 +19,11 @@ run_bin:
 
 run_example_with_hotpath:
     cargo run -p {{ to_run }} -F hotpath,hotpath-cpu,hotpath-alloc
+
+run_hot_patch:
+    dx serve -p {{ to_run }} \
+        --features {{ features }} \
+        --hot-patch
 
 clean:
     cargo clean

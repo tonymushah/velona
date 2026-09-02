@@ -105,16 +105,16 @@ fn towa(TowaProps { show }: TowaProps) -> AnyNewWidget {
                         return SizedBox::empty().prepare().erased();
                     }
                     match *base_image.read() {
-                        ImageState::Loading => SizedBox::new(
-                            Spinner::default().prepare().static_propeperty(TrackColor {
+                        ImageState::Loading => {
+                            SizedBox::new(Spinner::default().prepare().with_props(TrackColor {
                                 inactive: VIOLET,
                                 active: BLACK,
-                            }),
-                        )
-                        .height(Length::px(50.0))
-                        .width(Length::px(50.0))
-                        .prepare()
-                        .erased(),
+                            }))
+                            .height(Length::px(50.0))
+                            .width(Length::px(50.0))
+                            .prepare()
+                            .erased()
+                        }
                         ImageState::Error(ref error) => {
                             Label::new(format!("Cannot show her webp image ;( [{error}]"))
                                 .with_style(StyleProperty::FontWeight(FontWeight::new(700.0)))
@@ -161,11 +161,11 @@ where
                         set_val.set(val);
                     }
                 })
-                .static_propeperty(BorderColor::new(BLACK))
-                .static_propeperty(BorderWidth::all(Length::px(3.0)))
-                .static_propeperty(CornerRadius::all(Length::px(8.0)))
-                .static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
-                .static_propeperty(Background::Color(WHITE_SMOKE)),
+                .with_props(BorderColor::new(BLACK))
+                .with_props(BorderWidth::all(Length::px(3.0)))
+                .with_props(CornerRadius::all(Length::px(8.0)))
+                .with_props(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
+                .with_props(Background::Color(WHITE_SMOKE)),
             )
             .prepare(),
         )
@@ -276,11 +276,11 @@ fn main_view() -> AnyNewWidget {
                 .on_primary(move || {
                     set_count.update(|count| *count += 1);
                 })
-                .static_propeperty(Background::Color(WHEAT))
-                .static_propeperty(BorderColor::new(BLACK))
-                .static_propeperty(BorderWidth::all(Length::px(3.0)))
-                .static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
-                .static_propeperty(CornerRadius::all(Length::px(3.0))),
+                .with_props(Background::Color(WHEAT))
+                .with_props(BorderColor::new(BLACK))
+                .with_props(BorderWidth::all(Length::px(3.0)))
+                .with_props(Padding::from_vh(Length::px(4.0), Length::px(8.0)))
+                .with_props(CornerRadius::all(Length::px(3.0))),
                 None,
             )
             .prepare()
@@ -313,12 +313,12 @@ fn main_view() -> AnyNewWidget {
                     should_show_towa.set(true);
                 })
                 // Good luck on figuring what it is :)
-                .static_propeperty(Background::Color(AlphaColor::from_rgb8(
+                .with_props(Background::Color(AlphaColor::from_rgb8(
                     0xff_u8, 0x78_u8, 0xff_u8,
                 )))
-                .static_propeperty(BorderColor::new(BLACK))
-                .static_propeperty(BorderWidth::all(Length::px(3.0)))
-                .static_propeperty(Padding::from_vh(Length::px(4.0), Length::px(8.0))),
+                .with_props(BorderColor::new(BLACK))
+                .with_props(BorderWidth::all(Length::px(3.0)))
+                .with_props(Padding::from_vh(Length::px(4.0), Length::px(8.0))),
         )
         // Towa!!!
         .with_fixed(towa(TowaProps {

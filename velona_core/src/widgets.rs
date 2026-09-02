@@ -7,10 +7,13 @@ use masonry_core::{
     core::{NewWidget, Property, PropertyStackId, UsesProperty as HasProperty, Widget, WidgetMut},
     kurbo::Affine,
 };
-use reactive_graph::{effect::Effect, graph::untrack};
+#[cfg(doc)]
+use reactive_graph::effect::Effect;
+
+use reactive_graph::graph::untrack;
 
 use crate::{
-    utils::register_widget_action_listener,
+    utils::{local_effect::local_effect, register_widget_action_listener},
     widget_ref::VelonaWidgetRef,
     window::{event_listener::register_typed_widget_action_listener, use_window},
 };
@@ -27,13 +30,13 @@ pub trait NewWidgetBaseExt {
     where
         F: FnMut(WidgetMut<'_, dyn Widget>, Option<V>) -> Option<V> + 'static,
         V: 'static;
-    /// Very similar to [`Self::use_reactive_widget_mut_with_effect_val`],
+    /// Very similar to [`Self::use_reactive_widget_erased_mut_with_effect_val`],
     /// but doesn't require a return value.
     fn use_reactive_widget_erased_mut<F>(self, fun: F) -> Self
     where
         F: FnMut(WidgetMut<'_, dyn Widget>) + 'static;
 
-    /// Very similar to [`on`](Self::on_action) but uses a [`&self`](self) instead of [`self`].
+    /// Very similar to [`on`](Self::on_erased_action) but uses a [`&self`](self) instead of [`self`].
     /// _You get the idea._
     fn on_erased_action_ref_self<F>(&self, fun: F)
     where
@@ -51,13 +54,13 @@ pub trait NewWidgetBaseExt {
     fn class<C>(self, class: C) -> Self
     where
         C: Fn() -> String + 'static;
-    /// Similar to [`NewWidgetExt::class`] but uses a [`Option<String>`] instead of [`String`].
+    /// Similar to [`class`](Self::class) but uses a [`Option<String>`] instead of [`String`].
     ///
     /// See [`MutateCtx::add_class`] and [`MutateCtx::remove_class`].
     fn class_opt<C>(self, class: C) -> Self
     where
         C: Fn() -> Option<String> + 'static;
-    /// Similar to [`NewWidgetExt::class`] and [`NewWidgetExt::class_opt`] but uses a [`Vec<String>`] (aka a list of classes).
+    /// Similar to [`class`](Self::class) and [`class_opt`](Self::class_opt) but uses a [`Vec<String>`] (aka a list of classes).
     ///
     /// When the values changes, the old classes with be [removed](MutateCtx::remove_class).
     ///
@@ -110,7 +113,7 @@ where
         V: 'static,
     {
         let widget_ref = self.create_erased_velona_ref().disarm();
-        Effect::new(move |v: Option<Option<V>>| {
+        local_effect(move |v: Option<Option<V>>| {
             let v = v.flatten();
             match widget_ref.edit_erased_local_now(|widget_mut| (fun)(widget_mut, v)) {
                 Ok(val) => val,
@@ -266,14 +269,9 @@ where
     where
         F: Fn(&W::Action) + Send + 'static;
     /// Set a [widget](Widget) [property](Property) reactively.
-    fn property<F, P>(self, prop: F) -> Self
+    fn with_props_reactive<F, P>(self, prop: F) -> Self
     where
         F: Fn() -> P + 'static,
-        P: Property,
-        W: HasProperty<P>;
-    /// Use [`property`](Self::property) for reactive values
-    fn static_propeperty<P>(self, prop: P) -> Self
-    where
         P: Property,
         W: HasProperty<P>;
     /// Update the internal [`NewWidget::widget`].
@@ -307,7 +305,7 @@ where
         V: 'static,
     {
         let widget_ref = self.create_velona_ref().disarm();
-        Effect::new(move |v: Option<Option<V>>| {
+        local_effect(move |v: Option<Option<V>>| {
             let v = v.flatten();
             match widget_ref.edit_local_now(|widget_mut| (fun)(widget_mut, v)) {
                 Ok(val) => val,
@@ -343,7 +341,7 @@ where
     }
     /// It is worth mentioning that the `prop` function will be called immediately (inside an [`untrack`]) to set the property beforehand.
     /// After that, it will just passed inside a [`use_reactive_widget_mut`](Self::use_reactive_widget_mut).
-    fn property<F, P>(mut self, prop: F) -> Self
+    fn with_props_reactive<F, P>(mut self, prop: F) -> Self
     where
         F: Fn() -> P + 'static,
         P: Property,
@@ -353,17 +351,6 @@ where
         self.use_reactive_widget_mut(move |mut this| {
             this.insert_prop::<P>(prop());
         })
-    }
-
-    // TODO remove this
-    fn static_propeperty<P>(mut self, prop: P) -> Self
-    where
-        P: Property,
-        W: HasProperty<P>,
-    {
-        self.properties.insert(prop);
-
-        self
     }
 
     fn update_inner_widget<T>(mut self, update_fn: T) -> Self

@@ -49,7 +49,7 @@ fn checkbox() -> AnyNewWidget {
             "Checked checkbox!!"
         }
     })
-    .static_propeperty(CheckmarkColor { color: GREEN })
+    .with_props(CheckmarkColor { color: GREEN })
     .on_action(move |checked| {
         set_checked(checked.0);
     })
@@ -63,19 +63,19 @@ trait ButtonExt {
 
 impl ButtonExt for NewWidget<Button> {
     fn apply_custom_styles(self) -> Self {
-        self.static_propeperty(Padding::from_vh(Length::px(4f64), Length::px(8f64)))
-            .static_propeperty(CornerRadius::all(Length::px(8f64)))
+        self.with_props(Padding::from_vh(Length::px(4f64), Length::px(8f64)))
+            .with_props(CornerRadius::all(Length::px(8f64)))
     }
 
     fn apply_counter_button_style(self) -> Self {
         self.apply_custom_styles()
-            .static_propeperty(Background::Color("#f1aeff".parse().unwrap()))
+            .with_props(Background::Color("#f1aeff".parse().unwrap()))
             // .append_static_propeperty(ActiveBackground(Background::Color(
             //     "#de67f8".parse().unwrap(),
             // )))
-            .static_propeperty(BorderColor::new(BLACK))
+            .with_props(BorderColor::new(BLACK))
             // .append_static_propeperty(HoveredBorderColor(BorderColor::new(BLACK)))
-            .static_propeperty(BorderWidth::all(Length::px(1f64)))
+            .with_props(BorderWidth::all(Length::px(1f64)))
     }
 }
 
@@ -124,9 +124,7 @@ fn main_view() -> AnyNewWidget {
                             .on_primary(move || {
                                 set_view.set(ViewToUse::Text);
                             })
-                            .static_propeperty(Background::Color(AlphaColor::from_rgb8(
-                                200, 100, 100,
-                            )))
+                            .with_props(Background::Color(AlphaColor::from_rgb8(200, 100, 100)))
                             .apply_custom_styles(),
                     )
                     .with_fixed(
@@ -135,9 +133,7 @@ fn main_view() -> AnyNewWidget {
                             .on_primary(move || {
                                 set_view.set(ViewToUse::Checkbox);
                             })
-                            .static_propeperty(Background::Color(AlphaColor::from_rgb8(
-                                200, 100, 100,
-                            )))
+                            .with_props(Background::Color(AlphaColor::from_rgb8(200, 100, 100)))
                             .apply_custom_styles(),
                     )
                     .with_fixed(
@@ -146,9 +142,7 @@ fn main_view() -> AnyNewWidget {
                             .on_primary(move || {
                                 set_view.set(ViewToUse::Count);
                             })
-                            .static_propeperty(Background::Color(AlphaColor::from_rgb8(
-                                200, 100, 100,
-                            )))
+                            .with_props(Background::Color(AlphaColor::from_rgb8(200, 100, 100)))
                             .apply_custom_styles(),
                     )
                     .main_axis_alignment(MainAxisAlignment::Center)

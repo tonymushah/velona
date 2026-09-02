@@ -1,5 +1,5 @@
 use velona_core::{
-    masonry_core::core::{NewWidget, PropertySet, PropertyStack, Selector, Widget},
+    masonry_core::core::{NewWidget, PropertySet, PropertyStack, Selector, Widget, WidgetMut},
     window::{WindowHandle, use_window},
 };
 
@@ -15,6 +15,13 @@ pub(crate) fn use_window_local() -> WindowHandle {
 
 pub trait ApplyToNewWidget {
     fn apply_to_widget<W>(&self, new_widget: NewWidget<W>) -> NewWidget<W>
+    where
+        W: Widget + ?Sized;
+}
+
+pub trait ApplyToWidgetMut {
+    /// Apply a style to a [`WidgetMut`]
+    fn apply_to_widget_mut<W>(&self, widget_mut: WidgetMut<W>)
     where
         W: Widget + ?Sized;
 }

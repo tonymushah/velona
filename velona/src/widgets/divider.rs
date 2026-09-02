@@ -10,6 +10,7 @@ use masonry::{
     layout::Length,
     widgets::{DashFit, Divider, Placement},
 };
+#[cfg(doc)]
 use velona_core::reactive::effect::Effect;
 
 use crate::{AnyNewWidget, NewWidgetExt, utils::ConsumeResult};
@@ -184,7 +185,7 @@ impl NewDividerExt for NewWidget<Divider> {
         C: Fn() -> Option<AnyNewWidget> + 'static,
     {
         let this_ref = self.create_velona_ref();
-        Effect::new(move || {
+        velona_core::utils::local_effect(move || {
             let content = content();
             this_ref
                 .edit_local_now(move |mut this| {

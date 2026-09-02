@@ -13,6 +13,7 @@ use masonry::{
     widgets::{Split, SplitPoint},
 };
 
+#[cfg(doc)]
 use velona_core::reactive::effect::Effect;
 
 use crate::{NewWidgetExt, utils::ConsumeResult};
@@ -127,7 +128,7 @@ where
         C: Fn() -> NewWidget<ChildA> + 'static,
     {
         let s_ref = self.create_velona_ref();
-        Effect::new(move || {
+        velona_core::utils::local_effect(move || {
             let child = child1();
             s_ref
                 .edit_local_now(|mut this| {
@@ -143,7 +144,7 @@ where
         C: Fn() -> NewWidget<ChildB> + 'static,
     {
         let s_ref = self.create_velona_ref();
-        Effect::new(move || {
+        velona_core::utils::local_effect(move || {
             let child = child2();
             s_ref
                 .edit_local_now(|mut this| {

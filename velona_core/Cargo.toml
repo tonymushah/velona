@@ -29,6 +29,9 @@ velona_renderer.workspace = true
 flume.workspace = true
 derive_more = { workspace = true, features = ["debug"] }
 velona_executor = { workspace = true }
+velona_subsecond = { workspace = true, optional = true }
+subsecond = { workspace = true, optional = true }
+dioxus-cli-config = { workspace = true, optional = true }
 
 [dev-dependencies]
 masonry = { workspace = true }
@@ -37,3 +40,4 @@ masonry = { workspace = true }
 # default = ["hotpath"]
 hotpath = ["dep:hotpath", "hotpath/flume"]
 # testing = []
+subsecond = ["dep:velona_subsecond", "reactive_graph/subsecond", "dep:subsecond", "dep:dioxus-cli-config"]

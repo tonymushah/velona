@@ -30,7 +30,12 @@ impl Surface {
         settings: SurfaceSettings,
     ) -> Self {
         let ctx = RenderContext::new_with(width.get() as _, height.get() as _, settings.render);
-        let surface = InnerSurface::new(context, window).unwrap();
+        let mut surface = InnerSurface::new(context, window).unwrap();
+        if surface.supports_alpha_mode(softbuffer::AlphaMode::Ignored) {
+            let _ = surface.configure(width, height, softbuffer::AlphaMode::Ignored);
+        } else {
+            let _ = surface.supports_alpha_mode(softbuffer::AlphaMode::Opaque);
+        }
         Self {
             ctx,
             ressources: Resources::new(),

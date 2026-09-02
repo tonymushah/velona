@@ -1,6 +1,6 @@
 use std::any::type_name;
 
-use masonry::core::FromDynWidget;
+use velona_core::masonry_core::core::FromDynWidget;
 use velona_core::{
     AnyNewWidget,
     masonry_core::core::{NewWidget, Widget, WidgetMut},

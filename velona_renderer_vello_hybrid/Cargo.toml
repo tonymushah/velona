@@ -1,5 +1,5 @@
 [package]
-name = "velona_renderer_vello"
+name = "velona_renderer_vello_hybrid"
 version.workspace = true
 edition.workspace = true
 
@@ -13,7 +13,7 @@ kurbo.workspace = true
 pollster.workspace = true
 debug_timer.workspace = true
 # hotpath = {workspace = true, optional=true}
-vello = { workspace = true, features = ["wgpu"] }
+vello_hybrid = { workspace = true, features = ["wgpu"] }
 
 [features]
 log_frame_times = ["debug_timer/enable"]

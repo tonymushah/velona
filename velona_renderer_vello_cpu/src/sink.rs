@@ -32,7 +32,7 @@ pub struct BufferSurfaceSink<'surface> {
     pub(crate) error: Option<RendererError>,
     pub(crate) clip_depth: u32,
     pub(crate) group_depth: u32,
-    // pub(crate) pixmap_mut: &'surface mut Pixmap,
+    pub(crate) pixmap_mut: &'surface mut Pixmap,
 }
 
 impl<'surface> BufferSurfaceSink<'surface> {
@@ -291,16 +291,15 @@ impl<'surface> BufferSurfaceSink<'surface> {
 
         self.ctx.flush();
 
-        let mut pixmap = Pixmap::new(
-            self.buffer.width().get() as _,
-            self.buffer.width().get() as _,
+        self.ctx.render_with(
+            self.pixmap_mut.as_mut(),
+            self.ressources,
+            self.rasterizer_settings,
         );
-        self.ctx
-            .render_with(pixmap.as_mut(), self.ressources, self.rasterizer_settings);
-        unpremultiply_rgba8_in_place(pixmap.data_as_u8_slice_mut());
+        unpremultiply_rgba8_in_place(self.pixmap_mut.data_as_u8_slice_mut());
         for (x, y, pixel) in self.buffer.pixels_iter() {
             let idx = self.width as usize * y as usize + x as usize;
-            let Some(pixto_render) = pixmap.data().get(idx) else {
+            let Some(pixto_render) = self.pixmap_mut.data().get(idx) else {
                 continue;
             };
             pixel.r = pixto_render.r;
@@ -310,8 +309,6 @@ impl<'surface> BufferSurfaceSink<'surface> {
         }
 
         // log::trace!("buffer size: {}", self.buffer.pixels().len());
-
-        self.ctx.flush();
         Ok(())
     }
 }

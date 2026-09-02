@@ -1,7 +1,7 @@
 use std::{collections::VecDeque, num::NonZero, sync::Arc};
 
 use softbuffer::{SoftBufferError, Surface as SoftSurface};
-use vello_cpu::{RasterizerSettings, RenderContext, RenderSettings, Resources};
+use vello_cpu::{Pixmap, RasterizerSettings, RenderContext, RenderSettings, Resources};
 use velona_renderer::window_handle::WindowHandle;
 use winit::event_loop::OwnedDisplayHandle;
 
@@ -15,6 +15,7 @@ pub struct Surface {
     pub inner_surface: InnerSurface,
     pub surface_settings: SurfaceSettings,
     pub mask_cache: VecDeque<CachedMask>,
+    pub pixmap: Pixmap,
     width: NonZero<u32>,
     height: NonZero<u32>,
     _d: (),
@@ -38,6 +39,7 @@ impl Surface {
             mask_cache: VecDeque::new(),
             width,
             height,
+            pixmap: Pixmap::new(width.get() as _, height.get() as _),
             _d: (),
         }
     }
@@ -55,9 +57,12 @@ impl Surface {
             error: None,
             clip_depth: 0,
             group_depth: 0,
+            pixmap_mut: &mut self.pixmap,
         })
     }
     fn sync_size(&mut self) {
+        self.pixmap
+            .resize(self.width.get() as _, self.height.get() as _);
         self.ctx
             .reset_and_resize(self.width.get() as _, self.height.get() as _);
         self.inner_surface.resize(self.width, self.height).unwrap();
@@ -67,6 +72,7 @@ impl Surface {
         self.height = height;
         self.width = width;
         self.sync_size();
+        self.reset();
     }
 
     /// Drop any realized mask artifacts cached by the renderer.
@@ -76,6 +82,12 @@ impl Surface {
     /// affect mask realization outside the recorded scene itself.
     pub fn clear_cached_masks(&mut self) {
         self.mask_cache.clear();
+    }
+
+    pub fn reset(&mut self) {
+        self.clear_cached_masks();
+        self.ctx.reset();
+        self.ressources.clear_images();
     }
 }
 

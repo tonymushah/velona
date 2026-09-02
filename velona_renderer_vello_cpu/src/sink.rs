@@ -291,6 +291,7 @@ impl<'surface> BufferSurfaceSink<'surface> {
 
         self.ctx.flush();
 
+        // TODO use SIMD for this??
         self.ctx.render_with(
             self.pixmap_mut.as_mut(),
             self.ressources,

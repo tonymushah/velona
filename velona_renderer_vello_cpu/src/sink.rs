@@ -297,8 +297,7 @@ impl<'surface> BufferSurfaceSink<'surface> {
             self.rasterizer_settings,
         );
         unpremultiply_rgba8_in_place(self.pixmap_mut.data_as_u8_slice_mut());
-        for (x, y, pixel) in self.buffer.pixels_iter() {
-            let idx = self.width as usize * y as usize + x as usize;
+        for (idx, pixel) in self.buffer.pixels().iter_mut().enumerate() {
             let Some(pixto_render) = self.pixmap_mut.data().get(idx) else {
                 continue;
             };

@@ -66,6 +66,7 @@ impl Surface {
         self.ctx
             .reset_and_resize(self.width.get() as _, self.height.get() as _);
         self.inner_surface.resize(self.width, self.height).unwrap();
+        self.pixmap.shrink_to_fit();
     }
 
     pub fn set_size(&mut self, width: NonZero<u32>, height: NonZero<u32>) {

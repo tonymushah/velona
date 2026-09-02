@@ -110,7 +110,7 @@ fn main() {
                     render_mode: vello_cpu::RenderMode::OptimizeSpeed,
                     ..Default::default()
                 },
-
+                tolerance: 0.1,
                 ..Default::default()
             },
         )

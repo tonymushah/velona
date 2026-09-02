@@ -34,7 +34,7 @@ impl Surface {
         if surface.supports_alpha_mode(softbuffer::AlphaMode::Ignored) {
             let _ = surface.configure(width, height, softbuffer::AlphaMode::Ignored);
         } else {
-            let _ = surface.supports_alpha_mode(softbuffer::AlphaMode::Opaque);
+            let _ = surface.configure(width, height, softbuffer::AlphaMode::Opaque);
         }
         Self {
             ctx,

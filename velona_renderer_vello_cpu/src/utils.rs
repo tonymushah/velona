@@ -1,3 +1,7 @@
+use std::mem;
+
+use vello_common::fearless_simd::Simd;
+
 use crate::imaging_vello_cpu::RendererError;
 
 #[inline]
@@ -39,4 +43,11 @@ pub fn unpremultiply_channel(channel: u8, alpha: u8) -> u8 {
 
     let value = (u32::from(channel) * 255 + u32::from(alpha) / 2) / u32::from(alpha);
     u8::try_from(value.min(u32::from(u8::MAX))).expect("unpremultiplied channel must fit in u8")
+}
+
+#[inline(always)]
+pub fn swap_blue_and_red_channel<S: Simd>(_: S, pixels: &mut [u8]) {
+    for [r, _, b, _] in pixels.as_chunks_mut::<4>().0 {
+        mem::swap(r, b);
+    }
 }

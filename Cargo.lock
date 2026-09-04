@@ -5883,8 +5883,10 @@ dependencies = [
  "kurbo",
  "peniko",
  "pollster",
+ "vello_common 0.2.0",
  "vello_hybrid",
  "velona_renderer",
+ "wgpu",
  "wgpu_context",
 ]
 

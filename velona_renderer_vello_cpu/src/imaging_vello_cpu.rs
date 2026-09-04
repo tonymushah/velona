@@ -11,12 +11,16 @@ use imaging::{
 };
 use kurbo::{Affine, Shape as _};
 use peniko::{BlendMode, Brush, BrushRef, Fill, Style};
+use softbuffer::{Buffer, PixelFormat};
 use std::sync::Arc;
 use std::vec;
 use std::vec::Vec;
 use std::{collections::VecDeque, num::TryFromIntError};
-use vello_common::filter_effects::{EdgeMode, Filter as VelloFilter, FilterGraph, FilterPrimitive};
 use vello_common::paint::{Image as VelloImage, ImageSource};
+use vello_common::{
+    fearless_simd,
+    filter_effects::{EdgeMode, Filter as VelloFilter, FilterGraph, FilterPrimitive},
+};
 use vello_cpu::{
     Glyph as VelloGlyph, Pixmap, RasterizerSettings, RenderContext, RenderMode, RenderSettings,
     Resources,
@@ -26,6 +30,7 @@ use vello_cpu::{
     kurbo::{BezPath, StrokeOpts, stroke},
 };
 
+use crate::utils::swap_blue_and_red_channel;
 use crate::utils::{checked_size, f64_to_f32, unpremultiply_rgba8_in_place};
 
 /// Errors that can occur when rendering via Vello CPU.
@@ -61,7 +66,8 @@ pub struct VelloCpuRenderer {
     pub(crate) clip_depth: u32,
     pub(crate) group_depth: u32,
     pub(crate) mask_cache: VecDeque<CachedMask>,
-    pub(crate) render_mode: RenderMode,
+    pub(crate) rasterizer_settings: RasterizerSettings,
+    pub(crate) render_settings: RenderSettings,
 }
 
 #[derive(Clone, Debug)]
@@ -73,25 +79,17 @@ pub struct CachedMask {
 }
 
 impl VelloCpuRenderer {
-    fn rasterizer_settings(&self) -> RasterizerSettings {
-        RasterizerSettings {
-            render_mode: self.render_mode,
-            ..Default::default()
-        }
-    }
-
-    fn render_settings() -> RenderSettings {
-        RenderSettings {
-            ..Default::default()
-        }
-    }
-
     /// Create a renderer with an initial target size.
     ///
     /// Scene rendering methods resize this target on demand. The renderer uses Vello CPU's
     /// `OptimizeSpeed` mode by default to keep snapshots stable.
-    pub fn new(width: u16, height: u16) -> Self {
-        let ctx = RenderContext::new_with(width, height, Self::render_settings());
+    pub fn new(
+        width: u16,
+        height: u16,
+        render_settings: RenderSettings,
+        raster_settings: RasterizerSettings,
+    ) -> Self {
+        let ctx = RenderContext::new_with(width, height, render_settings);
         Self {
             ctx,
             resources: Resources::new(),
@@ -102,7 +100,8 @@ impl VelloCpuRenderer {
             clip_depth: 0,
             group_depth: 0,
             mask_cache: VecDeque::new(),
-            render_mode: RenderMode::OptimizeSpeed,
+            rasterizer_settings: raster_settings,
+            render_settings,
         }
     }
 
@@ -115,7 +114,7 @@ impl VelloCpuRenderer {
     }
 
     pub fn set_render_mode(&mut self, mode: RenderMode) {
-        self.render_mode = mode;
+        self.rasterizer_settings.render_mode = mode;
     }
 
     fn reset_inner(&mut self) {
@@ -131,6 +130,8 @@ impl VelloCpuRenderer {
     }
 
     pub fn reset_and_resize(&mut self, width: u16, height: u16) {
+        self.width = width;
+        self.height = height;
         self.ctx.reset_and_resize(width, height);
         self.reset_inner();
     }
@@ -149,7 +150,7 @@ impl VelloCpuRenderer {
             return;
         }
 
-        self.ctx = RenderContext::new_with(width, height, Self::render_settings());
+        self.ctx = RenderContext::new_with(width, height, self.render_settings);
         self.resources = Resources::new();
         self.width = width;
         self.height = height;
@@ -247,7 +248,7 @@ impl VelloCpuRenderer {
         }
 
         self.ctx.flush();
-        let settings = self.rasterizer_settings();
+        let settings = self.rasterizer_settings;
         self.ctx.render_with(
             PixmapMut::new(
                 target.width.try_into().map_err(|_: TryFromIntError| {
@@ -271,6 +272,50 @@ impl VelloCpuRenderer {
         let mut image = RgbaImage::new(u32::from(self.width), u32::from(self.height));
         self.finish_into(&mut image)?;
         Ok(image)
+    }
+
+    pub(crate) fn write_in_buffer(&mut self, buffer: &mut Buffer<'_>) -> Result<(), RendererError> {
+        if let Some(err) = self.error.take() {
+            return Err(err);
+        }
+        if self.clip_depth != 0 {
+            return Err(RendererError::Internal("unbalanced clip stack"));
+        }
+        if self.group_depth != 0 {
+            return Err(RendererError::Internal("unbalanced group stack"));
+        }
+
+        self.ctx.flush();
+
+        let pixmap_mut = if let Some(pix) =
+            PixmapMut::new(self.width as _, self.height as _, buffer.data_u8())
+        {
+            pix
+        } else {
+            let Some(pix) = PixmapMut::new(
+                self.width as _,
+                self.height as _,
+                buffer
+                    .data_u8()
+                    .split_at_mut(usize::from(self.width) * usize::from(self.height) * 4)
+                    .0,
+            ) else {
+                return Ok(());
+            };
+            pix
+        };
+
+        self.ctx
+            .render_with(pixmap_mut, &mut self.resources, self.rasterizer_settings);
+        unpremultiply_rgba8_in_place(buffer.data_u8());
+
+        if PixelFormat::default() == PixelFormat::Bgra8 {
+            let level = self.render_settings.level;
+            fearless_simd::dispatch!(level, simd => swap_blue_and_red_channel(simd, buffer.data_u8()));
+        }
+
+        // log::trace!("buffer size: {}", self.buffer.pixels().len());
+        Ok(())
     }
 
     fn set_error_once(&mut self, err: RendererError) {
@@ -450,7 +495,12 @@ impl VelloCpuRenderer {
             return Some(mask);
         }
 
-        let mut renderer = Self::new(self.width, self.height);
+        let mut renderer = Self::new(
+            self.width,
+            self.height,
+            self.render_settings,
+            self.rasterizer_settings,
+        );
         renderer.set_tolerance(self.tolerance);
         replay_transformed(scene, &mut renderer, transform);
         if let Some(err) = renderer.error.take() {
@@ -754,7 +804,17 @@ mod tests {
     #[test]
     fn render_scene_reuses_cached_masks_for_identical_scenes() {
         let scene = masked_scene(MaskMode::Alpha);
-        let mut renderer = VelloCpuRenderer::new(64, 64);
+        let mut renderer = VelloCpuRenderer::new(
+            64,
+            64,
+            RenderSettings {
+                ..Default::default()
+            },
+            RasterizerSettings {
+                render_mode: RenderMode::OptimizeSpeed,
+                ..Default::default()
+            },
+        );
 
         renderer.render_scene(&scene, 64, 64).unwrap();
         assert_eq!(renderer.mask_cache.len(), 1);
@@ -766,7 +826,17 @@ mod tests {
     #[test]
     fn clear_cached_masks_drops_realized_masks() {
         let scene = masked_scene(MaskMode::Luminance);
-        let mut renderer = VelloCpuRenderer::new(64, 64);
+        let mut renderer = VelloCpuRenderer::new(
+            64,
+            64,
+            RenderSettings {
+                ..Default::default()
+            },
+            RasterizerSettings {
+                render_mode: RenderMode::OptimizeSpeed,
+                ..Default::default()
+            },
+        );
 
         renderer.render_scene(&scene, 64, 64).unwrap();
         assert_eq!(renderer.mask_cache.len(), 1);
@@ -781,7 +851,17 @@ mod tests {
     #[test]
     fn changing_tolerance_clears_cached_masks() {
         let scene = masked_scene(MaskMode::Alpha);
-        let mut renderer = VelloCpuRenderer::new(64, 64);
+        let mut renderer = VelloCpuRenderer::new(
+            64,
+            64,
+            RenderSettings {
+                ..Default::default()
+            },
+            RasterizerSettings {
+                render_mode: RenderMode::OptimizeSpeed,
+                ..Default::default()
+            },
+        );
 
         renderer.render_scene(&scene, 64, 64).unwrap();
         assert_eq!(renderer.mask_cache.len(), 1);
@@ -804,14 +884,34 @@ mod tests {
                 .draw();
         }
 
-        let mut renderer = VelloCpuRenderer::new(64, 64);
+        let mut renderer = VelloCpuRenderer::new(
+            64,
+            64,
+            RenderSettings {
+                ..Default::default()
+            },
+            RasterizerSettings {
+                render_mode: RenderMode::OptimizeSpeed,
+                ..Default::default()
+            },
+        );
         let image = renderer.render_scene(&scene, 64, 64).unwrap();
         assert_eq!(image.data.len(), 64 * 64 * 4);
     }
 
     #[test]
     fn render_scene_renders_image() {
-        let mut renderer = VelloCpuRenderer::new(64, 64);
+        let mut renderer = VelloCpuRenderer::new(
+            64,
+            64,
+            RenderSettings {
+                ..Default::default()
+            },
+            RasterizerSettings {
+                render_mode: RenderMode::OptimizeSpeed,
+                ..Default::default()
+            },
+        );
         let mut scene = Scene::new();
         {
             let mut painter = Painter::new(&mut scene);
@@ -829,7 +929,17 @@ mod tests {
 
     #[test]
     fn render_source_renders_image() {
-        let mut renderer = VelloCpuRenderer::new(48, 48);
+        let mut renderer = VelloCpuRenderer::new(
+            48,
+            48,
+            RenderSettings {
+                ..Default::default()
+            },
+            RasterizerSettings {
+                render_mode: RenderMode::OptimizeSpeed,
+                ..Default::default()
+            },
+        );
         let mut scene = Scene::new();
         {
             let mut painter = Painter::new(&mut scene);
@@ -849,7 +959,17 @@ mod tests {
 
     #[test]
     fn render_source_into_rejects_short_row_stride_as_target_error() {
-        let mut renderer = VelloCpuRenderer::new(4, 4);
+        let mut renderer = VelloCpuRenderer::new(
+            4,
+            4,
+            RenderSettings {
+                ..Default::default()
+            },
+            RasterizerSettings {
+                render_mode: RenderMode::OptimizeSpeed,
+                ..Default::default()
+            },
+        );
         let mut scene = Scene::new();
         {
             let mut painter = Painter::new(&mut scene);
@@ -886,7 +1006,17 @@ mod tests {
 
     #[test]
     fn render_source_into_rejects_short_buffer_as_target_error() {
-        let mut renderer = VelloCpuRenderer::new(4, 4);
+        let mut renderer = VelloCpuRenderer::new(
+            4,
+            4,
+            RenderSettings {
+                ..Default::default()
+            },
+            RasterizerSettings {
+                render_mode: RenderMode::OptimizeSpeed,
+                ..Default::default()
+            },
+        );
         let mut scene = Scene::new();
         {
             let mut painter = Painter::new(&mut scene);

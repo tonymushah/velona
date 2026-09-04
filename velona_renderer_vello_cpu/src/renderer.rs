@@ -5,7 +5,7 @@ use velona_renderer::{WindowRenderer, window_handle::WindowHandle};
 use winit::event_loop::OwnedDisplayHandle;
 
 use crate::{
-    BufferSurfaceSink,
+    imaging_vello_cpu::VelloCpuRenderer,
     surface::{Surface, SurfaceSettings},
 };
 
@@ -35,7 +35,7 @@ impl VelloSoftbufferRenderer {
 
 impl WindowRenderer for VelloSoftbufferRenderer {
     type ScenePainter<'a>
-        = BufferSurfaceSink<'a>
+        = VelloCpuRenderer
     where
         Self: 'a;
 
@@ -84,21 +84,23 @@ impl WindowRenderer for VelloSoftbufferRenderer {
 
     fn render<F: FnOnce(&mut Self::ScenePainter<'_>)>(&mut self, draw_fn: F) {
         if let RenderState::Active(active) = &mut self.render_state {
-            let mut buffer = active.next_sink().unwrap();
-            draw_fn(&mut buffer);
-            buffer.write_in_buffer().unwrap();
-            // buffer.pixmap_mut.shrink_to_fit();
-            // log::trace!(
-            //     "masks cache: ({}, {})",
-            //     buffer.mask_cache.len(),
-            //     buffer.mask_cache.capacity()
-            // );
-            // log::trace!(
-            //     "pixmap: ({}, {})",
-            //     buffer.pixmap_mut.data().len(),
-            //     buffer.pixmap_mut.capacity()
-            // );
-            buffer.buffer.present().unwrap();
+            let mut buffer = active.inner_surface.next_buffer().unwrap();
+
+            if buffer.height().get() != active.renderer.height as u32
+                || buffer.width().get() != active.renderer.width as u32
+            {
+                active
+                    .renderer
+                    .reset_and_resize(buffer.width().get() as _, buffer.height().get() as _);
+            }
+
+            draw_fn(&mut active.renderer);
+
+            active.renderer.write_in_buffer(&mut buffer).unwrap();
+
+            buffer.present().unwrap();
+
+            // 5. reset buffer
             active.reset();
         };
     }

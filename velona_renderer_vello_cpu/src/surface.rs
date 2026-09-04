@@ -84,7 +84,6 @@ impl Surface {
         self.clear_cached_masks();
         self.renderer.reset();
         self.renderer.resources.clear_images();
-        self.renderer.mask_cache.clear();
     }
 }
 

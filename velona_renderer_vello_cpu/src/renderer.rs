@@ -99,12 +99,12 @@ impl WindowRenderer for VelloSoftbufferRenderer {
             //     buffer.pixmap_mut.capacity()
             // );
             buffer.buffer.present().unwrap();
+            active.reset();
         };
     }
     fn on_memory_warning(&mut self) {
         if let RenderState::Active(active) = &mut self.render_state {
             active.clear_cached_masks();
-            // active.pixmap.shrink_to_fit();
         }
     }
 }

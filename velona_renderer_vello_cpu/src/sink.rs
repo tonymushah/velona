@@ -8,16 +8,18 @@ use imaging::{
 use imaging::{Filter, MaskMode};
 use kurbo::{Affine, BezPath, Shape, StrokeOpts, stroke};
 use peniko::{BlendMode, Brush, BrushRef, Fill, Style};
-use softbuffer::Buffer;
+use softbuffer::{Buffer, PixelFormat};
+use vello_common::fearless_simd;
 use vello_common::filter_effects::{EdgeMode, Filter as VelloFilter, FilterGraph, FilterPrimitive};
 use vello_common::paint::Image as VelloImage;
 use vello_cpu::{
-    Glyph as VelloGlyph, ImageSource, Pixmap, RasterizerSettings, RenderContext, Resources,
+    Glyph as VelloGlyph, ImageSource, Level, Pixmap, PixmapMut, RasterizerSettings, RenderContext,
+    Resources,
 };
 
 use crate::imaging_vello_cpu::CachedMask;
 use crate::imaging_vello_cpu::{RendererError, VelloCpuRenderer};
-use crate::utils::{f64_to_f32, unpremultiply_rgba8_in_place};
+use crate::utils::{f64_to_f32, swap_blue_and_red_channel, unpremultiply_rgba8_in_place};
 
 #[derive(Debug)]
 pub struct BufferSurfaceSink<'surface> {
@@ -32,7 +34,7 @@ pub struct BufferSurfaceSink<'surface> {
     pub(crate) error: Option<RendererError>,
     pub(crate) clip_depth: u32,
     pub(crate) group_depth: u32,
-    // pub(crate) pixmap_mut: &'surface mut Pixmap,
+    pub(crate) simd_level: Level, // pub(crate) pixmap_mut: &'surface mut Pixmap,
 }
 
 impl<'surface> BufferSurfaceSink<'surface> {
@@ -291,27 +293,34 @@ impl<'surface> BufferSurfaceSink<'surface> {
 
         self.ctx.flush();
 
-        let mut pixmap = Pixmap::new(
-            self.buffer.width().get() as _,
-            self.buffer.width().get() as _,
-        );
-        self.ctx
-            .render_with(pixmap.as_mut(), self.ressources, self.rasterizer_settings);
-        unpremultiply_rgba8_in_place(pixmap.data_as_u8_slice_mut());
-        for (x, y, pixel) in self.buffer.pixels_iter() {
-            let idx = self.width as usize * y as usize + x as usize;
-            let Some(pixto_render) = pixmap.data().get(idx) else {
-                continue;
+        let pixmap_mut = if let Some(pix) =
+            PixmapMut::new(self.width as _, self.height as _, self.buffer.data_u8())
+        {
+            pix
+        } else {
+            let Some(pix) = PixmapMut::new(
+                self.width as _,
+                self.height as _,
+                self.buffer
+                    .data_u8()
+                    .split_at_mut(usize::from(self.width) * usize::from(self.height) * 4)
+                    .0,
+            ) else {
+                return Ok(());
             };
-            pixel.r = pixto_render.r;
-            pixel.b = pixto_render.b;
-            pixel.g = pixto_render.g;
-            pixel.a = pixto_render.a;
+            pix
+        };
+
+        self.ctx
+            .render_with(pixmap_mut, self.ressources, self.rasterizer_settings);
+        unpremultiply_rgba8_in_place(self.buffer.data_u8());
+
+        if PixelFormat::default() == PixelFormat::Bgra8 {
+            let level = self.simd_level;
+            fearless_simd::dispatch!(level, simd => swap_blue_and_red_channel(simd, self.buffer.data_u8()));
         }
 
         // log::trace!("buffer size: {}", self.buffer.pixels().len());
-
-        self.ctx.flush();
         Ok(())
     }
 }

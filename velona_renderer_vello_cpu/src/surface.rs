@@ -29,7 +29,12 @@ impl Surface {
         settings: SurfaceSettings,
     ) -> Self {
         let ctx = RenderContext::new_with(width.get() as _, height.get() as _, settings.render);
-        let surface = InnerSurface::new(context, window).unwrap();
+        let mut surface = InnerSurface::new(context, window).unwrap();
+        if surface.supports_alpha_mode(softbuffer::AlphaMode::Ignored) {
+            let _ = surface.configure(width, height, softbuffer::AlphaMode::Ignored);
+        } else {
+            let _ = surface.configure(width, height, softbuffer::AlphaMode::Opaque);
+        }
         Self {
             ctx,
             ressources: Resources::new(),
@@ -43,6 +48,13 @@ impl Surface {
     }
     pub fn next_sink(&mut self) -> Result<BufferSurfaceSink<'_>, SoftBufferError> {
         let buffer = self.inner_surface.next_buffer()?;
+        // if buffer.height() != self.height || buffer.width() != self.width {
+        //     self.width = buffer.width();
+        //     self.height = buffer.height();
+        //     self.ctx
+        //         .reset_and_resize(self.width.get() as _, self.height.get() as _);
+        // }
+
         Ok(BufferSurfaceSink {
             buffer,
             ressources: &mut self.ressources,
@@ -55,9 +67,11 @@ impl Surface {
             error: None,
             clip_depth: 0,
             group_depth: 0,
+            simd_level: self.surface_settings.render.level,
         })
     }
     fn sync_size(&mut self) {
+        self.ctx.flush();
         self.ctx
             .reset_and_resize(self.width.get() as _, self.height.get() as _);
         self.inner_surface.resize(self.width, self.height).unwrap();
@@ -67,6 +81,7 @@ impl Surface {
         self.height = height;
         self.width = width;
         self.sync_size();
+        self.reset();
     }
 
     /// Drop any realized mask artifacts cached by the renderer.
@@ -76,6 +91,12 @@ impl Surface {
     /// affect mask realization outside the recorded scene itself.
     pub fn clear_cached_masks(&mut self) {
         self.mask_cache.clear();
+    }
+
+    pub fn reset(&mut self) {
+        self.clear_cached_masks();
+        self.ctx.reset();
+        self.ressources.clear_images();
     }
 }
 

@@ -1,20 +1,20 @@
-use std::{collections::VecDeque, num::NonZero, sync::Arc};
+use std::{num::NonZero, sync::Arc};
 
-use softbuffer::{SoftBufferError, Surface as SoftSurface};
-use vello_cpu::{RasterizerSettings, RenderContext, RenderSettings, Resources};
+use softbuffer::{
+    // Buffer, SoftBufferError,
+    Surface as SoftSurface,
+};
+use vello_cpu::{RasterizerSettings, RenderSettings};
 use velona_renderer::window_handle::WindowHandle;
 use winit::event_loop::OwnedDisplayHandle;
 
-use crate::{imaging_vello_cpu::CachedMask, sink::BufferSurfaceSink};
+use crate::imaging_vello_cpu::VelloCpuRenderer;
 
 type InnerSurface = SoftSurface<OwnedDisplayHandle, Arc<dyn WindowHandle>>;
 
 pub struct Surface {
-    pub ctx: RenderContext,
-    pub ressources: Resources,
+    pub renderer: VelloCpuRenderer,
     pub inner_surface: InnerSurface,
-    pub surface_settings: SurfaceSettings,
-    pub mask_cache: VecDeque<CachedMask>,
     width: NonZero<u32>,
     height: NonZero<u32>,
     _d: (),
@@ -28,51 +28,40 @@ impl Surface {
         window: Arc<dyn WindowHandle>,
         settings: SurfaceSettings,
     ) -> Self {
-        let ctx = RenderContext::new_with(width.get() as _, height.get() as _, settings.render);
         let mut surface = InnerSurface::new(context, window).unwrap();
         if surface.supports_alpha_mode(softbuffer::AlphaMode::Ignored) {
             let _ = surface.configure(width, height, softbuffer::AlphaMode::Ignored);
         } else {
             let _ = surface.configure(width, height, softbuffer::AlphaMode::Opaque);
         }
-        Self {
-            ctx,
-            ressources: Resources::new(),
+        let mut s = Self {
+            renderer: VelloCpuRenderer::new(
+                width.get() as _,
+                height.get() as _,
+                settings.render,
+                settings.rasterizer,
+            ),
             inner_surface: surface,
-            surface_settings: settings,
-            mask_cache: VecDeque::new(),
             width,
             height,
             _d: (),
-        }
+        };
+        s.renderer.set_tolerance(settings.tolerance);
+        s
     }
-    pub fn next_sink(&mut self) -> Result<BufferSurfaceSink<'_>, SoftBufferError> {
-        let buffer = self.inner_surface.next_buffer()?;
-        // if buffer.height() != self.height || buffer.width() != self.width {
-        //     self.width = buffer.width();
-        //     self.height = buffer.height();
-        //     self.ctx
-        //         .reset_and_resize(self.width.get() as _, self.height.get() as _);
-        // }
-
-        Ok(BufferSurfaceSink {
-            buffer,
-            ressources: &mut self.ressources,
-            ctx: &mut self.ctx,
-            mask_cache: &mut self.mask_cache,
-            rasterizer_settings: self.surface_settings.rasterizer,
-            width: self.width.get() as _,
-            height: self.height.get() as _,
-            tolerance: self.surface_settings.tolerance,
-            error: None,
-            clip_depth: 0,
-            group_depth: 0,
-            simd_level: self.surface_settings.render.level,
-        })
-    }
+    // pub fn next_sink(&mut self) -> Result<Buffer<'_>, SoftBufferError> {
+    //     let buffer = self.inner_surface.next_buffer()?;
+    //     if buffer.height() != self.height || buffer.width() != self.width {
+    //         self.width = buffer.width();
+    //         self.height = buffer.height();
+    //         self.renderer
+    //             .reset_and_resize(self.width.get() as _, self.height.get() as _);
+    //     }
+    //     Ok(buffer)
+    // }
     fn sync_size(&mut self) {
-        self.ctx.flush();
-        self.ctx
+        self.renderer.ctx.flush();
+        self.renderer
             .reset_and_resize(self.width.get() as _, self.height.get() as _);
         self.inner_surface.resize(self.width, self.height).unwrap();
     }
@@ -81,7 +70,6 @@ impl Surface {
         self.height = height;
         self.width = width;
         self.sync_size();
-        self.reset();
     }
 
     /// Drop any realized mask artifacts cached by the renderer.
@@ -90,13 +78,12 @@ impl Surface {
     /// Call this if you need to release memory aggressively or after changing assumptions that
     /// affect mask realization outside the recorded scene itself.
     pub fn clear_cached_masks(&mut self) {
-        self.mask_cache.clear();
+        self.renderer.mask_cache.clear();
     }
-
     pub fn reset(&mut self) {
         self.clear_cached_masks();
-        self.ctx.reset();
-        self.ressources.clear_images();
+        self.renderer.reset();
+        self.renderer.resources.clear_images();
     }
 }
 

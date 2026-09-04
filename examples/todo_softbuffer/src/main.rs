@@ -2,19 +2,22 @@ use std::sync::Arc;
 
 use vello_cpu::RasterizerSettings;
 // use log::trace;
-use velona::masonry::{
-    self,
-    core::Widget,
-    layout::{AsUnit, Length},
-    palette::css::{BEIGE, BLACK, WHITE},
-    properties::{Background, BorderColor, BorderWidth, Padding},
-    widgets::{Button, Flex, FlexParams, Label, Prose, TextInput},
-};
 use velona::reactive::{signal::signal, traits::Update};
 use velona::{
     AnyNewWidget, WindowBuilder,
     collection::NewCollectionWidgetExt,
     widgets::{button::NewButtonPressEventsExt, text_input::NewTextInputActionExt},
+};
+use velona::{
+    masonry::{
+        self,
+        core::Widget,
+        layout::{AsUnit, Length},
+        palette::css::{BEIGE, BLACK, WHITE},
+        properties::{Background, BorderColor, BorderWidth, Padding},
+        widgets::{Button, Flex, FlexParams, Label, Prose, TextInput},
+    },
+    reactive::traits::Read,
 };
 use velona_renderer_vello_cpu::{SurfaceSettings, VelloSoftbufferRenderer};
 use winit::event_loop::EventLoop;
@@ -34,8 +37,9 @@ fn view() -> AnyNewWidget {
         .cross_axis_alignment(masonry::properties::types::CrossAxisAlignment::Center)
         .with_fixed(Prose::new("Todos").prepare())
         .with_fixed(Flex::column().prepare().collect_reactive_iter(move || {
-            todos()
-                .into_iter()
+            todos
+                .read()
+                .iter()
                 .enumerate()
                 .map(move |(index, item)| {
                     (
@@ -66,7 +70,7 @@ fn view() -> AnyNewWidget {
                         FlexParams::default(),
                     )
                 })
-                .collect::<Vec<_>>()
+                .collect::<Box<[_]>>()
         }))
         .with_fixed(
             TextInput::new("")

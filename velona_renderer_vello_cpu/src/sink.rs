@@ -293,10 +293,22 @@ impl<'surface> BufferSurfaceSink<'surface> {
 
         self.ctx.flush();
 
-        let Some(pixmap_mut) = PixmapMut::new(self.width, self.height, self.buffer.data_u8())
-        else {
-            // TODO Return Err
-            return Ok(());
+        let pixmap_mut = if let Some(pix) =
+            PixmapMut::new(self.width as _, self.height as _, self.buffer.data_u8())
+        {
+            pix
+        } else {
+            let Some(pix) = PixmapMut::new(
+                self.width as _,
+                self.height as _,
+                self.buffer
+                    .data_u8()
+                    .split_at_mut(usize::from(self.width) * usize::from(self.height) * 4)
+                    .0,
+            ) else {
+                return Ok(());
+            };
+            pix
         };
 
         self.ctx

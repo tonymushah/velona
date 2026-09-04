@@ -48,6 +48,13 @@ impl Surface {
     }
     pub fn next_sink(&mut self) -> Result<BufferSurfaceSink<'_>, SoftBufferError> {
         let buffer = self.inner_surface.next_buffer()?;
+        // if buffer.height() != self.height || buffer.width() != self.width {
+        //     self.width = buffer.width();
+        //     self.height = buffer.height();
+        //     self.ctx
+        //         .reset_and_resize(self.width.get() as _, self.height.get() as _);
+        // }
+
         Ok(BufferSurfaceSink {
             buffer,
             ressources: &mut self.ressources,

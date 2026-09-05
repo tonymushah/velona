@@ -10,7 +10,7 @@ use imaging::{
     record::{Scene, ValidateError, replay},
 };
 
-use vello_hybrid::{RenderError, RenderSize, RenderTargetConfig, TextureBindings};
+use vello_hybrid::{RenderError, RenderSettings, RenderSize, RenderTargetConfig, TextureBindings};
 
 pub use scene_sink::VelloHybridSceneSink;
 use wgpu::{TextureFormat, wgt::CommandEncoderDescriptor};
@@ -77,12 +77,14 @@ impl VelloHybridRendererState {
         Ok((width, height))
     }
 
-    fn new_with_target_config(
+    fn new_with_config(
         device: wgpu::Device,
         queue: wgpu::Queue,
         target_config: &RenderTargetConfig,
+        render_settings: RenderSettings,
     ) -> Self {
-        let (renderer, resources) = vello_hybrid::Renderer::new(&device, target_config);
+        let (renderer, resources) =
+            vello_hybrid::Renderer::new_with(&device, target_config, render_settings);
 
         Self {
             renderer,
@@ -95,7 +97,7 @@ impl VelloHybridRendererState {
     }
 
     fn new(device: wgpu::Device, queue: wgpu::Queue) -> Self {
-        Self::new_with_target_config(
+        Self::new_with_config(
             device,
             queue,
             &RenderTargetConfig {
@@ -103,6 +105,7 @@ impl VelloHybridRendererState {
                 width: 1,
                 height: 1,
             },
+            Default::default(),
         )
     }
 
@@ -161,13 +164,19 @@ impl VelloHybridRenderer {
     }
 
     #[must_use]
-    pub fn new_with_target_config(
+    pub fn new_with_config(
         device: wgpu::Device,
         queue: wgpu::Queue,
         target_config: &RenderTargetConfig,
+        render_config: RenderSettings,
     ) -> Self {
         Self {
-            state: VelloHybridRendererState::new_with_target_config(device, queue, target_config),
+            state: VelloHybridRendererState::new_with_config(
+                device,
+                queue,
+                target_config,
+                render_config,
+            ),
             target: None,
         }
     }

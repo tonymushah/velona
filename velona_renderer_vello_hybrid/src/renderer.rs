@@ -295,7 +295,7 @@ impl WindowRenderer for VelloHybridWindowRenderer {
         )
         .expect("Error creating SurfaceRenderer");
 
-        let renderer = VelloHybridRenderer::new_with_target_config(
+        let renderer = VelloHybridRenderer::new_with_config(
             render_surface.device().clone(),
             render_surface.queue().clone(),
             &RenderTargetConfig {
@@ -303,6 +303,7 @@ impl WindowRenderer for VelloHybridWindowRenderer {
                 width,
                 height,
             },
+            self.config.render_settings,
         );
 
         let _ = sender.send(InitOutput {

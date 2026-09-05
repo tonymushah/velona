@@ -5282,6 +5282,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "todo_vello_hybrid"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "hotpath",
+ "log",
+ "velona",
+ "velona_renderer_vello_hybrid",
+]
+
+[[package]]
 name = "tokio"
 version = "1.53.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

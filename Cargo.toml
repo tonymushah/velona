@@ -17,6 +17,7 @@ members = [
     "velona_renderer",
     "velona_renderer_vello",
     "velona_renderer_vello_cpu",
+    "velona_renderer_vello_hybrid",
     # subsecond support
     "velona_subsecond",
     # examples
@@ -29,7 +30,7 @@ members = [
     "examples/todo",
     "examples/todo_softbuffer",
     "examples/todo_subsecond",
-    "velona_renderer_vello_hybrid"
+    "examples/todo_vello_hybrid"
 ]
 default-members = ["velona"]
 resolver = "3"
@@ -111,6 +112,7 @@ velona_subsecond = { path = "velona_subsecond" }
 # velona renderers
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }
 velona_renderer_vello_cpu = { path = "velona_renderer_vello_cpu" }
+velona_renderer_vello_hybrid = { path = "velona_renderer_vello_hybrid" }
 
 # velona itself
 velona = { path = "velona" }

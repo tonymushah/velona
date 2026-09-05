@@ -77,15 +77,12 @@ impl VelloHybridRendererState {
         Ok((width, height))
     }
 
-    fn new(device: wgpu::Device, queue: wgpu::Queue) -> Self {
-        let (renderer, resources) = vello_hybrid::Renderer::new(
-            &device,
-            &RenderTargetConfig {
-                format: TextureFormat::Rgba8Unorm,
-                width: 1,
-                height: 1,
-            },
-        );
+    fn new_with_target_config(
+        device: wgpu::Device,
+        queue: wgpu::Queue,
+        target_config: &RenderTargetConfig,
+    ) -> Self {
+        let (renderer, resources) = vello_hybrid::Renderer::new(&device, target_config);
 
         Self {
             renderer,
@@ -95,6 +92,18 @@ impl VelloHybridRendererState {
             tolerance: 0.1,
             image_registry: HybridImageRegistry::default(),
         }
+    }
+
+    fn new(device: wgpu::Device, queue: wgpu::Queue) -> Self {
+        Self::new_with_target_config(
+            device,
+            queue,
+            &RenderTargetConfig {
+                format: TextureFormat::Rgba8Unorm,
+                width: 1,
+                height: 1,
+            },
+        )
     }
 
     fn clear_cached_images(&mut self) {
@@ -147,6 +156,18 @@ impl VelloHybridRenderer {
     pub fn new(device: wgpu::Device, queue: wgpu::Queue) -> Self {
         Self {
             state: VelloHybridRendererState::new(device, queue),
+            target: None,
+        }
+    }
+
+    #[must_use]
+    pub fn new_with_target_config(
+        device: wgpu::Device,
+        queue: wgpu::Queue,
+        target_config: &RenderTargetConfig,
+    ) -> Self {
+        Self {
+            state: VelloHybridRendererState::new_with_target_config(device, queue, target_config),
             target: None,
         }
     }

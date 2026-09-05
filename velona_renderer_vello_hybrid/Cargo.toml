@@ -13,9 +13,10 @@ kurbo.workspace = true
 pollster.workspace = true
 debug_timer.workspace = true
 # hotpath = {workspace = true, optional=true}
-vello_hybrid = { workspace = true, features = ["wgpu"] }
+vello_hybrid = { workspace = true, features = ["wgpu", "text"] }
 vello_common.workspace = true
 wgpu.workspace = true
+glifo = { workspace = true, features = ["std"] }
 
 [features]
 log_frame_times = ["debug_timer/enable"]

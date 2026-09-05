@@ -5742,6 +5742,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dccbb4221070e7ef92486abef0002a651702f00a52d6be532249a0fa0eb3e9ba"
 dependencies = [
  "bytemuck",
+ "glifo",
  "hashbrown 0.17.1",
  "log",
  "thiserror 2.0.20",
@@ -5879,6 +5880,7 @@ version = "0.1.0"
 dependencies = [
  "debug_timer",
  "futures-channel",
+ "glifo",
  "imaging",
  "kurbo",
  "peniko",

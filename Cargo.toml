@@ -83,6 +83,7 @@ or_poisoned = { version = "0.1" }
 vello_hybrid = { version = "0.2", default-features = false }
 debug_timer = "0.1"
 wgpu = "29"
+glifo = { version = "0.3", default-features = true}
 
 # subsecond support
 subsecond = "0.7"

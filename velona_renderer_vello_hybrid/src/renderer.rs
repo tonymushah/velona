@@ -440,5 +440,6 @@ impl WindowRenderer for VelloHybridWindowRenderer {
 
         // Empty the Vello scene (memory optimisation)
         self.scene.reset();
+        // state.renderer.clear_cached_images();
     }
 }

@@ -1,12 +1,14 @@
 use std::{num::NonZero, sync::Arc};
 
 use softbuffer::Context;
+// use vello_common::fearless_simd;
 use velona_renderer::{WindowRenderer, window_handle::WindowHandle};
 use winit::event_loop::OwnedDisplayHandle;
 
 use crate::{
     imaging_vello_cpu::VelloCpuRenderer,
     surface::{Surface, SurfaceSettings},
+    utils::write_to_buffer,
 };
 
 #[allow(clippy::large_enum_variant)]
@@ -84,24 +86,27 @@ impl WindowRenderer for VelloSoftbufferRenderer {
 
     fn render<F: FnOnce(&mut Self::ScenePainter<'_>)>(&mut self, draw_fn: F) {
         if let RenderState::Active(active) = &mut self.render_state {
+            // active.configure_surface();
             let mut buffer = active.inner_surface.next_buffer().unwrap();
-
-            if buffer.height().get() != active.renderer.height as u32
-                || buffer.width().get() != active.renderer.width as u32
-            {
-                active
-                    .renderer
-                    .reset_and_resize(buffer.width().get() as _, buffer.height().get() as _);
-            }
+            // buffer.data_u8().fill(0);
 
             draw_fn(&mut active.renderer);
 
-            active.renderer.write_in_buffer(&mut buffer).unwrap();
+            active
+                .renderer
+                .write_in_buffer(&mut active.pix_buf)
+                .unwrap();
 
+            write_to_buffer(
+                active.renderer.width as _,
+                active.pix_buf.data_mut(),
+                buffer.pixels_iter(),
+            );
             buffer.present().unwrap();
 
             // 5. reset buffer
             active.reset();
+            // assert_eq!(active.pix_buf.capacity(), active.pix_buf.data().len());
         };
     }
     fn on_memory_warning(&mut self) {

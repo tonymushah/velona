@@ -14,3 +14,6 @@ vello_common = { workspace = true, features = ["std"] }
 raw-window-handle.workspace = true
 winit.workspace = true
 # log.workspace = true
+
+[features]
+multithreading = ["vello_cpu/multithreading"]

@@ -4,7 +4,7 @@ use softbuffer::{
     // Buffer, SoftBufferError,
     Surface as SoftSurface,
 };
-use vello_cpu::{RasterizerSettings, RenderSettings};
+use vello_cpu::{Pixmap, RasterizerSettings, RenderSettings};
 use velona_renderer::window_handle::WindowHandle;
 use winit::event_loop::OwnedDisplayHandle;
 
@@ -17,6 +17,7 @@ pub struct Surface {
     pub inner_surface: InnerSurface,
     width: NonZero<u32>,
     height: NonZero<u32>,
+    pub pix_buf: Pixmap,
     _d: (),
 }
 
@@ -42,6 +43,7 @@ impl Surface {
                 settings.rasterizer,
             ),
             inner_surface: surface,
+            pix_buf: Pixmap::new(width.get() as _, height.get() as _),
             width,
             height,
             _d: (),
@@ -60,10 +62,15 @@ impl Surface {
     //     Ok(buffer)
     // }
     fn sync_size(&mut self) {
-        self.renderer.ctx.flush();
+        self.pix_buf
+            .resize(self.width.get() as _, self.height.get() as _);
+        self.pix_buf.shrink_to_fit();
         self.renderer
             .reset_and_resize(self.width.get() as _, self.height.get() as _);
-        self.inner_surface.resize(self.width, self.height).unwrap();
+        self.configure_surface();
+    }
+    pub fn configure_surface(&mut self) {
+        self.inner_surface.resize(self.width, self.height).unwrap()
     }
 
     pub fn set_size(&mut self, width: NonZero<u32>, height: NonZero<u32>) {

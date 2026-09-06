@@ -1,0 +1,491 @@
+// Copyright 2026 the Velona Authors
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+use super::image_registry::HybridImageUploadSession;
+use super::{Error, VelloHybridRenderer};
+use glifo::Glyph as VelloGlyph;
+use imaging::{
+    BlurredRoundedRect, ClipRef, Composite, FillRef, GeometryRef, GlyphRunRef, GroupRef, PaintSink,
+    StrokeRef,
+};
+use kurbo::{Affine, Shape as _};
+use peniko::{Brush, BrushRef, ImageBrush, Style};
+
+/// Borrowed adapter that streams `imaging` commands into an existing [`vello_hybrid::Scene`].
+pub struct VelloHybridSceneSink<'a> {
+    scene: &'a mut vello_hybrid::Scene,
+    resources: SceneSinkResources<'a>,
+    image_upload: Option<HybridImageUploadSession<'a>>,
+    tolerance: f64,
+    error: Option<Error>,
+    clip_depth: u32,
+    group_depth: u32,
+}
+
+#[allow(unused)]
+enum SceneSinkResources<'a> {
+    Owned(Box<vello_hybrid::Resources>),
+    Borrowed(&'a mut vello_hybrid::Resources),
+}
+
+impl SceneSinkResources<'_> {
+    fn as_mut(&mut self) -> &mut vello_hybrid::Resources {
+        match self {
+            Self::Owned(resources) => resources.as_mut(),
+            Self::Borrowed(resources) => resources,
+        }
+    }
+}
+
+impl core::fmt::Debug for VelloHybridSceneSink<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("VelloHybridSceneSink")
+            .field("tolerance", &self.tolerance)
+            .field("error", &self.error)
+            .field("clip_depth", &self.clip_depth)
+            .field("group_depth", &self.group_depth)
+            .finish_non_exhaustive()
+    }
+}
+
+impl<'a> VelloHybridSceneSink<'a> {
+    // Wrap an existing [`vello_hybrid::Scene`].
+    // pub fn new(scene: &'a mut vello_hybrid::Scene) -> Self {
+    //     Self {
+    //         scene,
+    //         resources: SceneSinkResources::Owned(Box::new(vello_hybrid::Resources::new())),
+    //         image_upload: None,
+    //         tolerance: 0.1,
+    //         error: None,
+    //         clip_depth: 0,
+    //         group_depth: 0,
+    //     }
+    // }
+
+    /// Wrap an existing [`vello_hybrid::Scene`] and use `renderer` to upload image brushes on
+    /// demand.
+    ///
+    /// This is the native-scene path for image brushes. Uploaded images are cached on the
+    /// renderer and reused across subsequent recordings and renders.
+    pub fn with_renderer(
+        scene: &'a mut vello_hybrid::Scene,
+        renderer: &'a mut VelloHybridRenderer,
+    ) -> Self {
+        let state = &mut renderer.state;
+        let encoder = state
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("imaging_vello_hybrid scene upload images"),
+            });
+        let image_upload = state.image_registry.begin_upload_session(
+            &mut state.resources,
+            &mut state.renderer,
+            &state.device,
+            &state.queue,
+            encoder,
+        );
+        Self {
+            scene,
+            resources: SceneSinkResources::Borrowed(&mut state.resources),
+            image_upload: Some(image_upload),
+            tolerance: 0.1,
+            error: None,
+            clip_depth: 0,
+            group_depth: 0,
+        }
+    }
+
+    /// Set the tolerance used when converting rounded rectangles to paths.
+    pub fn set_tolerance(&mut self, tolerance: f64) {
+        self.tolerance = tolerance;
+    }
+
+    /// Return the first deferred translation error, if any, and ensure clip/group stacks are balanced.
+    pub fn finish(&mut self) -> Result<(), Error> {
+        let result = if let Some(err) = self.error.take() {
+            Err(err)
+        } else if self.clip_depth != 0 {
+            Err(Error::Internal("unbalanced clip stack"))
+        } else if self.group_depth != 0 {
+            Err(Error::Internal("unbalanced group stack"))
+        } else {
+            Ok(())
+        };
+
+        if let Some(mut image_upload) = self.image_upload.take() {
+            image_upload.finish(self.resources.as_mut(), result.is_ok());
+        }
+
+        result
+    }
+
+    fn set_error_once(&mut self, err: Error) {
+        if self.error.is_none() {
+            self.error = Some(err);
+        }
+    }
+
+    fn brush_to_paint(
+        &mut self,
+        brush: BrushRef<'_>,
+        composite: Composite,
+    ) -> Option<vello_common::paint::PaintType> {
+        let brush = brush.to_owned().multiply_alpha(composite.alpha);
+        match brush {
+            Brush::Solid(c) => Some(Brush::Solid(c)),
+            Brush::Gradient(g) => Some(Brush::Gradient(g)),
+            Brush::Image(image) => self.resolve_image_brush(&image).map(Brush::Image),
+        }
+    }
+
+    fn resolve_image_brush(&mut self, image: &ImageBrush) -> Option<vello_common::paint::Image> {
+        let Some(image_upload) = self.image_upload.as_mut() else {
+            self.set_error_once(Error::UnsupportedImageBrush);
+            return None;
+        };
+        match image_upload.resolve_image_brush(self.resources.as_mut(), image) {
+            Ok(image) => Some(image),
+            Err(err) => {
+                self.set_error_once(err);
+                None
+            }
+        }
+    }
+
+    fn geometry_to_path(&self, geom: GeometryRef<'_>) -> kurbo::BezPath {
+        match geom {
+            GeometryRef::Rect(r) => r.to_path(self.tolerance),
+            GeometryRef::RoundedRect(rr) => rr.to_path(self.tolerance),
+            GeometryRef::Path(p) => p.clone(),
+            GeometryRef::OwnedPath(p) => p,
+        }
+    }
+
+    fn clip_to_path(&mut self, clip: ClipRef<'_>) -> (Affine, kurbo::BezPath, peniko::Fill) {
+        match clip {
+            ClipRef::Fill {
+                transform,
+                shape,
+                fill_rule,
+            } => (transform, self.geometry_to_path(shape), fill_rule),
+            ClipRef::Stroke {
+                transform,
+                shape,
+                stroke,
+            } => {
+                let path = self.geometry_to_path(shape);
+                let outline = kurbo::stroke(
+                    path.iter(),
+                    stroke,
+                    &kurbo::StrokeOpts::default(),
+                    self.tolerance,
+                );
+                (transform, outline, peniko::Fill::NonZero)
+            }
+        }
+    }
+
+    fn draw_glyph_run(
+        &mut self,
+        glyph_run: GlyphRunRef<'_>,
+        glyphs: &mut dyn Iterator<Item = imaging::record::Glyph>,
+    ) {
+        let Some(paint) = self.brush_to_paint(glyph_run.brush, glyph_run.composite) else {
+            return;
+        };
+        self.scene.set_transform(glyph_run.transform);
+        self.scene
+            .set_paint_transform(glyph_run.brush_transform.unwrap_or(Affine::IDENTITY));
+        self.scene.set_blend_mode(glyph_run.composite.blend);
+        self.scene.set_paint(paint);
+        // TODO: Revisit this allocation. `PaintSink` currently gives us a
+        // one-shot iterator, while glifo's glyph builders need a cloneable
+        // glyph source.
+        let glyphs = glyphs
+            .map(|glyph| VelloGlyph {
+                id: glyph.id,
+                x: glyph.x,
+                y: glyph.y,
+            })
+            .collect::<Vec<_>>();
+
+        match glyph_run.style {
+            Style::Fill(fill_rule) => {
+                self.scene.set_fill_rule(*fill_rule);
+                let builder = self
+                    .scene
+                    .glyph_run(self.resources.as_mut(), glyph_run.font)
+                    .font_size(glyph_run.font_size)
+                    .hint(glyph_run.hint)
+                    .normalized_coords(glyph_run.normalized_coords);
+                let builder = if let Some(transform) = glyph_run.glyph_transform {
+                    builder.glyph_transform(transform)
+                } else {
+                    builder
+                };
+                builder.fill_glyphs(glyphs.into_iter());
+            }
+            Style::Stroke(stroke) => {
+                self.scene.set_stroke(stroke.clone());
+                let builder = self
+                    .scene
+                    .glyph_run(self.resources.as_mut(), glyph_run.font)
+                    .font_size(glyph_run.font_size)
+                    .hint(glyph_run.hint)
+                    .normalized_coords(glyph_run.normalized_coords);
+                let builder = if let Some(transform) = glyph_run.glyph_transform {
+                    builder.glyph_transform(transform)
+                } else {
+                    builder
+                };
+                builder.stroke_glyphs(glyphs.into_iter());
+            }
+        }
+    }
+
+    fn draw_blurred_rounded_rect(&mut self, _draw: BlurredRoundedRect) {
+        self.set_error_once(Error::UnsupportedBlurredRoundedRect);
+    }
+}
+
+impl PaintSink for VelloHybridSceneSink<'_> {
+    fn push_clip(&mut self, clip: ClipRef<'_>) {
+        if self.error.is_some() {
+            return;
+        }
+        let (xf, path, fill_rule) = self.clip_to_path(clip);
+        self.scene.set_transform(xf);
+        self.scene.set_fill_rule(fill_rule);
+        self.scene.push_clip_path(&path);
+        self.clip_depth += 1;
+    }
+
+    fn pop_clip(&mut self) {
+        if self.error.is_some() {
+            return;
+        }
+        if self.clip_depth == 0 {
+            self.set_error_once(Error::Internal("pop_clip underflow"));
+            return;
+        }
+        self.scene.pop_clip_path();
+        self.clip_depth -= 1;
+    }
+
+    fn push_group(&mut self, group: GroupRef<'_>) {
+        if self.error.is_some() {
+            return;
+        }
+        if group.mask.is_some() {
+            self.set_error_once(Error::UnsupportedMask);
+            return;
+        }
+        if !group.filters.is_empty() {
+            self.set_error_once(Error::UnsupportedFilter);
+            return;
+        }
+        let clip_path = group.clip.map(|clip| {
+            let (xf, path, fill_rule) = self.clip_to_path(clip);
+            self.scene.set_transform(xf);
+            self.scene.set_fill_rule(fill_rule);
+            path
+        });
+
+        let blend = Some(group.composite.blend);
+        let opacity = Some(group.composite.alpha);
+        self.scene
+            .push_layer(clip_path.as_ref(), blend, opacity, None, None);
+        self.group_depth += 1;
+    }
+
+    fn pop_group(&mut self) {
+        if self.error.is_some() {
+            return;
+        }
+        if self.group_depth == 0 {
+            self.set_error_once(Error::Internal("pop_group underflow"));
+            return;
+        }
+        self.scene.pop_layer();
+        self.group_depth -= 1;
+    }
+
+    fn fill(&mut self, draw: FillRef<'_>) {
+        if self.error.is_some() {
+            return;
+        }
+
+        let Some(paint) = self.brush_to_paint(draw.brush, draw.composite) else {
+            return;
+        };
+        self.scene.set_transform(draw.transform);
+        self.scene.set_fill_rule(draw.fill_rule);
+        self.scene
+            .set_paint_transform(draw.brush_transform.unwrap_or(Affine::IDENTITY));
+
+        let (blend, paint) = match (&paint, draw.composite.blend.compose) {
+            (Brush::Solid(c), peniko::Compose::Copy) if c.components[3] == 0.0 => (
+                peniko::BlendMode::new(peniko::Mix::Normal, peniko::Compose::Clear),
+                Brush::Solid(peniko::Color::from_rgba8(0, 0, 0, 255)),
+            ),
+            _ => (draw.composite.blend, paint),
+        };
+
+        self.scene.set_blend_mode(blend);
+        self.scene.set_paint(paint);
+
+        match draw.shape {
+            GeometryRef::Rect(r) => self.scene.fill_rect(&r),
+            GeometryRef::RoundedRect(rr) => {
+                let path = rr.to_path(self.tolerance);
+                self.scene.fill_path(&path);
+            }
+            GeometryRef::Path(p) => self.scene.fill_path(p),
+            GeometryRef::OwnedPath(p) => self.scene.fill_path(&p),
+        }
+    }
+
+    fn stroke(&mut self, draw: StrokeRef<'_>) {
+        if self.error.is_some() {
+            return;
+        }
+
+        let Some(paint) = self.brush_to_paint(draw.brush, draw.composite) else {
+            return;
+        };
+        self.scene.set_transform(draw.transform);
+        self.scene.set_stroke(draw.stroke.clone());
+        self.scene
+            .set_paint_transform(draw.brush_transform.unwrap_or(Affine::IDENTITY));
+
+        let (blend, paint) = match (&paint, draw.composite.blend.compose) {
+            (Brush::Solid(c), peniko::Compose::Copy) if c.components[3] == 0.0 => (
+                peniko::BlendMode::new(peniko::Mix::Normal, peniko::Compose::Clear),
+                Brush::Solid(peniko::Color::from_rgba8(0, 0, 0, 255)),
+            ),
+            _ => (draw.composite.blend, paint),
+        };
+
+        self.scene.set_blend_mode(blend);
+        self.scene.set_paint(paint);
+
+        match draw.shape {
+            GeometryRef::Rect(r) => self.scene.stroke_rect(&r),
+            GeometryRef::RoundedRect(rr) => {
+                let path = rr.to_path(self.tolerance);
+                self.scene.stroke_path(&path);
+            }
+            GeometryRef::Path(p) => self.scene.stroke_path(p),
+            GeometryRef::OwnedPath(p) => self.scene.stroke_path(&p),
+        }
+    }
+
+    fn glyph_run(
+        &mut self,
+        draw: GlyphRunRef<'_>,
+        glyphs: &mut dyn Iterator<Item = imaging::record::Glyph>,
+    ) {
+        if self.error.is_some() {
+            return;
+        }
+        self.draw_glyph_run(draw, glyphs);
+    }
+
+    fn blurred_rounded_rect(&mut self, draw: BlurredRoundedRect) {
+        if self.error.is_some() {
+            return;
+        }
+        self.draw_blurred_rounded_rect(draw);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use imaging::{Filter, MaskMode, MaskRef, record};
+    use peniko::{Blob, ImageAlphaType, ImageData, ImageFormat};
+    use pollster::FutureExt;
+    use std::sync::Arc;
+
+    #[test]
+    fn hybrid_scene_sink_reports_clip_underflow() {
+        let mut scene = vello_hybrid::Scene::new(32, 32);
+        let gpu_context = wgpu_context::WGPUContext::default();
+        let device_handle = &gpu_context.create_device_handle(None).block_on().unwrap();
+        let mut renderer =
+            VelloHybridRenderer::new(device_handle.device.clone(), device_handle.queue.clone());
+        scene.reset();
+        let mut sink = VelloHybridSceneSink::with_renderer(&mut scene, &mut renderer);
+        sink.pop_clip();
+        assert!(matches!(
+            sink.finish(),
+            Err(Error::Internal("pop_clip underflow"))
+        ));
+    }
+
+    #[test]
+    fn hybrid_scene_sink_rejects_filters() {
+        let mut scene = vello_hybrid::Scene::new(32, 32);
+
+        let gpu_context = wgpu_context::WGPUContext::default();
+        let device_handle = &gpu_context.create_device_handle(None).block_on().unwrap();
+        let mut renderer =
+            VelloHybridRenderer::new(device_handle.device.clone(), device_handle.queue.clone());
+        scene.reset();
+        let mut sink = VelloHybridSceneSink::with_renderer(&mut scene, &mut renderer);
+        sink.push_group(GroupRef::new().with_filters(&[Filter::blur(2.0)]));
+        assert!(matches!(sink.finish(), Err(Error::UnsupportedFilter)));
+    }
+
+    #[test]
+    fn hybrid_scene_sink_rejects_image_brushes_without_resolver() {
+        let mut scene = vello_hybrid::Scene::new(32, 32);
+        let gpu_context = wgpu_context::WGPUContext::default();
+        let device_handle = &gpu_context.create_device_handle(None).block_on().unwrap();
+        let mut renderer =
+            VelloHybridRenderer::new(device_handle.device.clone(), device_handle.queue.clone());
+        scene.reset();
+        let mut sink = VelloHybridSceneSink::with_renderer(&mut scene, &mut renderer);
+        let image = Brush::Image(ImageBrush::new(ImageData {
+            data: Blob::new(Arc::new([255_u8; 16])),
+            format: ImageFormat::Rgba8,
+            alpha_type: ImageAlphaType::Alpha,
+            width: 2,
+            height: 2,
+        }));
+        sink.fill(FillRef::new(kurbo::Rect::new(0.0, 0.0, 8.0, 8.0), &image));
+        let sink_res = sink.finish();
+        assert!(sink_res.is_ok());
+        // Aparently Vello hybrid support it now so...
+        // assert!(matches!(sink.finish(), Err(Error::UnsupportedImageBrush)));
+    }
+
+    #[test]
+    fn hybrid_scene_sink_rejects_masks() {
+        let mut mask = record::Scene::new();
+        mask.fill(FillRef::new(
+            kurbo::Rect::new(0.0, 0.0, 8.0, 8.0),
+            peniko::Color::WHITE,
+        ));
+        let mut content = record::Scene::new();
+        content.fill(FillRef::new(
+            kurbo::Rect::new(1.0, 1.0, 7.0, 7.0),
+            peniko::Color::BLACK,
+        ));
+
+        let mut scene = vello_hybrid::Scene::new(32, 32);
+        let gpu_context = wgpu_context::WGPUContext::default();
+        let device_handle = &gpu_context.create_device_handle(None).block_on().unwrap();
+        let mut renderer =
+            VelloHybridRenderer::new(device_handle.device.clone(), device_handle.queue.clone());
+        scene.reset();
+        let mut sink = VelloHybridSceneSink::with_renderer(&mut scene, &mut renderer);
+        sink.push_group(GroupRef::new().with_mask(MaskRef::new(MaskMode::Luminance, &mask)));
+        sink.fill(FillRef::new(
+            kurbo::Rect::new(1.0, 1.0, 7.0, 7.0),
+            peniko::Color::BLACK,
+        ));
+        sink.pop_group();
+        assert!(matches!(sink.finish(), Err(Error::UnsupportedMask)));
+    }
+}

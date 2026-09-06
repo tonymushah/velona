@@ -17,6 +17,7 @@ members = [
     "velona_renderer",
     "velona_renderer_vello",
     "velona_renderer_vello_cpu",
+    "velona_renderer_vello_hybrid",
     # subsecond support
     "velona_subsecond",
     # examples
@@ -28,7 +29,8 @@ members = [
     "examples/badge_ed",
     "examples/todo",
     "examples/todo_softbuffer",
-    "examples/todo_subsecond"
+    "examples/todo_subsecond",
+    "examples/todo_vello_hybrid"
 ]
 default-members = ["velona"]
 resolver = "3"
@@ -77,8 +79,12 @@ derive_more = { version = "2", default-features = false }
 softbuffer = { git = "https://github.com/rust-windowing/softbuffer.git" }
 vello_cpu = { version = "0.2", default-features = false }
 wgpu_context = "0.9.0"
-vello = { version = "0.10" }
+vello = { version = "0.10", default-features = false }
 or_poisoned = { version = "0.1" }
+vello_hybrid = { version = "0.2", default-features = false }
+debug_timer = "0.1"
+wgpu = "29"
+glifo = { version = "0.3", default-features = true}
 
 # subsecond support
 subsecond = "0.7"
@@ -106,6 +112,7 @@ velona_subsecond = { path = "velona_subsecond" }
 # velona renderers
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }
 velona_renderer_vello_cpu = { path = "velona_renderer_vello_cpu" }
+velona_renderer_vello_hybrid = { path = "velona_renderer_vello_hybrid" }
 
 # velona itself
 velona = { path = "velona" }

@@ -4,7 +4,7 @@ use softbuffer::{
     // Buffer, SoftBufferError,
     Surface as SoftSurface,
 };
-use vello_cpu::{RasterizerSettings, RenderSettings};
+use vello_cpu::{Pixmap, RasterizerSettings, RenderSettings};
 use velona_renderer::window_handle::WindowHandle;
 use winit::event_loop::OwnedDisplayHandle;
 
@@ -15,9 +15,9 @@ type InnerSurface = SoftSurface<OwnedDisplayHandle, Arc<dyn WindowHandle>>;
 pub struct Surface {
     pub renderer: VelloCpuRenderer,
     pub inner_surface: InnerSurface,
-    pub sizes: [Option<(NonZero<u32>, NonZero<u32>)>; 3],
     width: NonZero<u32>,
     height: NonZero<u32>,
+    pub pix_buf: Pixmap,
     _d: (),
 }
 
@@ -43,7 +43,7 @@ impl Surface {
                 settings.rasterizer,
             ),
             inner_surface: surface,
-            sizes: [None, None, None],
+            pix_buf: Pixmap::new(width.get() as _, height.get() as _),
             width,
             height,
             _d: (),
@@ -62,6 +62,9 @@ impl Surface {
     //     Ok(buffer)
     // }
     fn sync_size(&mut self) {
+        self.pix_buf
+            .resize(self.width.get() as _, self.height.get() as _);
+        self.pix_buf.shrink_to_fit();
         self.renderer.ctx.flush();
         self.renderer
             .reset_and_resize(self.width.get() as _, self.height.get() as _);
@@ -72,15 +75,9 @@ impl Surface {
     }
 
     pub fn set_size(&mut self, width: NonZero<u32>, height: NonZero<u32>) {
-        self.push_new_size(width, height);
         self.height = height;
         self.width = width;
         self.sync_size();
-    }
-    fn push_new_size(&mut self, width: NonZero<u32>, height: NonZero<u32>) {
-        self.sizes[2] = self.sizes[1];
-        self.sizes[1] = self.sizes[0];
-        self.sizes[0] = Some((width, height))
     }
 
     /// Drop any realized mask artifacts cached by the renderer.
@@ -95,6 +92,8 @@ impl Surface {
         self.clear_cached_masks();
         self.renderer.reset();
         self.renderer.resources.clear_images();
+        self.pix_buf.data_as_u8_slice_mut().fill(0);
+        self.pix_buf.shrink_to_fit();
     }
 }
 

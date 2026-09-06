@@ -1,10 +1,6 @@
 use masonry_core::core::{CollectionWidget, NewWidget};
 
-use crate::{
-    NewWidgetExt,
-    utils::ConsumeResult,
-    reactive::effect::Effect
-};
+use crate::{NewWidgetExt, reactive::effect::Effect, utils::ConsumeResult};
 
 pub type CollectIterItem<P> = (crate::AnyNewWidget, P);
 

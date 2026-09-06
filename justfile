@@ -30,3 +30,6 @@ clean:
 
 hack-clippy:
     cargo hack --each-feature clippy
+
+fmt:
+    cargo hack fmt

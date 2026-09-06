@@ -100,6 +100,7 @@ fn view() -> AnyNewWidget {
             .with_props(Padding::all(Length::px(12.0)))
             .erased(),
     )
+    .content_must_fill(true)
     .prepare()
     .erased()
 }

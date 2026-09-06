@@ -4,7 +4,6 @@ use std::mem;
 
 use peniko::color::PremulRgba8;
 use softbuffer::Pixel;
-use vello_common::fearless_simd::Simd;
 
 use crate::imaging_vello_cpu::RendererError;
 
@@ -56,9 +55,7 @@ pub fn unpremultiply_channel(channel: u8, alpha: u8) -> u8 {
 //     }
 // }
 
-#[inline(always)]
-pub fn write_to_buffer<'a, S: Simd>(
-    _: S,
+pub fn write_to_buffer<'a>(
     width: usize,
     pixel_in: &mut [PremulRgba8],
     pixels_out: impl DoubleEndedIterator<Item = (u32, u32, &'a mut Pixel)>,

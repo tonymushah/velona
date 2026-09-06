@@ -1,7 +1,7 @@
 use std::{num::NonZero, sync::Arc};
 
 use softbuffer::Context;
-use vello_common::fearless_simd;
+// use vello_common::fearless_simd;
 use velona_renderer::{WindowRenderer, window_handle::WindowHandle};
 use winit::event_loop::OwnedDisplayHandle;
 
@@ -88,7 +88,7 @@ impl WindowRenderer for VelloSoftbufferRenderer {
         if let RenderState::Active(active) = &mut self.render_state {
             // active.configure_surface();
             let mut buffer = active.inner_surface.next_buffer().unwrap();
-            buffer.data_u8().fill(0);
+            // buffer.data_u8().fill(0);
 
             draw_fn(&mut active.renderer);
 
@@ -97,15 +97,16 @@ impl WindowRenderer for VelloSoftbufferRenderer {
                 .write_in_buffer(&mut active.pix_buf)
                 .unwrap();
 
-            {
-                let level = active.renderer.render_settings.level;
-
-                fearless_simd::dispatch!(level, simd => write_to_buffer(simd, active.renderer.width as _, active.pix_buf.data_mut(), buffer.pixels_iter()));
-            }
+            write_to_buffer(
+                active.renderer.width as _,
+                active.pix_buf.data_mut(),
+                buffer.pixels_iter(),
+            );
             buffer.present().unwrap();
 
             // 5. reset buffer
             active.reset();
+            // assert_eq!(active.pix_buf.capacity(), active.pix_buf.data().len());
         };
     }
     fn on_memory_warning(&mut self) {

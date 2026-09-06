@@ -65,7 +65,6 @@ impl Surface {
         self.pix_buf
             .resize(self.width.get() as _, self.height.get() as _);
         self.pix_buf.shrink_to_fit();
-        self.renderer.ctx.flush();
         self.renderer
             .reset_and_resize(self.width.get() as _, self.height.get() as _);
         self.configure_surface();
@@ -92,8 +91,6 @@ impl Surface {
         self.clear_cached_masks();
         self.renderer.reset();
         self.renderer.resources.clear_images();
-        self.pix_buf.data_as_u8_slice_mut().fill(0);
-        self.pix_buf.shrink_to_fit();
     }
 }
 

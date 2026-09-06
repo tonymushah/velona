@@ -21,7 +21,6 @@ use masonry::{
     core::{NewWidget, Widget, WidgetMut},
     widgets::{BadgePlacement, Badged},
 };
-#[cfg(doc)]
 use velona_core::reactive::effect::Effect;
 
 use crate::{AnyNewWidget, NewWidgetExt, utils::ConsumeResult};
@@ -67,7 +66,7 @@ impl NewBadgedTrait for NewWidget<Badged> {
         C: Fn() -> AnyNewWidget + 'static,
     {
         let b_ref = self.create_velona_ref();
-        velona_core::utils::local_effect(move || {
+        Effect::new(move || {
             let content = content_fn();
             b_ref
                 .edit_local_now(|mut this| {
@@ -83,7 +82,7 @@ impl NewBadgedTrait for NewWidget<Badged> {
         B: Fn() -> Option<AnyNewWidget> + 'static,
     {
         let b_ref = self.create_velona_ref();
-        velona_core::utils::local_effect(move || {
+        Effect::new(move || {
             let badge = badge_fn();
 
             b_ref

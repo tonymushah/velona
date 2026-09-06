@@ -1,9 +1,6 @@
 use masonry_core::core::{CollectionWidget, NewWidget};
 
-use crate::{
-    NewWidgetExt,
-    utils::{ConsumeResult, local_effect},
-};
+use crate::{NewWidgetExt, reactive::effect::Effect, utils::ConsumeResult};
 
 pub type CollectIterItem<P> = (crate::AnyNewWidget, P);
 
@@ -25,7 +22,7 @@ where
         Ifn: Fn() -> I + 'static,
     {
         let self_ref = self.create_velona_ref();
-        local_effect(move || {
+        Effect::new(move || {
             self_ref
                 .edit_local_now(|mut this| {
                     CollectionWidget::<P>::clear(&mut this);

@@ -10,7 +10,6 @@ use masonry::{
     layout::Length,
     widgets::SizedBox,
 };
-#[cfg(doc)]
 use velona_core::reactive::effect::Effect;
 
 use crate::{AnyNewWidget, NewWidgetExt};
@@ -75,7 +74,7 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
         Cf: Fn() -> Option<AnyNewWidget> + 'static,
     {
         let w_ref = self.create_velona_ref();
-        velona_core::utils::local_effect(move || {
+        Effect::new(move || {
             let maybe_new_widget = child_fn();
             if let Some(new_widget) = maybe_new_widget {
                 let _ = w_ref
@@ -103,7 +102,7 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
         W: Fn() -> Option<Length> + 'static,
     {
         let w_ref = self.create_velona_ref();
-        velona_core::utils::local_effect(move || {
+        Effect::new(move || {
             let maybe_new_width = width_fn();
             if let Some(new_width) = maybe_new_width {
                 let _ = w_ref
@@ -131,7 +130,7 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
         W: Fn() -> Option<Length> + 'static,
     {
         let w_ref = self.create_velona_ref();
-        velona_core::utils::local_effect(move || {
+        Effect::new(move || {
             let maybe_new_height = height_fn();
             if let Some(new_height) = maybe_new_height {
                 let _ = w_ref

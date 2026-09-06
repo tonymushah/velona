@@ -47,7 +47,7 @@ use velona_renderer_vello::create_wgpu_context;
 fn view() -> AnyNewWidget {
     let (todos, set_todos) = signal(Vec::<Arc<str>>::new());
 
-    // local_effect(move || {
+    // Effect::new(move || {
     //     let todo_ref = todos.read();
     //     trace!("todo len: {}", todo_ref.len());
     //     trace!("todo capacity: {}", todo_ref.capacity());

@@ -46,7 +46,6 @@ use masonry::{
     core::{ArcStr, MutateCtx, NewWidget},
     widgets::Canvas,
 };
-#[cfg(doc)]
 use velona_core::reactive::effect::Effect;
 
 use crate::widget_ref::{EditWidgetLocalError, UseWidgetFromRefError, VelonaWidgetRef};
@@ -78,7 +77,7 @@ impl NewCanvasExt for NewWidget<Canvas> {
         U: FnMut(&mut MutateCtx<'_>, &mut Scene, Size) + 'static,
     {
         let c_ref = self.create_velona_ref();
-        velona_core::utils::local_effect(move || {
+        Effect::new(move || {
             c_ref
                 .edit_local_now(|mut this| {
                     Canvas::update_scene(&mut this, |ctx, sc, size| {

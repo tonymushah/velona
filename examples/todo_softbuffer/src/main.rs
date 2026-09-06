@@ -57,6 +57,7 @@ fn view() -> AnyNewWidget {
                                         .on_primary(move || {
                                             set_todos.update(|todos| {
                                                 todos.swap_remove(index);
+                                                todos.shrink_to_fit();
                                             });
                                         })
                                         .with_props(BorderColor::new(BLACK))

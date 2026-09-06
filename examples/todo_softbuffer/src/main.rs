@@ -10,6 +10,7 @@ use velona::masonry::{
     properties::{Background, BorderColor, BorderWidth, Padding},
     widgets::{Button, Flex, FlexParams, Label, Portal, Prose, TextInput},
 };
+use velona::reactive::traits::Read;
 use velona::reactive::{signal::signal, traits::Update};
 use velona::{
     AnyNewWidget, WindowBuilder,
@@ -35,8 +36,9 @@ fn view() -> AnyNewWidget {
             .cross_axis_alignment(masonry::properties::types::CrossAxisAlignment::Center)
             .with_fixed(Prose::new("Todos").prepare())
             .with_fixed(Flex::column().prepare().collect_reactive_iter(move || {
-                todos()
-                    .into_iter()
+                todos
+                    .read()
+                    .iter()
                     .enumerate()
                     .map(move |(index, item)| {
                         (
@@ -67,7 +69,7 @@ fn view() -> AnyNewWidget {
                             FlexParams::default(),
                         )
                     })
-                    .collect::<Vec<_>>()
+                    .collect::<Box<[_]>>()
             }))
             .with_fixed(
                 TextInput::new("")
@@ -116,7 +118,7 @@ fn main() {
                     render_mode: vello_cpu::RenderMode::OptimizeSpeed,
                     ..Default::default()
                 },
-
+                tolerance: 0.1,
                 ..Default::default()
             },
         )

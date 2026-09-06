@@ -5,7 +5,7 @@ use velona_renderer::{WindowRenderer, window_handle::WindowHandle};
 use winit::event_loop::OwnedDisplayHandle;
 
 use crate::{
-    imaging_vello_cpu::VelloCpuRenderer,
+    imaging_vello_cpu::{VelloCpuRenderer, WriteBufferError},
     surface::{Surface, SurfaceSettings},
 };
 
@@ -84,21 +84,25 @@ impl WindowRenderer for VelloSoftbufferRenderer {
 
     fn render<F: FnOnce(&mut Self::ScenePainter<'_>)>(&mut self, draw_fn: F) {
         if let RenderState::Active(active) = &mut self.render_state {
+            // active.configure_surface();
             let mut buffer = active.inner_surface.next_buffer().unwrap();
-
-            if buffer.height().get() != active.renderer.height as u32
-                || buffer.width().get() != active.renderer.width as u32
-            {
-                active
-                    .renderer
-                    .reset_and_resize(buffer.width().get() as _, buffer.height().get() as _);
-            }
 
             draw_fn(&mut active.renderer);
 
-            active.renderer.write_in_buffer(&mut buffer).unwrap();
+            let res = active.renderer.write_in_buffer(&mut buffer);
 
-            buffer.present().unwrap();
+            match res {
+                Err(WriteBufferError::SplittedBuffer) => {
+                    println!("(w: {}, h: {})", buffer.width(), buffer.height());
+                    buffer.present().unwrap();
+                }
+                Err(err) => {
+                    panic!("{err}")
+                }
+                Ok(_) => {
+                    buffer.present().unwrap();
+                }
+            }
 
             // 5. reset buffer
             active.reset();

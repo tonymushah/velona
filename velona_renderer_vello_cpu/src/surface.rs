@@ -15,6 +15,7 @@ type InnerSurface = SoftSurface<OwnedDisplayHandle, Arc<dyn WindowHandle>>;
 pub struct Surface {
     pub renderer: VelloCpuRenderer,
     pub inner_surface: InnerSurface,
+    pub sizes: [Option<(NonZero<u32>, NonZero<u32>)>; 3],
     width: NonZero<u32>,
     height: NonZero<u32>,
     _d: (),
@@ -42,6 +43,7 @@ impl Surface {
                 settings.rasterizer,
             ),
             inner_surface: surface,
+            sizes: [None, None, None],
             width,
             height,
             _d: (),
@@ -63,13 +65,22 @@ impl Surface {
         self.renderer.ctx.flush();
         self.renderer
             .reset_and_resize(self.width.get() as _, self.height.get() as _);
-        self.inner_surface.resize(self.width, self.height).unwrap();
+        self.configure_surface();
+    }
+    pub fn configure_surface(&mut self) {
+        self.inner_surface.resize(self.width, self.height).unwrap()
     }
 
     pub fn set_size(&mut self, width: NonZero<u32>, height: NonZero<u32>) {
+        self.push_new_size(width, height);
         self.height = height;
         self.width = width;
         self.sync_size();
+    }
+    fn push_new_size(&mut self, width: NonZero<u32>, height: NonZero<u32>) {
+        self.sizes[2] = self.sizes[1];
+        self.sizes[1] = self.sizes[0];
+        self.sizes[0] = Some((width, height))
     }
 
     /// Drop any realized mask artifacts cached by the renderer.

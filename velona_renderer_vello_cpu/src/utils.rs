@@ -1,6 +1,9 @@
 use std::mem;
 
+use peniko::color::PremulRgba8;
+use softbuffer::Pixel;
 use vello_common::fearless_simd::Simd;
+use vello_cpu::Pixmap;
 
 use crate::imaging_vello_cpu::RendererError;
 
@@ -49,5 +52,25 @@ pub fn unpremultiply_channel(channel: u8, alpha: u8) -> u8 {
 pub fn swap_blue_and_red_channel<S: Simd>(_: S, pixels: &mut [u8]) {
     for [r, _, b, _] in pixels.as_chunks_mut::<4>().0 {
         mem::swap(r, b);
+    }
+}
+
+#[inline(always)]
+pub fn write_to_buffer<'a, S: Simd>(
+    _: S,
+    width: usize,
+    pixel_in: &[PremulRgba8],
+    pixels_out: impl DoubleEndedIterator<Item = (u32, u32, &'a mut Pixel)>,
+) {
+    for (x, y, pixel_mut) in pixels_out {
+        let idx = width * y as usize + x as usize;
+        if let Some(pix) = pixel_in.get(idx) {
+            pixel_mut.a = pix.a;
+            pixel_mut.b = pix.b;
+            pixel_mut.g = pix.g;
+            pixel_mut.r = pix.r;
+        } else {
+            *pixel_mut = Pixel::default()
+        }
     }
 }

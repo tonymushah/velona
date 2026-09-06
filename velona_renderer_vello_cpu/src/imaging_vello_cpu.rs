@@ -12,10 +12,10 @@ use imaging::{
 use kurbo::{Affine, Shape as _};
 use peniko::{BlendMode, Brush, BrushRef, Fill, Style};
 use softbuffer::{Buffer, PixelFormat};
-use std::sync::Arc;
-use std::vec;
 use std::vec::Vec;
 use std::{collections::VecDeque, num::TryFromIntError};
+use std::{fmt::Display, sync::Arc};
+use std::{mem, vec};
 use vello_common::paint::{Image as VelloImage, ImageSource};
 use vello_common::{
     fearless_simd,
@@ -30,8 +30,8 @@ use vello_cpu::{
     kurbo::{BezPath, StrokeOpts, stroke},
 };
 
-use crate::utils::swap_blue_and_red_channel;
 use crate::utils::{checked_size, f64_to_f32, unpremultiply_rgba8_in_place};
+use crate::utils::{swap_blue_and_red_channel, write_to_buffer};
 
 /// Errors that can occur when rendering via Vello CPU.
 #[derive(Debug)]
@@ -272,50 +272,6 @@ impl VelloCpuRenderer {
         let mut image = RgbaImage::new(u32::from(self.width), u32::from(self.height));
         self.finish_into(&mut image)?;
         Ok(image)
-    }
-
-    pub(crate) fn write_in_buffer(&mut self, buffer: &mut Buffer<'_>) -> Result<(), RendererError> {
-        if let Some(err) = self.error.take() {
-            return Err(err);
-        }
-        if self.clip_depth != 0 {
-            return Err(RendererError::Internal("unbalanced clip stack"));
-        }
-        if self.group_depth != 0 {
-            return Err(RendererError::Internal("unbalanced group stack"));
-        }
-
-        self.ctx.flush();
-
-        let pixmap_mut = if let Some(pix) =
-            PixmapMut::new(self.width as _, self.height as _, buffer.data_u8())
-        {
-            pix
-        } else {
-            let Some(pix) = PixmapMut::new(
-                self.width as _,
-                self.height as _,
-                buffer
-                    .data_u8()
-                    .split_at_mut(usize::from(self.width) * usize::from(self.height) * 4)
-                    .0,
-            ) else {
-                return Ok(());
-            };
-            pix
-        };
-
-        self.ctx
-            .render_with(pixmap_mut, &mut self.resources, self.rasterizer_settings);
-        unpremultiply_rgba8_in_place(buffer.data_u8());
-
-        if PixelFormat::default() == PixelFormat::Bgra8 {
-            let level = self.render_settings.level;
-            fearless_simd::dispatch!(level, simd => swap_blue_and_red_channel(simd, buffer.data_u8()));
-        }
-
-        // log::trace!("buffer size: {}", self.buffer.pixels().len());
-        Ok(())
     }
 
     fn set_error_once(&mut self, err: RendererError) {
@@ -755,6 +711,142 @@ impl PaintSink for VelloCpuRenderer {
         self.draw_blurred_rounded_rect(draw);
     }
 }
+
+#[derive(Debug)]
+pub(crate) enum WriteBufferError {
+    Renderer(RendererError),
+    SplittedBuffer,
+    PixMapMut,
+}
+
+impl From<RendererError> for WriteBufferError {
+    fn from(value: RendererError) -> Self {
+        Self::Renderer(value)
+    }
+}
+
+impl core::error::Error for WriteBufferError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        if let Self::Renderer(renderer) = self {
+            Some(renderer)
+        } else {
+            None
+        }
+    }
+}
+
+impl Display for WriteBufferError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WriteBufferError::Renderer(renderer_error) => renderer_error.fmt(f),
+            WriteBufferError::SplittedBuffer => {
+                write!(f, "The Buffer has been splitted to fit the size.")
+            }
+            WriteBufferError::PixMapMut => {
+                write!(f, "Cannot build a build pixmap from the buffer")
+            }
+        }
+    }
+}
+
+impl VelloCpuRenderer {
+    pub(crate) fn write_in_buffer(
+        &mut self,
+        buffer: &mut Buffer<'_>,
+    ) -> Result<(), WriteBufferError> {
+        if let Some(err) = self.error.take() {
+            return Err(err.into());
+        }
+        if self.clip_depth != 0 {
+            return Err(RendererError::Internal("unbalanced clip stack").into());
+        }
+        if self.group_depth != 0 {
+            return Err(RendererError::Internal("unbalanced group stack").into());
+        }
+
+        self.ctx.flush();
+        let mut pixmap_mut: PixmapCow = if let Some(pix) =
+            PixmapMut::new(self.width as _, self.height as _, buffer.data_u8())
+        {
+            PixmapCow::Mut(pix)
+        } else {
+            // println!(
+            //     "Invalid buffer size on buffer (len = {}, expected = {}, age = {})",
+            //     buffer.data_u8().len(),
+            //     self.width as usize * self.height as usize * 4,
+            //     buffer.age()
+            // );
+            // buffer.data_u8().fill(0x00);
+            // let Some(pix) = PixmapMut::new(
+            //     self.width as _,
+            //     self.height as _,
+            //     buffer
+            //         .data_u8()
+            //         .split_at_mut(usize::from(self.width) * usize::from(self.height) * 4)
+            //         .0,
+            // ) else {
+            //     return Err(WriteBufferError::PixMapMut);
+            // };
+            // use_split = true;
+            PixmapCow::Owned(Pixmap::new(self.width, self.height))
+        };
+        {
+            self.ctx.render_with(
+                match &mut pixmap_mut {
+                    PixmapCow::Mut(pixmap_mut) => PixmapMut::new(
+                        pixmap_mut.width(),
+                        pixmap_mut.height(),
+                        pixmap_mut.data_mut(),
+                    )
+                    .unwrap(),
+                    PixmapCow::Owned(pixmap) => pixmap.as_mut(),
+                },
+                &mut self.resources,
+                self.rasterizer_settings,
+            );
+        }
+        unpremultiply_rgba8_in_place(pixmap_mut.data_u8());
+
+        if PixelFormat::default() == PixelFormat::Bgra8 && matches!(&pixmap_mut, PixmapCow::Mut(_))
+        {
+            let level = self.render_settings.level;
+            fearless_simd::dispatch!(level, simd => swap_blue_and_red_channel(simd, buffer.data_u8()));
+        } else if let PixmapCow::Owned(pixmap) = pixmap_mut {
+            let level = self.render_settings.level;
+            fearless_simd::dispatch!(level, simd => write_to_buffer(simd, self.width as _ ,pixmap.data(), buffer.pixels_iter()));
+            return Err(WriteBufferError::SplittedBuffer);
+        }
+        Ok(())
+    }
+}
+
+enum PixmapCow<'a> {
+    Mut(PixmapMut<'a>),
+    Owned(Pixmap),
+}
+
+impl<'a> PixmapCow<'a> {
+    fn data_u8(&mut self) -> &mut [u8] {
+        match self {
+            PixmapCow::Mut(pixmap_mut) => pixmap_mut.data_mut(),
+            PixmapCow::Owned(pixmap) => pixmap.data_as_u8_slice_mut(),
+        }
+    }
+}
+
+// impl<'a> From<&'a mut PixmapCow<'a>> for PixmapMut<'a> {
+//     fn from(value: &'a mut PixmapCow<'a>) -> Self {
+//         match value {
+//             PixmapCow::Mut(pixmap_mut) => PixmapMut::new(
+//                 pixmap_mut.width(),
+//                 pixmap_mut.height(),
+//                 pixmap_mut.data_mut(),
+//             )
+//             .unwrap(),
+//             PixmapCow::Owned(pixmap) => pixmap.as_mut(),
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

@@ -28,8 +28,25 @@ run_hot_patch:
 clean:
     cargo clean
 
-hack-clippy:
+hack_clippy:
     cargo hack --each-feature clippy
 
 fmt:
     cargo hack fmt
+
+check_fmt:
+    cargo hack fmt --check
+
+run_tests:
+    cargo hack --each-feature \
+        --exclude align \
+        --exclude badge_ed \
+        --exclude checkbox \
+        --exclude counter \
+        --exclude fragment \
+        --exclude image_example \
+        --exclude todo \
+        --exclude todo_softbuffer \
+        --exclude todo_subsecond \
+        --exclude todo_vello_hybrid \
+        test

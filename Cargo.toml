@@ -7,6 +7,8 @@ members = [
     # Masonry utils
     "masonry_raw_box",
     "masonry_imaging_lite",
+    # Winit crates port
+    "ui-events-winit-core",
     # Velona core deps
     "velona_scoped_styling",
     "velona_executor",
@@ -87,6 +89,7 @@ vello_hybrid = { version = "0.2", default-features = false }
 debug_timer = "0.1"
 wgpu = "29"
 glifo = { version = "0.3", default-features = true}
+ui-events = { version = "0.3" }
 
 # subsecond support
 subsecond = "0.7"
@@ -115,6 +118,7 @@ velona_subsecond = { path = "velona_subsecond" }
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }
 velona_renderer_vello_cpu = { path = "velona_renderer_vello_cpu" }
 velona_renderer_vello_hybrid = { path = "velona_renderer_vello_hybrid" }
+ui-events-winit-core = { path = "ui-events-winit-core" }
 
 # velona itself
 velona = { path = "velona" }

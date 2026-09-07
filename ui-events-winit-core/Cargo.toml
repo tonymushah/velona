@@ -1,0 +1,8 @@
+[package]
+name = "ui-events-winit-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+winit-core = { workspace = true }
+ui-events = { workspace = true }

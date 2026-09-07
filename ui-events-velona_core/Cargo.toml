@@ -1,5 +1,5 @@
 [package]
-name = "ui-events-winit-core"
+name = "ui-events-velona_core"
 version.workspace = true
 edition.workspace = true
 

@@ -5306,7 +5306,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ui-events-winit-core"
+name = "ui-events-velona_core"
 version = "0.1.0"
 dependencies = [
  "ui-events",
@@ -5648,7 +5648,7 @@ dependencies = [
  "send_wrapper",
  "subsecond",
  "thiserror 2.0.20",
- "ui-events-winit-core",
+ "ui-events-velona_core",
  "velona_executor",
  "velona_renderer",
  "velona_subsecond",

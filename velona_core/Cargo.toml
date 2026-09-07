@@ -19,7 +19,7 @@ non-exhaustive.workspace = true
 send_wrapper.workspace = true
 # TODO remove this in favor of atomics counter
 # uuid = { workspace = true, features = ["v4"] }
-ui-events-winit-core.workspace = true
+ui-events-velona_core.workspace = true
 # parking_lot = "0.12"
 copypasta.workspace = true
 futures-channel.workspace = true

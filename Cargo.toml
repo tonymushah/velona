@@ -36,7 +36,8 @@ default-members = ["velona"]
 resolver = "3"
 
 [workspace.dependencies]
-accesskit_winit = "0.33"
+accesskit_xplat = "0.1"
+accesskit = "0.24"
 any_spawner = "0.3"
 # async-task = "4"
 # TODO update to 0.5 if released
@@ -48,7 +49,8 @@ masonry_testing = { version = "0.4", git = "https://github.com/linebender/xilem.
 reactive_graph = { version = "0.3.0-beta2" }
 thiserror = "2"
 # TODO update to 0.31 when stable
-winit = "0.30"
+winit = "=0.31.0-beta.3"
+winit-core = "=0.31.0-beta.3"
 log = "0.4"
 pollster = "1"
 # TODO remove this

@@ -11,7 +11,7 @@ masonry_core.workspace = true
 reactive_graph = { workspace = true, features = ["effects", "sandboxed-arenas"] }
 masonry_raw_box = { workspace = true }
 thiserror.workspace = true
-winit.workspace = true
+winit-core.workspace = true
 log.workspace = true
 # TODO remove this
 non-exhaustive.workspace = true

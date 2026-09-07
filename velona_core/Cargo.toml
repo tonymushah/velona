@@ -4,7 +4,8 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-accesskit_winit.workspace = true
+accesskit_xplat.workspace = true
+accesskit.workspace = true
 any_spawner.workspace = true
 masonry_imaging_lite.workspace = true
 masonry_core.workspace = true

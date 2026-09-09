@@ -268,6 +268,9 @@ impl WindowEventHandlers {
             remove_on_focused_handler,
             remove_on_occluded_handler,
             remove_on_cursor_entered_handler,
+            remove_on_theme_changed_handler,
+            remove_on_keyboard_input_handler,
+            remove_on_modifiers_changed_handler,
         )
     }
 

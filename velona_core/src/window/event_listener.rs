@@ -410,3 +410,43 @@ pub fn register_typed_widget_action_listener<W: Widget + 'static, H>(
 }
 
 // TODO add tests
+#[cfg(test)]
+mod tests {
+    use std::sync::{
+        Arc,
+        atomic::{AtomicU8, Ordering::Relaxed},
+    };
+
+    use super::*;
+
+    #[test]
+    fn test_handling_event_basic() {
+        let mut handlers = WindowEventHandlers::default();
+
+        let handler_id = HandlerId::next();
+
+        let calls = Arc::new(AtomicU8::default());
+        {
+            let calls = calls.clone();
+            handlers.add_handler_fn(RegisterWindowEventHandler {
+                handler_id,
+                type_: RegisterWindowEventHandlerType::OnDestroy(Box::new(move || {
+                    let _ = calls.try_update(
+                        std::sync::atomic::Ordering::SeqCst,
+                        std::sync::atomic::Ordering::SeqCst,
+                        |val| Some(val + 1),
+                    );
+                })),
+            });
+        }
+
+        let ad = calls.load(std::sync::atomic::Ordering::Relaxed);
+        assert_eq!(ad, 0);
+
+        assert_eq!(handlers.on_destroy_handler.len(), 1);
+
+        handlers.handle_event(HandleEvent::WindowEvent(&WindowEvent::Destroyed));
+
+        assert_eq!(calls.load(Relaxed), 1);
+    }
+}

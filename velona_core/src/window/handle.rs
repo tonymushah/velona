@@ -1011,20 +1011,7 @@ impl WindowHandle {
             )))?;
         Ok(())
     }
-    pub fn remove_on_destroy_handler(
-        &self,
-        handler_id: HandlerId,
-    ) -> Result<(), WindowHandleActionError> {
-        self.app_handle
-            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
-                UnregisterEventHandler::Window {
-                    window_id: self.id()?,
-                    handler_id,
-                    type_: Some(UnregisterWindowEventHandlerType::OnDestroy),
-                },
-            )))?;
-        Ok(())
-    }
+
     pub fn register_on_destroy_handler(
         &self,
         handler_fn: NoParamHandlerFn,
@@ -1041,6 +1028,20 @@ impl WindowHandle {
         )))?;
 
         Ok(handler_id)
+    }
+    pub fn remove_on_destroy_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnDestroy),
+                },
+            )))?;
+        Ok(())
     }
 }
 

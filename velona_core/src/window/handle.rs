@@ -1046,6 +1046,38 @@ impl WindowHandle {
         Ok(())
     }
 
+    pub fn register_on_focused_handler(
+        &self,
+        handler_fn: HandlerFnGenericStatic<bool>,
+    ) -> Result<HandlerId, WindowHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::Window {
+                window_id: self.id()?,
+                type_: RegisterWindowEventHandler {
+                    handler_id,
+                    type_: RegisterWindowEventHandlerType::OnFocused(handler_fn),
+                },
+            },
+        )))?;
+
+        Ok(handler_id)
+    }
+    pub fn remove_on_focused_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnFocused),
+                },
+            )))?;
+        Ok(())
+    }
+
     pub fn register_on_occluded_handler(
         &self,
         handler_fn: HandlerFnGenericStatic<bool>,

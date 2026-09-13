@@ -1,16 +1,14 @@
+mod hooks;
+
 use std::{collections::HashMap, fmt::Debug};
 
 // use parking_lot::RwLock;
 
-use log::{debug, warn};
-use masonry_core::core::{ErasedAction, Widget, WidgetId};
-use reactive_graph::owner::{Owner, on_cleanup};
+use log::debug;
+use masonry_core::core::{ErasedAction, WidgetId};
 use winit::event::{DeviceId, KeyEvent, Modifiers, WindowEvent};
 
-use crate::{
-    utils::events::{EventMap, NoParamHandler},
-    window::use_window,
-};
+use crate::utils::events::{EventMap, NoParamHandler};
 
 pub use crate::utils::HandlerId;
 
@@ -348,66 +346,7 @@ impl Debug for WindowEventHandlers {
     }
 }
 
-/// Register a widget action handler
-/// and automatically removes it [`on_cleanup`].
-///
-/// This function will fail if:
-/// - there is no [`WindowHandle`](crate::window::WindowHandle) in the current context (panics on debug mode, just [`log::warn!`] on non-debug)
-/// - the app or the window already closed (always panics)
-///
-/// For a typed version, use [`register_typed_widget_action_listener`].
-pub fn register_widget_action_listener(widget_id: WidgetId, mut handler_fn: HandlerFn) {
-    let Some(window) = use_window() else {
-        #[cfg(debug_assertions)]
-        {
-            panic!("No window handle found in the current context");
-        }
-        #[cfg(not(debug_assertions))]
-        {
-            log::warn!("No window handle found in the current context");
-            return;
-        }
-    };
-    if let Some(current) = Owner::current() {
-        let to_send = current.child();
-        handler_fn = Box::new(move |e| {
-            to_send.with(|| {
-                handler_fn(e);
-            })
-        })
-    }
-    let handler_id = window
-        .register_action_handler(widget_id, handler_fn)
-        .unwrap();
-
-    on_cleanup(move || {
-        if let Err(err) = window.remove_widget_action_handler(handler_id, widget_id) {
-            log::error!("{err}");
-        }
-    });
-}
-
-/// Very similar to [`register_widget_action_listener`]
-/// but automatically cast the [`ErasedAction`] to the [`Widget::Action`] type.
-///
-/// The `handler_fn` function will just not run if the cast fails.
-pub fn register_typed_widget_action_listener<W: Widget + 'static, H>(
-    widget_id: WidgetId,
-    handler_fn: H,
-) where
-    H: Fn(&<W as Widget>::Action) + Send + 'static,
-{
-    register_widget_action_listener(
-        widget_id,
-        Box::new(move |ev| {
-            let Some(ev) = ev.downcast_ref::<W::Action>() else {
-                warn!("Cannot cast action");
-                return;
-            };
-            handler_fn(ev);
-        }),
-    );
-}
+pub use hooks::*;
 
 // TODO add tests
 #[cfg(test)]

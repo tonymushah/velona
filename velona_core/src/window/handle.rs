@@ -9,6 +9,7 @@ use masonry_core::core::Widget;
 use masonry_core::core::WidgetId;
 use masonry_core::core::{PropertyStack, PropertyStackId};
 use masonry_core::parley::fontique::{FamilyId, FontInfo};
+use winit::event::{DeviceId, Modifiers};
 use winit::{
     dpi::{self, PhysicalPosition, PhysicalSize},
     monitor::MonitorHandle,
@@ -22,7 +23,8 @@ use crate::events;
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
 use crate::events::property_stack::{PropertyStackMethods, PropertyStackMethodsType};
 use crate::window::event_listener::{
-    RegisterWindowEventHandler, RegisterWindowEventHandlerType, UnregisterWindowEventHandlerType,
+    HandlerFnGeneric, HandlerFnGenericStatic, OnKeyboardInput, RegisterWindowEventHandler,
+    RegisterWindowEventHandlerType, UnregisterWindowEventHandlerType,
 };
 use crate::{
     Manager,
@@ -1011,20 +1013,7 @@ impl WindowHandle {
             )))?;
         Ok(())
     }
-    pub fn remove_on_destroy_handler(
-        &self,
-        handler_id: HandlerId,
-    ) -> Result<(), WindowHandleActionError> {
-        self.app_handle
-            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
-                UnregisterEventHandler::Window {
-                    window_id: self.id()?,
-                    handler_id,
-                    type_: Some(UnregisterWindowEventHandlerType::OnDestroy),
-                },
-            )))?;
-        Ok(())
-    }
+
     pub fn register_on_destroy_handler(
         &self,
         handler_fn: NoParamHandlerFn,
@@ -1041,6 +1030,244 @@ impl WindowHandle {
         )))?;
 
         Ok(handler_id)
+    }
+    pub fn remove_on_destroy_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnDestroy),
+                },
+            )))?;
+        Ok(())
+    }
+
+    pub fn register_on_focused_handler(
+        &self,
+        handler_fn: HandlerFnGenericStatic<bool>,
+    ) -> Result<HandlerId, WindowHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::Window {
+                window_id: self.id()?,
+                type_: RegisterWindowEventHandler {
+                    handler_id,
+                    type_: RegisterWindowEventHandlerType::OnFocused(handler_fn),
+                },
+            },
+        )))?;
+
+        Ok(handler_id)
+    }
+    pub fn remove_on_focused_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnFocused),
+                },
+            )))?;
+        Ok(())
+    }
+
+    pub fn register_on_occluded_handler(
+        &self,
+        handler_fn: HandlerFnGenericStatic<bool>,
+    ) -> Result<HandlerId, WindowHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::Window {
+                window_id: self.id()?,
+                type_: RegisterWindowEventHandler {
+                    handler_id,
+                    type_: RegisterWindowEventHandlerType::OnOccluded(handler_fn),
+                },
+            },
+        )))?;
+
+        Ok(handler_id)
+    }
+    pub fn remove_on_occluded_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnOccluded),
+                },
+            )))?;
+        Ok(())
+    }
+
+    pub fn register_on_cursor_entered_handler(
+        &self,
+        handler_fn: HandlerFnGeneric<DeviceId>,
+    ) -> Result<HandlerId, WindowHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::Window {
+                window_id: self.id()?,
+                type_: RegisterWindowEventHandler {
+                    handler_id,
+                    type_: RegisterWindowEventHandlerType::OnCursorEntered(handler_fn),
+                },
+            },
+        )))?;
+
+        Ok(handler_id)
+    }
+    pub fn remove_on_cursor_entered_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnCursorEntered),
+                },
+            )))?;
+        Ok(())
+    }
+
+    pub fn register_on_cursor_left_handler(
+        &self,
+        handler_fn: HandlerFnGeneric<DeviceId>,
+    ) -> Result<HandlerId, WindowHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::Window {
+                window_id: self.id()?,
+                type_: RegisterWindowEventHandler {
+                    handler_id,
+                    type_: RegisterWindowEventHandlerType::OnCursorLeft(handler_fn),
+                },
+            },
+        )))?;
+
+        Ok(handler_id)
+    }
+    pub fn remove_on_cursor_left_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnCursorLeft),
+                },
+            )))?;
+        Ok(())
+    }
+
+    pub fn register_on_theme_changed_handler(
+        &self,
+        handler_fn: HandlerFnGeneric<winit::window::Theme>,
+    ) -> Result<HandlerId, WindowHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::Window {
+                window_id: self.id()?,
+                type_: RegisterWindowEventHandler {
+                    handler_id,
+                    type_: RegisterWindowEventHandlerType::OnThemeChanged(handler_fn),
+                },
+            },
+        )))?;
+
+        Ok(handler_id)
+    }
+    pub fn remove_on_theme_changed_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnThemeChanged),
+                },
+            )))?;
+        Ok(())
+    }
+
+    pub fn register_on_keyboard_input_handler(
+        &self,
+        handler_fn: HandlerFnGeneric<OnKeyboardInput>,
+    ) -> Result<HandlerId, WindowHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::Window {
+                window_id: self.id()?,
+                type_: RegisterWindowEventHandler {
+                    handler_id,
+                    type_: RegisterWindowEventHandlerType::OnKeyboardInput(handler_fn),
+                },
+            },
+        )))?;
+
+        Ok(handler_id)
+    }
+    pub fn remove_on_keyboard_input_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnKeyboardInput),
+                },
+            )))?;
+        Ok(())
+    }
+
+    pub fn register_on_modifiers_changed_handler(
+        &self,
+        handler_fn: HandlerFnGeneric<Modifiers>,
+    ) -> Result<HandlerId, WindowHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            RegisterEventHandler::Window {
+                window_id: self.id()?,
+                type_: RegisterWindowEventHandler {
+                    handler_id,
+                    type_: RegisterWindowEventHandlerType::OnModifiersChanged(handler_fn),
+                },
+            },
+        )))?;
+
+        Ok(handler_id)
+    }
+    pub fn remove_on_modifiers_changed_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), WindowHandleActionError> {
+        self.app_handle
+            .send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+                UnregisterEventHandler::Window {
+                    window_id: self.id()?,
+                    handler_id,
+                    type_: Some(UnregisterWindowEventHandlerType::OnModifiersChanged),
+                },
+            )))?;
+        Ok(())
     }
 }
 

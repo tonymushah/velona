@@ -11,6 +11,7 @@ pub use hot_view::hot_view;
 
 pub use handler_id::HandlerId;
 
+use masonry_core::core::ErasedAction;
 pub use res_log::ConsumeResult;
 
 pub(crate) fn todo_warn_of_something(something: &'static str) {
@@ -42,6 +43,7 @@ where
 
 // pub(crate) fn noop() {}
 
+use crate::utils::events::NoParamHandler;
 pub use crate::window::event_listener::{
     register_typed_widget_action_listener, register_widget_action_listener,
 };
@@ -61,3 +63,11 @@ pub(crate) fn flume_channel<T: Send + std::fmt::Debug + 'static>()
 -> (FlumeSender<T>, FlumeReceiver<T>) {
     hotpath::channel!(flume::unbounded(), log = true)
 }
+
+pub type HandlerFn = HandlerFnGeneric<ErasedAction>;
+
+pub type HandlerFnGeneric<T> = Box<dyn Fn(&T) + Send>;
+
+pub type HandlerFnGenericStatic<T> = Box<dyn Fn(T) + Send>;
+
+pub type NoParamHandlerFn = NoParamHandler;

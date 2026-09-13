@@ -1,9 +1,12 @@
 use futures_channel::oneshot;
+use masonry_core::core::ErasedAction;
 use winit::{
     event_loop::{ControlFlow, DeviceEvents, OwnedDisplayHandle},
     monitor::MonitorHandle,
     window::{CustomCursor, CustomCursorSource},
 };
+
+pub use crate::events::erased_action::{ManagerErasedAction, ManagerErasedActionOrigin};
 
 use crate::{
     WindowBuilder,
@@ -172,5 +175,14 @@ pub trait Manager: EventProxyHandle {
     }
     fn try_poll_all_futures(&self) {
         let _ = self.send_event(EventLoopEvent::PollAll);
+    }
+    fn send_erased_action(&self, erased_action: ErasedAction) -> Result<(), AppHandleActionError> {
+        self.send_event(EventLoopEvent::ManagerActions(Box::new(
+            ManagerErasedAction {
+                action: erased_action,
+                origin: ManagerErasedActionOrigin::App,
+            },
+        )))
+        .map_err(|_| AppHandleActionError::AppExited)
     }
 }

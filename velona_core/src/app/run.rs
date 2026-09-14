@@ -665,6 +665,10 @@ where
                     let res = self.fut_executor.poll_all();
                     log::trace!("{:#?}", res);
                 }
+                EventLoopEvent::ManagerActions(manager_erased_action) => {
+                    self.app_event_listeners
+                        .emit(EmitAppEventToHandlers::ErasedAction(&manager_erased_action));
+                }
             }
         }
         for window_id in need_redraw {

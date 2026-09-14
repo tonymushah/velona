@@ -8,17 +8,11 @@ use log::debug;
 use masonry_core::core::{ErasedAction, WidgetId};
 use winit::event::{DeviceId, KeyEvent, Modifiers, WindowEvent};
 
-use crate::utils::events::{EventMap, NoParamHandler};
+use crate::utils::{
+    HandlerFn, HandlerFnGeneric, HandlerFnGenericStatic, NoParamHandlerFn, events::EventMap,
+};
 
 pub use crate::utils::HandlerId;
-
-pub type HandlerFn = HandlerFnGeneric<ErasedAction>;
-
-pub type HandlerFnGeneric<T> = Box<dyn Fn(&T) + Send>;
-
-pub type HandlerFnGenericStatic<T> = Box<dyn Fn(T) + Send>;
-
-pub type NoParamHandlerFn = NoParamHandler;
 
 #[derive(derive_more::Debug)]
 pub struct RegisterWindowEventHandler {

@@ -22,9 +22,11 @@ use winit::{
 use crate::events;
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
 use crate::events::property_stack::{PropertyStackMethods, PropertyStackMethodsType};
+use crate::manager::{ManagerErasedAction, ManagerErasedActionOrigin};
+use crate::utils::{HandlerFn, HandlerFnGeneric, HandlerFnGenericStatic, NoParamHandlerFn};
 use crate::window::event_listener::{
-    HandlerFnGeneric, HandlerFnGenericStatic, OnKeyboardInput, RegisterWindowEventHandler,
-    RegisterWindowEventHandlerType, UnregisterWindowEventHandlerType,
+    OnKeyboardInput, RegisterWindowEventHandler, RegisterWindowEventHandlerType,
+    UnregisterWindowEventHandlerType,
 };
 use crate::{
     Manager,
@@ -36,7 +38,7 @@ use crate::{
         GetWindowChildReactiveOwner, UseWindowRenderRootOnMain, UseWinitWindowOnMain,
     },
     widget_ref::VelonaWidgetRef,
-    window::event_listener::{HandlerFn, HandlerId, NoParamHandlerFn},
+    window::event_listener::HandlerId,
 };
 
 /// A window handle.
@@ -1295,5 +1297,20 @@ impl Manager for WindowHandle {
         if let Err(err) = res {
             log::error!("{err}");
         }
+    }
+    fn send_erased_action(
+        &self,
+        erased_action: masonry_core::core::ErasedAction,
+    ) -> Result<(), app::AppHandleActionError> {
+        self.send_event(EventLoopEvent::ManagerActions(Box::new(
+            ManagerErasedAction {
+                action: erased_action,
+                origin: self
+                    .id()
+                    .map(ManagerErasedActionOrigin::Window)
+                    .unwrap_or_default(),
+            },
+        )))
+        .map_err(|_| app::AppHandleActionError::AppExited)
     }
 }

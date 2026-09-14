@@ -1,5 +1,6 @@
 use futures_channel::oneshot;
 use masonry_core::core::ErasedAction;
+use reactive_graph::owner::on_cleanup;
 use winit::{
     event_loop::{ControlFlow, DeviceEvents, OwnedDisplayHandle},
     monitor::MonitorHandle,
@@ -10,9 +11,14 @@ pub use crate::events::erased_action::{ManagerErasedAction, ManagerErasedActionO
 
 use crate::{
     WindowBuilder,
-    app::{AppHandle, AppHandleActionError, EventLoopEvent, proxy::EventProxyHandle},
+    app::{
+        AppHandle, AppHandleActionError, EventLoopEvent,
+        event_listener::{RegisterAppEvent, UnRegisterAppEventHandler},
+        proxy::EventProxyHandle,
+        use_app_handle,
+    },
     events::el_event::{GetAppChildReactiveOwner, UnregisterEventHandler},
-    utils::HandlerId,
+    utils::{HandlerFnGeneric, HandlerId},
     window::handle::WindowHandle,
 };
 
@@ -184,5 +190,48 @@ pub trait Manager: EventProxyHandle {
             },
         )))
         .map_err(|_| AppHandleActionError::AppExited)
+    }
+    fn register_erased_action_handler(
+        &self,
+        handler: HandlerFnGeneric<ManagerErasedAction>,
+    ) -> Result<HandlerId, AppHandleActionError> {
+        let handler_id = HandlerId::next();
+        self.send_event(EventLoopEvent::RegisterHandler(Box::new(
+            crate::events::el_event::RegisterEventHandler::App(RegisterAppEvent {
+                type_: crate::app::event_listener::RegisterAppEventType::ErasedAction(handler),
+                handler_id,
+            }),
+        )))
+        .map_err(|_| AppHandleActionError::AppExited)?;
+        Ok(handler_id)
+    }
+    fn unregister_erased_action_handler(
+        &self,
+        handler_id: HandlerId,
+    ) -> Result<(), AppHandleActionError> {
+        self.send_event(EventLoopEvent::UnRegisterHandler(Box::new(
+            crate::events::el_event::UnregisterEventHandler::App(UnRegisterAppEventHandler {
+                type_: Some(crate::app::event_listener::UnRegisterAppEventType::ErasedAction),
+                handler_id,
+            }),
+        )))
+        .map_err(|_| AppHandleActionError::AppExited)?;
+        Ok(())
+    }
+}
+
+// TODO add documentation
+pub fn register_erased_action_handler(handler: HandlerFnGeneric<ManagerErasedAction>) {
+    let Some(app_handle) = use_app_handle() else {
+        panic!("Cannot extract the AppHandle inside the current context");
+    };
+    if let Ok(id) = app_handle.register_erased_action_handler(handler) {
+        on_cleanup(move || {
+            let _ = app_handle
+                .unregister_erased_action_handler(id)
+                .inspect_err(|e| {
+                    log::error!("{e}");
+                });
+        });
     }
 }

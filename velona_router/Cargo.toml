@@ -1,0 +1,8 @@
+[package]
+name = "velona_router"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona_core = { workspace = true }
+masonry_raw_box = { workspace = true }

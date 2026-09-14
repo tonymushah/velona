@@ -30,7 +30,8 @@ members = [
     "examples/todo",
     "examples/todo_softbuffer",
     "examples/todo_subsecond",
-    "examples/todo_vello_hybrid"
+    "examples/todo_vello_hybrid",
+    "velona_router"
 ]
 default-members = ["velona"]
 resolver = "3"

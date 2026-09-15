@@ -74,7 +74,7 @@ pub trait NewWidgetBaseExt {
     /// See [`MutateCtx::is_disabled`] for more information.
     ///
     /// _Reactive version of [`MutateCtx::set_disabled`]_.
-    fn disabled<D>(self, disabled: D) -> Self
+    fn disabled_reactive<D>(self, disabled: D) -> Self
     where
         D: Fn() -> bool + 'static;
     /// Sets the disabled state for this widget.
@@ -182,7 +182,7 @@ where
         )
     }
 
-    fn disabled<D>(self, disabled: D) -> Self
+    fn disabled_reactive<D>(self, disabled: D) -> Self
     where
         D: Fn() -> bool + 'static,
     {

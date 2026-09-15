@@ -32,7 +32,7 @@ members = [
     "examples/todo_subsecond",
     "examples/todo_vello_hybrid",
     "velona_router"
-]
+, "examples/router_example"]
 default-members = ["velona"]
 resolver = "3"
 
@@ -110,6 +110,7 @@ velona_core_child = { path = "velona_core_child" }
 velona_scoped_styling = { path = "velona_scoped_styling" }
 velona_executor = { path = "velona_executor" }
 velona_subsecond = { path = "velona_subsecond" }
+velona_router = { path = "velona_router" }
 
 # velona renderers
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }

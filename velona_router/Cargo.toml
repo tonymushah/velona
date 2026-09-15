@@ -7,4 +7,4 @@ edition.workspace = true
 velona_core = { workspace = true }
 masonry_raw_box = { workspace = true }
 reactive_stores = { workspace = true }
-derive_more = { workspace = true, feautures = ["debug"] }
+derive_more = { workspace = true, features = ["debug"] }

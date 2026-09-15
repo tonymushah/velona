@@ -5,7 +5,7 @@ use masonry_core::app::WindowSizePolicy;
 use masonry_core::{
     app::{RenderRootOptions, VisualLayerKind},
     core::{DefaultProperties, NewWidget, Widget},
-    palette::css::BLACK,
+    palette::css::WHITE,
     peniko::color::{AlphaColor, Srgb},
 };
 use masonry_imaging_lite::{Layer as ImagingLayer, PreparedFrame};
@@ -154,7 +154,7 @@ where
             event_reducer: WindowEventReducer::default(),
             last_anim: None,
             window_event_listeners: event_handlers,
-            base_color: base_color.unwrap_or(BLACK),
+            base_color: base_color.unwrap_or(WHITE),
             handle: window_handle,
         };
         Ok(this)

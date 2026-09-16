@@ -9,3 +9,5 @@ masonry_raw_box = { workspace = true }
 # reactive_stores = { workspace = true }
 derive_more = { workspace = true, features = ["debug"] }
 tree_arena = { workspace = true, default-features = true }
+thiserror = { workspace = true }
+url = { workspace = true }

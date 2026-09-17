@@ -1,5 +1,3 @@
-mod when_empty;
-
 use std::collections::HashMap;
 
 use tree_arena::ArenaRef;

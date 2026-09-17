@@ -306,4 +306,56 @@ mod tests {
             }
         }
     }
+    #[test]
+    // route : /user/posts
+    fn test_matching_nested_static_static() {
+        let router = Router::default()
+            .route(
+                Route::root(view)
+                    .child(
+                        Route::static_("user", view)
+                            .child(Route::static_("posts", view))
+                            .child(Route::params("id", view))
+                            .child(Route::wildcard("any", view)),
+                    )
+                    .child(Route::wildcard("any", view)),
+            )
+            .route(Route::wildcard("any", view));
+
+        let mut location = Location::default();
+        location.goto("user/posts").unwrap();
+
+        let matches = matches_routes(&router.tree, &location).unwrap();
+
+        assert_eq!(matches.matches.len(), 3);
+        for (index, node) in matches.matches.iter().enumerate() {
+            match index {
+                0 => {
+                    let node = router.tree.find(node.route_id.0).unwrap();
+                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                }
+                1 => {
+                    let tnode = router.tree.find(node.route_id.0).unwrap();
+                    assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
+                    assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
+                        s == "user"
+                    } else {
+                        false
+                    });
+                }
+                2 => {
+                    let tnode = router.tree.find(node.route_id.0).unwrap();
+                    assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
+                    assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
+                        s == "posts"
+                    } else {
+                        false
+                    });
+                }
+                _ => {
+                    unreachable!()
+                }
+            }
+        }
+    }
 }

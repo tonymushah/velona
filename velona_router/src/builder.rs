@@ -1,6 +1,6 @@
 use velona_core::AnyNewWidget;
 
-use crate::route_tree::{RouteId, RouteNode, RouteSegment, RouteTree};
+use crate::route_tree::{RouteId, RouteNode, RouteSegment, RouteSegmentKind, RouteTree};
 
 #[derive(Debug, Default)]
 pub struct Router {
@@ -36,13 +36,27 @@ pub struct Route {
 }
 
 impl Route {
-    pub fn root<V>(view: V) -> Self
+    pub fn layout<V>(view: V) -> Self
     where
         V: Fn() -> AnyNewWidget + Send + 'static,
     {
         Self {
             node: RouteNode {
-                segment: RouteSegment::Root,
+                segment: RouteSegment::Layout,
+                view: Box::new(view),
+            },
+            id: RouteId::next(),
+            childs: Default::default(),
+            parent_id: None,
+        }
+    }
+    pub fn index<V>(view: V) -> Self
+    where
+        V: Fn() -> AnyNewWidget + Send + 'static,
+    {
+        Self {
+            node: RouteNode {
+                segment: RouteSegment::Index,
                 view: Box::new(view),
             },
             id: RouteId::next(),
@@ -96,6 +110,9 @@ impl Route {
 
 impl Route {
     pub fn child(mut self, mut child: Route) -> Self {
+        if self.node.segment.kind() == RouteSegmentKind::Index {
+            panic!("An index route cannot have a children");
+        }
         child.parent_id = Some(self.id);
         self.childs.push(child);
         self
@@ -104,6 +121,8 @@ impl Route {
 
 #[cfg(test)]
 mod tests {
+    use std::thread::spawn;
+
     use super::*;
 
     fn my_view() -> AnyNewWidget {
@@ -111,9 +130,20 @@ mod tests {
     }
 
     #[test]
+    fn test_build_router_index_child() {
+        assert!(
+            spawn(|| {
+                let _ = Router::default().route(Route::index(my_view).child(Route::index(my_view)));
+            })
+            .join()
+            .is_err()
+        )
+    }
+
+    #[test]
     fn test_build_router() {
         let router = Router::default().route(
-            Route::root(my_view)
+            Route::layout(my_view)
                 .child(Route::static_("posts", my_view))
                 .child(Route::static_("users", my_view).child(Route::params("something", my_view)))
                 .child(Route::wildcard("any", my_view)),

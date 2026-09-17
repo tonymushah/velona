@@ -20,7 +20,8 @@ pub struct RouteNode {
 
 #[derive(Debug)]
 pub enum RouteSegment {
-    Root,
+    Index,
+    Layout,
     Static(String),
     Param { name: String },
     Wildcard { name: String },
@@ -29,10 +30,11 @@ pub enum RouteSegment {
 impl RouteSegment {
     pub fn kind(&self) -> RouteSegmentKind {
         match self {
-            RouteSegment::Root => RouteSegmentKind::Root,
+            RouteSegment::Index => RouteSegmentKind::Index,
             RouteSegment::Static(_) => RouteSegmentKind::Static,
             RouteSegment::Param { name: _ } => RouteSegmentKind::Param,
             RouteSegment::Wildcard { name: _ } => RouteSegmentKind::Wildcard,
+            RouteSegment::Layout => RouteSegmentKind::Layout,
         }
     }
 }
@@ -41,7 +43,8 @@ impl RouteSegment {
 pub enum RouteSegmentKind {
     Static,
     Param,
-    Root,
+    Index,
+    Layout,
     Wildcard,
 }
 
@@ -64,7 +67,7 @@ mod tests {
 
     #[test]
     fn test_segment_tests() {
-        assert!(RouteSegmentKind::Root < RouteSegmentKind::Static);
+        assert!(RouteSegmentKind::Index < RouteSegmentKind::Static);
     }
 
     #[test]
@@ -72,8 +75,9 @@ mod tests {
         let mut unsorted = [
             RouteSegmentKind::Wildcard,
             RouteSegmentKind::Param,
-            RouteSegmentKind::Root,
+            RouteSegmentKind::Index,
             RouteSegmentKind::Static,
+            RouteSegmentKind::Layout,
         ];
         unsorted.sort();
         assert_eq!(
@@ -81,7 +85,8 @@ mod tests {
             [
                 RouteSegmentKind::Static,
                 RouteSegmentKind::Param,
-                RouteSegmentKind::Root,
+                RouteSegmentKind::Index,
+                RouteSegmentKind::Layout,
                 RouteSegmentKind::Wildcard
             ]
         );

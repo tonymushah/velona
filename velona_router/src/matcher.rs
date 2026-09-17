@@ -91,12 +91,14 @@ pub fn matches_routes(tree: &RouteTree, location: &Location) -> Result<MatchedRo
 
                 for (id, node) in routes_node {
                     match &node.item.segment {
-                        RouteSegment::Root => {
-                            matches.push(RouteMatch {
-                                route_id: *id,
-                                params: params.clone(),
-                            });
-                            continue 'lookup;
+                        RouteSegment::Index => {
+                            if path.is_empty() {
+                                matches.push(RouteMatch {
+                                    route_id: *id,
+                                    params: params.clone(),
+                                });
+                                break 'segments;
+                            }
                         }
                         RouteSegment::Static(spath) => {
                             if spath == *path {
@@ -134,6 +136,13 @@ pub fn matches_routes(tree: &RouteTree, location: &Location) -> Result<MatchedRo
                                 params: params.clone(),
                             });
                             break 'segments;
+                        }
+                        RouteSegment::Layout => {
+                            matches.push(RouteMatch {
+                                route_id: *id,
+                                params: params.clone(),
+                            });
+                            continue 'lookup;
                         }
                     }
                 }
@@ -174,7 +183,7 @@ mod tests {
             match index {
                 0 => {
                     let node = router.tree.find(node.route_id.0).unwrap();
-                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                 }
                 _ => {
                     unreachable!()
@@ -184,7 +193,7 @@ mod tests {
     }
 
     fn router_root_1() -> Router {
-        Router::default().route(Route::root(view).child(Route::static_("aaa", view)))
+        Router::default().route(Route::layout(view).child(Route::static_("aaa", view)))
     }
 
     #[test]
@@ -201,7 +210,7 @@ mod tests {
             match index {
                 0..=2 => {
                     let node = router.tree.find(node.route_id.0).unwrap();
-                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                 }
                 _ => {
                     unreachable!()
@@ -212,9 +221,9 @@ mod tests {
 
     fn router_nested_1() -> Router {
         Router::default().route(
-            Route::root(view)
+            Route::layout(view)
                 .child(Route::static_("aaa", view))
-                .child(Route::root(view).child(Route::root(view))),
+                .child(Route::layout(view).child(Route::index(view))),
         )
     }
 
@@ -231,7 +240,7 @@ mod tests {
             match index {
                 0..=2 => {
                     let node = router.tree.find(node.route_id.0).unwrap();
-                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                 }
                 3 => {
                     let tnode = router.tree.find(node.route_id.0).unwrap();
@@ -247,9 +256,12 @@ mod tests {
 
     fn router_nested_wild_card_1() -> Router {
         Router::default().route(
-            Route::root(view).child(Route::static_("aaa", view)).child(
-                Route::root(view).child(Route::root(view).child(Route::wildcard("any", view))),
-            ),
+            Route::layout(view)
+                .child(Route::static_("aaa", view))
+                .child(
+                    Route::layout(view)
+                        .child(Route::layout(view).child(Route::wildcard("aqny", view))),
+                ),
         )
     }
 
@@ -267,7 +279,7 @@ mod tests {
             match index {
                 0 => {
                     let node = router.tree.find(node.route_id.0).unwrap();
-                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                 }
                 _ => {
                     unreachable!()
@@ -279,7 +291,7 @@ mod tests {
     fn router_nested_static_1() -> Router {
         Router::default()
             .route(
-                Route::root(view).child(
+                Route::layout(view).child(
                     Route::static_("user", view)
                         .child(Route::static_("posts", view))
                         .child(Route::params("id", view))
@@ -303,7 +315,7 @@ mod tests {
             match index {
                 0 => {
                     let node = router.tree.find(node.route_id.0).unwrap();
-                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                 }
                 1 => {
                     let tnode = router.tree.find(node.route_id.0).unwrap();
@@ -320,7 +332,7 @@ mod tests {
     fn router_static_wildcard_1() -> Router {
         Router::default()
             .route(
-                Route::root(view)
+                Route::index(view)
                     .child(
                         Route::static_("user", view)
                             .child(Route::static_("posts", view))
@@ -348,7 +360,7 @@ mod tests {
                 match index {
                     0 => {
                         let node = router.tree.find(node.route_id.0).unwrap();
-                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                     }
                     1 => {
                         let tnode = router.tree.find(node.route_id.0).unwrap();
@@ -392,7 +404,7 @@ mod tests {
                 match index {
                     0 => {
                         let node = router.tree.find(node.route_id.0).unwrap();
-                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                     }
                     1 => {
                         let tnode = router.tree.find(node.route_id.0).unwrap();
@@ -426,7 +438,7 @@ mod tests {
     fn router_user_posts_1() -> Router {
         Router::default()
             .route(
-                Route::root(view)
+                Route::layout(view)
                     .child(
                         Route::static_("user", view)
                             .child(Route::static_("posts", view))
@@ -454,7 +466,7 @@ mod tests {
                 match index {
                     0 => {
                         let node = router.tree.find(node.route_id.0).unwrap();
-                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                     }
                     1 => {
                         let tnode = router.tree.find(node.route_id.0).unwrap();
@@ -479,7 +491,7 @@ mod tests {
                     }
                     3 => {
                         let node = router.tree.find(node.route_id.0).unwrap();
-                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                     }
                     _ => {
                         unreachable!()
@@ -505,7 +517,7 @@ mod tests {
                 match index {
                     0 => {
                         let node = router.tree.find(node.route_id.0).unwrap();
-                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                     }
                     1 => {
                         let tnode = router.tree.find(node.route_id.0).unwrap();
@@ -530,7 +542,7 @@ mod tests {
                     }
                     3 => {
                         let node = router.tree.find(node.route_id.0).unwrap();
-                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                     }
                     _ => {
                         unreachable!()
@@ -556,7 +568,7 @@ mod tests {
                 match index {
                     0 => {
                         let node = router.tree.find(node.route_id.0).unwrap();
-                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                     }
                     1 => {
                         let tnode = router.tree.find(node.route_id.0).unwrap();
@@ -595,13 +607,13 @@ mod tests {
     fn router_user_posts_2() -> Router {
         Router::default()
             .route(
-                Route::root(view)
+                Route::layout(view)
                     .child(
                         Route::static_("user", view)
                             .child(Route::static_("posts", view))
                             .child(
                                 Route::params("id", view)
-                                    .child(Route::root(view))
+                                    .child(Route::index(view))
                                     .child(Route::static_("followers", view))
                                     .child(Route::wildcard("any", view)),
                             )

@@ -49,7 +49,7 @@ pub(crate) fn root_resolving(
 ) -> bool {
     let mut routes = root_ids
         .iter()
-        .flat_map(|id| tree.roots().item(id.0))
+        .flat_map(|id| tree.find(id.0))
         .collect::<Box<[_]>>();
     routes.sort_by_key(|a| a.item.segment.kind());
     for node in routes {
@@ -71,6 +71,7 @@ pub(crate) fn root_resolving(
                     route_id: RouteId(node.id().try_into().unwrap()),
                     params: params.clone(),
                 });
+                break;
             }
             _ => {}
         }

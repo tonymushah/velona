@@ -7,7 +7,22 @@ fn get_velona_router_base_url() -> Url {
 }
 
 pub struct Location {
-    pub url: Url,
+    pub(crate) url: Url,
+}
+
+impl Default for Location {
+    fn default() -> Self {
+        Self {
+            url: get_velona_router_base_url(),
+        }
+    }
+}
+
+impl Location {
+    pub fn goto(&mut self, path: &str) -> Result<(), url::ParseError> {
+        self.url = self.url.join(path)?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]

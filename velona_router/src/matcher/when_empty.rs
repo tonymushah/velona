@@ -47,7 +47,12 @@ pub(crate) fn root_resolving(
     url_path: &str,
     current_path_stack: &str,
 ) -> bool {
-    for node in root_ids.iter().flat_map(|id| tree.roots().item(id.0)) {
+    let mut routes = root_ids
+        .iter()
+        .flat_map(|id| tree.roots().item(id.0))
+        .collect::<Box<[_]>>();
+    routes.sort_by_key(|a| a.item.segment.kind());
+    for node in routes {
         match &node.item.segment {
             RouteSegment::Root => {
                 matches.push(RouteMatch {

@@ -58,26 +58,26 @@ fn get_routes_child_id(
 }
 
 pub fn matches_routes(tree: &RouteTree, location: &Location) -> Result<MatchedRoutes, MatchError> {
-    let mut matches = Vec::<RouteMatch>::with_capacity({
-        if let Some(paths) = location.url.path_segments() {
-            paths.count()
-        } else {
-            0
-        }
-    });
-
-    let mut params = HashMap::<String, String>::new();
-
-    let root_ids = get_routes_child_id(tree, None)?.unwrap();
-
-    if root_ids.is_empty() {
-        return Ok(MatchedRoutes {
-            matches: matches.into_boxed_slice(),
-        });
-    }
-
     if let Some(paths) = location.url.path_segments() {
-        let segments = paths.collect::<Box<[_]>>();
+        let mut segments = paths.collect::<Vec<_>>();
+
+        if segments.last().is_some_and(|s| !s.is_empty()) {
+            segments.push("");
+        }
+
+        let segments = segments.into_boxed_slice();
+
+        let mut matches = Vec::<RouteMatch>::with_capacity(segments.len());
+
+        let mut params = HashMap::<String, String>::new();
+
+        let root_ids = get_routes_child_id(tree, None)?.unwrap();
+
+        if root_ids.is_empty() {
+            return Ok(MatchedRoutes {
+                matches: matches.into_boxed_slice(),
+            });
+        }
 
         'segments: for (index, path) in segments.iter().enumerate() {
             'lookup: while let Some(route_ids) =
@@ -140,13 +140,12 @@ pub fn matches_routes(tree: &RouteTree, location: &Location) -> Result<MatchedRo
                 break;
             }
         }
+        Ok(MatchedRoutes {
+            matches: matches.into_boxed_slice(),
+        })
     } else {
-        return Err(MatchError::NoPathSegments);
+        Err(MatchError::NoPathSegments)
     }
-
-    Ok(MatchedRoutes {
-        matches: matches.into_boxed_slice(),
-    })
 }
 
 #[cfg(test)]
@@ -163,10 +162,13 @@ mod tests {
 
     #[test]
     fn test_root_matching() {
-        let router = Router::default().route(Route::root(view).child(Route::static_("aaa", view)));
+        let router = router_root_1();
 
         let location = Location::default();
+
         let matches = matches_routes(&router.tree, &location).unwrap();
+
+        assert_eq!(matches.matches.len(), 1);
 
         for (index, node) in matches.matches.iter().enumerate() {
             match index {
@@ -180,13 +182,14 @@ mod tests {
             }
         }
     }
+
+    fn router_root_1() -> Router {
+        Router::default().route(Route::root(view).child(Route::static_("aaa", view)))
+    }
+
     #[test]
     fn test_root_matching_nested() {
-        let router = Router::default().route(
-            Route::root(view)
-                .child(Route::static_("aaa", view))
-                .child(Route::root(view).child(Route::root(view))),
-        );
+        let router = router_nested_1();
 
         let location = Location::default();
 
@@ -206,12 +209,18 @@ mod tests {
             }
         }
     }
+
+    fn router_nested_1() -> Router {
+        Router::default().route(
+            Route::root(view)
+                .child(Route::static_("aaa", view))
+                .child(Route::root(view).child(Route::root(view))),
+        )
+    }
+
     #[test]
     fn test_root_matching_nested_wild_card() {
-        let router =
-            Router::default().route(Route::root(view).child(Route::static_("aaa", view)).child(
-                Route::root(view).child(Route::root(view).child(Route::wildcard("any", view))),
-            ));
+        let router = router_nested_wild_card_1();
 
         let location = Location::default();
         let matches = matches_routes(&router.tree, &location).unwrap();
@@ -236,18 +245,17 @@ mod tests {
         }
     }
 
+    fn router_nested_wild_card_1() -> Router {
+        Router::default().route(
+            Route::root(view).child(Route::static_("aaa", view)).child(
+                Route::root(view).child(Route::root(view).child(Route::wildcard("any", view))),
+            ),
+        )
+    }
+
     #[test]
     fn test_matching_nested_static() {
-        let router = Router::default()
-            .route(
-                Route::root(view).child(
-                    Route::static_("user", view)
-                        .child(Route::static_("posts", view))
-                        .child(Route::params("id", view))
-                        .child(Route::wildcard("any", view)),
-                ),
-            )
-            .route(Route::wildcard("any", view));
+        let router = router_nested_static_1();
 
         let mut location = Location::default();
         location.goto("users/").unwrap();
@@ -268,20 +276,22 @@ mod tests {
         }
     }
 
+    fn router_nested_static_1() -> Router {
+        Router::default()
+            .route(
+                Route::root(view).child(
+                    Route::static_("user", view)
+                        .child(Route::static_("posts", view))
+                        .child(Route::params("id", view))
+                        .child(Route::wildcard("any", view)),
+                ),
+            )
+            .route(Route::wildcard("any", view))
+    }
+
     #[test]
     fn test_matching_nested_static_wildcard() {
-        let router = Router::default()
-            .route(
-                Route::root(view)
-                    .child(
-                        Route::static_("user", view)
-                            .child(Route::static_("posts", view))
-                            .child(Route::params("id", view))
-                            .child(Route::wildcard("any", view)),
-                    )
-                    .child(Route::wildcard("any", view)),
-            )
-            .route(Route::wildcard("any", view));
+        let router = router_static_wildcard_1();
 
         let mut location = Location::default();
         location.goto("users/").unwrap();
@@ -306,10 +316,9 @@ mod tests {
             }
         }
     }
-    #[test]
-    // route : /user/posts
-    fn test_matching_nested_static_static() {
-        let router = Router::default()
+
+    fn router_static_wildcard_1() -> Router {
+        Router::default()
             .route(
                 Route::root(view)
                     .child(
@@ -320,42 +329,286 @@ mod tests {
                     )
                     .child(Route::wildcard("any", view)),
             )
-            .route(Route::wildcard("any", view));
+            .route(Route::wildcard("any", view))
+    }
+
+    #[test]
+    // route : /user/posts
+    fn test_matching_nested_static_static() {
+        let router = router_user_posts_1();
 
         let mut location = Location::default();
         location.goto("user/posts").unwrap();
 
-        let matches = matches_routes(&router.tree, &location).unwrap();
+        {
+            let matches = matches_routes(&router.tree, &location).unwrap();
 
-        assert_eq!(matches.matches.len(), 3);
-        for (index, node) in matches.matches.iter().enumerate() {
-            match index {
-                0 => {
-                    let node = router.tree.find(node.route_id.0).unwrap();
-                    assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
-                }
-                1 => {
-                    let tnode = router.tree.find(node.route_id.0).unwrap();
-                    assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
-                    assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
-                        s == "user"
-                    } else {
-                        false
-                    });
-                }
-                2 => {
-                    let tnode = router.tree.find(node.route_id.0).unwrap();
-                    assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
-                    assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
-                        s == "posts"
-                    } else {
-                        false
-                    });
-                }
-                _ => {
-                    unreachable!()
+            assert_eq!(matches.matches.len(), 3);
+            for (index, node) in matches.matches.iter().enumerate() {
+                match index {
+                    0 => {
+                        let node = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    }
+                    1 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
+                        assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
+                            s == "user"
+                        } else {
+                            false
+                        });
+                    }
+                    2 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
+                        assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
+                            s == "posts"
+                        } else {
+                            false
+                        });
+                    }
+                    _ => {
+                        unreachable!()
+                    }
                 }
             }
         }
+    }
+
+    #[test]
+    // route : /user/1
+    fn test_matching_nested_static_params() {
+        let router = router_user_posts_1();
+
+        let mut location = Location::default();
+        location.goto("user/1").unwrap();
+
+        {
+            let matches = matches_routes(&router.tree, &location).unwrap();
+
+            assert_eq!(matches.matches.len(), 3);
+            for (index, node) in matches.matches.iter().enumerate() {
+                match index {
+                    0 => {
+                        let node = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    }
+                    1 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
+                        assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
+                            s == "user"
+                        } else {
+                            false
+                        });
+                    }
+                    2 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Param);
+
+                        assert!(if let RouteSegment::Param { name } = &tnode.item.segment {
+                            name == "id"
+                        } else {
+                            false
+                        });
+
+                        assert_eq!(node.params.get("id").map(String::as_str), Some("1"));
+                    }
+                    _ => {
+                        unreachable!()
+                    }
+                }
+            }
+        }
+    }
+
+    fn router_user_posts_1() -> Router {
+        Router::default()
+            .route(
+                Route::root(view)
+                    .child(
+                        Route::static_("user", view)
+                            .child(Route::static_("posts", view))
+                            .child(Route::params("id", view))
+                            .child(Route::wildcard("any", view)),
+                    )
+                    .child(Route::wildcard("any", view)),
+            )
+            .route(Route::wildcard("any", view))
+    }
+
+    #[test]
+    // route : /user/1
+    fn test_matching_nested_static_params_root() {
+        let router = router_user_posts_2();
+
+        let mut location = Location::default();
+        location.goto("user/1").unwrap();
+
+        {
+            let matches = matches_routes(&router.tree, &location).unwrap();
+
+            assert_eq!(matches.matches.len(), 4);
+            for (index, node) in matches.matches.iter().enumerate() {
+                match index {
+                    0 => {
+                        let node = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    }
+                    1 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
+                        assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
+                            s == "user"
+                        } else {
+                            false
+                        });
+                    }
+                    2 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Param);
+
+                        assert!(if let RouteSegment::Param { name } = &tnode.item.segment {
+                            name == "id"
+                        } else {
+                            false
+                        });
+
+                        assert_eq!(node.params.get("id").map(String::as_str), Some("1"));
+                    }
+                    3 => {
+                        let node = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    }
+                    _ => {
+                        unreachable!()
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    // route : /user/2
+    fn test_matching_nested_static_params_root_2() {
+        let router = router_user_posts_2();
+
+        let mut location = Location::default();
+        location.goto("user/2").unwrap();
+
+        {
+            let matches = matches_routes(&router.tree, &location).unwrap();
+
+            assert_eq!(matches.matches.len(), 4);
+            for (index, node) in matches.matches.iter().enumerate() {
+                match index {
+                    0 => {
+                        let node = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    }
+                    1 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
+                        assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
+                            s == "user"
+                        } else {
+                            false
+                        });
+                    }
+                    2 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Param);
+
+                        assert!(if let RouteSegment::Param { name } = &tnode.item.segment {
+                            name == "id"
+                        } else {
+                            false
+                        });
+
+                        assert_eq!(node.params.get("id").map(String::as_str), Some("2"));
+                    }
+                    3 => {
+                        let node = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    }
+                    _ => {
+                        unreachable!()
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    // route : /user/2/aaaaa
+    fn test_matching_nested_static_params_root_2_aaaa() {
+        let router = router_user_posts_2();
+
+        let mut location = Location::default();
+        location.goto("user/2/aaaa").unwrap();
+
+        {
+            let matches = matches_routes(&router.tree, &location).unwrap();
+
+            assert_eq!(matches.matches.len(), 4);
+            for (index, node) in matches.matches.iter().enumerate() {
+                match index {
+                    0 => {
+                        let node = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Root);
+                    }
+                    1 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
+                        assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
+                            s == "user"
+                        } else {
+                            false
+                        });
+                    }
+                    2 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Param);
+
+                        assert!(if let RouteSegment::Param { name } = &tnode.item.segment {
+                            name == "id"
+                        } else {
+                            false
+                        });
+
+                        assert_eq!(node.params.get("id").map(String::as_str), Some("2"));
+                    }
+                    3 => {
+                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Wildcard);
+                        assert_eq!(node.params.get("any").map(|a| a.as_str()), Some("/aaaa"));
+                    }
+                    _ => {
+                        unreachable!()
+                    }
+                }
+            }
+        }
+    }
+
+    fn router_user_posts_2() -> Router {
+        Router::default()
+            .route(
+                Route::root(view)
+                    .child(
+                        Route::static_("user", view)
+                            .child(Route::static_("posts", view))
+                            .child(
+                                Route::params("id", view)
+                                    .child(Route::root(view))
+                                    .child(Route::static_("followers", view))
+                                    .child(Route::wildcard("any", view)),
+                            )
+                            .child(Route::wildcard("any", view)),
+                    )
+                    .child(Route::wildcard("any", view)),
+            )
+            .route(Route::wildcard("any", view))
     }
 }

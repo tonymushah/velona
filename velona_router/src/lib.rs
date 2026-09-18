@@ -15,3 +15,4 @@ pub mod components;
 pub use builder::{Route, Router};
 pub use navigation::NavigationController;
 pub use runtime::use_navigation_controller;
+pub use runtime::use_params;

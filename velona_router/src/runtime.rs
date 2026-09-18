@@ -161,3 +161,7 @@ pub fn use_navigation_controller() -> NavigationController {
 pub fn use_matched_routes() -> ArcMemo<MatchedRoutes> {
     expect_context()
 }
+
+pub fn use_params() -> RouteParams {
+    expect_context()
+}

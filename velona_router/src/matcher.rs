@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use tree_arena::ArenaRef;
 
 use crate::{
-    location::Location,
+    location::LocationState,
     route_tree::{RouteId, RouteNode, RouteSegment, RouteTree},
 };
 
@@ -57,7 +57,10 @@ fn get_routes_child_id(
     }
 }
 
-pub fn matches_routes(tree: &RouteTree, location: &Location) -> Result<MatchedRoutes, MatchError> {
+pub fn matches_routes(
+    tree: &RouteTree,
+    location: &LocationState,
+) -> Result<MatchedRoutes, MatchError> {
     if let Some(paths) = location.url.path_segments() {
         let mut segments = paths.collect::<Vec<_>>();
 
@@ -173,7 +176,7 @@ mod tests {
     fn test_root_matching() {
         let router = router_root_1();
 
-        let location = Location::default();
+        let location = LocationState::default();
 
         let matches = matches_routes(&router.tree, &location).unwrap();
 
@@ -200,7 +203,7 @@ mod tests {
     fn test_root_matching_nested() {
         let router = router_nested_1();
 
-        let location = Location::default();
+        let location = LocationState::default();
 
         let matches = matches_routes(&router.tree, &location).unwrap();
 
@@ -235,7 +238,7 @@ mod tests {
     fn test_root_matching_nested_wild_card() {
         let router = router_nested_wild_card_1();
 
-        let location = Location::default();
+        let location = LocationState::default();
         let matches = matches_routes(&router.tree, &location).unwrap();
 
         assert_eq!(matches.matches.len(), 4);
@@ -273,7 +276,7 @@ mod tests {
     fn test_matching_nested_static() {
         let router = router_nested_static_1();
 
-        let mut location = Location::default();
+        let mut location = LocationState::default();
         location.goto("users/").unwrap();
 
         let matches = matches_routes(&router.tree, &location).unwrap();
@@ -309,7 +312,7 @@ mod tests {
     fn test_matching_nested_static_wildcard() {
         let router = router_static_wildcard_1();
 
-        let mut location = Location::default();
+        let mut location = LocationState::default();
         location.goto("users/").unwrap();
 
         let matches = matches_routes(&router.tree, &location).unwrap();
@@ -353,7 +356,7 @@ mod tests {
     fn test_matching_nested_static_static() {
         let router = router_user_posts_1();
 
-        let mut location = Location::default();
+        let mut location = LocationState::default();
         location.goto("user/posts").unwrap();
 
         {
@@ -397,7 +400,7 @@ mod tests {
     fn test_matching_nested_static_params() {
         let router = router_user_posts_1();
 
-        let mut location = Location::default();
+        let mut location = LocationState::default();
         location.goto("user/1").unwrap();
 
         {
@@ -459,7 +462,7 @@ mod tests {
     fn test_matching_nested_static_params_root() {
         let router = router_user_posts_2();
 
-        let mut location = Location::default();
+        let mut location = LocationState::default();
         location.goto("user/1").unwrap();
 
         {
@@ -510,7 +513,7 @@ mod tests {
     fn test_matching_nested_static_params_root_2() {
         let router = router_user_posts_2();
 
-        let mut location = Location::default();
+        let mut location = LocationState::default();
         location.goto("user/2").unwrap();
 
         {
@@ -561,7 +564,7 @@ mod tests {
     fn test_matching_nested_static_params_root_2_aaaa() {
         let router = router_user_posts_2();
 
-        let mut location = Location::default();
+        let mut location = LocationState::default();
         location.goto("user/2/aaaa").unwrap();
 
         {

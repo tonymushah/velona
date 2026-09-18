@@ -6,11 +6,11 @@ fn get_velona_router_base_url() -> Url {
     Url::parse(VELONA_ROUTER_BASE_URL).unwrap()
 }
 
-pub struct Location {
+pub(crate) struct LocationState {
     pub(crate) url: Url,
 }
 
-impl Default for Location {
+impl Default for LocationState {
     fn default() -> Self {
         Self {
             url: get_velona_router_base_url(),
@@ -18,7 +18,7 @@ impl Default for Location {
     }
 }
 
-impl Location {
+impl LocationState {
     pub fn goto(&mut self, path: &str) -> Result<(), url::ParseError> {
         self.url = self.url.join(path)?;
         Ok(())

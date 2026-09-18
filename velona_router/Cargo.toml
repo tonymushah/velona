@@ -11,3 +11,4 @@ derive_more = { workspace = true, features = ["debug"] }
 tree_arena = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 url = { workspace = true }
+# arrayvec = { workspace = true }

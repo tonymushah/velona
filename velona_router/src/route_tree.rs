@@ -1,15 +1,12 @@
 use std::{
     num::NonZero,
-    sync::{
-        Arc,
-        atomic::{AtomicU64, Ordering},
-    },
+    sync::atomic::{AtomicU64, Ordering},
 };
 
 use tree_arena::TreeArena;
 use velona_core::AnyNewWidget;
 
-pub type RouteView = Box<dyn Fn() -> AnyNewWidget + Send>; // TODO
+pub type RouteView = Box<dyn Fn() -> AnyNewWidget + Send + Sync>; // TODO
 
 #[derive(derive_more::Debug)]
 pub struct RouteNode {
@@ -49,13 +46,28 @@ pub enum RouteSegmentKind {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct RouteId(pub(crate) NonZero<u64>);
+pub struct RouteId(NonZero<u64>);
 
 impl RouteId {
     pub(crate) fn next() -> RouteId {
         static ROUTE_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
         let id = ROUTE_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
         Self(id.try_into().unwrap())
+    }
+    pub(crate) fn new(id: NonZero<u64>) -> Self {
+        Self(id)
+    }
+}
+
+impl From<RouteId> for NonZero<u64> {
+    fn from(value: RouteId) -> Self {
+        value.0
+    }
+}
+
+impl From<RouteId> for u64 {
+    fn from(value: RouteId) -> Self {
+        value.0.get()
     }
 }
 

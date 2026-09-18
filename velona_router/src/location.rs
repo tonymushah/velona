@@ -6,6 +6,7 @@ fn get_velona_router_base_url() -> Url {
     Url::parse(VELONA_ROUTER_BASE_URL).unwrap()
 }
 
+#[derive(Debug, Clone)]
 pub(crate) struct LocationState {
     pub(crate) url: Url,
 }

@@ -1,6 +1,11 @@
-use velona_core::AnyNewWidget;
+use velona_core::{AnyNewWidget, reactive::signal::ArcRwSignal};
 
-use crate::route_tree::{RouteId, RouteNode, RouteSegment, RouteSegmentKind, RouteTree};
+use crate::{
+    NavigationController,
+    location::LocationState,
+    route_tree::{RouteId, RouteNode, RouteSegment, RouteSegmentKind, RouteTree},
+    runtime::RouterState,
+};
 
 #[derive(Debug, Default)]
 pub struct Router {
@@ -13,18 +18,42 @@ impl Router {
 
         while let Some(route) = stack.pop() {
             if let Some(parent_id) = route.parent_id {
-                let Some(mut parent_node) = self.tree.find_mut(parent_id.0) else {
+                let Some(mut parent_node) = self.tree.find_mut(parent_id) else {
                     unreachable!("The parent child node should be always available")
                 };
-                parent_node.children.insert(route.id.0, route.node);
+                parent_node.children.insert(route.id, route.node);
             } else {
-                self.tree.roots_mut().insert(route.id.0, route.node);
+                self.tree.roots_mut().insert(route.id, route.node);
             }
             let mut childs = route.childs;
             stack.append(&mut childs);
         }
 
         self
+    }
+
+    pub fn build_with_start_path(self, path: &str) -> impl Fn() -> AnyNewWidget + Send + 'static {
+        RouterState::new(
+            self.tree,
+            NavigationController {
+                state: ArcRwSignal::new({
+                    let mut state = LocationState::default();
+                    state.goto(path).unwrap();
+                    state
+                }),
+            },
+        )
+        .build_view()
+    }
+
+    pub fn build(self) -> impl Fn() -> AnyNewWidget + Send + 'static {
+        RouterState::new(
+            self.tree,
+            NavigationController {
+                state: ArcRwSignal::new(LocationState::default()),
+            },
+        )
+        .build_view()
     }
 }
 
@@ -38,7 +67,7 @@ pub struct Route {
 impl Route {
     pub fn layout<V>(view: V) -> Self
     where
-        V: Fn() -> AnyNewWidget + Send + 'static,
+        V: Fn() -> AnyNewWidget + Send + Sync + 'static,
     {
         Self {
             node: RouteNode {
@@ -52,7 +81,7 @@ impl Route {
     }
     pub fn index<V>(view: V) -> Self
     where
-        V: Fn() -> AnyNewWidget + Send + 'static,
+        V: Fn() -> AnyNewWidget + Send + Sync + 'static,
     {
         Self {
             node: RouteNode {
@@ -66,7 +95,7 @@ impl Route {
     }
     pub fn static_<V>(path: &str, view: V) -> Self
     where
-        V: Fn() -> AnyNewWidget + Send + 'static,
+        V: Fn() -> AnyNewWidget + Send + Sync + 'static,
     {
         Self {
             node: RouteNode {
@@ -80,7 +109,7 @@ impl Route {
     }
     pub fn params<V>(name: &str, view: V) -> Self
     where
-        V: Fn() -> AnyNewWidget + Send + 'static,
+        V: Fn() -> AnyNewWidget + Send + Sync + 'static,
     {
         Self {
             node: RouteNode {
@@ -94,7 +123,7 @@ impl Route {
     }
     pub fn wildcard<V>(name: &str, view: V) -> Self
     where
-        V: Fn() -> AnyNewWidget + Send + 'static,
+        V: Fn() -> AnyNewWidget + Send + Sync + 'static,
     {
         Self {
             node: RouteNode {

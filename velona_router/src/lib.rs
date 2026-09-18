@@ -10,7 +10,8 @@ pub(crate) mod navigation;
 pub(crate) mod runtime;
 // Router, Routes, Route, Outlet, Link
 mod builder;
-pub(crate) mod components;
+pub mod components;
 
 pub use builder::{Route, Router};
 pub use navigation::NavigationController;
+pub use runtime::use_navigation_controller;

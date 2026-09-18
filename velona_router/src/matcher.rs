@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 
-use tree_arena::ArenaRef;
-
 use crate::{
     location::LocationState,
-    route_tree::{RouteId, RouteNode, RouteSegment, RouteTree},
+    route_tree::{RouteId, RouteSegment, RouteTree},
 };
 
 pub type Params = HashMap<String, String>;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct RouteMatch {
     pub route_id: RouteId,
     pub params: Params,
 }
 
+#[derive(Debug, PartialEq, Eq, Default)]
 pub struct MatchedRoutes {
     pub matches: Box<[RouteMatch]>,
 }
@@ -33,20 +33,24 @@ fn get_routes_child_id(
     route_id: Option<RouteId>,
 ) -> Result<Option<Box<[RouteId]>>, MatchError> {
     let ids = if let Some(route_id) = route_id {
-        let Some(route) = tree.find(route_id.0) else {
+        let Some(route) = tree.find(route_id) else {
             return Ok(None);
         };
         route
             .child_ids()
             .into_iter()
             .map(|id| {
-                Ok::<_, MatchError>(RouteId(id.try_into().map_err(|_| MatchError::ZeroRouteId)?))
+                Ok::<_, MatchError>(RouteId::new(
+                    id.try_into().map_err(|_| MatchError::ZeroRouteId)?,
+                ))
             })
             .collect::<Result<Box<[_]>, MatchError>>()?
     } else {
         tree.root_ids()
             .map(|id| {
-                Ok::<_, MatchError>(RouteId(id.try_into().map_err(|_| MatchError::ZeroRouteId)?))
+                Ok::<_, MatchError>(RouteId::new(
+                    id.try_into().map_err(|_| MatchError::ZeroRouteId)?,
+                ))
             })
             .collect::<Result<Box<[_]>, MatchError>>()?
     };
@@ -88,7 +92,7 @@ pub fn matches_routes(
             {
                 let mut routes_node = route_ids
                     .iter()
-                    .flat_map(|id| Some((id, tree.find(id.0)?)))
+                    .flat_map(|id| Some((id, tree.find(*id)?)))
                     .collect::<Box<[_]>>();
                 routes_node.sort_by_key(|(_, e)| e.item.segment.kind());
 
@@ -185,7 +189,7 @@ mod tests {
         for (index, node) in matches.matches.iter().enumerate() {
             match index {
                 0 => {
-                    let node = router.tree.find(node.route_id.0).unwrap();
+                    let node = router.tree.find(node.route_id).unwrap();
                     assert_eq!(node.item.segment.kind(), RouteSegmentKind::Layout);
                 }
                 _ => {
@@ -212,11 +216,11 @@ mod tests {
         for (index, node) in matches.matches.iter().enumerate() {
             match index {
                 0..=1 => {
-                    let node = router.tree.find(node.route_id.0).unwrap();
+                    let node = router.tree.find(node.route_id).unwrap();
                     assert_eq!(node.item.segment.kind(), RouteSegmentKind::Layout);
                 }
                 2 => {
-                    let node = router.tree.find(node.route_id.0).unwrap();
+                    let node = router.tree.find(node.route_id).unwrap();
                     assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                 }
                 _ => {
@@ -246,11 +250,11 @@ mod tests {
         for (index, node) in matches.matches.iter().enumerate() {
             match index {
                 0..=2 => {
-                    let node = router.tree.find(node.route_id.0).unwrap();
+                    let node = router.tree.find(node.route_id).unwrap();
                     assert_eq!(node.item.segment.kind(), RouteSegmentKind::Layout);
                 }
                 3 => {
-                    let tnode = router.tree.find(node.route_id.0).unwrap();
+                    let tnode = router.tree.find(node.route_id).unwrap();
                     assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Wildcard);
                     assert_eq!(node.params.get("any").map(|a| a.as_str()), Some(""));
                 }
@@ -285,7 +289,7 @@ mod tests {
         for (index, node) in matches.matches.iter().enumerate() {
             match index {
                 0 => {
-                    let node = router.tree.find(node.route_id.0).unwrap();
+                    let node = router.tree.find(node.route_id).unwrap();
                     assert_eq!(node.item.segment.kind(), RouteSegmentKind::Layout);
                 }
                 _ => {
@@ -321,11 +325,11 @@ mod tests {
         for (index, node) in matches.matches.iter().enumerate() {
             match index {
                 0 => {
-                    let node = router.tree.find(node.route_id.0).unwrap();
+                    let node = router.tree.find(node.route_id).unwrap();
                     assert_eq!(node.item.segment.kind(), RouteSegmentKind::Layout);
                 }
                 1 => {
-                    let tnode = router.tree.find(node.route_id.0).unwrap();
+                    let tnode = router.tree.find(node.route_id).unwrap();
                     assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Wildcard);
                     assert_eq!(node.params.get("any").map(|a| a.as_str()), Some("/users"));
                 }
@@ -366,11 +370,11 @@ mod tests {
             for (index, node) in matches.matches.iter().enumerate() {
                 match index {
                     0 => {
-                        let node = router.tree.find(node.route_id.0).unwrap();
+                        let node = router.tree.find(node.route_id).unwrap();
                         assert_eq!(node.item.segment.kind(), RouteSegmentKind::Layout);
                     }
                     1 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
                         assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
                             s == "user"
@@ -379,7 +383,7 @@ mod tests {
                         });
                     }
                     2 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
                         assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
                             s == "posts"
@@ -410,11 +414,11 @@ mod tests {
             for (index, node) in matches.matches.iter().enumerate() {
                 match index {
                     0 => {
-                        let node = router.tree.find(node.route_id.0).unwrap();
+                        let node = router.tree.find(node.route_id).unwrap();
                         assert_eq!(node.item.segment.kind(), RouteSegmentKind::Layout);
                     }
                     1 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
                         assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
                             s == "user"
@@ -423,7 +427,7 @@ mod tests {
                         });
                     }
                     2 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Param);
 
                         assert!(if let RouteSegment::Param { name } = &tnode.item.segment {
@@ -472,11 +476,11 @@ mod tests {
             for (index, node) in matches.matches.iter().enumerate() {
                 match index {
                     0 => {
-                        let node = router.tree.find(node.route_id.0).unwrap();
+                        let node = router.tree.find(node.route_id).unwrap();
                         assert_eq!(node.item.segment.kind(), RouteSegmentKind::Layout);
                     }
                     1 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
                         assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
                             s == "user"
@@ -485,7 +489,7 @@ mod tests {
                         });
                     }
                     2 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Param);
 
                         assert!(if let RouteSegment::Param { name } = &tnode.item.segment {
@@ -497,7 +501,7 @@ mod tests {
                         assert_eq!(node.params.get("id").map(String::as_str), Some("1"));
                     }
                     3 => {
-                        let node = router.tree.find(node.route_id.0).unwrap();
+                        let node = router.tree.find(node.route_id).unwrap();
                         assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                     }
                     _ => {
@@ -523,11 +527,11 @@ mod tests {
             for (index, node) in matches.matches.iter().enumerate() {
                 match index {
                     0 => {
-                        let node = router.tree.find(node.route_id.0).unwrap();
+                        let node = router.tree.find(node.route_id).unwrap();
                         assert_eq!(node.item.segment.kind(), RouteSegmentKind::Layout);
                     }
                     1 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
                         assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
                             s == "user"
@@ -536,7 +540,7 @@ mod tests {
                         });
                     }
                     2 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Param);
 
                         assert!(if let RouteSegment::Param { name } = &tnode.item.segment {
@@ -548,7 +552,7 @@ mod tests {
                         assert_eq!(node.params.get("id").map(String::as_str), Some("2"));
                     }
                     3 => {
-                        let node = router.tree.find(node.route_id.0).unwrap();
+                        let node = router.tree.find(node.route_id).unwrap();
                         assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
                     }
                     _ => {
@@ -574,11 +578,11 @@ mod tests {
             for (index, node) in matches.matches.iter().enumerate() {
                 match index {
                     0 => {
-                        let node = router.tree.find(node.route_id.0).unwrap();
+                        let node = router.tree.find(node.route_id).unwrap();
                         assert_eq!(node.item.segment.kind(), RouteSegmentKind::Layout);
                     }
                     1 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Static);
                         assert!(if let RouteSegment::Static(s) = &tnode.item.segment {
                             s == "user"
@@ -587,7 +591,7 @@ mod tests {
                         });
                     }
                     2 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Param);
 
                         assert!(if let RouteSegment::Param { name } = &tnode.item.segment {
@@ -599,7 +603,7 @@ mod tests {
                         assert_eq!(node.params.get("id").map(String::as_str), Some("2"));
                     }
                     3 => {
-                        let tnode = router.tree.find(node.route_id.0).unwrap();
+                        let tnode = router.tree.find(node.route_id).unwrap();
                         assert_eq!(tnode.item.segment.kind(), RouteSegmentKind::Wildcard);
                         assert_eq!(node.params.get("any").map(|a| a.as_str()), Some("/aaaa"));
                     }

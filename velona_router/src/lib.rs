@@ -13,3 +13,4 @@ mod builder;
 pub(crate) mod components;
 
 pub use builder::{Route, Router};
+pub use navigation::NavigationController;

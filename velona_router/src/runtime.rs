@@ -74,28 +74,7 @@ impl RouterState {
                 provide_context(child_route);
 
                 Effect::new(move |_| {
-                    let tree = use_route_tree();
-                    if let Some(route_id) = route_id()
-                        && let Some(route_node) = {
-                            // This is fine because the route is memoized
-
-                            tree.find(route_id)
-                        }
-                    {
-                        let widget = (route_node.item.view)();
-
-                        box_ref
-                            .edit_local_now(|mut this| {
-                                RawBox::set_child(&mut this, widget);
-                            })
-                            .consume_with_log_err();
-                    } else {
-                        box_ref
-                            .edit_local_now(|mut this| {
-                                RawBox::remove_child(&mut this);
-                            })
-                            .consume_with_log_err();
-                    }
+                    update_raw_box(&box_ref, &route_id);
                 });
             }
 
@@ -104,7 +83,35 @@ impl RouterState {
     }
 }
 
-pub(crate) fn route_show_triad(
+pub(crate) fn update_raw_box(
+    box_ref: &velona_core::widget_ref::VelonaWidgetRef<RawBox>,
+    route_id: &Memo<Option<RouteId>>,
+) {
+    let tree = use_route_tree();
+    if let Some(route_id) = route_id()
+        && let Some(route_node) = {
+            // This is fine because the route is memoized
+
+            tree.find(route_id)
+        }
+    {
+        let widget = (route_node.item.view)();
+
+        box_ref
+            .edit_local_now(|mut this| {
+                RawBox::set_child(&mut this, widget);
+            })
+            .consume_with_log_err();
+    } else {
+        box_ref
+            .edit_local_now(|mut this| {
+                RawBox::remove_child(&mut this);
+            })
+            .consume_with_log_err();
+    }
+}
+
+fn route_show_triad(
     index: usize,
     matches: &ArcMemo<MatchedRoutes>,
 ) -> (Memo<Option<RouteId>>, RouteParams, ChildRoute) {
@@ -112,16 +119,18 @@ pub(crate) fn route_show_triad(
 
     let root_params = get_root_params_memo(index, matches.clone());
 
-    let child_route = {
-        let index = index + 1;
-        ChildRoute {
-            route_id: get_route_id_memo(index, matches.clone()),
-            params: get_root_params_memo(index, matches.clone()),
-            index,
-        }
-    };
+    let child_route = get_child_route(index, matches);
 
     (root_route_id, root_params, child_route)
+}
+
+pub(crate) fn get_child_route(index: usize, matches: &ArcMemo<MatchedRoutes>) -> ChildRoute {
+    let index = index + 1;
+    ChildRoute {
+        route_id: get_route_id_memo(index, matches.clone()),
+        params: get_root_params_memo(index, matches.clone()),
+        index,
+    }
 }
 
 fn get_root_params_memo(index: usize, matches: ArcMemo<MatchedRoutes>) -> RouteParams {
@@ -146,5 +155,9 @@ pub fn use_route_tree() -> Arc<RouteTree> {
 }
 
 pub fn use_navigation_controller() -> NavigationController {
+    expect_context()
+}
+
+pub fn use_matched_routes() -> ArcMemo<MatchedRoutes> {
     expect_context()
 }

@@ -20,8 +20,6 @@ pub struct MatchedRoutes {
 
 #[derive(Debug, thiserror::Error)]
 pub enum MatchError {
-    #[error("The route tree root node should be a `RouteSegment`")]
-    InvalidRootTreeNode,
     #[error("a route id can't be zero")]
     ZeroRouteId,
     #[error("The current location doesn't have any path segments")]

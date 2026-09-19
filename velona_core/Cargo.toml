@@ -8,7 +8,7 @@ accesskit_winit.workspace = true
 any_spawner.workspace = true
 masonry_imaging_lite.workspace = true
 masonry_core.workspace = true
-reactive_graph = { workspace = true, features = ["effects", "sandboxed-arenas"] }
+reactive_graph = { workspace = true, features = ["effects"] }
 masonry_raw_box = { workspace = true }
 thiserror.workspace = true
 winit.workspace = true

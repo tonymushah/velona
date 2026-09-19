@@ -4477,6 +4477,8 @@ dependencies = [
 name = "router_example"
 version = "0.1.0"
 dependencies = [
+ "env_logger",
+ "hotpath",
  "velona",
  "velona_renderer_vello",
  "velona_router",

@@ -76,7 +76,11 @@ pub fn matches_routes(
 
         let mut params = HashMap::<String, String>::new();
 
-        let root_ids = get_routes_child_id(tree, None)?.unwrap();
+        let Some(root_ids) = get_routes_child_id(tree, None)? else {
+            return Ok(MatchedRoutes {
+                matches: matches.into_boxed_slice(),
+            });
+        };
 
         if root_ids.is_empty() {
             return Ok(MatchedRoutes {

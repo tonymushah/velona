@@ -112,6 +112,12 @@ impl<const N: usize> ScopedClasses<N> {
     {
         self.prop_opt(state, move |old| Some(prop(old)))
     }
+    pub fn static_prop<P>(self, state: ScopedClassesState, prop: P) -> Self
+    where
+        P: Property + Clone,
+    {
+        self.prop(state, move |_| prop.clone())
+    }
     pub fn propstack_ref(&self) -> &ScopedPropstack {
         &self.prop_stack
     }

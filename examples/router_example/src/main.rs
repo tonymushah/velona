@@ -7,7 +7,7 @@ use velona::{
         layout::{AsUnit, Length},
         palette::css::{BLACK, MISTY_ROSE, WHEAT, WHITE, WHITE_SMOKE},
         properties::{Background, BorderColor, BorderWidth, CornerRadius, Padding},
-        widgets::{Button, Flex, Label, Portal, Prose},
+        widgets::{Button, Flex, Label, Portal, Prose, SizedBox},
     },
     reactive::{
         computed::Memo,
@@ -99,14 +99,21 @@ fn main_layout() -> AnyNewWidget {
     Portal::new(
         Flex::column()
             .with_fixed(
-                Flex::row()
-                    .with_fixed(navigate_button("Home", "/"))
-                    .with_fixed_spacer(10.0.px())
-                    .with_fixed(navigate_button("Posts", "/posts"))
-                    .prepare(),
+                SizedBox::new(
+                    Flex::row()
+                        .with_fixed(navigate_button("Home", "/"))
+                        .with_fixed_spacer(10.0.px())
+                        .with_fixed(navigate_button("Posts", "/posts"))
+                        .prepare(),
+                )
+                .prepare()
+                .with_props(Padding::from_vh(12.0.px(), 4.0.px())),
             )
-            .with_fixed_spacer(10.0.px())
-            .with_fixed(outlet())
+            .with_fixed(
+                SizedBox::new(outlet())
+                    .prepare()
+                    .with_props(Padding::from_vh(12.0.px(), 4.0.px())),
+            )
             .prepare(),
     )
     .prepare()

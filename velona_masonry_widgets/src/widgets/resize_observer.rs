@@ -13,6 +13,8 @@
 //! [`SingleChildWidget`]: super::SingleChildWidget
 //! [`ReactiveSingleChildExt`]: super::ReactiveSingleChildExt
 
+use std::sync::Arc;
+
 use masonry::{
     core::{FromDynWidget, NewWidget, Widget, WidgetMut},
     widgets::ResizeObserver,
@@ -20,8 +22,9 @@ use masonry::{
 
 #[cfg(doc)]
 use masonry::core::MutateCtx;
+use velona_core::utils::ConsumeResult;
 
-use crate::{NewWidgetExt, utils::ConsumeResult};
+use crate::NewWidgetExt;
 
 /// A trait that allows you to [listen](Self::on_resize) any [`NewWidget`] sizes changes
 /// _by wrapping it inside a [`ResizeObserver`]_.
@@ -44,7 +47,7 @@ pub trait BindResizeObserver {
     /// You might also get several of the resulting actions in a sequence.
     fn on_resize<E>(self, handler: E) -> NewWidget<ResizeObserver>
     where
-        E: Fn(WidgetMut<ResizeObserver>) + Send + 'static;
+        E: Fn(WidgetMut<ResizeObserver>) + Send + Sync + 'static;
 }
 
 impl<W> BindResizeObserver for NewWidget<W>
@@ -53,12 +56,14 @@ where
 {
     fn on_resize<E>(self, handler: E) -> NewWidget<ResizeObserver>
     where
-        E: Fn(WidgetMut<ResizeObserver>) + Send + 'static,
+        E: Fn(WidgetMut<ResizeObserver>) + Send + Sync + 'static,
     {
         let obs = ResizeObserver::new(self).prepare();
         let obs_ref = obs.create_velona_ref();
+        let handler = Arc::new(handler);
         obs.on_action(move |_| {
-            obs_ref.edit_local_now(&handler).consume_with_log_err();
+            let handler = handler.clone();
+            obs_ref.edit(move |e| handler(e)).consume_with_log_err();
         })
     }
 }

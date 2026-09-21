@@ -247,13 +247,7 @@ where
         V: 'static,
         Vfn: Fn() -> V + 'static,
     {
-        self.use_widget_mut_val(
-            move |_| UseWidgetValResult {
-                to_edit_fn: val_fn(),
-                to_next_effect_run: None::<()>,
-            },
-            edit_fn,
-        )
+        self.use_widget_mut_val(move |_| UseWidgetValResult::to_edit_fn(val_fn()), edit_fn)
     }
 
     #[track_caller]
@@ -483,13 +477,7 @@ where
         V: 'static,
         Vfn: Fn() -> V + 'static,
     {
-        self.use_widget_ref_val(
-            move |_| UseWidgetValResult {
-                to_edit_fn: val_fn(),
-                to_next_effect_run: None::<()>,
-            },
-            use_fn,
-        )
+        self.use_widget_ref_val(move |_| UseWidgetValResult::to_edit_fn(val_fn()), use_fn)
     }
 }
 

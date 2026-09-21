@@ -6,7 +6,7 @@
 // > every time the canvas is repainted,
 // > that callback is run with an [`imaging::record::Scene`].
 // > That recording is then replayed as the canvas contents.
-//! In `velona`, there are 3 ways to paint a [`Canvas`]:
+//! In `velona`, there are 2 ways to paint a [`Canvas`]:
 //!
 //! 1. [`NewCanvasExt::update_scene`]:
 //!
@@ -17,16 +17,7 @@
 //! > **Cons**:
 //! > - Might be complex to use (You might find yourself using a bunch of signals for basic stuff).
 //!
-//! 2. [`CanvasRefExt::update_scene_local`]:
-//!
-//! > **Pros**:
-//! > - Immediately updates the scene once it called.
-//!
-//! > **Cons**:
-//! > - Fails if the canvas is not in the widget tree (ex: component initialization).
-//! > - Fails if called in another thread.
-//!
-//! 3. [`CanvasRefExt::update_scene`]:
+//! 2. [`CanvasRefExt::update_scene`]:
 //!
 //! > **Pros**:
 //! > - Can be called on another thread.
@@ -40,16 +31,34 @@
 //!
 //! _See the [widget](Canvas) documentation for more information_.
 
+use std::fmt::Debug;
+
 use masonry::imaging::record::Scene;
 use masonry::kurbo::Size;
 use masonry::{
     core::{ArcStr, MutateCtx, NewWidget},
     widgets::Canvas,
 };
-use velona_core::reactive::effect::Effect;
+use velona_core::widget_ref::{UseWidgetFromRefError, VelonaWidgetRef};
+use velona_core::widgets::UseWidgetValResult;
 
-use crate::widget_ref::{EditWidgetLocalError, UseWidgetFromRefError, VelonaWidgetRef};
-use crate::{NewWidgetExt, utils::ConsumeResult};
+use crate::NewWidgetExt;
+
+#[non_exhaustive]
+pub struct UpdateSceneCtx<'a, 'b> {
+    pub mutate: &'a mut MutateCtx<'b>,
+    pub scene: &'a mut Scene,
+    pub size: Size,
+}
+
+impl<'a, 'b> Debug for UpdateSceneCtx<'a, 'b> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UpdateSceneCtx")
+            .field("scene", &self.scene)
+            .field("size", &self.size)
+            .finish_non_exhaustive()
+    }
+}
 
 /// A [new](NewWidget) [`Canvas`] trait extension.
 // TODO add drawing example
@@ -60,9 +69,13 @@ pub trait NewCanvasExt {
     ///
     /// _I personally don't recommend using this for updating the scene of a canvas,
     /// i recommend using a [`VelonaWidgetRef`] since it give you more "freedom" (aka thread-safety) on what to show._
-    fn update_scene<U>(self, updates: U) -> Self
+    fn update_scene<Vfn, Ufn, V, O>(self, val_fn: Vfn, update_fn: Ufn) -> Self
     where
-        U: FnMut(&mut MutateCtx<'_>, &mut Scene, Size) + 'static;
+        Ufn: FnMut(UpdateSceneCtx<'_, '_>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
+
     /// Sets the text that will describe the canvas to screen readers.
     ///
     /// See [`Canvas::with_alt_text`] for details.
@@ -72,43 +85,36 @@ pub trait NewCanvasExt {
 }
 
 impl NewCanvasExt for NewWidget<Canvas> {
-    fn update_scene<U>(self, mut updates: U) -> Self
+    fn update_scene<Vfn, Ufn, V, O>(self, val_fn: Vfn, mut update_fn: Ufn) -> Self
     where
-        U: FnMut(&mut MutateCtx<'_>, &mut Scene, Size) + 'static,
+        Ufn: FnMut(UpdateSceneCtx<'_, '_>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
     {
-        let c_ref = self.create_velona_ref();
-        Effect::new(move || {
-            c_ref
-                .edit_local_now(|mut this| {
-                    Canvas::update_scene(&mut this, |ctx, sc, size| {
-                        updates(ctx, sc, size);
-                    });
-                })
-                .consume_with_log_err();
-        });
-        self
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            Canvas::update_scene(&mut this, |ctx, scene, size| {
+                let _ctx = UpdateSceneCtx {
+                    scene,
+                    mutate: ctx,
+                    size,
+                };
+                update_fn(_ctx, val);
+            });
+        })
     }
-
     fn alt_text<T>(self, alt_text: T) -> Self
     where
         T: Fn() -> Option<ArcStr> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Canvas::set_alt_text(&mut this, alt_text());
+        self.use_widget_mut(alt_text, |mut this, alt_text| {
+            Canvas::set_alt_text(&mut this, alt_text);
         })
     }
 }
 
 /// A [`Canvas`] [ref](VelonaWidgetRef) trait extension.
 pub trait CanvasRefExt {
-    /// Updates the canvas scene.
-    ///
-    /// It is worth noting that this function doesn't run inside an [`Effect`].
-    ///
-    /// *See [`VelonaWidgetRef::edit_local_now`] for more details*.
-    fn update_scene_local<U>(self, updates: U) -> Result<(), EditWidgetLocalError>
-    where
-        U: FnOnce(&mut MutateCtx<'_>, &mut Scene, Size) + 'static;
     /// Updates the canvas scene.
     ///
     /// It is worth noting that this function doesn't run inside an [`Effect`].
@@ -120,15 +126,6 @@ pub trait CanvasRefExt {
 }
 
 impl CanvasRefExt for VelonaWidgetRef<Canvas> {
-    fn update_scene_local<U>(self, updates: U) -> Result<(), EditWidgetLocalError>
-    where
-        U: FnOnce(&mut MutateCtx<'_>, &mut Scene, Size) + 'static,
-    {
-        self.edit_local_now(|mut this| {
-            Canvas::update_scene(&mut this, updates);
-        })
-    }
-
     fn update_scene<U>(self, updates: U) -> Result<(), UseWidgetFromRefError>
     where
         U: FnOnce(&mut MutateCtx<'_>, &mut Scene, Size) + Send + Sync + 'static,

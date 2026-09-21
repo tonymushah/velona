@@ -38,6 +38,15 @@ pub struct UseWidgetValResult<A, B = ()> {
     pub to_next_effect_run: Option<B>,
 }
 
+impl<A> UseWidgetValResult<A, ()> {
+    pub const fn to_edit_fn(value: A) -> Self {
+        Self {
+            to_edit_fn: value,
+            to_next_effect_run: None,
+        }
+    }
+}
+
 #[allow(private_bounds)]
 pub trait NewWidgetExt: View + IsNewWidget {
     // TODO add docs on how it works

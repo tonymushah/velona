@@ -14,6 +14,7 @@ use winit::{
 
 use crate::Manager;
 use crate::manager::CreateWindowError;
+use crate::widgets::View;
 use crate::window::handle::WindowHandle;
 
 /// The `velona` window builder.
@@ -31,12 +32,13 @@ pub struct WindowBuilder {
 
 impl WindowBuilder {
     /// Create a new window that with this view.
-    pub fn new<F>(view_fn: F) -> Self
+    pub fn new<F, V>(view_fn: F) -> Self
     where
-        F: FnOnce() -> NewWidget<dyn Widget + 'static> + Send + 'static,
+        F: FnOnce() -> V + Send + 'static,
+        V: View + 'static,
     {
         Self {
-            view: Box::new(view_fn),
+            view: Box::new(move || view_fn().into_erased()),
             window_attributes: WindowAttributes::default().with_title("velona window"),
             base_color: None,
             window_handle_send: None,

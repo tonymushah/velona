@@ -4,6 +4,7 @@ use masonry_core::core::ErasedAction;
 use masonry_core::core::FromDynWidget;
 #[cfg(doc)]
 use masonry_core::core::MutateCtx;
+use masonry_core::core::WidgetRef;
 use masonry_core::{
     core::{NewWidget, Property, PropertyStackId, UsesProperty as HasProperty, Widget, WidgetMut},
     kurbo::Affine,
@@ -32,7 +33,7 @@ trait IsNewWidget {}
 
 impl<W> IsNewWidget for NewWidget<W> where W: ?Sized {}
 
-pub struct UseWidgetMutValResult<A, B = ()> {
+pub struct UseWidgetValResult<A, B = ()> {
     pub to_edit_fn: A,
     pub to_next_effect_run: Option<B>,
 }
@@ -49,11 +50,28 @@ pub trait NewWidgetExt: View + IsNewWidget {
         Efn: FnMut(WidgetMut<'_, Self::Widget>, V) + 'static,
         V: 'static,
         O: 'static,
-        Vfn: Fn(Option<O>) -> UseWidgetMutValResult<V, O> + 'static;
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
     // TODO add docs
     fn use_widget_mut<Vfn, Efn, V>(self, val_fn: Vfn, edit_fn: Efn) -> NewWidget<Self::Widget>
     where
         Efn: FnMut(WidgetMut<'_, Self::Widget>, V) + 'static,
+        V: 'static,
+        Vfn: Fn() -> V + 'static;
+
+    fn use_widget_ref_val<Vfn, Efn, V, O>(
+        self,
+        val_fn: Vfn,
+        use_fn: Efn,
+    ) -> NewWidget<Self::Widget>
+    where
+        Efn: FnMut(WidgetRef<'_, Self::Widget>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
+    // TODO add docs
+    fn use_widget_ref<Vfn, Efn, V>(self, val_fn: Vfn, use_fn: Efn) -> NewWidget<Self::Widget>
+    where
+        Efn: FnMut(WidgetRef<'_, Self::Widget>, V) + 'static,
         V: 'static,
         Vfn: Fn() -> V + 'static;
 
@@ -192,7 +210,7 @@ where
         Efn: FnMut(WidgetMut<'_, Self::Widget>, V) + 'static,
         V: 'static,
         O: 'static,
-        Vfn: Fn(Option<O>) -> UseWidgetMutValResult<V, O> + 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
     {
         let widget_ref = self.create_velona_ref();
         let edit_fn = ArenaItem::new_local(edit_fn);
@@ -221,7 +239,7 @@ where
         Vfn: Fn() -> V + 'static,
     {
         self.use_widget_mut_val(
-            move |_| UseWidgetMutValResult {
+            move |_| UseWidgetValResult {
                 to_edit_fn: val_fn(),
                 to_next_effect_run: None::<()>,
             },
@@ -342,7 +360,7 @@ where
                 if let Some(new_class) = maybe_new_class.as_ref() {
                     instructions.push((new_class.clone(), ClassActionType::Add));
                 }
-                UseWidgetMutValResult {
+                UseWidgetValResult {
                     to_edit_fn: instructions.into_boxed_slice(),
                     to_next_effect_run: maybe_new_class,
                 }
@@ -368,7 +386,7 @@ where
                 for new_class in &new_classes {
                     instructions.push((new_class.clone(), ClassActionType::Add));
                 }
-                UseWidgetMutValResult {
+                UseWidgetValResult {
                     to_edit_fn: instructions.into_boxed_slice(),
                     to_next_effect_run: Some(new_classes),
                 }
@@ -393,7 +411,7 @@ where
         self.use_widget_mut_val(
             move |old_state: Option<bool>| {
                 let new_state = disabled(old_state.unwrap_or_default());
-                UseWidgetMutValResult {
+                UseWidgetValResult {
                     to_edit_fn: new_state,
                     to_next_effect_run: Some(new_state),
                 }
@@ -422,6 +440,47 @@ where
         self.use_widget_mut(property_stack_id, |mut widget_mut, stack_id| {
             widget_mut.ctx.set_property_stack(stack_id);
         })
+    }
+
+    fn use_widget_ref_val<Vfn, Efn, V, O>(self, val_fn: Vfn, use_fn: Efn) -> NewWidget<Self::Widget>
+    where
+        Efn: FnMut(WidgetRef<'_, Self::Widget>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+    {
+        let widget_ref = self.create_velona_ref();
+        let use_fn = ArenaItem::new_local(use_fn);
+        Effect::new(move |effect_param: Option<Option<O>>| {
+            let res = val_fn(effect_param.flatten());
+
+            let to_send = SendWrapper::new(res.to_edit_fn);
+
+            widget_ref
+                .use_widget(move |widget_ref| {
+                    use_fn.try_update_value(|efn| {
+                        efn(widget_ref, to_send.take());
+                    });
+                })
+                .consume_with_log_err();
+            res.to_next_effect_run
+        });
+        self
+    }
+
+    fn use_widget_ref<Vfn, Efn, V>(self, val_fn: Vfn, use_fn: Efn) -> NewWidget<Self::Widget>
+    where
+        Efn: FnMut(WidgetRef<'_, Self::Widget>, V) + 'static,
+        V: 'static,
+        Vfn: Fn() -> V + 'static,
+    {
+        self.use_widget_ref_val(
+            move |_| UseWidgetValResult {
+                to_edit_fn: val_fn(),
+                to_next_effect_run: None::<()>,
+            },
+            use_fn,
+        )
     }
 }
 

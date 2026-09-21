@@ -8,7 +8,7 @@
 //!
 //! _See the [widget](RadioButton) documentation for more information_.
 
-use std::mem::{Discriminant, discriminant};
+use std::mem::Discriminant;
 
 use masonry::{
     TextAlign,
@@ -18,8 +18,13 @@ use masonry::{
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
+use velona_core::widgets::UseWidgetValResult;
 
-use crate::{NewWidgetExt, widgets::label::NewLabelExt};
+use crate::{
+    NewWidgetExt,
+    utils::text_style::{apply_label_style_actions, get_style_opt_action},
+    widgets::label::NewLabelExt,
+};
 
 /// A [new](NewWidget) [`RadioButton`] extension trait.
 pub trait NewRadioButtonExt {
@@ -29,10 +34,13 @@ pub trait NewRadioButtonExt {
         C: Fn() -> bool + 'static;
     /// Use a mutable reference to the label.
     ///
-    /// It is worth noting that the `use_fn` runs inside an [`Effect`].
-    fn use_label_mut<F>(self, use_fn: F) -> Self
+    /// It is worth noting that only the `use_fn` runs inside an [`Effect`].
+    fn use_label_mut<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        F: FnMut(WidgetMut<Label>) + 'static;
+        Efn: FnMut(WidgetMut<'_, Label>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
 }
 
 impl NewRadioButtonExt for NewWidget<RadioButton> {
@@ -40,17 +48,20 @@ impl NewRadioButtonExt for NewWidget<RadioButton> {
     where
         C: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            RadioButton::set_checked(&mut this, checked());
+        self.use_widget_mut(checked, |mut this, checked| {
+            RadioButton::set_checked(&mut this, checked);
         })
     }
 
-    fn use_label_mut<F>(self, mut use_fn: F) -> Self
+    fn use_label_mut<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
     where
-        F: FnMut(WidgetMut<Label>) + 'static,
+        Efn: FnMut(WidgetMut<'_, Label>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_fn(RadioButton::label_mut(&mut this));
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(RadioButton::label_mut(&mut this), val);
         })
     }
 }
@@ -61,9 +72,12 @@ impl NewLabelExt for NewWidget<RadioButton> {
         S: Fn() -> T + 'static,
         T: Into<ArcStr>,
     {
-        self.use_label_mut(move |mut this| {
-            Label::set_text(&mut this, text());
-        })
+        self.use_label_mut(
+            move |_| UseWidgetValResult::to_edit_fn(text().into()),
+            |mut this, text| {
+                Label::set_text(&mut this, text);
+            },
+        )
     }
 
     fn style_opt<S, T>(self, style: S) -> Self
@@ -71,20 +85,12 @@ impl NewLabelExt for NewWidget<RadioButton> {
         S: Fn() -> Option<T> + 'static,
         T: Into<StyleProperty>,
     {
-        self.use_reactive_widget_mut_with_effect_val::<_, Discriminant<StyleProperty>>(
-            move |mut this, old_style| {
-                let mut this = RadioButton::label_mut(&mut this);
-                if let Some(old_style) = old_style {
-                    Label::remove_style(&mut this, old_style);
-                }
-                if let Some(style) = style() {
-                    Label::insert_style(&mut this, style)
-                        .as_ref()
-                        .map(discriminant)
-                } else {
-                    None
-                }
+        self.use_label_mut(
+            move |old_style: Option<Discriminant<StyleProperty>>| {
+                let new_style = style().map(Into::<StyleProperty>::into);
+                get_style_opt_action(old_style, new_style)
             },
+            apply_label_style_actions,
         )
     }
     fn style<S, T>(self, style: S) -> Self
@@ -99,9 +105,12 @@ impl NewLabelExt for NewWidget<RadioButton> {
     where
         S: Fn() -> bool + 'static,
     {
-        self.use_label_mut(move |mut this| {
-            Label::set_hint(&mut this, hint());
-        })
+        self.use_label_mut(
+            move |_| UseWidgetValResult::to_edit_fn(hint()),
+            |mut this, hint| {
+                Label::set_hint(&mut this, hint);
+            },
+        )
     }
 
     fn text_alignment<S>(self, align: S) -> Self
@@ -111,8 +120,11 @@ impl NewLabelExt for NewWidget<RadioButton> {
         // {
         //     self.widget = Box::new(self.widget.with_text_alignment(untrack(&align)));
         // }
-        self.use_label_mut(move |mut this| {
-            Label::set_text_alignment(&mut this, align());
-        })
+        self.use_label_mut(
+            move |_| UseWidgetValResult::to_edit_fn(align()),
+            |mut this, align| {
+                Label::set_text_alignment(&mut this, align);
+            },
+        )
     }
 }

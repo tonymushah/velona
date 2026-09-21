@@ -10,9 +10,12 @@ use masonry::{
     layout::Length,
     widgets::SizedBox,
 };
+use velona_core::{AnyNewWidget, widgets::UseWidgetValResult};
+
+#[cfg(doc)]
 use velona_core::reactive::effect::Effect;
 
-use crate::{AnyNewWidget, NewWidgetExt};
+use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`SizedBox`] extension trait.
 pub trait NewSizedBoxExt {
@@ -63,9 +66,12 @@ pub trait NewSizedBoxExt {
     {
         self.raw_height(move || Some(height_fn()))
     }
-    fn use_child_opt<F>(self, use_fn: F) -> Self
+    fn use_child_opt<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        F: FnMut(Option<WidgetMut<'_, dyn Widget>>) + 'static;
+        Efn: FnMut(Option<WidgetMut<'_, dyn Widget>>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
 }
 
 impl NewSizedBoxExt for NewWidget<SizedBox> {
@@ -73,92 +79,42 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
     where
         Cf: Fn() -> Option<AnyNewWidget> + 'static,
     {
-        let w_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let maybe_new_widget = child_fn();
-            if let Some(new_widget) = maybe_new_widget {
-                let _ = w_ref
-                    .edit_local_now(|mut this| {
-                        SizedBox::set_child(&mut this, new_widget);
-                    })
-                    .inspect_err(|err| {
-                        log::error!("Cannot set a new child for this sized box => {err}");
-                    });
+        self.use_widget_mut(child_fn, |mut this, child| {
+            if let Some(child) = child {
+                SizedBox::set_child(&mut this, child);
             } else {
-                let _ = w_ref
-                    .edit_local_now(|mut this| {
-                        SizedBox::remove_child(&mut this);
-                    })
-                    .inspect_err(|err| {
-                        log::error!("Cannot remove child for this sized box => {err}");
-                    });
+                SizedBox::remove_child(&mut this);
             }
-        });
-        self
+        })
     }
 
     fn raw_width<W>(self, width_fn: W) -> Self
     where
         W: Fn() -> Option<Length> + 'static,
     {
-        let w_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let maybe_new_width = width_fn();
-            if let Some(new_width) = maybe_new_width {
-                let _ = w_ref
-                    .edit_local_now(|mut this| {
-                        SizedBox::set_width(&mut this, new_width);
-                    })
-                    .inspect_err(|err| {
-                        log::error!("Cannot set a new width for sized box => {err}");
-                    });
-            } else {
-                let _ = w_ref
-                    .edit_local_now(|mut this| {
-                        SizedBox::unset_width(&mut this);
-                    })
-                    .inspect_err(|err| {
-                        log::error!("Cannot unset width for this sized box => {err}");
-                    });
-            }
-        });
-        self
+        self.use_widget_mut(width_fn, |mut this, width| {
+            SizedBox::set_raw_width(&mut this, width);
+        })
     }
 
     fn raw_height<W>(self, height_fn: W) -> Self
     where
         W: Fn() -> Option<Length> + 'static,
     {
-        let w_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let maybe_new_height = height_fn();
-            if let Some(new_height) = maybe_new_height {
-                let _ = w_ref
-                    .edit_local_now(|mut this| {
-                        SizedBox::set_height(&mut this, new_height);
-                    })
-                    .inspect_err(|err| {
-                        log::error!("Cannot set a new height for sized box => {err}");
-                    });
-            } else {
-                let _ = w_ref
-                    .edit_local_now(|mut this| {
-                        SizedBox::unset_height(&mut this);
-                    })
-                    .inspect_err(|err| {
-                        log::error!("Cannot unset height for this sized box => {err}");
-                    });
-            }
-        });
-        self
+        self.use_widget_mut(height_fn, |mut this, height| {
+            SizedBox::set_raw_height(&mut this, height);
+        })
     }
 
-    fn use_child_opt<F>(self, mut use_fn: F) -> Self
+    fn use_child_opt<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
     where
-        F: FnMut(Option<WidgetMut<'_, dyn Widget>>) + 'static,
+        Efn: FnMut(Option<WidgetMut<'_, dyn Widget>>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_fn(SizedBox::child_mut(&mut this));
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(SizedBox::child_mut(&mut this), val)
         })
     }
 }

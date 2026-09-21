@@ -21,9 +21,12 @@ use masonry::{
     core::{NewWidget, Widget, WidgetMut},
     widgets::{BadgePlacement, Badged},
 };
+use velona_core::AnyNewWidget;
+#[cfg(doc)]
 use velona_core::reactive::effect::Effect;
+use velona_core::widgets::UseWidgetValResult;
 
-use crate::{AnyNewWidget, NewWidgetExt, utils::ConsumeResult};
+use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Badged`] trait extension
 pub trait NewBadgedTrait {
@@ -47,17 +50,22 @@ pub trait NewBadgedTrait {
         O: Fn() -> Vec2 + 'static;
     /// Use a mutable reference to the content widget.
     ///
-    /// It is worth noting that the `use_fn` will run inside an [`Effect`].
-    fn use_content_mut<U>(self, use_fn: U) -> Self
+    /// It is worth noting that only `val_fn` will run inside an [`Effect`].
+    fn use_content_mut_val<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        U: FnMut(WidgetMut<dyn Widget>) + 'static;
+        Efn: FnMut(WidgetMut<'_, dyn Widget>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
     /// Use a mutable reference to the badge widget.
     ///
-    /// It is worth noting that the `use_fn` will run inside an [`Effect`]
-    /// **and will not rerun if the badge has changed**.
-    fn use_badge_mut<U>(self, use_fn: U) -> Self
+    /// It is worth noting that the `val_fn` will run inside an [`Effect`]
+    fn use_badge_mut_val<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        U: FnMut(Option<WidgetMut<dyn Widget>>) + 'static;
+        Efn: FnMut(Option<WidgetMut<'_, dyn Widget>>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
 }
 
 impl NewBadgedTrait for NewWidget<Badged> {
@@ -65,45 +73,30 @@ impl NewBadgedTrait for NewWidget<Badged> {
     where
         C: Fn() -> AnyNewWidget + 'static,
     {
-        let b_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let content = content_fn();
-            b_ref
-                .edit_local_now(|mut this| {
-                    Badged::set_content(&mut this, content);
-                })
-                .consume_with_log_err();
-        });
-        self
+        self.use_widget_mut(content_fn, |mut this, content| {
+            Badged::set_content(&mut this, content);
+        })
     }
 
     fn badge<B>(self, badge_fn: B) -> Self
     where
         B: Fn() -> Option<AnyNewWidget> + 'static,
     {
-        let b_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let badge = badge_fn();
-
-            b_ref
-                .edit_local_now(|mut this| {
-                    if let Some(badge) = badge {
-                        Badged::set_badge(&mut this, badge);
-                    } else if this.widget.has_badge() {
-                        Badged::clear_badge(&mut this);
-                    }
-                })
-                .consume_with_log_err();
-        });
-        self
+        self.use_widget_mut(badge_fn, |mut this, badge| {
+            if let Some(badge) = badge {
+                Badged::set_badge(&mut this, badge);
+            } else if this.widget.has_badge() {
+                Badged::clear_badge(&mut this);
+            }
+        })
     }
 
     fn badge_placement<P>(self, placement_fn: P) -> Self
     where
         P: Fn() -> BadgePlacement + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Badged::set_badge_placement(&mut this, placement_fn());
+        self.use_widget_mut(placement_fn, |mut this, placement| {
+            Badged::set_badge_placement(&mut this, placement);
         })
     }
 
@@ -111,26 +104,32 @@ impl NewBadgedTrait for NewWidget<Badged> {
     where
         O: Fn() -> Vec2 + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Badged::set_badge_offset(&mut this, offset_fn());
+        self.use_widget_mut(offset_fn, |mut this, offset| {
+            Badged::set_badge_offset(&mut this, offset);
         })
     }
 
-    fn use_content_mut<U>(self, mut use_fn: U) -> Self
+    fn use_content_mut_val<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
     where
-        U: FnMut(WidgetMut<dyn Widget>) + 'static,
+        Efn: FnMut(WidgetMut<'_, dyn Widget>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_fn(Badged::content_mut(&mut this));
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(Badged::content_mut(&mut this), val);
         })
     }
 
-    fn use_badge_mut<U>(self, mut use_fn: U) -> Self
+    fn use_badge_mut_val<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
     where
-        U: FnMut(Option<WidgetMut<dyn Widget>>) + 'static,
+        Efn: FnMut(Option<WidgetMut<'_, dyn Widget>>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_fn(Badged::badge_mut(&mut this));
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(Badged::badge_mut(&mut this), val);
         })
     }
 }

@@ -23,8 +23,8 @@ impl NewDisclosureButtonExt for NewWidget<DisclosureButton> {
     where
         F: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            DisclosureButton::set_disclosed(&mut this, disclosed());
+        self.use_widget_mut(disclosed, |mut this, disclosed| {
+            DisclosureButton::set_disclosed(&mut this, disclosed);
         })
     }
 }

@@ -1,5 +1,5 @@
 use velona_core::{
-    NewWidgetBaseExt, NewWidgetExt,
+    NewWidgetExt,
     masonry_core::core::{FromDynWidget, Property, PropertyStack, PropertyStackId, Selector},
     reactive::{
         effect::Effect,

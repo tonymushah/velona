@@ -17,11 +17,12 @@ where
             log::warn!("Behold! A hot view is coming...");
             log::trace!("It just came out of the Subsecond Blast Compiler.");
             let new_view = view();
-            box_ref
-                .edit_local_now(|mut this| {
-                    RawBox::set_child(&mut this, new_view);
-                })
-                .consume_with_log_err();
+            todo!();
+            // box_ref
+            //     .edit_local_now(|mut this| {
+            //         RawBox::set_child(&mut this, new_view);
+            //     })
+            //     .consume_with_log_err();
             log::info!("Cooled (I mean reloaded)")
         });
     }

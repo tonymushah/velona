@@ -24,6 +24,34 @@ impl From<ScopedClassesState> for Selector {
 }
 
 impl ScopedClassesState {
+    pub const HOVERED: Self = Self {
+        is_hovered: Some(true),
+        is_active: None,
+        is_disabled: None,
+        has_focus_target: None,
+    };
+
+    pub const ACTIVE: Self = Self {
+        is_hovered: None,
+        is_active: Some(true),
+        is_disabled: None,
+        has_focus_target: None,
+    };
+
+    pub const DISABLED: Self = Self {
+        is_hovered: None,
+        is_active: None,
+        is_disabled: Some(true),
+        has_focus_target: None,
+    };
+
+    pub const FOCUS: Self = Self {
+        is_hovered: None,
+        is_active: None,
+        is_disabled: None,
+        has_focus_target: Some(true),
+    };
+
     pub fn hovered(mut self, is_hovered: bool) -> Self {
         self.is_hovered = Some(is_hovered);
         self
@@ -83,6 +111,12 @@ impl<const N: usize> ScopedClasses<N> {
         Pfn: Fn(Option<P>) -> P + 'static,
     {
         self.prop_opt(state, move |old| Some(prop(old)))
+    }
+    pub fn static_prop<P>(self, state: ScopedClassesState, prop: P) -> Self
+    where
+        P: Property + Clone,
+    {
+        self.prop(state, move |_| prop.clone())
     }
     pub fn propstack_ref(&self) -> &ScopedPropstack {
         &self.prop_stack

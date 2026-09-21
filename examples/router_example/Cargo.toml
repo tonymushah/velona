@@ -1,0 +1,16 @@
+[package]
+name = "router_example"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona = { workspace = true }
+velona_router = { workspace = true }
+velona_renderer_vello = { workspace = true }
+hotpath = { workspace = true, optional=true}
+env_logger = { workspace = true }
+
+[features]
+hotpath = ["dep:hotpath"]
+hotpath-cpu = ["hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]

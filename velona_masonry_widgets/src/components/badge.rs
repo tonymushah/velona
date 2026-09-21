@@ -5,10 +5,9 @@ use masonry::{
 };
 use velona_core::reactive::{computed::Memo, graph::untrack, traits::Get};
 
-use crate::{
-    utils::{badge::badge_count_overflow, memo::unsync_memo},
-    widgets::label::NewLabelExt,
-};
+use velona_core::utils::memo::unsync_memo;
+
+use crate::{utils::badge::badge_count_overflow, widgets::label::NewLabelExt};
 
 /// Similar to [`Badge::with_text`] but with a reactive text
 pub fn badge_with_text<Tf, T>(text: Tf) -> NewWidget<Badge>

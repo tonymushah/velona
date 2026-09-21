@@ -4,13 +4,17 @@ use masonry::{
     properties::ObjectFit,
     widgets::{Image, SizedBox},
 };
-use velona_core::reactive::callback::{Callable, UnsyncCallback};
-use velona_core::reactive::effect::Effect;
-
-use crate::{
-    AnyNewWidget, NewWidgetExt,
-    widget_ref::{EditWidgetLocalError, VelonaWidgetRef},
+use velona_core::{
+    AnyNewWidget,
+    reactive::{
+        callback::{Callable, UnsyncCallback},
+        send_wrapper_ext::SendOption,
+    },
+    widget_ref::UseWidgetFromRefError,
 };
+use velona_core::{reactive::effect::Effect, widget_ref::VelonaWidgetRef};
+
+use crate::NewWidgetExt;
 
 #[derive(Default)]
 // We use a callback here for generics simplicity
@@ -24,9 +28,10 @@ pub struct LazyImageOptions {
 fn change_box_child_element(
     isr: &VelonaWidgetRef<SizedBox>,
     maybe_element: Option<AnyNewWidget>,
-) -> Result<(), EditWidgetLocalError> {
-    isr.edit_local_now(|mut this| {
-        if let Some(element) = maybe_element {
+) -> Result<(), UseWidgetFromRefError> {
+    let maybe_element = SendOption::new_local(maybe_element);
+    isr.edit(move |mut this| {
+        if let Some(element) = maybe_element.take() {
             SizedBox::set_child(&mut this, element);
         } else {
             SizedBox::remove_child(&mut this);
@@ -83,7 +88,7 @@ where
             let image_ref = if let Some(current_image_ref) = maybe_current_image_ref {
                 // If there is already some image showing we just update it.
                 let _ = current_image_ref
-                    .edit_local_now(|mut this| {
+                    .edit(move |mut this| {
                         Image::set_image_data(&mut this, image_data);
                     })
                     .inspect_err(|e| log::error!("Cannot set image data => {e}"));
@@ -103,7 +108,7 @@ where
                     let object_fit = object_fit.try_run(());
                     if let Some(object_fit) = object_fit {
                         let _ = image_ref
-                            .edit_local_now(|mut this| {
+                            .edit(move |mut this| {
                                 this.insert_prop(object_fit);
                             })
                             .inspect_err(|e| log::error!("Cannot set image object fit => {e}"));

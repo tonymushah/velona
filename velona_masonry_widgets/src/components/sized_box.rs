@@ -4,11 +4,9 @@ use masonry::{
     core::{NewWidget, Widget},
     widgets::SizedBox,
 };
+use velona_core::AnyNewWidget;
 
-use crate::{
-    AnyNewWidget,
-    widgets::{ReactiveSingleChildExt, sized_box::NewSizedBoxExt},
-};
+use crate::widgets::{ReactiveSingleChildExt, sized_box::NewSizedBoxExt};
 
 /// The function signature and the signature might sound dumb,
 /// but this allows you to show widgets based on conditional logic, ect...

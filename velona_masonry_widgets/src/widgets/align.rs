@@ -28,8 +28,8 @@ impl NewAlignExt for NewWidget<Align> {
     where
         A: Fn() -> UnitPoint + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Align::set_alignment(&mut this, alignment());
+        self.use_widget_mut(alignment, |mut this, alignment| {
+            Align::set_alignment(&mut this, alignment);
         })
     }
 }

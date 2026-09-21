@@ -1,11 +1,11 @@
 use velona_core::{
-    NewWidgetBaseExt,
-    masonry_core::core::{Property, PropertyStack, PropertyStackId, Selector},
+    NewWidgetBaseExt, NewWidgetExt,
+    masonry_core::core::{FromDynWidget, Property, PropertyStack, PropertyStackId, Selector},
     reactive::{
         effect::Effect,
         owner::on_cleanup,
         signal::{ArcReadSignal, ArcWriteSignal, arc_signal},
-        traits::{GetUntracked, Update},
+        traits::{Get, GetUntracked, Update},
     },
     task::spawn_local_scoped_with_cancellation,
 };
@@ -143,14 +143,17 @@ impl ApplyToNewWidget for ScopedPropstack {
         new_widget: velona_core::masonry_core::core::NewWidget<W>,
     ) -> velona_core::masonry_core::core::NewWidget<W>
     where
-        W: velona_core::masonry_core::core::Widget + ?Sized,
+        W: velona_core::masonry_core::core::Widget + FromDynWidget + ?Sized,
     {
         let id = self.get_id();
-        new_widget.use_reactive_widget_erased_mut(move |mut this| {
-            if let Some(id) = id() {
-                this.ctx.set_property_stack(id);
-            }
-        })
+        new_widget.use_widget_mut(
+            move || id.get(),
+            |mut this, maybe_id| {
+                if let Some(id) = maybe_id {
+                    this.ctx.set_property_stack(id);
+                }
+            },
+        )
     }
 }
 
@@ -158,7 +161,7 @@ impl ApplyToWidgetMut for ScopedPropstack {
     /// You must only call this inside an [`Effect`]
     fn apply_to_widget_mut<W>(&self, mut widget_mut: velona_core::masonry_core::core::WidgetMut<W>)
     where
-        W: velona_core::masonry_core::core::Widget + ?Sized,
+        W: velona_core::masonry_core::core::Widget + FromDynWidget + ?Sized,
     {
         let id = self.get_id();
         if let Some(id) = id() {

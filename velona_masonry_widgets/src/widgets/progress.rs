@@ -23,8 +23,8 @@ impl NewProgressBarExt for NewWidget<ProgressBar> {
     where
         P: Fn() -> Option<f64> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            ProgressBar::set_progress(&mut this, progress());
+        self.use_widget_mut(progress, |mut this, progress| {
+            ProgressBar::set_progress(&mut this, progress);
         })
     }
 }

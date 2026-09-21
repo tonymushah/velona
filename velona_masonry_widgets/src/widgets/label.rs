@@ -7,17 +7,15 @@
 //!
 //! _See the [widget](Label) documentation for more information_.
 
-use std::{
-    mem::{Discriminant, discriminant},
-    sync::{self, Mutex},
-};
+use std::mem::{Discriminant, discriminant};
 
 use crate::widgets::TypedSingleChildWidget;
 use masonry::{
     TextAlign,
-    core::{ArcStr, NewWidget, StyleProperty},
+    core::{ArcStr, NewWidget, StyleProperty, WidgetMut},
     widgets::Label,
 };
+use velona_core::widgets::UseWidgetValResult;
 // use velona_core::widgets::TypedSingleChildWidget;
 
 use super::NewWidgetExt;
@@ -55,9 +53,12 @@ impl NewLabelExt for NewWidget<Label> {
         S: Fn() -> T + 'static,
         T: Into<ArcStr>,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Label::set_text(&mut this, text());
-        })
+        self.use_widget_mut(
+            move || text().into(),
+            move |mut this, text| {
+                Label::set_text(&mut this, text);
+            },
+        )
     }
 
     fn style_opt<S, T>(self, style: S) -> Self
@@ -65,19 +66,12 @@ impl NewLabelExt for NewWidget<Label> {
         S: Fn() -> Option<T> + 'static,
         T: Into<StyleProperty>,
     {
-        self.use_reactive_widget_mut_with_effect_val::<_, Discriminant<StyleProperty>>(
-            move |mut this, old_style| {
-                if let Some(old_style) = old_style {
-                    Label::remove_style(&mut this, old_style);
-                }
-                if let Some(style) = style() {
-                    Label::insert_style(&mut this, style)
-                        .as_ref()
-                        .map(discriminant)
-                } else {
-                    None
-                }
+        self.use_widget_mut_val(
+            move |old_style: Option<Discriminant<StyleProperty>>| {
+                let new_style = style().map(Into::<StyleProperty>::into);
+                get_style_opt_action(old_style, new_style)
             },
+            apply_label_style_actions,
         )
     }
     fn style<S, T>(self, style: S) -> Self
@@ -92,8 +86,8 @@ impl NewLabelExt for NewWidget<Label> {
     where
         S: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Label::set_hint(&mut this, hint());
+        self.use_widget_mut(hint, |mut this, hint| {
+            Label::set_hint(&mut this, hint);
         })
     }
 
@@ -104,9 +98,43 @@ impl NewLabelExt for NewWidget<Label> {
         // {
         //     self.widget = Box::new(self.widget.with_text_alignment(untrack(&align)));
         // }
-        self.use_reactive_widget_mut(move |mut this| {
-            Label::set_text_alignment(&mut this, align());
+        self.use_widget_mut(align, |mut this, align| {
+            Label::set_text_alignment(&mut this, align);
         })
+    }
+}
+
+fn get_style_opt_action(
+    old_style: Option<
+        Discriminant<masonry::parley::StyleProperty<'static, masonry::core::BrushIndex>>,
+    >,
+    new_style: Option<masonry::parley::StyleProperty<'static, masonry::core::BrushIndex>>,
+) -> UseWidgetValResult<
+    Box<[LabelStyleAction]>,
+    Discriminant<masonry::parley::StyleProperty<'static, masonry::core::BrushIndex>>,
+> {
+    let new_style_discrimant = new_style.as_ref().map(discriminant);
+    let mut instructions = Vec::<LabelStyleAction>::with_capacity(2);
+    match (new_style, old_style) {
+        (None, None) => {}
+        (None, Some(old)) => {
+            instructions.push(LabelStyleAction::Remove(old));
+        }
+        (Some(new), None) => {
+            instructions.push(LabelStyleAction::Add(Box::new(new)));
+        }
+        (Some(new), Some(old)) => {
+            if discriminant(&new) == old {
+                instructions.push(LabelStyleAction::Add(Box::new(new)));
+            } else {
+                instructions.push(LabelStyleAction::Remove(old));
+                instructions.push(LabelStyleAction::Add(Box::new(new)));
+            }
+        }
+    }
+    UseWidgetValResult {
+        to_edit_fn: instructions.into_boxed_slice(),
+        to_next_effect_run: new_style_discrimant,
     }
 }
 
@@ -146,9 +174,12 @@ where
         S: Fn() -> T + 'static,
         T: Into<ArcStr>,
     {
-        self.use_child(move |mut this| {
-            Label::set_text(&mut this, text());
-        })
+        self.use_child(
+            move |_| UseWidgetValResult::to_edit_fn(text().into()),
+            |mut this, text| {
+                Label::set_text(&mut this, text);
+            },
+        )
     }
 
     fn style_opt<S, T>(self, style: S) -> Self
@@ -156,25 +187,13 @@ where
         S: Fn() -> Option<T> + 'static,
         T: Into<StyleProperty>,
     {
-        let old_style_data = sync::Arc::new(Mutex::new(None::<Discriminant<StyleProperty>>));
-        self.use_child(move |mut this| {
-            let mut old_style_lock = {
-                if old_style_data.is_poisoned() {
-                    old_style_data.clear_poison();
-                }
-                old_style_data.lock().unwrap()
-            };
-            if let Some(old_style) = *old_style_lock {
-                Label::remove_style(&mut this, old_style);
-            }
-            if let Some(style) = style() {
-                *old_style_lock = Label::insert_style(&mut this, style)
-                    .as_ref()
-                    .map(discriminant);
-            } else {
-                *old_style_lock = None;
-            }
-        })
+        self.use_child(
+            move |old_style: Option<Discriminant<StyleProperty>>| {
+                let new_style = style().map(Into::<StyleProperty>::into);
+                get_style_opt_action(old_style, new_style)
+            },
+            apply_label_style_actions,
+        )
     }
     fn style<S, T>(self, style: S) -> Self
     where
@@ -188,9 +207,12 @@ where
     where
         S: Fn() -> bool + 'static,
     {
-        self.use_child(move |mut this| {
-            Label::set_hint(&mut this, hint());
-        })
+        self.use_child(
+            move |_| UseWidgetValResult::to_edit_fn(hint()),
+            |mut this, hint| {
+                Label::set_hint(&mut this, hint);
+            },
+        )
     }
 
     fn text_alignment<S>(self, align: S) -> Self
@@ -200,8 +222,29 @@ where
         // {
         //     self.widget = Box::new(self.widget.with_text_alignment(untrack(&align)));
         // }
-        self.use_child(move |mut this| {
-            Label::set_text_alignment(&mut this, align());
-        })
+        self.use_child(
+            move |_| UseWidgetValResult::to_edit_fn(align()),
+            |mut this, align| {
+                Label::set_text_alignment(&mut this, align);
+            },
+        )
+    }
+}
+
+enum LabelStyleAction {
+    Add(Box<StyleProperty>),
+    Remove(Discriminant<StyleProperty>),
+}
+
+fn apply_label_style_actions(mut this: WidgetMut<'_, Label>, actions: Box<[LabelStyleAction]>) {
+    for action in actions {
+        match action {
+            LabelStyleAction::Add(style_property) => {
+                Label::insert_style(&mut this, *style_property);
+            }
+            LabelStyleAction::Remove(discriminant) => {
+                Label::remove_style(&mut this, discriminant);
+            }
+        }
     }
 }

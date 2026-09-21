@@ -37,17 +37,23 @@ impl NewSelectorExt for NewWidget<Selector> {
     where
         O: Fn() -> Vec<String> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Selector::set_options(&mut this, options());
-        })
+        self.use_widget_mut(
+            move || options(),
+            |mut this, options| {
+                Selector::set_options(&mut this, options);
+            },
+        )
     }
 
     fn select_option<O>(self, selected_option: O) -> Self
     where
         O: Fn() -> usize + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Selector::select_option(&mut this, selected_option());
-        })
+        self.use_widget_mut(
+            move || selected_option(),
+            |mut this, selected_option| {
+                Selector::select_option(&mut this, selected_option);
+            },
+        )
     }
 }

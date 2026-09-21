@@ -10,9 +10,8 @@ use masonry::{
     peniko::ImageBrush,
     widgets::Image,
 };
-use velona_core::reactive::effect::Effect;
 
-use crate::{NewWidgetExt, utils::ConsumeResult};
+use crate::NewWidgetExt;
 
 /// A [`NewWidget<Image>`] trait extension
 ///
@@ -46,30 +45,21 @@ impl NewImageExt for NewWidget<Image> {
         F: Fn() -> I + 'static,
         I: Into<ImageBrush>,
     {
-        let wref = self.create_velona_ref().disarm();
-        Effect::new(move || {
-            let new_image = img();
-            wref.edit_local_now(|mut widget_mut| {
-                Image::set_image_data(&mut widget_mut, new_image);
-            })
-            .consume_with_log_err();
-        });
-        self
+        self.use_widget_mut(
+            move || img().into(),
+            |mut this, img| {
+                Image::set_image_data(&mut this, img);
+            },
+        )
     }
 
     fn decorative<F>(self, is_decorative: F) -> Self
     where
         F: Fn() -> bool + 'static,
     {
-        let wref = self.create_velona_ref().disarm();
-        Effect::new(move || {
-            let decorative = is_decorative();
-            wref.edit_local_now(|mut widget_mut| {
-                Image::set_decorative(&mut widget_mut, decorative);
-            })
-            .consume_with_log_err();
-        });
-        self
+        self.use_widget_mut(is_decorative, |mut this, is_decorative| {
+            Image::set_decorative(&mut this, is_decorative);
+        })
     }
 
     fn with_alt_text<F, S>(self, alt_text: F) -> Self
@@ -77,14 +67,11 @@ impl NewImageExt for NewWidget<Image> {
         F: Fn() -> Option<S> + 'static,
         S: Into<ArcStr> + 'static,
     {
-        let wref = self.create_velona_ref().disarm();
-        Effect::new(move || {
-            let alt_text = alt_text();
-            wref.edit_local_now(|mut widget_mut| {
-                Image::set_alt_text(&mut widget_mut, alt_text);
-            })
-            .consume_with_log_err();
-        });
-        self
+        self.use_widget_mut(
+            move || alt_text().map(Into::<ArcStr>::into),
+            move |mut this, alt_text| {
+                Image::set_alt_text(&mut this, alt_text);
+            },
+        )
     }
 }

@@ -7,12 +7,15 @@
 //!
 //! _See the [widget](Label) documentation for more information_.
 
-use std::mem::{Discriminant, discriminant};
+use std::mem::Discriminant;
 
-use crate::widgets::TypedSingleChildWidget;
+use crate::{
+    utils::text_style::{apply_label_style_actions, get_style_opt_action},
+    widgets::TypedSingleChildWidget,
+};
 use masonry::{
     TextAlign,
-    core::{ArcStr, NewWidget, StyleProperty, WidgetMut},
+    core::{ArcStr, NewWidget, StyleProperty},
     widgets::Label,
 };
 use velona_core::widgets::UseWidgetValResult;
@@ -101,40 +104,6 @@ impl NewLabelExt for NewWidget<Label> {
         self.use_widget_mut(align, |mut this, align| {
             Label::set_text_alignment(&mut this, align);
         })
-    }
-}
-
-fn get_style_opt_action(
-    old_style: Option<
-        Discriminant<masonry::parley::StyleProperty<'static, masonry::core::BrushIndex>>,
-    >,
-    new_style: Option<masonry::parley::StyleProperty<'static, masonry::core::BrushIndex>>,
-) -> UseWidgetValResult<
-    Box<[LabelStyleAction]>,
-    Discriminant<masonry::parley::StyleProperty<'static, masonry::core::BrushIndex>>,
-> {
-    let new_style_discrimant = new_style.as_ref().map(discriminant);
-    let mut instructions = Vec::<LabelStyleAction>::with_capacity(2);
-    match (new_style, old_style) {
-        (None, None) => {}
-        (None, Some(old)) => {
-            instructions.push(LabelStyleAction::Remove(old));
-        }
-        (Some(new), None) => {
-            instructions.push(LabelStyleAction::Add(Box::new(new)));
-        }
-        (Some(new), Some(old)) => {
-            if discriminant(&new) == old {
-                instructions.push(LabelStyleAction::Add(Box::new(new)));
-            } else {
-                instructions.push(LabelStyleAction::Remove(old));
-                instructions.push(LabelStyleAction::Add(Box::new(new)));
-            }
-        }
-    }
-    UseWidgetValResult {
-        to_edit_fn: instructions.into_boxed_slice(),
-        to_next_effect_run: new_style_discrimant,
     }
 }
 
@@ -228,23 +197,5 @@ where
                 Label::set_text_alignment(&mut this, align);
             },
         )
-    }
-}
-
-enum LabelStyleAction {
-    Add(Box<StyleProperty>),
-    Remove(Discriminant<StyleProperty>),
-}
-
-fn apply_label_style_actions(mut this: WidgetMut<'_, Label>, actions: Box<[LabelStyleAction]>) {
-    for action in actions {
-        match action {
-            LabelStyleAction::Add(style_property) => {
-                Label::insert_style(&mut this, *style_property);
-            }
-            LabelStyleAction::Remove(discriminant) => {
-                Label::remove_style(&mut this, discriminant);
-            }
-        }
     }
 }

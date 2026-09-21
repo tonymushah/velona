@@ -7,7 +7,7 @@
 //!
 //! _See the [widget](Prose) documentation for more information_.
 
-use std::mem::{Discriminant, discriminant};
+use std::mem::Discriminant;
 
 use masonry::{
     TextAlign,
@@ -17,8 +17,13 @@ use masonry::{
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
+use velona_core::widgets::UseWidgetValResult;
 
-use crate::{NewWidgetExt, widgets::text_area::NewTextAreaExt};
+use crate::{
+    NewWidgetExt,
+    utils::text_style::{apply_text_style_actions, get_style_opt_action},
+    widgets::text_area::NewTextAreaExt,
+};
 
 /// A [new](NewWidget) [`Prose`] trait extension.
 pub trait NewProseExt {
@@ -30,12 +35,15 @@ pub trait NewProseExt {
         C: Fn() -> bool + 'static;
     /// Use the underlying text area.
     ///
-    /// It is worth noting that the `use_fn` will run inside an [`Effect`].
+    /// It is worth noting that only the `use_fn` will run inside an [`Effect`].
     ///
     /// Used to modify most properties of the text.
-    fn use_text_mut<T>(self, use_fn: T) -> Self
+    fn use_text_mut<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        T: FnMut(WidgetMut<TextArea<false>>) + 'static;
+        Efn: FnMut(WidgetMut<'_, TextArea<false>>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
 }
 
 impl NewProseExt for NewWidget<Prose> {
@@ -43,17 +51,20 @@ impl NewProseExt for NewWidget<Prose> {
     where
         C: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Prose::set_clip(&mut this, clip());
+        self.use_widget_mut(clip, move |mut this, clip| {
+            Prose::set_clip(&mut this, clip);
         })
     }
 
-    fn use_text_mut<T>(self, mut use_fn: T) -> Self
+    fn use_text_mut<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
     where
-        T: FnMut(WidgetMut<TextArea<false>>) + 'static,
+        Efn: FnMut(WidgetMut<'_, TextArea<false>>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_fn(Prose::text_mut(&mut this));
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(Prose::text_mut(&mut this), val);
         })
     }
 }
@@ -72,20 +83,12 @@ impl NewTextAreaExt<false> for NewWidget<Prose> {
         S: Fn() -> Option<T> + 'static,
         T: Into<StyleProperty>,
     {
-        self.use_reactive_widget_mut_with_effect_val::<_, Discriminant<StyleProperty>>(
-            move |mut this, old_style| {
-                let mut this = Prose::text_mut(&mut this);
-                if let Some(old_style) = old_style {
-                    TextArea::remove_style(&mut this, old_style);
-                }
-                if let Some(style) = style() {
-                    TextArea::insert_style(&mut this, style)
-                        .as_ref()
-                        .map(discriminant)
-                } else {
-                    None
-                }
+        self.use_text_mut(
+            move |old_style: Option<Discriminant<StyleProperty>>| {
+                let new_style = style().map(Into::<StyleProperty>::into);
+                get_style_opt_action(old_style, new_style)
             },
+            apply_text_style_actions,
         )
     }
 
@@ -93,44 +96,59 @@ impl NewTextAreaExt<false> for NewWidget<Prose> {
     where
         S: Fn() -> bool + 'static,
     {
-        self.use_text_mut(move |mut this| {
-            TextArea::set_hint(&mut this, hint());
-        })
+        self.use_text_mut(
+            move |_| UseWidgetValResult::to_edit_fn(hint()),
+            |mut this, hint| {
+                TextArea::set_hint(&mut this, hint);
+            },
+        )
     }
 
     fn text_alignment<S>(self, align: S) -> Self
     where
         S: Fn() -> TextAlign + 'static,
     {
-        self.use_text_mut(move |mut this| {
-            TextArea::set_text_alignment(&mut this, align());
-        })
+        self.use_text_mut(
+            move |_| UseWidgetValResult::to_edit_fn(align()),
+            |mut this, align| {
+                TextArea::set_text_alignment(&mut this, align);
+            },
+        )
     }
 
     fn word_wrap<W>(self, wrap_words: W) -> Self
     where
         W: Fn() -> bool + 'static,
     {
-        self.use_text_mut(move |mut this| {
-            TextArea::set_word_wrap(&mut this, wrap_words());
-        })
+        self.use_text_mut(
+            move |_| UseWidgetValResult::to_edit_fn(wrap_words()),
+            |mut this, wrap_words| {
+                TextArea::set_word_wrap(&mut this, wrap_words);
+            },
+        )
     }
 
     fn insert_newline<I>(self, insert_newline: I) -> Self
     where
         I: Fn() -> InsertNewline + 'static,
     {
-        self.use_text_mut(move |mut this| {
-            TextArea::set_insert_newline(&mut this, insert_newline());
-        })
+        self.use_text_mut(
+            move |_| UseWidgetValResult::to_edit_fn(insert_newline()),
+            |mut this, insert_newline| {
+                TextArea::set_insert_newline(&mut this, insert_newline);
+            },
+        )
     }
 
     fn text<T>(self, text: T) -> Self
     where
         T: Fn() -> String + 'static,
     {
-        self.use_text_mut(move |mut this| {
-            TextArea::reset_text(&mut this, text().as_str());
-        })
+        self.use_text_mut(
+            move |_| UseWidgetValResult::to_edit_fn(text()),
+            |mut this, text| {
+                TextArea::reset_text(&mut this, &text);
+            },
+        )
     }
 }

@@ -12,6 +12,7 @@ use masonry::{
     core::{ArcStr, NewWidget, WidgetMut},
     widgets::{CollapsePanel, DisclosureButton, Label},
 };
+use velona_core::widgets::UseWidgetValResult;
 
 use crate::NewWidgetExt;
 
@@ -38,16 +39,22 @@ pub trait NewCollapsePanelExt {
         T: Into<ArcStr>;
     /// Use the [discolure button](CollapsePanel::disclosure_button_mut).
     ///
-    /// It is worth noting that this function will run inside an [`Effect`] _which means that it will re-run on signal changes_.
-    fn use_disclosure_button<F>(self, use_fn: F) -> Self
+    /// It is worth noting that only the `val_fn` function will run inside an [`Effect`] _which means that it will re-run on signal changes_.
+    fn use_disclosure_button<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        F: FnMut(WidgetMut<'_, DisclosureButton>) + 'static;
+        Efn: FnMut(WidgetMut<'_, DisclosureButton>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
     /// Use the [header label](CollapsePanel::header_label_mut).
     ///
-    /// It is worth noting that this function will run inside an [`Effect`].
-    fn use_header_label<F>(self, use_fn: F) -> Self
+    /// It is worth noting that only the `val_fn` function will run inside an [`Effect`].
+    fn use_header_label<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        F: FnMut(WidgetMut<'_, Label>) + 'static;
+        Efn: FnMut(WidgetMut<'_, Label>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
 }
 
 impl NewCollapsePanelExt for NewWidget<CollapsePanel> {
@@ -55,8 +62,8 @@ impl NewCollapsePanelExt for NewWidget<CollapsePanel> {
     where
         C: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            CollapsePanel::set_collapsed(&mut this, collapsed());
+        self.use_widget_mut(collapsed, |mut this, collapsed| {
+            CollapsePanel::set_collapsed(&mut this, collapsed);
         })
     }
 
@@ -65,26 +72,35 @@ impl NewCollapsePanelExt for NewWidget<CollapsePanel> {
         Tf: Fn() -> T + 'static,
         T: Into<ArcStr>,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            CollapsePanel::set_text(&mut this, text().into());
+        self.use_widget_mut(
+            move || text().into(),
+            |mut this, text| {
+                CollapsePanel::set_text(&mut this, text);
+            },
+        )
+    }
+
+    fn use_disclosure_button<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
+    where
+        Efn: FnMut(WidgetMut<'_, DisclosureButton>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+    {
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(CollapsePanel::disclosure_button_mut(&mut this), val);
         })
     }
 
-    fn use_disclosure_button<F>(self, mut use_fn: F) -> Self
+    fn use_header_label<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        F: FnMut(WidgetMut<'_, DisclosureButton>) + 'static,
+        Efn: FnMut(WidgetMut<'_, Label>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_fn(CollapsePanel::disclosure_button_mut(&mut this));
-        })
-    }
-
-    fn use_header_label<F>(self, mut use_fn: F) -> Self
-    where
-        F: FnMut(WidgetMut<'_, Label>) + 'static,
-    {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_fn(CollapsePanel::header_label_mut(&mut this))
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(CollapsePanel::header_label_mut(&mut this), val);
         })
     }
 }

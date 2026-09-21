@@ -45,17 +45,23 @@ impl NewScrollBarExt for NewWidget<ScrollBar> {
     where
         S: Fn() -> ScrollBarSizes + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            sizes().apply(&mut this);
-        })
+        self.use_widget_mut(
+            move || sizes(),
+            |mut this, sizes| {
+                sizes.apply(&mut this);
+            },
+        )
     }
 
     fn content_size<S>(self, content_size: S) -> Self
     where
         S: Fn() -> f64 + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            ScrollBar::set_content_size(&mut this, content_size());
-        })
+        self.use_widget_mut(
+            move || content_size(),
+            |mut this, content_size| {
+                ScrollBar::set_content_size(&mut this, content_size);
+            },
+        )
     }
 }

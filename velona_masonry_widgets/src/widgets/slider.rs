@@ -69,8 +69,8 @@ impl NewSliderExt for NewWidget<Slider> {
     where
         V: Fn() -> f64 + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Slider::set_value(&mut this, value());
+        self.use_widget_mut(value, |mut this, value| {
+            Slider::set_value(&mut this, value);
         })
     }
 
@@ -78,8 +78,8 @@ impl NewSliderExt for NewWidget<Slider> {
     where
         S: Fn() -> Option<f64> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Slider::set_step(&mut this, step());
+        self.use_widget_mut(step, |mut this, step| {
+            Slider::set_step(&mut this, step);
         })
     }
 
@@ -87,8 +87,8 @@ impl NewSliderExt for NewWidget<Slider> {
     where
         R: Fn() -> SliderRange + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            range().apply(&mut this);
+        self.use_widget_mut(range, |mut this, range| {
+            range.apply(&mut this);
         })
     }
 }

@@ -30,8 +30,8 @@ impl NewGridExt for NewWidget<Grid> {
     where
         C: Fn() -> Vec<GridTrackSize> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Grid::set_columns(&mut this, track_sizes());
+        self.use_widget_mut(track_sizes, |mut this, track_sizes| {
+            Grid::set_columns(&mut this, track_sizes);
         })
     }
 
@@ -39,8 +39,8 @@ impl NewGridExt for NewWidget<Grid> {
     where
         C: Fn() -> Vec<GridTrackSize> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Grid::set_rows(&mut this, track_sizes());
+        self.use_widget_mut(track_sizes, |mut this, track_sizes| {
+            Grid::set_rows(&mut this, track_sizes);
         })
     }
 }

@@ -5843,6 +5843,7 @@ dependencies = [
  "thiserror 2.0.20",
  "velona_core",
  "velona_core_child",
+ "velona_masonry_widgets",
  "velona_scoped_styling",
 ]
 
@@ -5890,6 +5891,19 @@ name = "velona_executor"
 version = "0.1.0"
 dependencies = [
  "log",
+]
+
+[[package]]
+name = "velona_masonry_widgets"
+version = "0.1.0"
+dependencies = [
+ "hotpath",
+ "log",
+ "masonry",
+ "resvg",
+ "thiserror 2.0.20",
+ "velona_core",
+ "velona_core_child",
 ]
 
 [[package]]

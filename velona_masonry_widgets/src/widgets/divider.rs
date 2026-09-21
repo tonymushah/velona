@@ -10,9 +10,12 @@ use masonry::{
     layout::Length,
     widgets::{DashFit, Divider, Placement},
 };
+use velona_core::AnyNewWidget;
+#[cfg(doc)]
 use velona_core::reactive::effect::Effect;
+use velona_core::widgets::UseWidgetValResult;
 
-use crate::{AnyNewWidget, NewWidgetExt, utils::ConsumeResult};
+use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Divider`] trait extension.
 // TODO add example
@@ -41,7 +44,7 @@ pub trait NewDividerExt {
     /// Panics if `dash_pattern` contains an uneven number of entries of 3 or more and debug assertions are enabled.
     fn dash_pattern<D>(self, dash_pattern: D) -> Self
     where
-        D: Fn() -> Vec<Length> + 'static;
+        D: Fn() -> Box<[Length]> + 'static;
     /// Sets the `cap` used both for start and end _reactively_.
     ///
     /// Use [`start_cap`](Self::start_cap) or [`ending_cap`](Self::ending_cap) to set different edge caps.
@@ -96,10 +99,13 @@ pub trait NewDividerExt {
         P: Fn() -> Length + 'static;
     /// Use the [divider `content`](Divider::content_mut).
     ///
-    /// It worth noting that the `use_content_fn` function will run inside an [`Effect`].
-    fn use_content<C>(self, use_content_fn: C) -> Self
+    /// It worth noting that the only `val_fn` function will run inside an [`Effect`].
+    fn use_content<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        C: FnMut(Option<WidgetMut<'_, dyn Widget>>) + 'static;
+        Efn: FnMut(Option<WidgetMut<'_, dyn Widget>>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
 }
 
 impl NewDividerExt for NewWidget<Divider> {
@@ -107,8 +113,8 @@ impl NewDividerExt for NewWidget<Divider> {
     where
         A: Fn() -> Axis + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Divider::set_direction(&mut this, axis());
+        self.use_widget_mut(axis, |mut this, axis| {
+            Divider::set_direction(&mut this, axis);
         })
     }
 
@@ -116,8 +122,8 @@ impl NewDividerExt for NewWidget<Divider> {
     where
         T: Fn() -> Option<Length> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            if let Some(thickness) = thickness() {
+        self.use_widget_mut(thickness, |mut this, maybe_thickness| {
+            if let Some(thickness) = maybe_thickness {
                 Divider::set_thickness(&mut this, thickness);
             } else {
                 Divider::set_hairline(&mut this);
@@ -129,17 +135,17 @@ impl NewDividerExt for NewWidget<Divider> {
     where
         D: Fn() -> DashFit + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Divider::set_dash_fit(&mut this, dash_fit());
+        self.use_widget_mut(dash_fit, |mut this, dash_fit| {
+            Divider::set_dash_fit(&mut this, dash_fit);
         })
     }
 
     fn dash_pattern<D>(self, dash_pattern: D) -> Self
     where
-        D: Fn() -> Vec<Length> + 'static,
+        D: Fn() -> Box<[Length]> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Divider::set_dash_pattern(&mut this, &dash_pattern());
+        self.use_widget_mut(dash_pattern, |mut this, dash_pattern| {
+            Divider::set_dash_pattern(&mut this, &dash_pattern);
         })
     }
 
@@ -147,8 +153,8 @@ impl NewDividerExt for NewWidget<Divider> {
     where
         C: Fn() -> Cap + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Divider::set_cap(&mut this, cap());
+        self.use_widget_mut(cap, |mut this, cap| {
+            Divider::set_cap(&mut this, cap);
         })
     }
 
@@ -156,8 +162,8 @@ impl NewDividerExt for NewWidget<Divider> {
     where
         C: Fn() -> Cap + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Divider::set_start_cap(&mut this, cap());
+        self.use_widget_mut(cap, |mut this, cap| {
+            Divider::set_start_cap(&mut this, cap);
         })
     }
 
@@ -165,8 +171,8 @@ impl NewDividerExt for NewWidget<Divider> {
     where
         C: Fn() -> Cap + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Divider::set_end_cap(&mut this, cap());
+        self.use_widget_mut(cap, |mut this, cap| {
+            Divider::set_end_cap(&mut this, cap);
         })
     }
 
@@ -174,8 +180,8 @@ impl NewDividerExt for NewWidget<Divider> {
     where
         P: Fn() -> Placement + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Divider::set_placement(&mut this, placement());
+        self.use_widget_mut(placement, |mut this, placement| {
+            Divider::set_placement(&mut this, placement);
         })
     }
 
@@ -183,37 +189,33 @@ impl NewDividerExt for NewWidget<Divider> {
     where
         C: Fn() -> Option<AnyNewWidget> + 'static,
     {
-        let this_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let content = content();
-            this_ref
-                .edit_local_now(move |mut this| {
-                    if let Some(content) = content {
-                        Divider::set_content(&mut this, content);
-                    } else {
-                        Divider::clear_content(&mut this);
-                    }
-                })
-                .consume_with_log_err();
-        });
-        self
+        self.use_widget_mut(content, |mut this, maybe_content| {
+            if let Some(content) = maybe_content {
+                Divider::set_content(&mut this, content);
+            } else {
+                Divider::clear_content(&mut this);
+            }
+        })
     }
 
     fn pad<P>(self, pad: P) -> Self
     where
         P: Fn() -> Length + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Divider::set_pad(&mut this, pad());
+        self.use_widget_mut(pad, |mut this, pad| {
+            Divider::set_pad(&mut this, pad);
         })
     }
 
-    fn use_content<C>(self, mut use_content_fn: C) -> Self
+    fn use_content<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
     where
-        C: FnMut(Option<WidgetMut<'_, dyn Widget>>) + 'static,
+        Efn: FnMut(Option<WidgetMut<'_, dyn Widget>>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_content_fn(Divider::content_mut(&mut this));
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(Divider::content_mut(&mut this), val);
         })
     }
 }

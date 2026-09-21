@@ -37,8 +37,8 @@ impl NewFlexExt for NewWidget<Flex> {
     where
         D: Fn() -> Axis + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Flex::set_direction(&mut this, direction());
+        self.use_widget_mut(direction, |mut this, direction| {
+            Flex::set_direction(&mut this, direction);
         })
     }
 
@@ -46,8 +46,8 @@ impl NewFlexExt for NewWidget<Flex> {
     where
         C: Fn() -> CrossAxisAlignment + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Flex::set_cross_axis_alignment(&mut this, alignment());
+        self.use_widget_mut(alignment, |mut this, alignment| {
+            Flex::set_cross_axis_alignment(&mut this, alignment);
         })
     }
 
@@ -55,8 +55,8 @@ impl NewFlexExt for NewWidget<Flex> {
     where
         M: Fn() -> MainAxisAlignment + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Flex::set_main_axis_alignment(&mut this, alignment());
+        self.use_widget_mut(alignment, |mut this, alignment| {
+            Flex::set_main_axis_alignment(&mut this, alignment);
         })
     }
 }

@@ -47,8 +47,8 @@ impl NewPaginationExt for NewWidget<Pagination> {
     where
         C: Fn() -> usize + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Pagination::set_page_count(&mut this, page_count());
+        self.use_widget_mut(page_count, |mut this, page_count| {
+            Pagination::set_page_count(&mut this, page_count);
         })
     }
 
@@ -56,8 +56,8 @@ impl NewPaginationExt for NewWidget<Pagination> {
     where
         C: Fn() -> usize + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Pagination::set_active_page(&mut this, active_page());
+        self.use_widget_mut(active_page, |mut this, active_page| {
+            Pagination::set_active_page(&mut this, active_page);
         })
     }
 
@@ -65,8 +65,8 @@ impl NewPaginationExt for NewWidget<Pagination> {
     where
         C: Fn() -> u8 + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Pagination::set_buttons_start(&mut this, buttons_start());
+        self.use_widget_mut(buttons_start, |mut this, buttons_start| {
+            Pagination::set_buttons_start(&mut this, buttons_start);
         })
     }
 
@@ -74,8 +74,8 @@ impl NewPaginationExt for NewWidget<Pagination> {
     where
         C: Fn() -> u8 + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Pagination::set_buttons_end(&mut this, buttons_end());
+        self.use_widget_mut(buttons_end, |mut this, buttons_end| {
+            Pagination::set_buttons_end(&mut this, buttons_end);
         })
     }
 
@@ -83,8 +83,8 @@ impl NewPaginationExt for NewWidget<Pagination> {
     where
         C: Fn() -> u8 + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Pagination::set_buttons_total(&mut this, buttons_total());
+        self.use_widget_mut(buttons_total, |mut this, buttons_total| {
+            Pagination::set_buttons_total(&mut this, buttons_total);
         })
     }
 }

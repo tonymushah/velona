@@ -1,5 +1,6 @@
 use masonry_core::core::Widget;
 use masonry_raw_box::RawBox;
+use reactive_graph::owner::ArenaItem;
 
 use crate::{AnyNewWidget, NewWidgetExt, subsecond::hot_local_effect, utils::ConsumeResult};
 
@@ -16,13 +17,17 @@ where
         hot_local_effect(move || {
             log::warn!("Behold! A hot view is coming...");
             log::trace!("It just came out of the Subsecond Blast Compiler.");
-            let new_view = view();
-            todo!();
-            // box_ref
-            //     .edit_local_now(|mut this| {
-            //         RawBox::set_child(&mut this, new_view);
-            //     })
-            //     .consume_with_log_err();
+            let new_view = ArenaItem::new_local(Some(view()));
+
+            box_ref
+                .edit(move |mut this| {
+                    let Some(child) = new_view.try_update_value(|child| child.take()).flatten()
+                    else {
+                        return;
+                    };
+                    RawBox::set_child(&mut this, child);
+                })
+                .consume_with_log_err();
             log::info!("Cooled (I mean reloaded)")
         });
     }

@@ -5,7 +5,7 @@
 //!
 //! _See the [widget](TextArea) documentation for more information_.
 
-use std::mem::{Discriminant, discriminant};
+use std::mem::Discriminant;
 
 use masonry::{
     TextAlign,
@@ -13,7 +13,10 @@ use masonry::{
     widgets::{InsertNewline, TextArea},
 };
 
-use crate::NewWidgetExt;
+use crate::{
+    NewWidgetExt,
+    utils::text_style::{apply_text_style_actions, get_style_opt_action},
+};
 
 /// A [new](NewWidget) [`TextArea`] trait extension.
 pub trait NewTextAreaExt<const USER_EDITABLE: bool> {
@@ -87,19 +90,12 @@ impl<const USER_EDITABLE: bool> NewTextAreaExt<USER_EDITABLE>
         S: Fn() -> Option<T> + 'static,
         T: Into<StyleProperty>,
     {
-        self.use_reactive_widget_mut_with_effect_val::<_, Discriminant<StyleProperty>>(
-            move |mut this, old_style| {
-                if let Some(old_style) = old_style {
-                    TextArea::remove_style(&mut this, old_style);
-                }
-                if let Some(style) = style() {
-                    TextArea::insert_style(&mut this, style)
-                        .as_ref()
-                        .map(discriminant)
-                } else {
-                    None
-                }
+        self.use_widget_mut_val(
+            move |old_style: Option<Discriminant<StyleProperty>>| {
+                let new_style = style().map(Into::<StyleProperty>::into);
+                get_style_opt_action(old_style, new_style)
             },
+            apply_text_style_actions,
         )
     }
 
@@ -107,35 +103,44 @@ impl<const USER_EDITABLE: bool> NewTextAreaExt<USER_EDITABLE>
     where
         S: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            TextArea::set_hint(&mut this, hint());
-        })
+        self.use_widget_mut(
+            move || hint(),
+            |mut this, hint| {
+                TextArea::set_hint(&mut this, hint);
+            },
+        )
     }
 
     fn text_alignment<S>(self, align: S) -> Self
     where
         S: Fn() -> TextAlign + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            TextArea::set_text_alignment(&mut this, align());
-        })
+        self.use_widget_mut(
+            move || align(),
+            |mut this, align| {
+                TextArea::set_text_alignment(&mut this, align);
+            },
+        )
     }
 
     fn word_wrap<W>(self, wrap_words: W) -> Self
     where
         W: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            TextArea::set_word_wrap(&mut this, wrap_words());
-        })
+        self.use_widget_mut(
+            move || wrap_words(),
+            |mut this, wrap_words| {
+                TextArea::set_word_wrap(&mut this, wrap_words);
+            },
+        )
     }
 
     fn insert_newline<I>(self, insert_newline: I) -> Self
     where
         I: Fn() -> InsertNewline + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            TextArea::set_insert_newline(&mut this, insert_newline());
+        self.use_widget_mut(insert_newline, |mut this, insert_newline| {
+            TextArea::set_insert_newline(&mut this, insert_newline);
         })
     }
 
@@ -143,8 +148,8 @@ impl<const USER_EDITABLE: bool> NewTextAreaExt<USER_EDITABLE>
     where
         T: Fn() -> String + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            TextArea::reset_text(&mut this, text().as_str());
+        self.use_widget_mut(text, |mut this, text| {
+            TextArea::reset_text(&mut this, &text);
         })
     }
 }

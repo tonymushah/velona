@@ -78,8 +78,7 @@ where
     W: WindowRenderer,
 {
     pub fn on_memory_warning(&mut self) {
-        self.window_event_listeners
-            .cleanup(&mut self.render_root.tree);
+        self.window_event_listeners.cleanup(&self.render_root.tree);
         self.window_event_listeners.shrink_to_fit();
     }
     pub(crate) fn new<V>(args: WindowNew<'_, V, W>) -> Result<Self, crate::error::Error>

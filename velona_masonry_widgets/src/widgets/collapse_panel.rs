@@ -92,7 +92,7 @@ impl NewCollapsePanelExt for NewWidget<CollapsePanel> {
         })
     }
 
-    fn use_header_label<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
+    fn use_header_label<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
     where
         Efn: FnMut(WidgetMut<'_, Label>, V) + 'static,
         V: 'static,

@@ -1,6 +1,7 @@
 use std::any::type_name;
 
 use velona_core::masonry_core::core::FromDynWidget;
+use velona_core::widgets::UseWidgetValResult;
 use velona_core::{
     AnyNewWidget,
     masonry_core::core::{NewWidget, Widget, WidgetMut},
@@ -10,18 +11,26 @@ use velona_core::{
 ///
 /// This trait will unify all of those single child widgets "mutations" (aka `child_mut`) _instead of making duplicates method for those_.
 pub trait SingleChildWidget {
-    fn use_child_erased<C>(self, use_child_fn: C) -> Self
+    #[track_caller]
+    fn use_child_erased<Vfn, Cfn, V, O>(self, val_fn: Vfn, edit_child_fn: Cfn) -> Self
     where
-        C: FnMut(WidgetMut<'_, dyn Widget>) + 'static;
-    fn use_child_casted<C, W>(self, mut use_child_fn: C) -> Self
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+        Cfn: FnMut(WidgetMut<'_, dyn Widget>, V) + 'static;
+    #[track_caller]
+    fn use_child_casted<Vfn, Cfn, V, O, W>(self, val_fn: Vfn, mut edit_child_fn: Cfn) -> Self
     where
-        C: FnMut(WidgetMut<'_, W>) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+        Cfn: FnMut(WidgetMut<'_, W>, V) + 'static,
         W: Widget + 'static,
         Self: Sized,
     {
-        self.use_child_erased(move |mut child| {
+        self.use_child_erased(val_fn, move |mut child, val| {
             if let Some(child) = child.try_downcast::<W>() {
-                use_child_fn(child);
+                edit_child_fn(child, val);
             } else {
                 log::warn!(
                     "Invalid downcast. (expected {}, found {:?})",
@@ -40,7 +49,10 @@ mod single_impl {
     use masonry_core::core::{NewWidget, Widget, WidgetMut};
     #[cfg(doc)]
     use velona_core::reactive::effect::Effect;
-    use velona_core::{masonry_core, widgets::NewWidgetExt};
+    use velona_core::{
+        masonry_core,
+        widgets::{NewWidgetExt, UseWidgetValResult},
+    };
 
     macro_rules! impl_single_widget {
         ($($widget:ty,)*) => {
@@ -48,11 +60,17 @@ mod single_impl {
                 #[cfg_attr(docsrs, doc(feature = "masonry_child_widget_impls"))]
                 impl SingleChildWidget for NewWidget<$widget> {
                     /// It is worth mentioning that the `use_child_fn` will run inside an [`Effect`].
-                    fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
+                    fn use_child_erased<Vfn, Cfn, V, O>(self, val_fn: Vfn, mut edit_child_fn: Cfn) -> Self
                     where
-                        C: FnMut(WidgetMut<'_, dyn Widget>) + 'static
+                        V: 'static,
+                        O: 'static,
+                        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+                        Cfn: FnMut(WidgetMut<'_, dyn Widget>, V) + 'static
                     {
-                        self.use_reactive_widget_mut(move |mut this| use_child_fn(<$widget>::child_mut(&mut this)))
+                        self.use_widget_mut_val(val_fn, move|mut this, val| {
+                            let child = <$widget>::child_mut(&mut this);
+                            edit_child_fn(child, val);
+                        })
                     }
                 }
             )*
@@ -72,21 +90,16 @@ mod single_impl {
 
     #[cfg_attr(docsrs, doc(feature = "masonry_child_widget_impls"))]
     impl SingleChildWidget for NewWidget<SizedBox> {
-        /// It worth noting that the `use_child_fn` might not re-run properly
-        /// if there are no child inside the [`SizedBox`].
-        ///
-        /// It is recommended to use `velona::NewSizedBoxExt::use_child_opt`, instead of this.
-        fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
+        fn use_child_erased<Vfn, Cfn, V, O>(self, val_fn: Vfn, mut edit_child_fn: Cfn) -> Self
         where
-            C: FnMut(masonry::core::WidgetMut<'_, dyn Widget>) + 'static,
+            V: 'static,
+            O: 'static,
+            Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+            Cfn: FnMut(WidgetMut<'_, dyn Widget>, V) + 'static,
         {
-            self.use_reactive_widget_mut(move |mut this| {
-                let maybe_child = SizedBox::child_mut(&mut this);
-                if let Some(child) = maybe_child {
-                    // This will fail to re-run hardly if there are no child inside.
-                    use_child_fn(child);
-                } else {
-                    log::warn!("Not child for SizedBox");
+            self.use_widget_mut_val(val_fn, move |mut this, val| {
+                if let Some(child) = SizedBox::child_mut(&mut this) {
+                    edit_child_fn(child, val);
                 }
             })
         }
@@ -97,9 +110,13 @@ mod single_impl {
 // TODO implement for [`Portal`](masonry::widgets::Portal)
 pub trait TypedSingleChildWidget {
     type Child: Widget + FromDynWidget + ?Sized;
-    fn use_child<C>(self, use_child_fn: C) -> Self
+
+    fn use_child<Vfn, Cfn, V, O>(self, val_fn: Vfn, edit_child_fn: Cfn) -> Self
     where
-        C: FnMut(WidgetMut<'_, Self::Child>) + 'static;
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+        Cfn: FnMut(WidgetMut<'_, Self::Child>, V) + 'static;
 }
 
 #[cfg(feature = "masonry_widget_impls")]
@@ -108,7 +125,7 @@ mod typed_single_child_widget_impl {
         core::{FromDynWidget, NewWidget, Widget, WidgetMut},
         widgets::*,
     };
-    use velona_core::NewWidgetExt;
+    use velona_core::{NewWidgetExt, widgets::UseWidgetValResult};
 
     use crate::TypedSingleChildWidget;
 
@@ -116,12 +133,15 @@ mod typed_single_child_widget_impl {
     impl TypedSingleChildWidget for NewWidget<Selector> {
         type Child = Label;
 
-        fn use_child<C>(self, mut use_child_fn: C) -> Self
+        fn use_child<Vfn, Cfn, V, O>(self, val_fn: Vfn, mut edit_child_fn: Cfn) -> Self
         where
-            C: FnMut(masonry::core::WidgetMut<'_, Self::Child>) + 'static,
+            V: 'static,
+            O: 'static,
+            Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+            Cfn: FnMut(WidgetMut<'_, Self::Child>, V) + 'static,
         {
-            self.use_reactive_widget_mut(move |mut this| {
-                use_child_fn(Selector::child_mut(&mut this));
+            self.use_widget_mut_val(val_fn, move |mut this, val| {
+                edit_child_fn(Selector::child_mut(&mut this), val);
             })
         }
     }
@@ -130,12 +150,15 @@ mod typed_single_child_widget_impl {
     impl TypedSingleChildWidget for NewWidget<SelectorItem> {
         type Child = Label;
 
-        fn use_child<C>(self, mut use_child_fn: C) -> Self
+        fn use_child<Vfn, Cfn, V, O>(self, val_fn: Vfn, mut edit_child_fn: Cfn) -> Self
         where
-            C: FnMut(masonry::core::WidgetMut<'_, Self::Child>) + 'static,
+            V: 'static,
+            O: 'static,
+            Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+            Cfn: FnMut(WidgetMut<'_, Self::Child>, V) + 'static,
         {
-            self.use_reactive_widget_mut(move |mut this| {
-                use_child_fn(SelectorItem::child_mut(&mut this));
+            self.use_widget_mut_val(val_fn, move |mut this, val| {
+                edit_child_fn(SelectorItem::child_mut(&mut this), val);
             })
         }
     }
@@ -147,11 +170,16 @@ mod typed_single_child_widget_impl {
     {
         type Child = W;
 
-        fn use_child<C>(self, mut use_child_fn: C) -> Self
+        fn use_child<Vfn, Cfn, V, O>(self, val_fn: Vfn, mut edit_child_fn: Cfn) -> Self
         where
-            C: FnMut(WidgetMut<'_, Self::Child>) + 'static,
+            V: 'static,
+            O: 'static,
+            Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+            Cfn: FnMut(WidgetMut<'_, Self::Child>, V) + 'static,
         {
-            self.use_reactive_widget_mut(move |mut this| use_child_fn(Portal::child_mut(&mut this)))
+            self.use_widget_mut_val(val_fn, move |mut this, val| {
+                edit_child_fn(Portal::child_mut(&mut this), val);
+            })
         }
     }
 }
@@ -160,16 +188,15 @@ impl<T> SingleChildWidget for T
 where
     T: TypedSingleChildWidget,
 {
-    fn use_child_erased<C>(self, mut use_child_fn: C) -> Self
+    fn use_child_erased<Vfn, Cfn, V, O>(self, val_fn: Vfn, mut edit_child_fn: Cfn) -> Self
     where
-        C: FnMut(WidgetMut<'_, dyn Widget>) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+        Cfn: FnMut(WidgetMut<'_, dyn Widget>, V) + 'static,
     {
-        <Self as TypedSingleChildWidget>::use_child(self, move |mut child| {
-            if let Some(child) = child.try_downcast::<dyn Widget>() {
-                use_child_fn(child);
-            } else {
-                log::warn!("Cannot cast to `dyn Widget`. (which is dumb)");
-            }
+        <Self as TypedSingleChildWidget>::use_child(self, val_fn, move |mut child, val| {
+            edit_child_fn(child.downcast::<dyn Widget>(), val);
         })
     }
 }
@@ -188,10 +215,7 @@ mod reactive_child_impl {
     use super::ReactiveSingleChildExt;
     use masonry::widgets::*;
     use masonry_core::core::NewWidget;
-    use std::any::type_name;
-    use velona_core::{
-        AnyNewWidget, NewWidgetExt, masonry_core, reactive::effect::Effect, utils::ConsumeResult,
-    };
+    use velona_core::{AnyNewWidget, NewWidgetExt, masonry_core};
 
     macro_rules! impl_reactive_child {
         ($($widget:ty,)*) => {
@@ -202,18 +226,9 @@ mod reactive_child_impl {
                     where
                         Cf: Fn() -> AnyNewWidget + 'static
                     {
-                        let w_ref = self.create_velona_ref();
-                        Effect::new(move || {
-                            let new_widget = child_fn();
-                            let _ = w_ref
-                                .edit_local_now(|mut this| {
-                                    <$widget>::set_child(&mut this, new_widget);
-                                })
-                                .inspect_err(|err| {
-                                    log::error!("Cannot set a new child for this widget {} => {err}", type_name::<$widget>());
-                                });
-                        });
-                        self
+                        self.use_widget_mut(child_fn, |mut this, new_widget| {
+                            <$widget>::set_child(&mut this, new_widget);
+                        })
                     }
                 }
             )*
@@ -234,16 +249,9 @@ mod reactive_child_impl {
         where
             Cf: Fn() -> AnyNewWidget + 'static,
         {
-            let velona_ref = self.create_velona_ref();
-            Effect::new(move || {
-                let child = child_fn();
-                velona_ref
-                    .edit_local_now(|mut this| {
-                        SizedBox::set_child(&mut this, child);
-                    })
-                    .consume_with_log_err();
-            });
-            self
+            self.use_widget_mut(child_fn, |mut this, child| {
+                SizedBox::set_child(&mut this, child);
+            })
         }
     }
 }
@@ -264,7 +272,7 @@ mod reactive_typed_single_child_ext {
         core::{NewWidget, Widget},
         widgets::Portal,
     };
-    use velona_core::{NewWidgetExt, reactive::effect::Effect, utils::ConsumeResult};
+    use velona_core::NewWidgetExt;
 
     use crate::ReactiveSingleTypedChildExt;
 
@@ -274,20 +282,14 @@ mod reactive_typed_single_child_ext {
         W: Widget + 'static,
     {
         type Child = W;
+
         fn child<Cf>(self, child_fn: Cf) -> Self
         where
             Cf: Fn() -> NewWidget<Self::Child> + 'static,
         {
-            let w_ref = self.create_velona_ref();
-            Effect::new(move || {
-                let new_child = child_fn();
-                w_ref
-                    .edit_local_now(|mut this| {
-                        Portal::set_child(&mut this, new_child);
-                    })
-                    .consume_with_log_err();
-            });
-            self
+            self.use_widget_mut(child_fn, |mut this, child| {
+                Portal::set_child(&mut this, child);
+            })
         }
     }
 }

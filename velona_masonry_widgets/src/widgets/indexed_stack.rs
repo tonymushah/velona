@@ -21,8 +21,8 @@ impl NewIndexedStackExt for NewWidget<IndexedStack> {
     where
         A: Fn() -> usize + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            IndexedStack::set_active_child(&mut this, idx());
+        self.use_widget_mut(idx, |mut this, idx| {
+            IndexedStack::set_active_child(&mut this, idx);
         })
     }
 }

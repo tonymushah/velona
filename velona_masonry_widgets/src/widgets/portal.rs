@@ -14,6 +14,7 @@ use masonry::{
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
+use velona_core::widgets::UseWidgetValResult;
 
 use super::NewWidgetExt;
 
@@ -25,17 +26,22 @@ where
 {
     /// Use the [`Portal` horizontal scrollbar](Portal::horizontal_scrollbar_mut).
     ///
-    /// It is worth noting that the `use_fn` runs inside an [`Effect`].
-    fn use_horizontal_scrollbar_mut<U>(self, use_fn: U) -> Self
+    /// It is worth noting that only the `val_fn` runs inside an [`Effect`].
+    fn use_horizontal_scrollbar_mut<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        U: FnMut(WidgetMut<ScrollBar>) + 'static;
+        Efn: FnMut(WidgetMut<'_, ScrollBar>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
     /// Use the [`Portal` vertical scrollbar](Portal::vertical_scrollbar_mut).
     ///
-    /// It is worth noting that the `use_fn` runs inside an [`Effect`].
-    fn use_vertical_scrollbar_mut<U>(self, use_fn: U) -> Self
+    /// It is worth noting that the only `val_fn` runs inside an [`Effect`].
+    fn use_vertical_scrollbar_mut<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        U: FnMut(WidgetMut<ScrollBar>) + 'static;
-
+        Efn: FnMut(WidgetMut<'_, ScrollBar>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
     /// Set the [`Portal` horizontal constrain](Portal::set_constrain_horizontal) reactively.
     fn constrain_horizontal<C>(self, contrain: C) -> Self
     where
@@ -66,30 +72,12 @@ impl<W> NewPortalExt<W> for NewWidget<Portal<W>>
 where
     W: Widget + FromDynWidget + ?Sized,
 {
-    fn use_horizontal_scrollbar_mut<U>(self, mut use_fn: U) -> Self
-    where
-        U: FnMut(WidgetMut<ScrollBar>) + 'static,
-    {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_fn(Portal::horizontal_scrollbar_mut(&mut this))
-        })
-    }
-
-    fn use_vertical_scrollbar_mut<U>(self, mut use_fn: U) -> Self
-    where
-        U: FnMut(WidgetMut<ScrollBar>) + 'static,
-    {
-        self.use_reactive_widget_mut(move |mut this| {
-            use_fn(Portal::vertical_scrollbar_mut(&mut this))
-        })
-    }
-
     fn constrain_horizontal<C>(self, contrain: C) -> Self
     where
         C: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Portal::set_constrain_horizontal(&mut this, contrain())
+        self.use_widget_mut(contrain, |mut this, contrain| {
+            Portal::set_constrain_horizontal(&mut this, contrain)
         })
     }
 
@@ -97,8 +85,8 @@ where
     where
         C: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Portal::set_constrain_vertical(&mut this, contrain())
+        self.use_widget_mut(contrain, |mut this, contrain| {
+            Portal::set_constrain_vertical(&mut this, contrain)
         })
     }
 
@@ -106,8 +94,8 @@ where
     where
         C: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Portal::set_content_must_fill(&mut this, must_fill())
+        self.use_widget_mut(must_fill, |mut this, must_fill| {
+            Portal::set_content_must_fill(&mut this, must_fill)
         })
     }
 
@@ -115,8 +103,8 @@ where
     where
         C: Fn() -> Point + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Portal::set_viewport_pos(&mut this, pos());
+        self.use_widget_mut(pos, |mut this, pos| {
+            Portal::set_viewport_pos(&mut this, pos);
         })
     }
 
@@ -124,8 +112,8 @@ where
     where
         C: Fn() -> Vec2 + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Portal::pan_viewport_by(&mut this, translation());
+        self.use_widget_mut(translation, |mut this, translation| {
+            Portal::pan_viewport_by(&mut this, translation);
         })
     }
 
@@ -133,8 +121,32 @@ where
     where
         C: Fn() -> Rect + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Portal::pan_viewport_to(&mut this, target());
+        self.use_widget_mut(target, |mut this, target| {
+            Portal::pan_viewport_to(&mut this, target);
+        })
+    }
+
+    fn use_horizontal_scrollbar_mut<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
+    where
+        Efn: FnMut(WidgetMut<'_, ScrollBar>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+    {
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(Portal::horizontal_scrollbar_mut(&mut this), val)
+        })
+    }
+
+    fn use_vertical_scrollbar_mut<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
+    where
+        Efn: FnMut(WidgetMut<'_, ScrollBar>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+    {
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(Portal::vertical_scrollbar_mut(&mut this), val)
         })
     }
 }

@@ -40,8 +40,8 @@ impl NewCheckboxExt for NewWidget<Checkbox> {
     where
         C: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut widget_mut| {
-            Checkbox::set_checked(&mut widget_mut, checked());
+        self.use_widget_mut(checked, |mut widget_mut, checked| {
+            Checkbox::set_checked(&mut widget_mut, checked);
         })
     }
 
@@ -50,8 +50,11 @@ impl NewCheckboxExt for NewWidget<Checkbox> {
         Tf: Fn() -> T + 'static,
         T: Into<ArcStr>,
     {
-        self.use_reactive_widget_mut(move |mut widget_mut| {
-            Checkbox::set_text(&mut widget_mut, text().into());
-        })
+        self.use_widget_mut(
+            move || text().into(),
+            move |mut widget_mut, text| {
+                Checkbox::set_text(&mut widget_mut, text);
+            },
+        )
     }
 }

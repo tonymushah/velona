@@ -217,7 +217,7 @@ where
 }
 
 pub trait IntoNewLabel {
-    fn into_label(self) -> NewWidget<Label>;
+    fn into_new_label(self) -> NewWidget<Label>;
 }
 
 impl<V, T> IntoNewLabel for V
@@ -225,7 +225,7 @@ where
     V: SignalOrFn<Output = T> + 'static,
     T: Into<ArcStr> + 'static,
 {
-    fn into_label(self) -> NewWidget<Label> {
+    fn into_new_label(self) -> NewWidget<Label> {
         Label::new(untrack(|| self.run()))
             .prepare()
             .text(move || self.run().into())

@@ -9,6 +9,7 @@ use masonry_core::{
     core::{NewWidget, Property, PropertyStackId, UsesProperty as HasProperty, Widget, WidgetMut},
     kurbo::Affine,
 };
+use masonry_raw_box::RawBox;
 use reactive_graph::effect::Effect;
 
 use reactive_graph::owner::ArenaItem;
@@ -31,6 +32,24 @@ pub trait View {
         Self: std::marker::Sized,
     {
         self.into_new_widget().into_erased()
+    }
+}
+
+impl<V> View for Box<V>
+where
+    V: View + 'static,
+{
+    type Widget = V::Widget;
+    fn into_new_widget(self) -> NewWidget<V::Widget> {
+        (*self).into_new_widget()
+    }
+}
+
+impl View for () {
+    type Widget = RawBox;
+
+    fn into_new_widget(self) -> NewWidget<Self::Widget> {
+        RawBox::empty().prepare()
     }
 }
 

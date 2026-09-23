@@ -12,9 +12,10 @@ use masonry::{
     layout::Length,
     widgets::{Split, SplitPoint},
 };
+#[cfg(doc)]
 use velona_core::reactive::effect::Effect;
 
-use crate::{NewWidgetExt, utils::ConsumeResult};
+use crate::NewWidgetExt;
 
 /// A utility struct for [`Split::set_min_lengths`].
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -125,32 +126,18 @@ where
     where
         C: Fn() -> NewWidget<ChildA> + 'static,
     {
-        let s_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let child = child1();
-            s_ref
-                .edit_local_now(|mut this| {
-                    Split::set_child1(&mut this, child);
-                })
-                .consume_with_log_err();
-        });
-        self
+        self.use_widget_mut(child1, |mut this, child1| {
+            Split::set_child1(&mut this, child1);
+        })
     }
 
     fn child2<C>(self, child2: C) -> Self
     where
         C: Fn() -> NewWidget<ChildB> + 'static,
     {
-        let s_ref = self.create_velona_ref();
-        Effect::new(move || {
-            let child = child2();
-            s_ref
-                .edit_local_now(|mut this| {
-                    Split::set_child2(&mut this, child);
-                })
-                .consume_with_log_err();
-        });
-        self
+        self.use_widget_mut(child2, |mut this, child2| {
+            Split::set_child2(&mut this, child2);
+        })
     }
 
     fn use_child1<U>(self, mut use_fn: U) -> Self
@@ -171,8 +158,8 @@ where
     where
         A: Fn() -> Axis + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Split::set_split_axis(&mut this, split_axis());
+        self.use_widget_mut(split_axis, |mut this, split_axis| {
+            Split::set_split_axis(&mut this, split_axis);
         })
     }
 
@@ -180,8 +167,8 @@ where
     where
         P: Fn() -> SplitPoint + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Split::set_split_point(&mut this, split_point());
+        self.use_widget_mut(split_point, |mut this, split_point| {
+            Split::set_split_point(&mut this, split_point);
         })
     }
 
@@ -189,8 +176,8 @@ where
     where
         Ml: Fn() -> SplitMinLengths + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            min_lengths().apply(&mut this);
+        self.use_widget_mut(min_lengths, |mut this, min_lengths| {
+            min_lengths.apply(&mut this);
         })
     }
 
@@ -198,8 +185,8 @@ where
     where
         B: Fn() -> Length + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Split::set_bar_thickness(&mut this, bar_thickness());
+        self.use_widget_mut(bar_thickness, |mut this, bar_thickness| {
+            Split::set_bar_thickness(&mut this, bar_thickness);
         })
     }
 
@@ -207,8 +194,8 @@ where
     where
         B: Fn() -> Length + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Split::set_min_bar_area(&mut this, min_bar_area());
+        self.use_widget_mut(min_bar_area, |mut this, min_bar_area| {
+            Split::set_min_bar_area(&mut this, min_bar_area);
         })
     }
 
@@ -216,8 +203,8 @@ where
     where
         D: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Split::set_draggable(&mut this, draggable());
+        self.use_widget_mut(draggable, |mut this, draggable| {
+            Split::set_draggable(&mut this, draggable);
         })
     }
 
@@ -225,8 +212,8 @@ where
     where
         B: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Split::set_bar_solid(&mut this, bar_solid());
+        self.use_widget_mut(bar_solid, |mut this, bar_solid| {
+            Split::set_bar_solid(&mut this, bar_solid);
         })
     }
 }

@@ -7,17 +7,20 @@
 //!
 //! _See the [widget](Prose) documentation for more information_.
 
-use std::mem::Discriminant;
+use std::{fmt::Display, mem::Discriminant};
 
 use masonry::{
     TextAlign,
-    core::{NewWidget, StyleProperty, WidgetMut},
+    core::{NewWidget, StyleProperty, Widget, WidgetMut},
     widgets::{InsertNewline, Prose, TextArea},
 };
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
-use velona_core::widgets::UseWidgetValResult;
+use velona_core::{
+    reactive::{graph::untrack, traits::SignalOrFn},
+    widgets::UseWidgetValResult,
+};
 
 use crate::{
     NewWidgetExt,
@@ -151,5 +154,34 @@ impl NewTextAreaExt<false> for NewWidget<Prose> {
                 TextArea::reset_text(&mut this, text.as_ref());
             },
         )
+    }
+}
+
+pub trait IntoProse {
+    fn into_prose(self) -> Prose;
+}
+
+impl<V> IntoProse for V
+where
+    V: Display,
+{
+    fn into_prose(self) -> Prose {
+        Prose::new(&self.to_string())
+    }
+}
+
+pub trait IntoNewProse {
+    fn into_prose(self) -> NewWidget<Prose>;
+}
+
+impl<Vfn, V> IntoNewProse for Vfn
+where
+    Vfn: SignalOrFn<Output = V> + 'static,
+    V: AsRef<str> + 'static,
+{
+    fn into_prose(self) -> NewWidget<Prose> {
+        Prose::new(untrack(|| self.run()).as_ref())
+            .prepare()
+            .text(move || self.run())
     }
 }

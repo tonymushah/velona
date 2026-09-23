@@ -18,12 +18,15 @@
 //! [`ReactiveSingleChildExt`]: super::ReactiveSingleChildExt
 
 use masonry::{
-    core::{NewWidget, PointerButton},
+    core::{NewWidget, PointerButton, Widget},
     widgets::Button,
 };
 
 #[cfg(doc)]
 use masonry::widgets::ButtonPress;
+use masonry_raw_box::RawBox;
+use velona_core::widgets::View;
+use velona_core_child::ReactiveSingleChildExt;
 
 use crate::NewWidgetExt;
 
@@ -208,3 +211,32 @@ btn_ev_trait!(
         on_b32
     },
 );
+
+pub trait IntoButton {
+    fn into_button(self) -> Button;
+}
+
+impl<V> IntoButton for V
+where
+    V: View + 'static,
+{
+    fn into_button(self) -> Button {
+        Button::new(self.into_new_widget())
+    }
+}
+
+pub trait IntoNewButton {
+    fn into_new_button(self) -> NewWidget<Button>;
+}
+
+impl<V, Vfn> IntoNewButton for Vfn
+where
+    V: View + 'static,
+    Vfn: Fn() -> V + 'static,
+{
+    fn into_new_button(self) -> NewWidget<Button> {
+        Button::new(RawBox::empty().prepare())
+            .prepare()
+            .child(move || (self)().into_erased())
+    }
+}

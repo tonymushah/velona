@@ -8,10 +8,17 @@
 //!
 //! _See the [widget](Align) documentation for more information_.
 //!
+//! There is also the [`IntoAlign`] and [`IntoNewAlign`] trait for quickly building a [`Align`] widget from any [`View`].
+//! 
 //! [single-widget]: super::SingleChildWidget
 //! [reactive-child]: super::ReactiveSingleChildExt
 
-use masonry::{core::NewWidget, layout::UnitPoint, widgets::Align};
+use masonry::{
+    core::{NewWidget, Widget},
+    layout::UnitPoint,
+    widgets::Align,
+};
+use masonry_raw_box::RawBox;
 use velona_core::widgets::View;
 
 use crate::NewWidgetExt;
@@ -65,5 +72,74 @@ where
 
     fn align_vertical(self, align: UnitPoint) -> Align {
         Align::vertical(align, self.into_new_widget())
+    }
+}
+
+pub trait IntoNewAlign {
+    fn align_centered(self) -> NewWidget<Align>;
+    fn align_right(self) -> NewWidget<Align>;
+    fn align_left(self) -> NewWidget<Align>;
+    fn align_horizontal(self, align: UnitPoint) -> NewWidget<Align>;
+    fn align_vertical(self, align: UnitPoint) -> NewWidget<Align>;
+}
+
+impl<V, Vfn> IntoNewAlign for Vfn
+where
+    V: View + 'static,
+    Vfn: Fn() -> V + 'static,
+{
+    fn align_centered(self) -> NewWidget<Align> {
+        Align::centered(RawBox::empty().prepare())
+            .prepare()
+            .use_widget_mut(
+                move || (self)().into_erased(),
+                |mut this, child| {
+                    Align::set_child(&mut this, child);
+                },
+            )
+    }
+
+    fn align_right(self) -> NewWidget<Align> {
+        Align::right(RawBox::empty().prepare())
+            .prepare()
+            .use_widget_mut(
+                move || (self)().into_erased(),
+                |mut this, child| {
+                    Align::set_child(&mut this, child);
+                },
+            )
+    }
+
+    fn align_left(self) -> NewWidget<Align> {
+        Align::left(RawBox::empty().prepare())
+            .prepare()
+            .use_widget_mut(
+                move || (self)().into_erased(),
+                |mut this, child| {
+                    Align::set_child(&mut this, child);
+                },
+            )
+    }
+
+    fn align_horizontal(self, align: UnitPoint) -> NewWidget<Align> {
+        Align::horizontal(align, RawBox::empty().prepare())
+            .prepare()
+            .use_widget_mut(
+                move || (self)().into_erased(),
+                |mut this, child| {
+                    Align::set_child(&mut this, child);
+                },
+            )
+    }
+
+    fn align_vertical(self, align: UnitPoint) -> NewWidget<Align> {
+        Align::vertical(align, RawBox::empty().prepare())
+            .prepare()
+            .use_widget_mut(
+                move || (self)().into_erased(),
+                |mut this, child| {
+                    Align::set_child(&mut this, child);
+                },
+            )
     }
 }

@@ -75,6 +75,6 @@ pub mod virtual_scroll;
 pub mod zstack;
 
 pub(crate) use velona_core::widgets::*;
-pub(crate) use velona_core_child::{ReactiveSingleChildExt, TypedSingleChildWidget};
+pub(crate) use velona_core_child::*;
 
 pub use masonry::widgets as masonry_widgets;

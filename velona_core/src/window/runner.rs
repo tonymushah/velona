@@ -1,5 +1,6 @@
 use std::{sync::Arc, time::Instant};
 
+use any_spawner::PinnedLocalFuture;
 use imaging::RenderSource;
 use masonry_core::app::WindowSizePolicy;
 use masonry_core::{
@@ -220,10 +221,10 @@ where
     pub fn get_handle(&self) -> WindowHandle {
         self.handle.clone()
     }
-    pub fn resume(&mut self) {
+    pub fn resume(&mut self) -> PinnedLocalFuture<()> {
         let size = self.render_root.tree.size();
         self.renderer
-            .resume(self.winit_window.clone(), size.width, size.height);
+            .resume(self.winit_window.clone(), size.width, size.height)
     }
     pub fn suspend(&mut self) {
         self.renderer.suspend();

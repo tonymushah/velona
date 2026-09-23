@@ -1,4 +1,4 @@
-use std::{num::NonZero, sync::Arc};
+use std::{future::ready, num::NonZero, sync::Arc};
 
 use softbuffer::Context;
 // use vello_common::fearless_simd;
@@ -41,7 +41,13 @@ impl WindowRenderer for VelloSoftbufferRenderer {
     where
         Self: 'a;
 
-    fn resume(&mut self, window: Arc<dyn WindowHandle>, width: u32, height: u32) {
+    fn resume(
+        &mut self,
+        window: Arc<dyn WindowHandle>,
+        width: u32,
+        height: u32,
+    ) -> std::pin::Pin<Box<dyn Future<Output = ()>>> {
+        let ready = Box::pin(ready(()));
         // Each `resume` must be preceded by `suspend` (or be the first call after
         // construction). Calling while `Pending` or `Active` is a state-machine bug
         // in the embedder: it would orphan the in-flight init's `WGPUContext` and
@@ -49,7 +55,7 @@ impl WindowRenderer for VelloSoftbufferRenderer {
         if !matches!(self.render_state, RenderState::Suspended) {
             // #[cfg(feature = "tracing")]
             // tracing::warn!("WindowRenderer::resume called from non-Suspended state");
-            return;
+            return ready;
         }
 
         self.window_handle = Some(window.clone());
@@ -60,7 +66,8 @@ impl WindowRenderer for VelloSoftbufferRenderer {
             window,
             self.settings.clone(),
         );
-        self.render_state = RenderState::Active(surface)
+        self.render_state = RenderState::Active(surface);
+        ready
     }
 
     fn complete_resume(&mut self) -> bool {

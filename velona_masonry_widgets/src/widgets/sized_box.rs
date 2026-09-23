@@ -136,7 +136,7 @@ where
 }
 
 pub trait IntoNewSizedBox {
-    fn into_sized_box(self) -> NewWidget<SizedBox>;
+    fn into_new_sized_box(self) -> NewWidget<SizedBox>;
 }
 
 impl<Vfn, V> IntoNewSizedBox for Vfn
@@ -144,7 +144,7 @@ where
     Vfn: Fn() -> Option<V> + 'static,
     V: View + 'static,
 {
-    fn into_sized_box(self) -> NewWidget<SizedBox> {
+    fn into_new_sized_box(self) -> NewWidget<SizedBox> {
         SizedBox::empty()
             .prepare()
             .child_opt(move || (self)().map(V::into_erased))

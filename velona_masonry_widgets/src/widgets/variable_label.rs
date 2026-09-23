@@ -7,7 +7,7 @@
 //!
 //! _See the [widget](VariableLabel) documentation for more information_.
 
-use std::mem::{Discriminant, discriminant};
+use std::mem::Discriminant;
 
 use masonry::{
     TextAlign,
@@ -17,8 +17,13 @@ use masonry::{
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
+use velona_core::widgets::UseWidgetValResult;
 
-use crate::{NewWidgetExt, widgets::label::NewLabelExt};
+use crate::{
+    NewWidgetExt,
+    utils::text_style::{apply_label_style_actions, get_style_opt_action},
+    widgets::label::NewLabelExt,
+};
 
 /// A utility struct for [`VariableLabel::set_target_weight`].
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -39,10 +44,13 @@ impl VariableLabelTargetWeight {
 pub trait NewVariableLabelExt {
     /// Use the underlying label for this widget.
     ///
-    /// It is worth noting that the `use_fn` will run inside an [`Effect`].
-    fn use_label_mut<L>(self, use_fn: L) -> Self
+    /// It is worth noting that only the `val_fn` will run inside an [`Effect`].
+    fn use_label_mut<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        L: FnMut(WidgetMut<Label>) + 'static;
+        Efn: FnMut(WidgetMut<'_, Label>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
     /// Sets the weight which this font will target.
     ///
     /// The reactive variant of [`set_target_weight`](VariableLabel::set_target_weight).
@@ -52,19 +60,24 @@ pub trait NewVariableLabelExt {
 }
 
 impl NewVariableLabelExt for NewWidget<VariableLabel> {
-    fn use_label_mut<L>(self, mut use_fn: L) -> Self
-    where
-        L: FnMut(WidgetMut<Label>) + 'static,
-    {
-        self.use_reactive_widget_mut(move |mut this| use_fn(VariableLabel::label_mut(&mut this)))
-    }
-
     fn target_weight<T>(self, target_weight: T) -> Self
     where
         T: Fn() -> VariableLabelTargetWeight + 'static,
     {
         self.use_widget_mut(target_weight, |mut this, target_weight| {
             target_weight.apply(&mut this);
+        })
+    }
+
+    fn use_label_mut<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
+    where
+        Efn: FnMut(WidgetMut<'_, Label>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+    {
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(VariableLabel::label_mut(&mut this), val);
         })
     }
 }
@@ -75,32 +88,14 @@ impl NewLabelExt for NewWidget<VariableLabel> {
         S: Fn() -> T + 'static,
         T: Into<ArcStr>,
     {
-        self.use_label_mut(move |mut this| {
-            Label::set_text(&mut this, text());
-        })
-    }
-
-    fn style_opt<S, T>(self, style: S) -> Self
-    where
-        S: Fn() -> Option<T> + 'static,
-        T: Into<StyleProperty>,
-    {
-        self.use_reactive_widget_mut_with_effect_val::<_, Discriminant<StyleProperty>>(
-            move |mut this, old_style| {
-                let mut this = VariableLabel::label_mut(&mut this);
-                if let Some(old_style) = old_style {
-                    Label::remove_style(&mut this, old_style);
-                }
-                if let Some(style) = style() {
-                    Label::insert_style(&mut this, style)
-                        .as_ref()
-                        .map(discriminant)
-                } else {
-                    None
-                }
+        self.use_label_mut(
+            move |_| UseWidgetValResult::to_edit_fn(text().into()),
+            |mut this, text| {
+                Label::set_text(&mut this, text);
             },
         )
     }
+
     fn style<S, T>(self, style: S) -> Self
     where
         S: Fn() -> T + 'static,
@@ -109,21 +104,41 @@ impl NewLabelExt for NewWidget<VariableLabel> {
         self.style_opt(move || Some(style()))
     }
 
+    fn style_opt<S, T>(self, style: S) -> Self
+    where
+        S: Fn() -> Option<T> + 'static,
+        T: Into<StyleProperty>,
+    {
+        self.use_label_mut(
+            move |old_style: Option<Discriminant<StyleProperty>>| {
+                let new_style = style().map(Into::<StyleProperty>::into);
+                get_style_opt_action(old_style, new_style)
+            },
+            apply_label_style_actions,
+        )
+    }
+
     fn hint<S>(self, hint: S) -> Self
     where
         S: Fn() -> bool + 'static,
     {
-        self.use_label_mut(move |mut this| {
-            Label::set_hint(&mut this, hint());
-        })
+        self.use_label_mut(
+            move |_| UseWidgetValResult::to_edit_fn(hint()),
+            |mut this, hint| {
+                Label::set_hint(&mut this, hint);
+            },
+        )
     }
 
     fn text_alignment<S>(self, align: S) -> Self
     where
         S: Fn() -> TextAlign + 'static,
     {
-        self.use_label_mut(move |mut this| {
-            Label::set_text_alignment(&mut this, align());
-        })
+        self.use_label_mut(
+            move |_| UseWidgetValResult::to_edit_fn(align()),
+            |mut this, alignment| {
+                Label::set_text_alignment(&mut this, alignment);
+            },
+        )
     }
 }

@@ -24,8 +24,8 @@ impl NewSwitchExt for NewWidget<Switch> {
     where
         S: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Switch::set_on(&mut this, on());
+        self.use_widget_mut(on, |mut this, on| {
+            Switch::set_on(&mut this, on);
         })
     }
 }

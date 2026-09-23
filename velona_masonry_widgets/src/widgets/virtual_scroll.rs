@@ -71,8 +71,8 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
     where
         L: Fn() -> usize + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            VirtualScroll::set_len(&mut this, len());
+        self.use_widget_mut(len, |mut this, len| {
+            VirtualScroll::set_len(&mut this, len);
         })
     }
 
@@ -80,8 +80,8 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
     where
         S: Fn() -> f64 + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            VirtualScroll::set_start(&mut this, start_at());
+        self.use_widget_mut(start_at, |mut this, start_at| {
+            VirtualScroll::set_start(&mut this, start_at);
         })
     }
 
@@ -89,8 +89,8 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
     where
         E: Fn() -> f64 + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            VirtualScroll::set_end(&mut this, end_at());
+        self.use_widget_mut(end_at, |mut this, end_at| {
+            VirtualScroll::set_end(&mut this, end_at);
         })
     }
 
@@ -98,8 +98,8 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
     where
         D: Fn() -> ScrollDirection + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            VirtualScroll::set_direction(&mut this, direction());
+        self.use_widget_mut(direction, |mut this, direction| {
+            VirtualScroll::set_direction(&mut this, direction);
         })
     }
 
@@ -107,8 +107,8 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
     where
         S: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            VirtualScroll::set_scrolling(&mut this, scrolling());
+        self.use_widget_mut(scrolling, |mut this, scrolling| {
+            VirtualScroll::set_scrolling(&mut this, scrolling);
         })
     }
 
@@ -116,8 +116,8 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
     where
         I: Fn() -> usize + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            VirtualScroll::scroll_to(&mut this, idx());
+        self.use_widget_mut(idx, |mut this, idx| {
+            VirtualScroll::scroll_to(&mut this, idx);
         })
     }
 }

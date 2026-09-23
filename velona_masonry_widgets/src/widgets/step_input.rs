@@ -125,8 +125,8 @@ where
     where
         B: Fn() -> T + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            StepInput::set_base(&mut this, base());
+        self.use_widget_mut(base, |mut this, base| {
+            StepInput::set_base(&mut this, base);
         })
     }
 
@@ -134,8 +134,8 @@ where
     where
         S: Fn() -> T + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            StepInput::set_step(&mut this, step());
+        self.use_widget_mut(step, |mut this, step| {
+            StepInput::set_step(&mut this, step);
         })
     }
 
@@ -143,8 +143,8 @@ where
     where
         S: Fn() -> Option<T> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            StepInput::set_snap(&mut this, snap());
+        self.use_widget_mut(snap, |mut this, snap| {
+            StepInput::set_snap(&mut this, snap);
         })
     }
 
@@ -152,8 +152,8 @@ where
     where
         B: Fn() -> StepInputBounds<T> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            bounds().apply(&mut this);
+        self.use_widget_mut(bounds, |mut this, bounds| {
+            bounds.apply(&mut this);
         })
     }
 
@@ -161,8 +161,8 @@ where
     where
         W: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            StepInput::set_wrap(&mut this, wrap());
+        self.use_widget_mut(wrap, |mut this, wrap| {
+            StepInput::set_wrap(&mut this, wrap);
         })
     }
 
@@ -171,8 +171,8 @@ where
         D: Fn() -> F + 'static,
         F: Fn(StepState<T>) -> String + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            StepInput::set_display(&mut this, display());
+        self.use_widget_mut(display, |mut this, display| {
+            StepInput::set_display(&mut this, display);
         })
     }
 }

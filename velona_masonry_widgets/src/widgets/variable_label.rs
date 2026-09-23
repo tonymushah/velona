@@ -11,13 +11,16 @@ use std::mem::Discriminant;
 
 use masonry::{
     TextAlign,
-    core::{ArcStr, NewWidget, StyleProperty, WidgetMut},
+    core::{ArcStr, NewWidget, StyleProperty, Widget, WidgetMut},
     widgets::{Label, VariableLabel},
 };
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
-use velona_core::widgets::UseWidgetValResult;
+use velona_core::{
+    reactive::{graph::untrack, traits::SignalOrFn},
+    widgets::UseWidgetValResult,
+};
 
 use crate::{
     NewWidgetExt,
@@ -140,5 +143,34 @@ impl NewLabelExt for NewWidget<VariableLabel> {
                 Label::set_text_alignment(&mut this, alignment);
             },
         )
+    }
+}
+
+pub trait IntoVariableLabel {
+    fn into_variable_label(self) -> VariableLabel;
+}
+
+impl<V> IntoVariableLabel for V
+where
+    V: Into<ArcStr>,
+{
+    fn into_variable_label(self) -> VariableLabel {
+        VariableLabel::new(self)
+    }
+}
+
+pub trait IntoNewVariableLabel {
+    fn into_new_variable_label(self) -> NewWidget<VariableLabel>;
+}
+
+impl<V, T> IntoNewVariableLabel for V
+where
+    V: SignalOrFn<Output = T> + 'static,
+    T: Into<ArcStr> + 'static,
+{
+    fn into_new_variable_label(self) -> NewWidget<VariableLabel> {
+        VariableLabel::new(untrack(|| self.run()))
+            .prepare()
+            .text(move || self.run().into())
     }
 }

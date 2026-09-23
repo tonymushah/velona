@@ -14,6 +14,8 @@
 //!
 //! _See the [widget](Button) documentation for more information_.
 //!
+//! There is also the [`IntoButton`] and [`IntoNewButton`] trait for quickly building a [`Button`] widget from any [`View`].
+//!
 //! [`SingleChildWidget`]: super::SingleChildWidget
 //! [`ReactiveSingleChildExt`]: super::ReactiveSingleChildExt
 

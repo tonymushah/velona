@@ -11,6 +11,7 @@ use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Selector`] trait extension.
 // TODO Add example
+#[must_use]
 pub trait NewSelectorExt {
     /// Sets [the list of options with a new one](Selector::set_options) reactively.
     ///

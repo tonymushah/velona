@@ -21,6 +21,7 @@ use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Svg`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewSvgExt {
     /// [Sets a new inner SVG](Svg::set_tree) reactively.
     fn tree<T>(self, tree: T) -> Self

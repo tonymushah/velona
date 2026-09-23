@@ -9,6 +9,7 @@ use masonry::{core::NewWidget, widgets::IndexedStack};
 use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`IndexedStack`] extension trait.
+#[must_use]
 pub trait NewIndexedStackExt {
     /// [Set the active child](IndexedStack::set_active_child) reactively.
     fn active_child<A>(self, idx: A) -> Self

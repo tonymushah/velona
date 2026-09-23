@@ -11,6 +11,7 @@ use crate::NewWidgetExt;
 
 /// A [`DisclosureButton`] extension trait
 // TODO add example
+#[must_use]
 pub trait NewDisclosureButtonExt {
     /// Set the [disclosed](DisclosureButton::set_disclosed) reactively.
     fn disclosed<F>(self, disclosed: F) -> Self

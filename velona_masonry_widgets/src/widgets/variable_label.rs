@@ -44,6 +44,7 @@ impl VariableLabelTargetWeight {
 
 /// A [new](NewWidget) [`VariableLabel`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewVariableLabelExt {
     /// Use the underlying label for this widget.
     ///
@@ -146,6 +147,7 @@ impl NewLabelExt for NewWidget<VariableLabel> {
     }
 }
 
+#[must_use]
 pub trait IntoVariableLabel {
     fn into_variable_label(self) -> VariableLabel;
 }
@@ -159,6 +161,7 @@ where
     }
 }
 
+#[must_use]
 pub trait IntoNewVariableLabel {
     fn into_new_variable_label(self) -> NewWidget<VariableLabel>;
 }

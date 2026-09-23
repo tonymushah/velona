@@ -21,6 +21,7 @@ use velona_core::reactive::effect::Effect;
 use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`SizedBox`] extension trait.
+#[must_use]
 pub trait NewSizedBoxExt {
     /// Set a "reactive" child for this [`SizedBox`].
     ///
@@ -122,6 +123,7 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
     }
 }
 
+#[must_use]
 pub trait IntoSizedBox {
     fn into_sized_box(self) -> SizedBox;
 }
@@ -135,6 +137,7 @@ where
     }
 }
 
+#[must_use]
 pub trait IntoNewSizedBox {
     fn into_new_sized_box(self) -> NewWidget<SizedBox>;
 }

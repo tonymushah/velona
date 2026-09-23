@@ -14,6 +14,7 @@ use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Grid`] extension trait.
 // TODO add example
+#[must_use]
 pub trait NewGridExt {
     /// [Set the grid columns](Grid::set_columns) reactively.
     fn columns<C>(self, track_sizes: C) -> Self

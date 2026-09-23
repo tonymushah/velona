@@ -47,6 +47,7 @@ impl From<SliderRange> for Range<f64> {
 
 /// A [new](NewWidget) [`Slider`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewSliderExt {
     /// Set the [slider value](Slider::set_value) reactively.
     fn value<V>(self, value: V) -> Self

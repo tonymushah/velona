@@ -11,6 +11,7 @@ use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Switch`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewSwitchExt {
     /// Sets the [switch state](Switch::set_on)
     /// reactively.

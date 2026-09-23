@@ -14,6 +14,7 @@ use velona_core::reactive::{computed::Memo, traits::Get};
 use crate::NewWidgetExt;
 
 /// A [`Checkbox`] trait extension
+#[must_use]
 pub trait NewCheckboxExt {
     /// Make the `checked` value reactive
     fn checked<C>(self, checked: C) -> Self

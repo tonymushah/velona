@@ -27,6 +27,7 @@ use velona_core::reactive::effect::Effect;
 ///
 /// It you want to use the child, use [`SingleChildWidget`].
 // TODO add an example for this
+#[must_use]
 pub trait NewCollapsePanelExt {
     /// Set the [collapsed](CollapsePanel::set_collapsed) value reactively.
     fn collapsed<C>(self, collapsed: C) -> Self
@@ -105,6 +106,7 @@ impl NewCollapsePanelExt for NewWidget<CollapsePanel> {
     }
 }
 
+#[must_use]
 pub trait IntoCollapsePanel {
     fn into_collapse_panel<T>(self, collpse: bool, header_text: T) -> CollapsePanel
     where

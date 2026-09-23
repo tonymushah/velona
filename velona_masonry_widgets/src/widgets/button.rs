@@ -52,6 +52,7 @@ macro_rules! btn_ev_trait {
         $(#[$attr:meta])* $ev_method:ident
     },)*) => {
         /// A useful wrapper trait for handling [`ButtonPress::button`] event easily
+        #[must_use]
         pub trait NewButtonPressEventsExt {
             $(
                 $(#[$attr])*
@@ -214,6 +215,7 @@ btn_ev_trait!(
     },
 );
 
+#[must_use]
 pub trait IntoButton {
     fn into_button(self) -> Button;
 }
@@ -227,6 +229,7 @@ where
     }
 }
 
+#[must_use]
 pub trait IntoNewButton {
     fn into_new_button(self) -> NewWidget<Button>;
 }

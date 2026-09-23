@@ -31,6 +31,7 @@ use velona_core::widgets::{UseWidgetValResult, View};
 use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Badged`] trait extension
+#[must_use]
 pub trait NewBadgedTrait {
     /// Change the badged [`content`](Badged::set_content) reactively.
     fn content<C>(self, content_fn: C) -> Self

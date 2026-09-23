@@ -13,6 +13,7 @@ use masonry::{
 use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`VirtualScroll`] trait extension.
+#[must_use]
 pub trait NewVirtualScrollExt {
     /// Sets the valid number of items.
     ///

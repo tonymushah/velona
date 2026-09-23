@@ -27,6 +27,7 @@ use crate::{
 };
 
 /// A [new](NewWidget) [`RadioButton`] extension trait.
+#[must_use]
 pub trait NewRadioButtonExt {
     /// [Check or uncheck the box](RadioButton::set_checked) reactively.
     fn checked<C>(self, checked: C) -> Self

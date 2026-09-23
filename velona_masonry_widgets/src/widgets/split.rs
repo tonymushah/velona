@@ -37,6 +37,7 @@ impl SplitMinLengths {
 
 /// A [new](NewWidget) [`Split`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewSplitExt<ChildA, ChildB>
 where
     ChildA: Widget + FromDynWidget + ?Sized,
@@ -235,6 +236,7 @@ where
     }
 }
 
+#[must_use]
 pub trait IntoSplit {
     type Widget: Widget + FromDynWidget + ?Sized;
     fn into_child_a<Bv>(self, child_b: Bv) -> Split<Self::Widget, Bv::Widget>

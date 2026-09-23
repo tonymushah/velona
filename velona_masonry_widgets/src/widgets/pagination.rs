@@ -11,6 +11,7 @@ use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Pagination`] extension trait.
 // TODO add example
+#[must_use]
 pub trait NewPaginationExt {
     /// Set the [pagination page count](Pagination::set_page_count) reactively.
     ///

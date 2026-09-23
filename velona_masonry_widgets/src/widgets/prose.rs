@@ -29,6 +29,7 @@ use crate::{
 };
 
 /// A [new](NewWidget) [`Prose`] trait extension.
+#[must_use]
 pub trait NewProseExt {
     /// Whether to clip the text to the available space.
     ///
@@ -157,6 +158,7 @@ impl NewTextAreaExt<false> for NewWidget<Prose> {
     }
 }
 
+#[must_use]
 pub trait IntoProse {
     fn into_prose(self) -> Prose;
 }
@@ -170,6 +172,7 @@ where
     }
 }
 
+#[must_use]
 pub trait IntoNewProse {
     fn into_new_prose(self) -> NewWidget<Prose>;
 }

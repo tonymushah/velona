@@ -30,6 +30,7 @@ use crate::{
 
 /// A [new](NewWidget) [`TextInput`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewTextInputExt {
     /// Edits the underlying text area.
     ///
@@ -218,6 +219,7 @@ impl NewTextAreaExt<true> for NewWidget<TextInput> {
 /// it might be quite complex to handle event _via [`NewTextInputExt::use_text_mut`]_.
 ///
 /// This trait provides a [`on_text_action`](Self::on_text_action) to listen to the internal [`TextArea`] action.
+#[must_use]
 pub trait NewTextInputActionExt {
     /// Handle the internal [`TextArea`] [`TextAction`]s.
     fn on_text_action<H>(self, on_action: H) -> Self

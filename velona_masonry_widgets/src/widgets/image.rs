@@ -16,6 +16,7 @@ use crate::NewWidgetExt;
 /// A [`NewWidget<Image>`] trait extension
 ///
 /// PS: You might not need this in most cases. Use `lazy_image` instead.
+#[must_use]
 pub trait NewImageExt {
     /// make the image_data reactive
     fn image_data<F, I>(self, img: F) -> Self

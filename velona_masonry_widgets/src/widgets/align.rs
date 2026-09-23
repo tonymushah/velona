@@ -24,9 +24,9 @@ use velona_core::widgets::View;
 use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Align`] trait extension
+#[must_use]
 pub trait NewAlignExt {
     /// Make the [`Align::set_alignment`] reactive
-    #[must_use]
     fn alignment<A>(self, alignment: A) -> Self
     where
         A: Fn() -> UnitPoint + 'static;
@@ -43,16 +43,12 @@ impl NewAlignExt for NewWidget<Align> {
     }
 }
 
+#[must_use]
 pub trait IntoAlign {
-    #[must_use]
     fn align_centered(self) -> Align;
-    #[must_use]
     fn align_right(self) -> Align;
-    #[must_use]
     fn align_left(self) -> Align;
-    #[must_use]
     fn align_horizontal(self, align: UnitPoint) -> Align;
-    #[must_use]
     fn align_vertical(self, align: UnitPoint) -> Align;
 }
 
@@ -81,15 +77,12 @@ where
     }
 }
 
+#[must_use]
 pub trait IntoNewAlign {
-    #[must_use]
     fn new_align_centered(self) -> NewWidget<Align>;
     fn new_align_right(self) -> NewWidget<Align>;
-    #[must_use]
     fn new_align_left(self) -> NewWidget<Align>;
-    #[must_use]
     fn new_align_horizontal(self, align: UnitPoint) -> NewWidget<Align>;
-    #[must_use]
     fn new_align_vertical(self, align: UnitPoint) -> NewWidget<Align>;
 }
 

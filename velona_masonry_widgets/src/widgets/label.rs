@@ -27,6 +27,7 @@ use velona_core::{
 use super::NewWidgetExt;
 
 /// A [`Label`] trait extention
+#[must_use]
 pub trait NewLabelExt {
     /// It is inefficient to call this function twice.
     fn text<S, T>(self, text: S) -> Self
@@ -111,6 +112,7 @@ impl NewLabelExt for NewWidget<Label> {
 }
 
 /// [`NewLabelExt`] knock-off
+#[must_use]
 pub trait NewChildedLabelExt {
     /// It is inefficient to call this function twice.
     fn text<S, T>(self, text: S) -> Self
@@ -203,6 +205,7 @@ where
     }
 }
 
+#[must_use]
 pub trait IntoLabel {
     fn into_label(self) -> Label;
 }
@@ -216,6 +219,7 @@ where
     }
 }
 
+#[must_use]
 pub trait IntoNewLabel {
     fn into_new_label(self) -> NewWidget<Label>;
 }

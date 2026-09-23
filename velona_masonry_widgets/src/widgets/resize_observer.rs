@@ -28,6 +28,7 @@ use crate::NewWidgetExt;
 
 /// A trait that allows you to [listen](Self::on_resize) any [`NewWidget`] sizes changes
 /// _by wrapping it inside a [`ResizeObserver`]_.
+#[must_use]
 pub trait BindResizeObserver {
     /// Listen to the widget sizes changes.
     ///

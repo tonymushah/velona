@@ -19,6 +19,7 @@ use crate::{
 };
 
 /// A [new](NewWidget) [`TextArea`] trait extension.
+#[must_use]
 pub trait NewTextAreaExt<const USER_EDITABLE: bool> {
     /// Reactive text styles.
     fn style<S, T>(self, style: S) -> Self

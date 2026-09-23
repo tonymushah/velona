@@ -29,6 +29,7 @@ impl ScrollBarSizes {
 }
 
 /// A [new](NewWidget) [`ScrollBar`] trait extension.
+#[must_use]
 pub trait NewScrollBarExt {
     /// Set the [scrollbar sizes](ScrollBar::set_sizes) reactively.
     fn sizes<S>(self, sizes: S) -> Self

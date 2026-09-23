@@ -20,6 +20,7 @@ use super::NewWidgetExt;
 
 /// A [new](NewWidget) [`Portal`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewPortalExt<W>
 where
     W: Widget + FromDynWidget + ?Sized,
@@ -151,6 +152,7 @@ where
     }
 }
 
+#[must_use]
 pub trait IntoPortal {
     type Widget: Widget + FromDynWidget + ?Sized;
     fn into_portal(self) -> Portal<Self::Widget>;

@@ -14,6 +14,7 @@ use masonry::{
 };
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
+use velona_core::widgets::UseWidgetValResult;
 
 use crate::NewWidgetExt;
 
@@ -53,16 +54,22 @@ where
         C: Fn() -> NewWidget<ChildB> + 'static;
     /// Use a mutable reference to the first child widget.
     ///
-    /// It is worth noting that the `use_fn` runs inside an [`Effect`].
-    fn use_child1<U>(self, use_fn: U) -> Self
+    /// It is worth noting that only the `val_fn` runs inside an [`Effect`].
+    fn use_child1<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        U: FnMut(WidgetMut<ChildA>) + 'static;
+        Efn: FnMut(WidgetMut<'_, ChildA>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
     /// Use a mutable reference to the second child widget.
     ///
-    /// It is worth noting that the `use_fn` runs inside an [`Effect`].
-    fn use_child2<U>(self, use_fn: U) -> Self
+    /// It is worth noting that only the `val_fn` runs inside an [`Effect`].
+    fn use_child2<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
-        U: FnMut(WidgetMut<ChildB>) + 'static;
+        Efn: FnMut(WidgetMut<'_, ChildB>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
     /// Sets the [split axis](Split::set_split_axis) reactively.
     fn split_axis<A>(self, split_axis: A) -> Self
     where
@@ -140,20 +147,6 @@ where
         })
     }
 
-    fn use_child1<U>(self, mut use_fn: U) -> Self
-    where
-        U: FnMut(WidgetMut<ChildA>) + 'static,
-    {
-        self.use_reactive_widget_mut(move |mut this| use_fn(Split::child1_mut(&mut this)))
-    }
-
-    fn use_child2<U>(self, mut use_fn: U) -> Self
-    where
-        U: FnMut(WidgetMut<ChildB>) + 'static,
-    {
-        self.use_reactive_widget_mut(move |mut this| use_fn(Split::child2_mut(&mut this)))
-    }
-
     fn split_axis<A>(self, split_axis: A) -> Self
     where
         A: Fn() -> Axis + 'static,
@@ -214,6 +207,30 @@ where
     {
         self.use_widget_mut(bar_solid, |mut this, bar_solid| {
             Split::set_bar_solid(&mut this, bar_solid);
+        })
+    }
+
+    fn use_child1<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
+    where
+        Efn: FnMut(WidgetMut<'_, ChildA>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+    {
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(Split::child1_mut(&mut this), val);
+        })
+    }
+
+    fn use_child2<Vfn, Efn, V, O>(self, val_fn: Vfn, mut edit_fn: Efn) -> Self
+    where
+        Efn: FnMut(WidgetMut<'_, ChildB>, V) + 'static,
+        V: 'static,
+        O: 'static,
+        Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static,
+    {
+        self.use_widget_mut_val(val_fn, move |mut this, val| {
+            edit_fn(Split::child2_mut(&mut this), val);
         })
     }
 }

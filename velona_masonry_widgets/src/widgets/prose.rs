@@ -171,7 +171,7 @@ where
 }
 
 pub trait IntoNewProse {
-    fn into_prose(self) -> NewWidget<Prose>;
+    fn into_new_prose(self) -> NewWidget<Prose>;
 }
 
 impl<Vfn, V> IntoNewProse for Vfn
@@ -179,7 +179,7 @@ where
     Vfn: SignalOrFn<Output = V> + 'static,
     V: AsRef<str> + 'static,
 {
-    fn into_prose(self) -> NewWidget<Prose> {
+    fn into_new_prose(self) -> NewWidget<Prose> {
         Prose::new(untrack(|| self.run()).as_ref())
             .prepare()
             .text(move || self.run())

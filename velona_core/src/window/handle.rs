@@ -786,7 +786,6 @@ impl WindowHandle {
             id: widget_id,
             window: Some(Box::new(self.clone())),
             phantom: PhantomData::<dyn Widget>,
-            thread_id: std::thread::current().id(),
         }
     }
 

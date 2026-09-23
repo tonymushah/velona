@@ -90,21 +90,13 @@ where
     where
         F: FnOnce(&mut RenderRoot) -> R,
     {
-        self.use_window(window_id, |window| {
-            window.render_root.use_render_root_mut(|r| fun(r))
-        })
-        .flatten()
+        self.use_window(window_id, |window| fun(&mut window.render_root.tree))
     }
     fn use_window_render_root_ref<F, R>(&mut self, window_id: WindowId, fun: F) -> Option<R>
     where
         F: FnOnce(&RenderRoot) -> R,
     {
-        self.use_window_ref(window_id, |window| {
-            window
-                .render_root
-                .use_inner_render_root_ref(|r| fun(&r.tree))
-        })
-        .flatten()
+        self.use_window_ref(window_id, |window| fun(&window.render_root.tree))
     }
     fn create_window_owner_children(&self, window_id: WindowId) -> Option<Owner> {
         self.use_window_ref(window_id, |window| window.create_children_owner())
@@ -471,34 +463,27 @@ where
                     window.winit_window.show_window_menu(logical_position);
                 }
                 RenderRootSignal::WidgetSelectedInInspector(widget_id) => {
-                    window.render_root.use_render_root_ref(|render_root| {
-                        let Some(widget) = render_root.get_widget(widget_id) else {
-                            return;
-                        };
-                        let widget_name = widget.short_type_name();
-                        let display_name = if let Some(debug_text) = widget.get_debug_text() {
-                            format!("{widget_name}<{debug_text}>")
-                        } else {
-                            widget_name.into()
-                        };
-                        log::info!("Widget selected in inspector: {widget_id} - {display_name}");
-                    });
+                    let render_root = &window.render_root.tree;
+                    let Some(widget) = render_root.get_widget(widget_id) else {
+                        return;
+                    };
+                    let widget_name = widget.short_type_name();
+                    let display_name = if let Some(debug_text) = widget.get_debug_text() {
+                        format!("{widget_name}<{debug_text}>")
+                    } else {
+                        widget_name.into()
+                    };
+                    log::info!("Widget selected in inspector: {widget_id} - {display_name}");
                 }
                 RenderRootSignal::NewLayer(_type, new_widget, point) => {
                     // TODO implement type
-                    window.render_root.use_render_root_mut(|render_root| {
-                        render_root.add_layer(new_widget, point);
-                    });
+                    window.render_root.tree.add_layer(new_widget, point);
                 }
                 RenderRootSignal::RemoveLayer(widget_id) => {
-                    window.render_root.use_render_root_mut(|render_root| {
-                        render_root.remove_layer(widget_id);
-                    });
+                    window.render_root.tree.remove_layer(widget_id);
                 }
                 RenderRootSignal::RepositionLayer(widget_id, point) => {
-                    window.render_root.use_render_root_mut(|render_root| {
-                        render_root.reposition_layer(widget_id, point);
-                    });
+                    window.render_root.tree.reposition_layer(widget_id, point);
                 }
             }
         });
@@ -511,23 +496,19 @@ where
                 EventLoopEvent::AccessKitAction(event) => {
                     self.use_window(event.window_id, |window| match event.window_event {
                         accesskit_winit::WindowEvent::InitialTreeRequested => {
-                            window.render_root.use_inner_render_root_mut(|render_root| {
-                                render_root
-                                    .tree
-                                    .handle_window_event(MasonryWindowEvent::EnableAccessTree);
-                            });
+                            window
+                                .render_root
+                                .tree
+                                .handle_window_event(MasonryWindowEvent::EnableAccessTree);
                         }
                         accesskit_winit::WindowEvent::ActionRequested(action_request) => {
-                            window.render_root.use_inner_render_root_mut(|inner| {
-                                inner.tree.handle_access_event(action_request);
-                            });
+                            window.render_root.tree.handle_access_event(action_request);
                         }
                         accesskit_winit::WindowEvent::AccessibilityDeactivated => {
-                            window.render_root.use_inner_render_root_mut(|render_root| {
-                                render_root
-                                    .tree
-                                    .handle_window_event(MasonryWindowEvent::DisableAccessTree);
-                            });
+                            window
+                                .render_root
+                                .tree
+                                .handle_window_event(MasonryWindowEvent::DisableAccessTree);
                         }
                     });
                 }
@@ -747,56 +728,7 @@ where
         });
         let clipboard_context = self.clipboard_context.clone();
         self.use_window(window_id, |window| {
-            if !matches!(
-                event,
-                WindowEvent::KeyboardInput {
-                    is_synthetic: true,
-                    ..
-                }
-            ) && let Some(wet) = window
-                .event_reducer
-                .reduce(window.winit_window.scale_factor(), &event)
-            {
-                match wet {
-                    WindowEventTranslation::Keyboard(k) => {
-                        // TODO - Detect in Masonry code instead
-                        let action_mod = if cfg!(target_os = "macos") {
-                            k.modifiers.meta()
-                        } else {
-                            k.modifiers.ctrl()
-                        };
-                        if let Key::Character(c) = &k.key
-                            && c.as_str().eq_ignore_ascii_case("v")
-                            && action_mod
-                            && k.state == KeyState::Down
-                        {
-                            match clipboard_context.borrow_mut().get_contents() {
-                                Ok(content) => {
-                                    window.render_root.use_inner_render_root_mut(|_rr| {
-                                        todo_warn_of_something("Clipboard Paste");
-
-                                        _rr.tree
-                                            .handle_text_event(TextEvent::ClipboardPaste(content));
-                                    });
-                                }
-                                Err(err) => {
-                                    log::error!("Cannot get clipboard content: {err}")
-                                }
-                            }
-                        } else {
-                            window.render_root.use_inner_render_root_mut(|rr| {
-                                rr.tree
-                                    .handle_text_event(masonry_core::core::TextEvent::Keyboard(k));
-                            });
-                        }
-                    }
-                    WindowEventTranslation::Pointer(p) => {
-                        window.render_root.use_inner_render_root_mut(|rr| {
-                            rr.tree.handle_pointer_event(p);
-                        });
-                    }
-                }
-            }
+            handle_ui_translated_event(&event, clipboard_context, window);
         });
         match event {
             WindowEvent::Destroyed if self.windows.is_empty() => {
@@ -865,5 +797,59 @@ where
     ) {
         self.app_event_listeners
             .emit(EmitAppEventToHandlers::Device(device_id, &event));
+    }
+}
+
+fn handle_ui_translated_event<W: WindowRenderer>(
+    event: &WindowEvent,
+    clipboard_context: Rc<RefCell<copypasta::x11_clipboard::X11ClipboardContext>>,
+    window: &mut Window<W>,
+) {
+    if !matches!(
+        *event,
+        WindowEvent::KeyboardInput {
+            is_synthetic: true,
+            ..
+        }
+    ) && let Some(wet) = window
+        .event_reducer
+        .reduce(window.winit_window.scale_factor(), event)
+    {
+        match wet {
+            WindowEventTranslation::Keyboard(k) => {
+                // TODO - Detect in Masonry code instead
+                let action_mod = if cfg!(target_os = "macos") {
+                    k.modifiers.meta()
+                } else {
+                    k.modifiers.ctrl()
+                };
+                if let Key::Character(c) = &k.key
+                    && c.as_str().eq_ignore_ascii_case("v")
+                    && action_mod
+                    && k.state == KeyState::Down
+                {
+                    match clipboard_context.borrow_mut().get_contents() {
+                        Ok(content) => {
+                            window
+                                .render_root
+                                .tree
+                                .handle_text_event(TextEvent::ClipboardPaste(content));
+                            todo_warn_of_something("Clipboard Paste");
+                        }
+                        Err(err) => {
+                            log::error!("Cannot get clipboard content: {err}")
+                        }
+                    }
+                } else {
+                    window
+                        .render_root
+                        .tree
+                        .handle_text_event(masonry_core::core::TextEvent::Keyboard(k));
+                }
+            }
+            WindowEventTranslation::Pointer(p) => {
+                window.render_root.tree.handle_pointer_event(p);
+            }
+        }
     }
 }

@@ -18,7 +18,7 @@ use winit::window::Window as WinitWindow;
 
 use crate::{
     app::{AppHandle, EventLoopEvent, proxy::EventProxyHandle},
-    render_root::{InnerRenderRoot, WindowRenderRoot},
+    render_root::InnerRenderRoot,
     window::event_listener::WindowEventHandlers,
     window::{handle::WindowHandle, renderer::WindowRendererFactory},
 };
@@ -27,7 +27,7 @@ pub struct Window<W>
 where
     W: WindowRenderer,
 {
-    pub(crate) render_root: WindowRenderRoot,
+    pub(crate) render_root: InnerRenderRoot,
     renderer: W,
     pub(crate) access_kit: accesskit_winit::Adapter,
     owner: Owner,
@@ -78,10 +78,8 @@ where
     W: WindowRenderer,
 {
     pub fn on_memory_warning(&mut self) {
-        self.render_root.use_inner_render_root_ref(|rr| {
-            self.window_event_listeners.cleanup(&rr.tree);
-            self.window_event_listeners.shrink_to_fit();
-        });
+        self.window_event_listeners.cleanup(&self.render_root.tree);
+        self.window_event_listeners.shrink_to_fit();
     }
     pub(crate) fn new<V>(args: WindowNew<'_, V, W>) -> Result<Self, crate::error::Error>
     where
@@ -107,7 +105,7 @@ where
 
         let renderer = factory.create(&app_handle);
 
-        let render_root = InnerRenderRoot::new(
+        let mut render_root = InnerRenderRoot::new(
             {
                 let window = window.id();
                 let proxy = app_handle.get_proxy().clone();
@@ -127,22 +125,13 @@ where
                 test_font: None,
             },
         );
-        let render_root = WindowRenderRoot::new(render_root);
         {
             let new_widget = window_owner.with(|| {
-                provide_context(render_root.create_weak());
                 provide_context(window_handle.clone());
                 provide_context(app_handle);
                 view()
             });
-            if render_root
-                .use_inner_render_root_mut(|root| {
-                    root.swap_root_widget(new_widget);
-                })
-                .is_none()
-            {
-                log::error!("The render root should have been initialized already");
-            }
+            render_root.swap_root_widget(new_widget);
         }
 
         let this = Self {
@@ -160,12 +149,7 @@ where
         Ok(this)
     }
     pub fn sync_surface_render_root_size(&mut self) -> bool {
-        let Some(size) = self
-            .render_root
-            .use_inner_render_root_ref(|root| root.tree.size())
-        else {
-            return false;
-        };
+        let size = self.render_root.tree.size();
         self.set_rendered_size(size);
         true
     }
@@ -181,25 +165,17 @@ where
         let last = self.last_anim.take();
         let elapsed = last.map(|t| now.duration_since(t)).unwrap_or_default();
 
-        self.render_root.use_inner_render_root_mut(|rr| {
-            rr.tree
-                .handle_window_event(masonry_core::core::WindowEvent::AnimFrame(elapsed));
-        });
+        self.render_root
+            .tree
+            .handle_window_event(masonry_core::core::WindowEvent::AnimFrame(elapsed));
 
         // If this animation will continue, store the time.
         // If a new animation starts, then it will have zero reported elapsed time.
-        let animation_continues = self
-            .render_root
-            .use_inner_render_root_ref(|rr| rr.tree.needs_anim())
-            .unwrap_or_default();
+        let animation_continues = self.render_root.tree.needs_anim();
         self.last_anim = animation_continues.then_some(now);
 
-        let Some(((visual_plan, _access_tree), size)) = self
-            .render_root
-            .use_inner_render_root_mut(|root| (root.tree.redraw(), root.tree.size()))
-        else {
-            return Ok(());
-        };
+        let (visual_plan, _access_tree) = self.render_root.tree.redraw();
+        let size = self.render_root.tree.size();
 
         let overlays: Vec<_> = visual_plan
             .overlay_layers()
@@ -245,9 +221,7 @@ where
         self.handle.clone()
     }
     pub fn resume(&mut self) {
-        let Some(size) = self.render_root.use_render_root_ref(|root| root.size()) else {
-            return;
-        };
+        let size = self.render_root.tree.size();
         self.renderer
             .resume(self.winit_window.clone(), size.width, size.height);
     }

@@ -1,0 +1,31 @@
+//! Various [`Switch`] implementations.
+//!
+//! The most important thing in the module is the [`NewSwitchExt`]
+//! which is implemented for [`NewWidget<Switch>`].
+//!
+//! _See the [widget](Switch) documentation for more information_.
+
+use masonry::{core::NewWidget, widgets::Switch};
+
+use crate::NewWidgetExt;
+
+/// A [new](NewWidget) [`Switch`] trait extension.
+// TODO add example
+pub trait NewSwitchExt {
+    /// Sets the [switch state](Switch::set_on)
+    /// reactively.
+    fn on<S>(self, on: S) -> Self
+    where
+        S: Fn() -> bool + 'static;
+}
+
+impl NewSwitchExt for NewWidget<Switch> {
+    fn on<S>(self, on: S) -> Self
+    where
+        S: Fn() -> bool + 'static,
+    {
+        self.use_widget_mut(on, |mut this, on| {
+            Switch::set_on(&mut this, on);
+        })
+    }
+}

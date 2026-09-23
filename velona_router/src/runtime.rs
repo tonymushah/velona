@@ -8,6 +8,7 @@ use velona_core::{
         computed::{ArcMemo, Memo},
         effect::Effect,
         owner::{expect_context, provide_context},
+        send_wrapper_ext::SendOption,
         traits::Read,
     },
     utils::ConsumeResult,
@@ -83,6 +84,7 @@ impl RouterState {
     }
 }
 
+#[track_caller]
 pub(crate) fn update_raw_box(
     box_ref: &velona_core::widget_ref::VelonaWidgetRef<RawBox>,
     route_id: &Memo<Option<RouteId>>,
@@ -95,16 +97,18 @@ pub(crate) fn update_raw_box(
             tree.find(route_id)
         }
     {
-        let widget = (route_node.item.view)();
+        let widget = SendOption::new_local(Some((route_node.item.view)()));
 
         box_ref
-            .edit_local_now(|mut this| {
-                RawBox::set_child(&mut this, widget);
+            .edit(move |mut this| {
+                if let Some(widget) = widget.take() {
+                    RawBox::set_child(&mut this, widget)
+                }
             })
             .consume_with_log_err();
     } else {
         box_ref
-            .edit_local_now(|mut this| {
+            .edit(|mut this| {
                 RawBox::remove_child(&mut this);
             })
             .consume_with_log_err();

@@ -12,6 +12,7 @@ members = [
     "velona_executor",
     "velona_core",
     "velona_core_child",
+    "velona_masonry_widgets",
     "velona",
     # Renderers
     "velona_renderer",
@@ -20,6 +21,8 @@ members = [
     "velona_renderer_vello_hybrid",
     # subsecond support
     "velona_subsecond",
+    # Various tools
+    "velona_router",
     # examples
     "examples/counter",
     "examples/align",
@@ -31,8 +34,8 @@ members = [
     "examples/todo_softbuffer",
     "examples/todo_subsecond",
     "examples/todo_vello_hybrid",
-    "velona_router"
-, "examples/router_example"]
+    "examples/router_example"
+]
 default-members = ["velona"]
 resolver = "3"
 
@@ -114,6 +117,7 @@ velona_scoped_styling = { path = "velona_scoped_styling" }
 velona_executor = { path = "velona_executor" }
 velona_subsecond = { path = "velona_subsecond" }
 velona_router = { path = "velona_router" }
+velona_masonry_widgets = { path = "velona_masonry_widgets" }
 
 # velona renderers
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }

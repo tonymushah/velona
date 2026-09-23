@@ -1,0 +1,30 @@
+//! Various [`DisclosureButton`] implementations.
+//!
+//! The most important thing in the module is the [`NewDisclosureButtonExt`]
+//! which is implemented for [`NewWidget<DisclosureButton>`].
+//!
+//! _See the [widget](DisclosureButton) documentation for more information_.
+
+use masonry::{core::NewWidget, widgets::DisclosureButton};
+
+use crate::NewWidgetExt;
+
+/// A [`DisclosureButton`] extension trait
+// TODO add example
+pub trait NewDisclosureButtonExt {
+    /// Set the [disclosed](DisclosureButton::set_disclosed) reactively.
+    fn disclosed<F>(self, disclosed: F) -> Self
+    where
+        F: Fn() -> bool + 'static;
+}
+
+impl NewDisclosureButtonExt for NewWidget<DisclosureButton> {
+    fn disclosed<F>(self, disclosed: F) -> Self
+    where
+        F: Fn() -> bool + 'static,
+    {
+        self.use_widget_mut(disclosed, |mut this, disclosed| {
+            DisclosureButton::set_disclosed(&mut this, disclosed);
+        })
+    }
+}

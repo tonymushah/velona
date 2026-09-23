@@ -11,11 +11,15 @@ use crate::window::{
 
 use super::HandlerFn;
 
+#[track_caller]
 fn use_window_with_panic() -> WindowHandle {
     let Some(window) = use_window() else {
         #[cfg(debug_assertions)]
         {
-            panic!("No window handle found in the current context");
+            panic!(
+                "No window handle found in the current context at {}",
+                std::panic::Location::caller()
+            );
         }
         #[cfg(not(debug_assertions))]
         {
@@ -26,6 +30,7 @@ fn use_window_with_panic() -> WindowHandle {
     window
 }
 
+#[track_caller]
 /// Register a widget action handler
 /// and automatically removes it [`on_cleanup`].
 ///
@@ -55,6 +60,7 @@ pub fn register_widget_action_listener(widget_id: WidgetId, mut handler_fn: Hand
     });
 }
 
+#[track_caller]
 /// Very similar to [`register_widget_action_listener`]
 /// but automatically cast the [`ErasedAction`] to the [`Widget::Action`] type.
 ///
@@ -77,6 +83,7 @@ pub fn register_typed_widget_action_listener<W: Widget + 'static, H>(
     );
 }
 
+#[track_caller]
 pub fn register_on_window_destroy_listener(mut handler_fn: NoParamHandlerFn) {
     let window = use_window_with_panic();
     if let Some(current) = Owner::current() {
@@ -96,6 +103,7 @@ pub fn register_on_window_destroy_listener(mut handler_fn: NoParamHandlerFn) {
     });
 }
 
+#[track_caller]
 pub fn register_on_window_focused_listener(mut handler_fn: HandlerFnGenericStatic<bool>) {
     let window = use_window_with_panic();
     if let Some(current) = Owner::current() {
@@ -115,6 +123,7 @@ pub fn register_on_window_focused_listener(mut handler_fn: HandlerFnGenericStati
     });
 }
 
+#[track_caller]
 pub fn register_on_window_occluded_listener(mut handler_fn: HandlerFnGenericStatic<bool>) {
     let window = use_window_with_panic();
     if let Some(current) = Owner::current() {
@@ -134,6 +143,7 @@ pub fn register_on_window_occluded_listener(mut handler_fn: HandlerFnGenericStat
     });
 }
 
+#[track_caller]
 pub fn register_on_window_cursor_entered_listener(mut handler_fn: HandlerFnGeneric<DeviceId>) {
     let window = use_window_with_panic();
     if let Some(current) = Owner::current() {
@@ -155,6 +165,7 @@ pub fn register_on_window_cursor_entered_listener(mut handler_fn: HandlerFnGener
     });
 }
 
+#[track_caller]
 pub fn register_on_window_cursor_left_listener(mut handler_fn: HandlerFnGeneric<DeviceId>) {
     let window = use_window_with_panic();
     if let Some(current) = Owner::current() {
@@ -174,6 +185,7 @@ pub fn register_on_window_cursor_left_listener(mut handler_fn: HandlerFnGeneric<
     });
 }
 
+#[track_caller]
 pub fn register_on_theme_changed_listener(mut handler_fn: HandlerFnGeneric<winit::window::Theme>) {
     let window = use_window_with_panic();
     if let Some(current) = Owner::current() {
@@ -195,6 +207,7 @@ pub fn register_on_theme_changed_listener(mut handler_fn: HandlerFnGeneric<winit
     });
 }
 
+#[track_caller]
 pub fn register_on_window_keyboard_input_listener(
     mut handler_fn: HandlerFnGeneric<OnKeyboardInput>,
 ) {
@@ -218,6 +231,7 @@ pub fn register_on_window_keyboard_input_listener(
     });
 }
 
+#[track_caller]
 pub fn register_on_window_modifiers_changed_listener(mut handler_fn: HandlerFnGeneric<Modifiers>) {
     let window = use_window_with_panic();
     if let Some(current) = Owner::current() {

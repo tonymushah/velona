@@ -10,7 +10,10 @@ use masonry::{
     layout::Length,
     widgets::SizedBox,
 };
-use velona_core::{AnyNewWidget, widgets::UseWidgetValResult};
+use velona_core::{
+    AnyNewWidget,
+    widgets::{UseWidgetValResult, View},
+};
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
@@ -116,5 +119,34 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
         self.use_widget_mut_val(val_fn, move |mut this, val| {
             edit_fn(SizedBox::child_mut(&mut this), val)
         })
+    }
+}
+
+pub trait IntoSizedBox {
+    fn into_sized_box(self) -> SizedBox;
+}
+
+impl<V> IntoSizedBox for V
+where
+    V: View + 'static,
+{
+    fn into_sized_box(self) -> SizedBox {
+        SizedBox::new(self.into_new_widget())
+    }
+}
+
+pub trait IntoNewSizedBox {
+    fn into_sized_box(self) -> NewWidget<SizedBox>;
+}
+
+impl<Vfn, V> IntoNewSizedBox for Vfn
+where
+    Vfn: Fn() -> Option<V> + 'static,
+    V: View + 'static,
+{
+    fn into_sized_box(self) -> NewWidget<SizedBox> {
+        SizedBox::empty()
+            .prepare()
+            .child_opt(move || (self)().map(V::into_erased))
     }
 }

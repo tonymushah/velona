@@ -200,14 +200,15 @@ impl NewTextAreaExt<true> for NewWidget<TextInput> {
         )
     }
 
-    fn text<T>(self, text: T) -> Self
+    fn text<Tfn, T>(self, text: Tfn) -> Self
     where
-        T: Fn() -> String + 'static,
+        T: AsRef<str> + 'static,
+        Tfn: Fn() -> T + 'static,
     {
         self.use_text_mut(
             move |_| UseWidgetValResult::to_edit_fn(text()),
             |mut this, text| {
-                TextArea::reset_text(&mut this, &text);
+                TextArea::reset_text(&mut this, text.as_ref());
             },
         )
     }

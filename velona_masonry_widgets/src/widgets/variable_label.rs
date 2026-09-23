@@ -63,8 +63,8 @@ impl NewVariableLabelExt for NewWidget<VariableLabel> {
     where
         T: Fn() -> VariableLabelTargetWeight + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            target_weight().apply(&mut this);
+        self.use_widget_mut(target_weight, |mut this, target_weight| {
+            target_weight.apply(&mut this);
         })
     }
 }

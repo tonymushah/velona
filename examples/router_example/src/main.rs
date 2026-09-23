@@ -3,7 +3,7 @@ use std::sync::Arc;
 use velona::{
     AnyNewWidget, WindowBuilder,
     masonry::{
-        core::{NewWidget, Widget},
+        core::{FromDynWidget, NewWidget, Widget},
         layout::{AsUnit, Length},
         palette::css::{BLACK, MISTY_ROSE, WHEAT, WHITE, WHITE_SMOKE},
         properties::{Background, BorderColor, BorderWidth, CornerRadius, Padding},
@@ -15,7 +15,7 @@ use velona::{
         traits::{Get, Read},
     },
     scoped_styling::{ApplyScopedStyles, ApplyToNewWidget, ScopedClasses, ScopedClassesState},
-    widgets::{NewWidgetBaseExt, button::NewButtonPressEventsExt},
+    widgets::{NewWidgetExt, button::NewButtonPressEventsExt},
 };
 use velona_renderer_vello::create_wgpu_context;
 use velona_router::{Route, Router, components::outlet, use_navigation_controller};
@@ -27,7 +27,7 @@ struct NavigateButtonStyles(Arc<ScopedClasses<1>>);
 impl ApplyToNewWidget for NavigateButtonStyles {
     fn apply_to_widget<W>(&self, new_widget: NewWidget<W>) -> NewWidget<W>
     where
-        W: Widget + ?Sized,
+        W: Widget + FromDynWidget + ?Sized,
     {
         new_widget.apply(&*self.0)
     }

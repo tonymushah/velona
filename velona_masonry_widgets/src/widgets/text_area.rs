@@ -103,36 +103,27 @@ impl<const USER_EDITABLE: bool> NewTextAreaExt<USER_EDITABLE>
     where
         S: Fn() -> bool + 'static,
     {
-        self.use_widget_mut(
-            move || hint(),
-            |mut this, hint| {
-                TextArea::set_hint(&mut this, hint);
-            },
-        )
+        self.use_widget_mut(hint, |mut this, hint| {
+            TextArea::set_hint(&mut this, hint);
+        })
     }
 
     fn text_alignment<S>(self, align: S) -> Self
     where
         S: Fn() -> TextAlign + 'static,
     {
-        self.use_widget_mut(
-            move || align(),
-            |mut this, align| {
-                TextArea::set_text_alignment(&mut this, align);
-            },
-        )
+        self.use_widget_mut(align, |mut this, align| {
+            TextArea::set_text_alignment(&mut this, align);
+        })
     }
 
     fn word_wrap<W>(self, wrap_words: W) -> Self
     where
         W: Fn() -> bool + 'static,
     {
-        self.use_widget_mut(
-            move || wrap_words(),
-            |mut this, wrap_words| {
-                TextArea::set_word_wrap(&mut this, wrap_words);
-            },
-        )
+        self.use_widget_mut(wrap_words, |mut this, wrap_words| {
+            TextArea::set_word_wrap(&mut this, wrap_words);
+        })
     }
 
     fn insert_newline<I>(self, insert_newline: I) -> Self

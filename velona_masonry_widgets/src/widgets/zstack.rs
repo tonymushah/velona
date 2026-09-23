@@ -26,8 +26,8 @@ impl NewZStackExt for NewWidget<ZStack> {
         A: Fn() -> U + 'static,
         U: Into<UnitPoint> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            ZStack::set_alignment(&mut this, alignment());
+        self.use_widget_mut(alignment, |mut this, alignment| {
+            ZStack::set_alignment(&mut this, alignment);
         })
     }
 }

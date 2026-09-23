@@ -73,6 +73,7 @@ impl<A> UseWidgetValResult<A, ()> {
 
 #[allow(private_bounds)]
 pub trait NewWidgetExt: View + IsNewWidget {
+    #[must_use]
     // TODO add docs on how it works
     fn use_widget_mut_val<Vfn, Efn, V, O>(
         self,
@@ -85,12 +86,14 @@ pub trait NewWidgetExt: View + IsNewWidget {
         O: 'static,
         Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
     // TODO add docs
+    #[must_use]
     fn use_widget_mut<Vfn, Efn, V>(self, val_fn: Vfn, edit_fn: Efn) -> NewWidget<Self::Widget>
     where
         Efn: FnMut(WidgetMut<'_, Self::Widget>, V) + 'static,
         V: 'static,
         Vfn: Fn() -> V + 'static;
 
+    #[must_use]
     fn use_widget_ref_val<Vfn, Efn, V, O>(
         self,
         val_fn: Vfn,
@@ -102,6 +105,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
         O: 'static,
         Vfn: Fn(Option<O>) -> UseWidgetValResult<V, O> + 'static;
     // TODO add docs
+    #[must_use]
     fn use_widget_ref<Vfn, Efn, V>(self, val_fn: Vfn, use_fn: Efn) -> NewWidget<Self::Widget>
     where
         Efn: FnMut(WidgetRef<'_, Self::Widget>, V) + 'static,
@@ -115,15 +119,18 @@ pub trait NewWidgetExt: View + IsNewWidget {
         F: Fn(&<Self::Widget as Widget>::Action) + Send + 'static,
         Self::Widget: Sized;
     /// Listen to the [`Widget::Action`]
+    #[must_use]
     fn on_action<F>(self, fun: F) -> NewWidget<Self::Widget>
     where
         F: Fn(&<Self::Widget as Widget>::Action) + Send + 'static,
         Self::Widget: Sized;
+    #[must_use]
     fn with_props_opt_reactive<F, P>(self, prop: F) -> NewWidget<Self::Widget>
     where
         F: Fn() -> Option<P> + 'static,
         P: Property;
     /// Set a [widget](Widget) [property](Property) reactively.
+    #[must_use]
     fn with_props_reactive<F, P>(self, prop: F) -> NewWidget<Self::Widget>
     where
         F: Fn() -> P + 'static,
@@ -132,6 +139,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
     /// Update the internal [`NewWidget::widget`].
     // **NOTE: Please be smart and always use [`untrack`](reactive_graph::graph::untrack) if you use decide to bring a reactive closure on using this.**
     // Weird thing might happen if you do that.
+    #[must_use]
     fn update_inner_widget<T>(self, update_fn: T) -> NewWidget<Self::Widget>
     where
         T: FnOnce(Self::Widget) -> Self::Widget,
@@ -146,6 +154,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
     /// but who knows?
     ///
     /// PS: *your `mutate_fn` will not run inside the current context!!*.
+    #[must_use]
     fn mutate_later<Fn>(self, mutate_fn: Fn) -> NewWidget<Self::Widget>
     where
         Fn: FnOnce(WidgetMut<'_, Self::Widget>) + Send + 'static;
@@ -155,6 +164,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
     where
         F: Fn(&ErasedAction) + Send + 'static;
     /// Listen to the [`Widget::Action`] but it is [erased](ErasedAction).
+    #[must_use]
     fn on_erased_action<F>(self, fun: F) -> Self
     where
         F: Fn(&ErasedAction) + Send + 'static;
@@ -164,12 +174,14 @@ pub trait NewWidgetExt: View + IsNewWidget {
     /// When the value changes, the old one will be [removed](MutateCtx::remove_class).
     ///
     /// See [`MutateCtx::add_class`] and [`MutateCtx::remove_class`].
+    #[must_use]
     fn class<C>(self, class: C) -> Self
     where
         C: Fn() -> String + 'static;
     /// Similar to [`class`](Self::class) but uses a [`Option<String>`] instead of [`String`].
     ///
     /// See [`MutateCtx::add_class`] and [`MutateCtx::remove_class`].
+    #[must_use]
     fn class_opt<C>(self, class: C) -> Self
     where
         C: Fn() -> Option<String> + 'static;
@@ -178,6 +190,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
     /// When the values changes, the old classes with be [removed](MutateCtx::remove_class).
     ///
     /// See [`MutateCtx::add_class`] and [`MutateCtx::remove_class`].
+    #[must_use]
     fn classes<C>(self, classes: C) -> Self
     where
         C: Fn() -> Box<[String]> + 'static;
@@ -188,6 +201,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
     /// See [`MutateCtx::is_disabled`] for more information.
     ///
     /// _Reactive version of [`MutateCtx::set_disabled`]_.
+    #[must_use]
     fn disabled_reactive<D>(self, disabled: D) -> Self
     where
         D: Fn() -> bool + 'static;
@@ -195,6 +209,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
     ///
     /// Unlike the [`disabled`](Self::disabled), the function of this one have a `bool` param with it
     /// which is the [`MutateCtx::is_disabled`] return value.
+    #[must_use]
     fn disabled_with_current<D>(self, disabled: D) -> Self
     where
         D: Fn(bool) -> bool + 'static;
@@ -205,12 +220,14 @@ pub trait NewWidgetExt: View + IsNewWidget {
     /// It behaves similarly as CSS transforms.
     ///
     /// _Reactive version of [`MutateCtx::set_transform`]_.
+    #[must_use]
     fn transform<T>(self, transform: T) -> Self
     where
         T: Fn() -> Affine + 'static;
     /// Sets which property stack this widget uses for property resolution.
     ///
     /// _Reactive version of [`MutateCtx::set_property_stack`]_.
+    #[must_use]
     fn property_stack_id<P>(self, property_stack_id: P) -> Self
     where
         P: Fn() -> PropertyStackId + 'static;

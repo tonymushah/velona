@@ -10,6 +10,7 @@ use masonry::{core::NewWidget, layout::UnitPoint, widgets::ZStack};
 use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`ZStack`] trait extension.
+#[must_use]
 pub trait NewZStackExt {
     /// Changes the alignment of the [`ZStack`].
     ///

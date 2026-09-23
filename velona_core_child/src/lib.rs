@@ -10,6 +10,7 @@ use velona_core::{
 /// Some widget has a single child with them. (like [button](masonry::widgets::Button), [align](masonry::widgets::Align))
 ///
 /// This trait will unify all of those single child widgets "mutations" (aka `child_mut`) _instead of making duplicates method for those_.
+#[must_use]
 pub trait SingleChildWidget {
     #[track_caller]
     fn use_child_erased<Vfn, Cfn, V, O>(self, val_fn: Vfn, edit_child_fn: Cfn) -> Self
@@ -108,6 +109,7 @@ mod single_impl {
 
 /// Similar to [`SingleChildWidget`] but the child is typed instead of erased.
 // TODO implement for [`Portal`](masonry::widgets::Portal)
+#[must_use]
 pub trait TypedSingleChildWidget {
     type Child: Widget + FromDynWidget + ?Sized;
 
@@ -204,6 +206,7 @@ where
 /// Allows you to [`Widget`] `set_child` reactively.
 ///
 /// This is only implemented for [`Widget`]s that has an erashed `set_child`
+#[must_use]
 pub trait ReactiveSingleChildExt {
     fn child<Cf>(self, child_fn: Cf) -> Self
     where
@@ -259,6 +262,7 @@ mod reactive_child_impl {
 /// Allows you to [`Widget`] `set_child` reactively.
 ///
 /// Unlike [`ReactiveSingleChildExt`], this trait is only implemented for [`Widget`]s that has a **typed** `set_child`.
+#[must_use]
 pub trait ReactiveSingleTypedChildExt {
     type Child: Widget + 'static;
     fn child<Cf>(self, child_fn: Cf) -> Self

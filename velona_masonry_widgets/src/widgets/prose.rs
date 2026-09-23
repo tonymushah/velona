@@ -7,17 +7,20 @@
 //!
 //! _See the [widget](Prose) documentation for more information_.
 
-use std::mem::Discriminant;
+use std::{fmt::Display, mem::Discriminant};
 
 use masonry::{
     TextAlign,
-    core::{NewWidget, StyleProperty, WidgetMut},
+    core::{NewWidget, StyleProperty, Widget, WidgetMut},
     widgets::{InsertNewline, Prose, TextArea},
 };
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
-use velona_core::widgets::UseWidgetValResult;
+use velona_core::{
+    reactive::{graph::untrack, traits::SignalOrFn},
+    widgets::UseWidgetValResult,
+};
 
 use crate::{
     NewWidgetExt,
@@ -26,6 +29,7 @@ use crate::{
 };
 
 /// A [new](NewWidget) [`Prose`] trait extension.
+#[must_use]
 pub trait NewProseExt {
     /// Whether to clip the text to the available space.
     ///
@@ -140,15 +144,47 @@ impl NewTextAreaExt<false> for NewWidget<Prose> {
         )
     }
 
-    fn text<T>(self, text: T) -> Self
+    fn text<Tfn, T>(self, text: Tfn) -> Self
     where
-        T: Fn() -> String + 'static,
+        Tfn: Fn() -> T + 'static,
+        T: AsRef<str> + 'static,
     {
         self.use_text_mut(
             move |_| UseWidgetValResult::to_edit_fn(text()),
             |mut this, text| {
-                TextArea::reset_text(&mut this, &text);
+                TextArea::reset_text(&mut this, text.as_ref());
             },
         )
+    }
+}
+
+#[must_use]
+pub trait IntoProse {
+    fn into_prose(self) -> Prose;
+}
+
+impl<V> IntoProse for V
+where
+    V: Display,
+{
+    fn into_prose(self) -> Prose {
+        Prose::new(&self.to_string())
+    }
+}
+
+#[must_use]
+pub trait IntoNewProse {
+    fn into_new_prose(self) -> NewWidget<Prose>;
+}
+
+impl<Vfn, V> IntoNewProse for Vfn
+where
+    Vfn: SignalOrFn<Output = V> + 'static,
+    V: AsRef<str> + 'static,
+{
+    fn into_new_prose(self) -> NewWidget<Prose> {
+        Prose::new(untrack(|| self.run()).as_ref())
+            .prepare()
+            .text(move || self.run())
     }
 }

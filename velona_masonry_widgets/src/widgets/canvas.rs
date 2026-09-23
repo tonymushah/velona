@@ -62,6 +62,7 @@ impl<'a, 'b> Debug for UpdateSceneCtx<'a, 'b> {
 
 /// A [new](NewWidget) [`Canvas`] trait extension.
 // TODO add drawing example
+#[must_use]
 pub trait NewCanvasExt {
     /// Updates the canvas scene.
     ///

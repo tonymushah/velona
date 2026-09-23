@@ -17,6 +17,7 @@ use crate::NewWidgetExt;
 
 /// a [new](NewWidget) [`Flex`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewFlexExt {
     /// Set the [flex direction](Flex::set_direction) reactively.
     fn direction<D>(self, direction: D) -> Self

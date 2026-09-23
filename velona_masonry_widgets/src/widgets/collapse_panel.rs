@@ -12,7 +12,7 @@ use masonry::{
     core::{ArcStr, NewWidget, WidgetMut},
     widgets::{CollapsePanel, DisclosureButton, Label},
 };
-use velona_core::widgets::UseWidgetValResult;
+use velona_core::widgets::{UseWidgetValResult, View};
 
 use crate::NewWidgetExt;
 
@@ -27,6 +27,7 @@ use velona_core::reactive::effect::Effect;
 ///
 /// It you want to use the child, use [`SingleChildWidget`].
 // TODO add an example for this
+#[must_use]
 pub trait NewCollapsePanelExt {
     /// Set the [collapsed](CollapsePanel::set_collapsed) value reactively.
     fn collapsed<C>(self, collapsed: C) -> Self
@@ -102,5 +103,24 @@ impl NewCollapsePanelExt for NewWidget<CollapsePanel> {
         self.use_widget_mut_val(val_fn, move |mut this, val| {
             edit_fn(CollapsePanel::header_label_mut(&mut this), val);
         })
+    }
+}
+
+#[must_use]
+pub trait IntoCollapsePanel {
+    fn into_collapse_panel<T>(self, collpse: bool, header_text: T) -> CollapsePanel
+    where
+        T: Into<ArcStr>;
+}
+
+impl<V> IntoCollapsePanel for V
+where
+    V: View + 'static,
+{
+    fn into_collapse_panel<T>(self, collpse: bool, header_text: T) -> CollapsePanel
+    where
+        T: Into<ArcStr>,
+    {
+        CollapsePanel::new(collpse, header_text, self.into_new_widget())
     }
 }

@@ -19,6 +19,7 @@ use crate::{
 };
 
 /// A [new](NewWidget) [`TextArea`] trait extension.
+#[must_use]
 pub trait NewTextAreaExt<const USER_EDITABLE: bool> {
     /// Reactive text styles.
     fn style<S, T>(self, style: S) -> Self
@@ -69,9 +70,10 @@ pub trait NewTextAreaExt<const USER_EDITABLE: bool> {
     /// and may cause undesirable interactions with IME.
     ///
     /// The reactive version of [`reset_text`](TextArea::reset_text).
-    fn text<T>(self, text: T) -> Self
+    fn text<Tfn, T>(self, text: Tfn) -> Self
     where
-        T: Fn() -> String + 'static;
+        T: AsRef<str> + 'static,
+        Tfn: Fn() -> T + 'static;
 }
 
 impl<const USER_EDITABLE: bool> NewTextAreaExt<USER_EDITABLE>
@@ -135,12 +137,13 @@ impl<const USER_EDITABLE: bool> NewTextAreaExt<USER_EDITABLE>
         })
     }
 
-    fn text<T>(self, text: T) -> Self
+    fn text<Tfn, T>(self, text: Tfn) -> Self
     where
-        T: Fn() -> String + 'static,
+        T: AsRef<str> + 'static,
+        Tfn: Fn() -> T + 'static,
     {
         self.use_widget_mut(text, |mut this, text| {
-            TextArea::reset_text(&mut this, &text);
+            TextArea::reset_text(&mut this, text.as_ref());
         })
     }
 }

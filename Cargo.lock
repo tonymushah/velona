@@ -5900,6 +5900,7 @@ dependencies = [
  "hotpath",
  "log",
  "masonry",
+ "masonry_raw_box",
  "resvg",
  "thiserror 2.0.20",
  "velona_core",

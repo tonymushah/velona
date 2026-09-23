@@ -36,6 +36,7 @@ where
 
 /// A [new](NewWidget) [`StepInput`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewStepInputExt<T>
 where
     T: Steppable + 'static,

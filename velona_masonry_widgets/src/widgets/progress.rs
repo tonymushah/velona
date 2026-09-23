@@ -11,6 +11,7 @@ use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`ProgressBar`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewProgressBarExt {
     /// Set the [`progress`](ProgressBar::set_progress) reactively.
     fn progress<P>(self, progress: P) -> Self

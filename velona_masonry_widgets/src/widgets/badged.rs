@@ -12,6 +12,8 @@
 //!
 //! _See the [widget](Badged) documentation for more information_.
 //!
+//! There is also the [`IntoBadged`] trait for transforming [`View`]s into a [`Badged`].
+//!
 //! [badge-widget]: masonry::widgets::Badge
 //! [`SingleChildWidget`]: super::SingleChildWidget
 //! [`ReactiveSingleChildExt`]: super::ReactiveSingleChildExt
@@ -24,11 +26,12 @@ use masonry::{
 use velona_core::AnyNewWidget;
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
-use velona_core::widgets::UseWidgetValResult;
+use velona_core::widgets::{UseWidgetValResult, View};
 
 use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Badged`] trait extension
+#[must_use]
 pub trait NewBadgedTrait {
     /// Change the badged [`content`](Badged::set_content) reactively.
     fn content<C>(self, content_fn: C) -> Self
@@ -131,5 +134,48 @@ impl NewBadgedTrait for NewWidget<Badged> {
         self.use_widget_mut_val(val_fn, move |mut this, val| {
             edit_fn(Badged::badge_mut(&mut this), val);
         })
+    }
+}
+
+pub trait IntoBadged {
+    fn into_badge_content<V>(self, badge: Option<V>) -> Badged
+    where
+        V: View + 'static;
+    fn into_badge_content_with_reactive_badge<Vfn, V>(self, badge: Vfn) -> NewWidget<Badged>
+    where
+        V: View + 'static,
+        Vfn: Fn() -> Option<V> + 'static;
+
+    fn into_badge<V>(self, badge_content: V) -> Badged
+    where
+        V: View + 'static;
+}
+
+impl<V1> IntoBadged for V1
+where
+    V1: View + 'static,
+{
+    fn into_badge_content<V>(self, badge: Option<V>) -> Badged
+    where
+        V: View + 'static,
+    {
+        Badged::new_optional(self.into_new_widget(), badge.map(|v| v.into_erased()))
+    }
+
+    fn into_badge<V>(self, badge_content: V) -> Badged
+    where
+        V: View + 'static,
+    {
+        Badged::new(badge_content.into_new_widget(), self.into_new_widget())
+    }
+
+    fn into_badge_content_with_reactive_badge<Vfn, V>(self, badge: Vfn) -> NewWidget<Badged>
+    where
+        V: View + 'static,
+        Vfn: Fn() -> Option<V> + 'static,
+    {
+        Badged::new_optional(self.into_new_widget(), None)
+            .prepare()
+            .badge(move || badge().map(|v| v.into_erased()))
     }
 }

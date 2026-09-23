@@ -19,6 +19,7 @@ use crate::NewWidgetExt;
 
 /// A [new](NewWidget) [`Divider`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewDividerExt {
     /// Sets the [divider direction](Divider::set_direction) reactively.
     fn direction<A>(self, axis: A) -> Self

@@ -15,15 +15,19 @@ use crate::{
 };
 use masonry::{
     TextAlign,
-    core::{ArcStr, NewWidget, StyleProperty},
+    core::{ArcStr, NewWidget, StyleProperty, Widget},
     widgets::Label,
 };
-use velona_core::widgets::UseWidgetValResult;
+use velona_core::{
+    reactive::{graph::untrack, traits::SignalOrFn},
+    widgets::UseWidgetValResult,
+};
 // use velona_core::widgets::TypedSingleChildWidget;
 
 use super::NewWidgetExt;
 
 /// A [`Label`] trait extention
+#[must_use]
 pub trait NewLabelExt {
     /// It is inefficient to call this function twice.
     fn text<S, T>(self, text: S) -> Self
@@ -108,6 +112,7 @@ impl NewLabelExt for NewWidget<Label> {
 }
 
 /// [`NewLabelExt`] knock-off
+#[must_use]
 pub trait NewChildedLabelExt {
     /// It is inefficient to call this function twice.
     fn text<S, T>(self, text: S) -> Self
@@ -197,5 +202,36 @@ where
                 Label::set_text_alignment(&mut this, align);
             },
         )
+    }
+}
+
+#[must_use]
+pub trait IntoLabel {
+    fn into_label(self) -> Label;
+}
+
+impl<V> IntoLabel for V
+where
+    V: Into<ArcStr>,
+{
+    fn into_label(self) -> Label {
+        Label::new(self)
+    }
+}
+
+#[must_use]
+pub trait IntoNewLabel {
+    fn into_new_label(self) -> NewWidget<Label>;
+}
+
+impl<V, T> IntoNewLabel for V
+where
+    V: SignalOrFn<Output = T> + 'static,
+    T: Into<ArcStr> + 'static,
+{
+    fn into_new_label(self) -> NewWidget<Label> {
+        Label::new(untrack(|| self.run()))
+            .prepare()
+            .text(move || self.run().into())
     }
 }

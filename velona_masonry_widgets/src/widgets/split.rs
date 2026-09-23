@@ -14,7 +14,7 @@ use masonry::{
 };
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
-use velona_core::widgets::UseWidgetValResult;
+use velona_core::widgets::{UseWidgetValResult, View};
 
 use crate::NewWidgetExt;
 
@@ -37,6 +37,7 @@ impl SplitMinLengths {
 
 /// A [new](NewWidget) [`Split`] trait extension.
 // TODO add example
+#[must_use]
 pub trait NewSplitExt<ChildA, ChildB>
 where
     ChildA: Widget + FromDynWidget + ?Sized,
@@ -232,5 +233,35 @@ where
         self.use_widget_mut_val(val_fn, move |mut this, val| {
             edit_fn(Split::child2_mut(&mut this), val);
         })
+    }
+}
+
+#[must_use]
+pub trait IntoSplit {
+    type Widget: Widget + FromDynWidget + ?Sized;
+    fn into_child_a<Bv>(self, child_b: Bv) -> Split<Self::Widget, Bv::Widget>
+    where
+        Bv: View + 'static;
+    fn into_child_b<Av>(self, child_a: Av) -> Split<Av::Widget, Self::Widget>
+    where
+        Av: View + 'static;
+}
+
+impl<V> IntoSplit for V
+where
+    V: View + 'static,
+{
+    type Widget = V::Widget;
+    fn into_child_a<Bv>(self, child_b: Bv) -> Split<Self::Widget, Bv::Widget>
+    where
+        Bv: View + 'static,
+    {
+        Split::new(self.into_new_widget(), child_b.into_new_widget())
+    }
+    fn into_child_b<Av>(self, child_a: Av) -> Split<Av::Widget, Self::Widget>
+    where
+        Av: View + 'static,
+    {
+        Split::new(child_a.into_new_widget(), self.into_new_widget())
     }
 }

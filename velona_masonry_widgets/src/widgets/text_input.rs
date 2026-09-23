@@ -90,8 +90,8 @@ impl NewTextInputExt for NewWidget<TextInput> {
         P: Fn() -> T + 'static,
         T: Into<ArcStr> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            TextInput::set_placeholder(&mut this, placeholder_text());
+        self.use_widget_mut(placeholder_text, |mut this, text| {
+            TextInput::set_placeholder(&mut this, text);
         })
     }
 
@@ -99,8 +99,8 @@ impl NewTextInputExt for NewWidget<TextInput> {
     where
         C: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            TextInput::set_clip(&mut this, clip());
+        self.use_widget_mut(clip, |mut this, clip| {
+            TextInput::set_clip(&mut this, clip);
         })
     }
 
@@ -108,8 +108,8 @@ impl NewTextInputExt for NewWidget<TextInput> {
     where
         A: Fn() -> parley::Alignment + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            TextInput::set_text_alignment(&mut this, text_alignment());
+        self.use_widget_mut(text_alignment, |mut this, text_alignment| {
+            TextInput::set_text_alignment(&mut this, text_alignment);
         })
     }
 }

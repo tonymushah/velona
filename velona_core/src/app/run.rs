@@ -142,7 +142,7 @@ where
                 }) {
                     Ok(mut new_instance) => {
                         if !self.suspended {
-                            new_instance.resume();
+                            self.fut_executor.spawn(new_instance.resume());
                         }
                         if let Some(sender) = builder.window_handle_send {
                             let _ = sender.send(new_instance.get_handle());
@@ -228,7 +228,7 @@ where
 {
     fn resume_windows(&mut self) {
         for window in self.windows.values_mut() {
-            window.resume();
+            self.fut_executor.spawn(window.resume());
         }
     }
     fn suspend_windows(&mut self) {

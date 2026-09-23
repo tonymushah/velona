@@ -5923,7 +5923,6 @@ dependencies = [
  "imaging",
  "kurbo",
  "peniko",
- "pollster",
  "vello",
  "velona_renderer",
  "wgpu_context",

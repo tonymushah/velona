@@ -14,7 +14,7 @@ use masonry::{
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
-use velona_core::widgets::UseWidgetValResult;
+use velona_core::widgets::{UseWidgetValResult, View};
 
 use super::NewWidgetExt;
 
@@ -148,5 +148,20 @@ where
         self.use_widget_mut_val(val_fn, move |mut this, val| {
             edit_fn(Portal::vertical_scrollbar_mut(&mut this), val)
         })
+    }
+}
+
+pub trait IntoPortal {
+    type Widget: Widget + FromDynWidget + ?Sized;
+    fn into_portal(self) -> Portal<Self::Widget>;
+}
+
+impl<V> IntoPortal for V
+where
+    V: View + 'static,
+{
+    type Widget = V::Widget;
+    fn into_portal(self) -> Portal<Self::Widget> {
+        Portal::new(self.into_new_widget())
     }
 }

@@ -50,8 +50,8 @@ impl NewSvgExt for NewWidget<Svg> {
     where
         T: Fn() -> Arc<Tree> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Svg::set_tree(&mut this, tree());
+        self.use_widget_mut(tree, |mut this, tree| {
+            Svg::set_tree(&mut this, tree);
         })
     }
 
@@ -59,8 +59,8 @@ impl NewSvgExt for NewWidget<Svg> {
     where
         D: Fn() -> bool + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Svg::set_decorative(&mut this, is_decorative());
+        self.use_widget_mut(is_decorative, |mut this, is_decorative| {
+            Svg::set_decorative(&mut this, is_decorative);
         })
     }
 
@@ -68,8 +68,8 @@ impl NewSvgExt for NewWidget<Svg> {
     where
         A: Fn() -> Option<ArcStr> + 'static,
     {
-        self.use_reactive_widget_mut(move |mut this| {
-            Svg::set_alt_text(&mut this, alt_text());
+        self.use_widget_mut(alt_text, |mut this, alt_text| {
+            Svg::set_alt_text(&mut this, alt_text);
         })
     }
 }

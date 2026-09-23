@@ -26,7 +26,12 @@ pub trait View {
 
     fn into_new_widget(self) -> NewWidget<Self::Widget>;
 
-    fn into_erased(self) -> NewWidget<dyn Widget>;
+    fn into_erased(self) -> NewWidget<dyn Widget>
+    where
+        Self: std::marker::Sized,
+    {
+        self.into_new_widget().into_erased()
+    }
 }
 
 trait IsNewWidget {}

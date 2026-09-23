@@ -15,10 +15,13 @@ use crate::{
 };
 use masonry::{
     TextAlign,
-    core::{ArcStr, NewWidget, StyleProperty},
+    core::{ArcStr, NewWidget, StyleProperty, Widget},
     widgets::Label,
 };
-use velona_core::widgets::UseWidgetValResult;
+use velona_core::{
+    reactive::{graph::untrack, traits::SignalOrFn},
+    widgets::UseWidgetValResult,
+};
 // use velona_core::widgets::TypedSingleChildWidget;
 
 use super::NewWidgetExt;
@@ -197,5 +200,34 @@ where
                 Label::set_text_alignment(&mut this, align);
             },
         )
+    }
+}
+
+pub trait IntoLabel {
+    fn into_label(self) -> Label;
+}
+
+impl<V> IntoLabel for V
+where
+    V: Into<ArcStr>,
+{
+    fn into_label(self) -> Label {
+        Label::new(self)
+    }
+}
+
+pub trait IntoNewLabel {
+    fn into_label(self) -> NewWidget<Label>;
+}
+
+impl<V, T> IntoNewLabel for V
+where
+    V: SignalOrFn<Output = T> + 'static,
+    T: Into<ArcStr> + 'static,
+{
+    fn into_label(self) -> NewWidget<Label> {
+        Label::new(untrack(|| self.run()))
+            .prepare()
+            .text(move || self.run().into())
     }
 }

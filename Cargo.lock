@@ -5185,6 +5185,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "timer_example"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "hotpath",
+ "log",
+ "tokio",
+ "velona",
+ "velona_renderer_vello_hybrid",
+]
+
+[[package]]
 name = "tiny-skia"
 version = "0.11.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

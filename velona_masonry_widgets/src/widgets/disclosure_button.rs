@@ -6,6 +6,7 @@
 //! _See the [widget](DisclosureButton) documentation for more information_.
 
 use masonry::{core::NewWidget, widgets::DisclosureButton};
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -16,13 +17,13 @@ pub trait NewDisclosureButtonExt {
     /// Set the [disclosed](DisclosureButton::set_disclosed) reactively.
     fn disclosed<F>(self, disclosed: F) -> Self
     where
-        F: Fn() -> bool + 'static;
+        F: SignalOrFn<Output = bool> + 'static;
 }
 
 impl NewDisclosureButtonExt for NewWidget<DisclosureButton> {
     fn disclosed<F>(self, disclosed: F) -> Self
     where
-        F: Fn() -> bool + 'static,
+        F: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(disclosed, |mut this, disclosed| {
             DisclosureButton::set_disclosed(&mut this, disclosed);

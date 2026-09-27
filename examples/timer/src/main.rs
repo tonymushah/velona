@@ -44,9 +44,9 @@ fn view() -> impl View {
     let (enabled, set_enabled) = signal(true);
     use_interval(
         period,
-        move || {
+        move |period| {
             set_time_elapsed.try_maybe_update(|write| {
-                if let Some(new_duration) = write.checked_add(period.get_untracked()) {
+                if let Some(new_duration) = write.checked_add(period) {
                     *write = new_duration;
                     (true, ())
                 } else {
@@ -131,7 +131,7 @@ fn view() -> impl View {
 fn use_interval<I, F, E>(interval_period: I, run_fn: F, enabled: E)
 where
     I: SignalOrFn<Output = Duration> + 'static,
-    F: Fn() + Clone + Send + Sync + 'static,
+    F: Fn(Duration) + Clone + Send + Sync + 'static,
     E: SignalOrFn<Output = bool> + 'static,
 {
     let tokio_handle = expect_context::<runtime::Handle>();
@@ -143,9 +143,11 @@ where
             let join_handle = tokio_handle.spawn(async move {
                 let mut interval = tokio::time::interval(interval_period);
 
+                let mut start = tokio::time::Instant::now();
                 loop {
                     let _end = interval.tick().await;
-                    run_fn();
+                    run_fn(_end - start);
+                    start = tokio::time::Instant::now();
                 }
             });
             on_cleanup(move || {

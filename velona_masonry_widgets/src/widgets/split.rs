@@ -14,7 +14,10 @@ use masonry::{
 };
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
-use velona_core::widgets::{UseWidgetValResult, View};
+use velona_core::{
+    reactive::traits::SignalOrFn,
+    widgets::{UseWidgetValResult, View},
+};
 
 use crate::NewWidgetExt;
 
@@ -74,25 +77,25 @@ where
     /// Sets the [split axis](Split::set_split_axis) reactively.
     fn split_axis<A>(self, split_axis: A) -> Self
     where
-        A: Fn() -> Axis + 'static;
+        A: SignalOrFn<Output = Axis> + 'static;
     /// Sets the [split point](Split::set_split_point) as a fraction of the split axis.
     ///
     /// The value must be between `0.0` and `1.0`, inclusive. The default split point is `0.5`.
     fn split_point<P>(self, split_point: P) -> Self
     where
-        P: Fn() -> SplitPoint + 'static;
+        P: SignalOrFn<Output = SplitPoint> + 'static;
     /// Set the [minimum lengths](Split::set_min_lengths) for both sides of the split axis
     /// reactively.
     fn min_lengths<Ml>(self, min_lengths: Ml) -> Self
     where
-        Ml: Fn() -> SplitMinLengths + 'static;
+        Ml: SignalOrFn<Output = SplitMinLengths> + 'static;
     /// Sets the thickness of the splitter bar
     /// reactively.
     ///
     /// The default splitter bar thickness is `6.0`.
     fn bar_thickness<B>(self, bar_thickness: B) -> Self
     where
-        B: Fn() -> Length + 'static;
+        B: SignalOrFn<Output = Length> + 'static;
     /// Sets the [minimum thickness](Split::set_min_bar_area) of the splitter bar area
     /// reactively.
     ///
@@ -107,12 +110,12 @@ where
     /// The default minimum splitter bar area thickness is `6.0`.
     fn min_bar_area<B>(self, min_bar_area: B) -> Self
     where
-        B: Fn() -> Length + 'static;
+        B: SignalOrFn<Output = Length> + 'static;
     /// [Sets whether the split point can be changed by dragging](Split::set_draggable)
     /// reactively.
     fn draggable<D>(self, draggable: D) -> Self
     where
-        D: Fn() -> bool + 'static;
+        D: SignalOrFn<Output = bool> + 'static;
     /// # Reactive version of [`Split::set_bar_solid`].
     ///
     /// Sets whether the splitter bar is drawn as a solid rectangle.
@@ -122,7 +125,7 @@ where
     /// If this is `false` (the default), the bar will be drawn as two parallel lines.
     fn bar_solid<B>(self, bar_solid: B) -> Self
     where
-        B: Fn() -> bool + 'static;
+        B: SignalOrFn<Output = bool> + 'static;
 }
 
 impl<ChildA, ChildB> NewSplitExt<ChildA, ChildB> for NewWidget<Split<ChildA, ChildB>>
@@ -150,7 +153,7 @@ where
 
     fn split_axis<A>(self, split_axis: A) -> Self
     where
-        A: Fn() -> Axis + 'static,
+        A: SignalOrFn<Output = Axis> + 'static,
     {
         self.use_widget_mut(split_axis, |mut this, split_axis| {
             Split::set_split_axis(&mut this, split_axis);
@@ -159,7 +162,7 @@ where
 
     fn split_point<P>(self, split_point: P) -> Self
     where
-        P: Fn() -> SplitPoint + 'static,
+        P: SignalOrFn<Output = SplitPoint> + 'static,
     {
         self.use_widget_mut(split_point, |mut this, split_point| {
             Split::set_split_point(&mut this, split_point);
@@ -168,7 +171,7 @@ where
 
     fn min_lengths<Ml>(self, min_lengths: Ml) -> Self
     where
-        Ml: Fn() -> SplitMinLengths + 'static,
+        Ml: SignalOrFn<Output = SplitMinLengths> + 'static,
     {
         self.use_widget_mut(min_lengths, |mut this, min_lengths| {
             min_lengths.apply(&mut this);
@@ -177,7 +180,7 @@ where
 
     fn bar_thickness<B>(self, bar_thickness: B) -> Self
     where
-        B: Fn() -> Length + 'static,
+        B: SignalOrFn<Output = Length> + 'static,
     {
         self.use_widget_mut(bar_thickness, |mut this, bar_thickness| {
             Split::set_bar_thickness(&mut this, bar_thickness);
@@ -186,7 +189,7 @@ where
 
     fn min_bar_area<B>(self, min_bar_area: B) -> Self
     where
-        B: Fn() -> Length + 'static,
+        B: SignalOrFn<Output = Length> + 'static,
     {
         self.use_widget_mut(min_bar_area, |mut this, min_bar_area| {
             Split::set_min_bar_area(&mut this, min_bar_area);
@@ -195,7 +198,7 @@ where
 
     fn draggable<D>(self, draggable: D) -> Self
     where
-        D: Fn() -> bool + 'static,
+        D: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(draggable, |mut this, draggable| {
             Split::set_draggable(&mut this, draggable);
@@ -204,7 +207,7 @@ where
 
     fn bar_solid<B>(self, bar_solid: B) -> Self
     where
-        B: Fn() -> bool + 'static,
+        B: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(bar_solid, |mut this, bar_solid| {
             Split::set_bar_solid(&mut this, bar_solid);

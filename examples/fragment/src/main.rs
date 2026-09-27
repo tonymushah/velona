@@ -1,21 +1,3 @@
-use velona::masonry::{
-    core::{NewWidget, Widget},
-    layout::Length,
-    palette::css::{BLACK, GREEN, WHEAT},
-    peniko::color::AlphaColor,
-    properties::{
-        // ActiveBackground,
-        Background,
-        BorderColor,
-        BorderWidth,
-        CheckmarkColor,
-        CornerRadius,
-        // HoveredBorderColor,
-        Padding,
-        types::MainAxisAlignment,
-    },
-    widgets::{Align, Button, Flex, Label},
-};
 use velona::reactive::{
     signal::signal,
     traits::{Get, Read, Set, Update},
@@ -24,6 +6,27 @@ use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder,
     components::{checkbox as _checkbox, label, sized_box},
     widgets::button::NewButtonPressEventsExt,
+};
+use velona::{
+    masonry::{
+        core::{NewWidget, Widget},
+        layout::Length,
+        palette::css::{BLACK, GREEN, WHEAT},
+        peniko::color::AlphaColor,
+        properties::{
+            // ActiveBackground,
+            Background,
+            BorderColor,
+            BorderWidth,
+            CheckmarkColor,
+            CornerRadius,
+            // HoveredBorderColor,
+            Padding,
+            types::MainAxisAlignment,
+        },
+        widgets::{Align, Button, Flex, Label},
+    },
+    widgets::label::IntoNewLabel,
 };
 use velona_renderer_vello::create_wgpu_context;
 
@@ -95,7 +98,7 @@ fn counter() -> AnyNewWidget {
                 })
                 .apply_counter_button_style(),
         )
-        .with_fixed(label(move || format!("{}", count.get())))
+        .with_fixed((move || format!("{}", count.get())).into_new_label())
         .with_fixed(
             Button::with_text("+")
                 .prepare()

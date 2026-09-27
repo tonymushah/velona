@@ -60,13 +60,13 @@ pub trait NewVariableLabelExt {
     /// The reactive variant of [`set_target_weight`](VariableLabel::set_target_weight).
     fn target_weight<T>(self, target_weight: T) -> Self
     where
-        T: Fn() -> VariableLabelTargetWeight + 'static;
+        T: SignalOrFn<Output = VariableLabelTargetWeight> + 'static;
 }
 
 impl NewVariableLabelExt for NewWidget<VariableLabel> {
     fn target_weight<T>(self, target_weight: T) -> Self
     where
-        T: Fn() -> VariableLabelTargetWeight + 'static,
+        T: SignalOrFn<Output = VariableLabelTargetWeight> + 'static,
     {
         self.use_widget_mut(target_weight, |mut this, target_weight| {
             target_weight.apply(&mut this);

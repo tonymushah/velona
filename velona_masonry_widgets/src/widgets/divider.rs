@@ -13,6 +13,7 @@ use masonry::{
 use velona_core::AnyNewWidget;
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
+use velona_core::reactive::traits::SignalOrFn;
 use velona_core::widgets::UseWidgetValResult;
 
 use crate::NewWidgetExt;
@@ -24,18 +25,18 @@ pub trait NewDividerExt {
     /// Sets the [divider direction](Divider::set_direction) reactively.
     fn direction<A>(self, axis: A) -> Self
     where
-        A: Fn() -> Axis + 'static;
+        A: SignalOrFn<Output = Axis> + 'static;
     /// Sets the [divider thickness](Divider::set_thickness) reactively.
     ///
     /// If the `thickness` function return [`Some`] [`Length`], it will use [`Divider::set_thickness`],
     /// if [`None`], it will call [`Divider::set_hairline`] instead.
     fn thickness<T>(self, thickness: T) -> Self
     where
-        T: Fn() -> Option<Length> + 'static;
+        T: SignalOrFn<Output = Option<Length>> + 'static;
     /// Sets the [divider `dash_fit`](Divider::set_dash_fit) reactively.
     fn dash_fit<D>(self, dash_fit: D) -> Self
     where
-        D: Fn() -> DashFit + 'static;
+        D: SignalOrFn<Output = DashFit> + 'static;
     /// Sets the [divider `dash_pattern`](Divider::set_dash_pattern) reactively.
     ///
     /// See [`Divider::dash_pattern`] for more details.
@@ -45,7 +46,7 @@ pub trait NewDividerExt {
     /// Panics if `dash_pattern` contains an uneven number of entries of 3 or more and debug assertions are enabled.
     fn dash_pattern<D>(self, dash_pattern: D) -> Self
     where
-        D: Fn() -> Box<[Length]> + 'static;
+        D: SignalOrFn<Output = Box<[Length]>> + 'static;
     /// Sets the `cap` used both for start and end _reactively_.
     ///
     /// Use [`start_cap`](Self::start_cap) or [`ending_cap`](Self::ending_cap) to set different edge caps.
@@ -56,7 +57,7 @@ pub trait NewDividerExt {
     /// and [`start_cap`](Self::start_cap)/[`end_cap`](Self::ending_cap) together.
     fn cap<C>(self, cap: C) -> Self
     where
-        C: Fn() -> Cap + 'static;
+        C: SignalOrFn<Output = Cap> + 'static;
     /// Sets the starting `cap`.
     ///
     /// Use [`cap`](Self::cap) to set the cap for both the start and the end.
@@ -66,7 +67,7 @@ pub trait NewDividerExt {
     /// It is not recommended to use [`start_cap`](Self::start_cap) and [`cap`](Self::cap) together.
     fn start_cap<C>(self, cap: C) -> Self
     where
-        C: Fn() -> Cap + 'static;
+        C: SignalOrFn<Output = Cap> + 'static;
     /// Sets the ending `cap`.
     ///
     /// Use [`cap`](Self::cap) to set the cap for both the start and the end.
@@ -76,13 +77,13 @@ pub trait NewDividerExt {
     /// It is not recommended to use [`ending_cap`](Self::ending_cap) and [`cap`](Self::cap) together.
     fn ending_cap<C>(self, cap: C) -> Self
     where
-        C: Fn() -> Cap + 'static;
+        C: SignalOrFn<Output = Cap> + 'static;
     /// Sets the content `placement` _reactively_.
     ///
     /// Defaults to [`Placement::Center`].
     fn placement<P>(self, placement: P) -> Self
     where
-        P: Fn() -> Placement + 'static;
+        P: SignalOrFn<Output = Placement> + 'static;
     /// Sets the [divider `content`](Divider::set_content) _reactively_.
     ///
     /// If the `content` function returns `None`, it will [clear the current content](Divider::clear_content).
@@ -97,7 +98,7 @@ pub trait NewDividerExt {
     /// The default value is `5px`.
     fn pad<P>(self, pad: P) -> Self
     where
-        P: Fn() -> Length + 'static;
+        P: SignalOrFn<Output = Length> + 'static;
     /// Use the [divider `content`](Divider::content_mut).
     ///
     /// It worth noting that the only `val_fn` function will run inside an [`Effect`].
@@ -112,7 +113,7 @@ pub trait NewDividerExt {
 impl NewDividerExt for NewWidget<Divider> {
     fn direction<A>(self, axis: A) -> Self
     where
-        A: Fn() -> Axis + 'static,
+        A: SignalOrFn<Output = Axis> + 'static,
     {
         self.use_widget_mut(axis, |mut this, axis| {
             Divider::set_direction(&mut this, axis);
@@ -121,7 +122,7 @@ impl NewDividerExt for NewWidget<Divider> {
 
     fn thickness<T>(self, thickness: T) -> Self
     where
-        T: Fn() -> Option<Length> + 'static,
+        T: SignalOrFn<Output = Option<Length>> + 'static,
     {
         self.use_widget_mut(thickness, |mut this, maybe_thickness| {
             if let Some(thickness) = maybe_thickness {
@@ -134,7 +135,7 @@ impl NewDividerExt for NewWidget<Divider> {
 
     fn dash_fit<D>(self, dash_fit: D) -> Self
     where
-        D: Fn() -> DashFit + 'static,
+        D: SignalOrFn<Output = DashFit> + 'static,
     {
         self.use_widget_mut(dash_fit, |mut this, dash_fit| {
             Divider::set_dash_fit(&mut this, dash_fit);
@@ -143,7 +144,7 @@ impl NewDividerExt for NewWidget<Divider> {
 
     fn dash_pattern<D>(self, dash_pattern: D) -> Self
     where
-        D: Fn() -> Box<[Length]> + 'static,
+        D: SignalOrFn<Output = Box<[Length]>> + 'static,
     {
         self.use_widget_mut(dash_pattern, |mut this, dash_pattern| {
             Divider::set_dash_pattern(&mut this, &dash_pattern);
@@ -152,7 +153,7 @@ impl NewDividerExt for NewWidget<Divider> {
 
     fn cap<C>(self, cap: C) -> Self
     where
-        C: Fn() -> Cap + 'static,
+        C: SignalOrFn<Output = Cap> + 'static,
     {
         self.use_widget_mut(cap, |mut this, cap| {
             Divider::set_cap(&mut this, cap);
@@ -161,7 +162,7 @@ impl NewDividerExt for NewWidget<Divider> {
 
     fn start_cap<C>(self, cap: C) -> Self
     where
-        C: Fn() -> Cap + 'static,
+        C: SignalOrFn<Output = Cap> + 'static,
     {
         self.use_widget_mut(cap, |mut this, cap| {
             Divider::set_start_cap(&mut this, cap);
@@ -170,7 +171,7 @@ impl NewDividerExt for NewWidget<Divider> {
 
     fn ending_cap<C>(self, cap: C) -> Self
     where
-        C: Fn() -> Cap + 'static,
+        C: SignalOrFn<Output = Cap> + 'static,
     {
         self.use_widget_mut(cap, |mut this, cap| {
             Divider::set_end_cap(&mut this, cap);
@@ -179,7 +180,7 @@ impl NewDividerExt for NewWidget<Divider> {
 
     fn placement<P>(self, placement: P) -> Self
     where
-        P: Fn() -> Placement + 'static,
+        P: SignalOrFn<Output = Placement> + 'static,
     {
         self.use_widget_mut(placement, |mut this, placement| {
             Divider::set_placement(&mut this, placement);
@@ -201,7 +202,7 @@ impl NewDividerExt for NewWidget<Divider> {
 
     fn pad<P>(self, pad: P) -> Self
     where
-        P: Fn() -> Length + 'static,
+        P: SignalOrFn<Output = Length> + 'static,
     {
         self.use_widget_mut(pad, |mut this, pad| {
             Divider::set_pad(&mut this, pad);

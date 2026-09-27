@@ -14,7 +14,10 @@ use masonry::{
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
-use velona_core::widgets::{UseWidgetValResult, View};
+use velona_core::{
+    reactive::traits::SignalOrFn,
+    widgets::{UseWidgetValResult, View},
+};
 
 use super::NewWidgetExt;
 
@@ -46,27 +49,27 @@ where
     /// Set the [`Portal` horizontal constrain](Portal::set_constrain_horizontal) reactively.
     fn constrain_horizontal<C>(self, contrain: C) -> Self
     where
-        C: Fn() -> bool + 'static;
+        C: SignalOrFn<Output = bool> + 'static;
     /// Set the [`Portal` vertical constrain](Portal::set_constrain_vertical) reactively.
     fn constrain_vertical<C>(self, contrain: C) -> Self
     where
-        C: Fn() -> bool + 'static;
+        C: SignalOrFn<Output = bool> + 'static;
     /// Set the [`Portal` _content_must_fill_](Portal::set_content_must_fill) reactively.
     fn content_must_fill<C>(self, must_fill: C) -> Self
     where
-        C: Fn() -> bool + 'static;
+        C: SignalOrFn<Output = bool> + 'static;
     /// Set the [`Portal` viewport position](Portal::set_constrain_vertical) reactively.
     fn viewport_pos<C>(self, pos: C) -> Self
     where
-        C: Fn() -> Point + 'static;
+        C: SignalOrFn<Output = Point> + 'static;
     /// A reactive version of [`Portal::pan_viewport_by`].
     fn pan_viewport_by<C>(self, translation: C) -> Self
     where
-        C: Fn() -> Vec2 + 'static;
+        C: SignalOrFn<Output = Vec2> + 'static;
     /// A reactive version of [`Portal::pan_viewport_to`].
     fn pan_viewport_to<C>(self, target: C) -> Self
     where
-        C: Fn() -> Rect + 'static;
+        C: SignalOrFn<Output = Rect> + 'static;
 }
 
 impl<W> NewPortalExt<W> for NewWidget<Portal<W>>
@@ -75,7 +78,7 @@ where
 {
     fn constrain_horizontal<C>(self, contrain: C) -> Self
     where
-        C: Fn() -> bool + 'static,
+        C: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(contrain, |mut this, contrain| {
             Portal::set_constrain_horizontal(&mut this, contrain)
@@ -84,7 +87,7 @@ where
 
     fn constrain_vertical<C>(self, contrain: C) -> Self
     where
-        C: Fn() -> bool + 'static,
+        C: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(contrain, |mut this, contrain| {
             Portal::set_constrain_vertical(&mut this, contrain)
@@ -93,7 +96,7 @@ where
 
     fn content_must_fill<C>(self, must_fill: C) -> Self
     where
-        C: Fn() -> bool + 'static,
+        C: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(must_fill, |mut this, must_fill| {
             Portal::set_content_must_fill(&mut this, must_fill)
@@ -102,7 +105,7 @@ where
 
     fn viewport_pos<C>(self, pos: C) -> Self
     where
-        C: Fn() -> Point + 'static,
+        C: SignalOrFn<Output = Point> + 'static,
     {
         self.use_widget_mut(pos, |mut this, pos| {
             Portal::set_viewport_pos(&mut this, pos);
@@ -111,7 +114,7 @@ where
 
     fn pan_viewport_by<C>(self, translation: C) -> Self
     where
-        C: Fn() -> Vec2 + 'static,
+        C: SignalOrFn<Output = Vec2> + 'static,
     {
         self.use_widget_mut(translation, |mut this, translation| {
             Portal::pan_viewport_by(&mut this, translation);
@@ -120,7 +123,7 @@ where
 
     fn pan_viewport_to<C>(self, target: C) -> Self
     where
-        C: Fn() -> Rect + 'static,
+        C: SignalOrFn<Output = Rect> + 'static,
     {
         self.use_widget_mut(target, |mut this, target| {
             Portal::pan_viewport_to(&mut this, target);

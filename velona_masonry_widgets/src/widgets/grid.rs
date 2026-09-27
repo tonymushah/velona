@@ -9,6 +9,7 @@ use masonry::{
     core::NewWidget,
     widgets::{Grid, GridTrackSize},
 };
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -19,17 +20,17 @@ pub trait NewGridExt {
     /// [Set the grid columns](Grid::set_columns) reactively.
     fn columns<C>(self, track_sizes: C) -> Self
     where
-        C: Fn() -> Vec<GridTrackSize> + 'static;
+        C: SignalOrFn<Output = Vec<GridTrackSize>> + 'static;
     /// [Set the grid rows](Grid::set_rows) reactively.
     fn rows<C>(self, track_sizes: C) -> Self
     where
-        C: Fn() -> Vec<GridTrackSize> + 'static;
+        C: SignalOrFn<Output = Vec<GridTrackSize>> + 'static;
 }
 
 impl NewGridExt for NewWidget<Grid> {
     fn columns<C>(self, track_sizes: C) -> Self
     where
-        C: Fn() -> Vec<GridTrackSize> + 'static,
+        C: SignalOrFn<Output = Vec<GridTrackSize>> + 'static,
     {
         self.use_widget_mut(track_sizes, |mut this, track_sizes| {
             Grid::set_columns(&mut this, track_sizes);
@@ -38,7 +39,7 @@ impl NewGridExt for NewWidget<Grid> {
 
     fn rows<C>(self, track_sizes: C) -> Self
     where
-        C: Fn() -> Vec<GridTrackSize> + 'static,
+        C: SignalOrFn<Output = Vec<GridTrackSize>> + 'static,
     {
         self.use_widget_mut(track_sizes, |mut this, track_sizes| {
             Grid::set_rows(&mut this, track_sizes);

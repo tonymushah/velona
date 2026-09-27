@@ -59,11 +59,11 @@ pub trait NewSliderExt {
     /// _A reactive version of [`Slider::set_step`]_.
     fn step<S>(self, step: S) -> Self
     where
-        S: Fn() -> Option<f64> + 'static;
+        S: SignalOrFn<Output = Option<f64>> + 'static;
     /// Sets the [range (min and max) of the slider](Slider::set_range) reactively.
     fn range<R>(self, range: R) -> Self
     where
-        R: Fn() -> SliderRange + 'static;
+        R: SignalOrFn<Output = SliderRange> + 'static;
 }
 
 impl NewSliderExt for NewWidget<Slider> {
@@ -71,17 +71,14 @@ impl NewSliderExt for NewWidget<Slider> {
     where
         V: SignalOrFn<Output = f64> + 'static,
     {
-        self.use_widget_mut(
-            move || value.run(),
-            |mut this, value| {
-                Slider::set_value(&mut this, value);
-            },
-        )
+        self.use_widget_mut(value, |mut this, value| {
+            Slider::set_value(&mut this, value);
+        })
     }
 
     fn step<S>(self, step: S) -> Self
     where
-        S: Fn() -> Option<f64> + 'static,
+        S: SignalOrFn<Output = Option<f64>> + 'static,
     {
         self.use_widget_mut(step, |mut this, step| {
             Slider::set_step(&mut this, step);
@@ -90,7 +87,7 @@ impl NewSliderExt for NewWidget<Slider> {
 
     fn range<R>(self, range: R) -> Self
     where
-        R: Fn() -> SliderRange + 'static,
+        R: SignalOrFn<Output = SliderRange> + 'static,
     {
         self.use_widget_mut(range, |mut this, range| {
             range.apply(&mut this);

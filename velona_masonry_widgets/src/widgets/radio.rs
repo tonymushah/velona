@@ -32,7 +32,7 @@ pub trait NewRadioButtonExt {
     /// [Check or uncheck the box](RadioButton::set_checked) reactively.
     fn checked<C>(self, checked: C) -> Self
     where
-        C: Fn() -> bool + 'static;
+        C: SignalOrFn<Output = bool> + 'static;
     /// Use a mutable reference to the label.
     ///
     /// It is worth noting that only the `use_fn` runs inside an [`Effect`].
@@ -47,7 +47,7 @@ pub trait NewRadioButtonExt {
 impl NewRadioButtonExt for NewWidget<RadioButton> {
     fn checked<C>(self, checked: C) -> Self
     where
-        C: Fn() -> bool + 'static,
+        C: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(checked, |mut this, checked| {
             RadioButton::set_checked(&mut this, checked);

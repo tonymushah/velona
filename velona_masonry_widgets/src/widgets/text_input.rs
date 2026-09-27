@@ -20,7 +20,10 @@ use masonry::{
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
-use velona_core::{utils::register_typed_widget_action_listener, widgets::UseWidgetValResult};
+use velona_core::{
+    reactive::traits::SignalOrFn, utils::register_typed_widget_action_listener,
+    widgets::UseWidgetValResult,
+};
 
 use crate::{
     NewWidgetExt,
@@ -133,20 +136,20 @@ impl NewTextInputExt for NewWidget<TextInput> {
 impl NewTextAreaExt<true> for NewWidget<TextInput> {
     fn style<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<StyleProperty>,
     {
-        self.style_opt(move || Some(style()))
+        self.style_opt(move || Some(style.run()))
     }
 
     fn style_opt<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> Option<T> + 'static,
+        S: SignalOrFn<Output = Option<T>> + 'static,
         T: Into<StyleProperty>,
     {
         self.use_text_mut(
             move |old_style: Option<Discriminant<StyleProperty>>| {
-                let new_style = style().map(Into::<StyleProperty>::into);
+                let new_style = style.run().map(Into::<StyleProperty>::into);
                 get_style_opt_action(old_style, new_style)
             },
             apply_text_style_actions,
@@ -155,10 +158,10 @@ impl NewTextAreaExt<true> for NewWidget<TextInput> {
 
     fn hint<S>(self, hint: S) -> Self
     where
-        S: Fn() -> bool + 'static,
+        S: SignalOrFn<Output = bool> + 'static,
     {
         self.use_text_mut(
-            move |_| UseWidgetValResult::to_edit_fn(hint()),
+            move |_| UseWidgetValResult::to_edit_fn(hint.run()),
             |mut this, hint| {
                 TextArea::set_hint(&mut this, hint);
             },
@@ -167,10 +170,10 @@ impl NewTextAreaExt<true> for NewWidget<TextInput> {
 
     fn text_alignment<S>(self, align: S) -> Self
     where
-        S: Fn() -> TextAlign + 'static,
+        S: SignalOrFn<Output = TextAlign> + 'static,
     {
         self.use_text_mut(
-            move |_| UseWidgetValResult::to_edit_fn(align()),
+            move |_| UseWidgetValResult::to_edit_fn(align.run()),
             |mut this, align| {
                 TextArea::set_text_alignment(&mut this, align);
             },
@@ -179,10 +182,10 @@ impl NewTextAreaExt<true> for NewWidget<TextInput> {
 
     fn word_wrap<W>(self, wrap_words: W) -> Self
     where
-        W: Fn() -> bool + 'static,
+        W: SignalOrFn<Output = bool> + 'static,
     {
         self.use_text_mut(
-            move |_| UseWidgetValResult::to_edit_fn(wrap_words()),
+            move |_| UseWidgetValResult::to_edit_fn(wrap_words.run()),
             |mut this, wrap| {
                 TextArea::set_word_wrap(&mut this, wrap);
             },
@@ -191,10 +194,10 @@ impl NewTextAreaExt<true> for NewWidget<TextInput> {
 
     fn insert_newline<I>(self, insert_newline: I) -> Self
     where
-        I: Fn() -> InsertNewline + 'static,
+        I: SignalOrFn<Output = InsertNewline> + 'static,
     {
         self.use_text_mut(
-            move |_| UseWidgetValResult::to_edit_fn(insert_newline()),
+            move |_| UseWidgetValResult::to_edit_fn(insert_newline.run()),
             |mut this, insert| {
                 TextArea::set_insert_newline(&mut this, insert);
             },
@@ -204,10 +207,10 @@ impl NewTextAreaExt<true> for NewWidget<TextInput> {
     fn text<Tfn, T>(self, text: Tfn) -> Self
     where
         T: AsRef<str> + 'static,
-        Tfn: Fn() -> T + 'static,
+        Tfn: SignalOrFn<Output = T> + 'static,
     {
         self.use_text_mut(
-            move |_| UseWidgetValResult::to_edit_fn(text()),
+            move |_| UseWidgetValResult::to_edit_fn(text.run()),
             |mut this, text| {
                 TextArea::reset_text(&mut this, text.as_ref());
             },

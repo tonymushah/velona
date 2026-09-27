@@ -14,6 +14,7 @@ use masonry::{
 use masonry::widgets::Step;
 #[cfg(doc)]
 use velona_core::reactive::owner::Owner;
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -56,7 +57,7 @@ where
     /// Panics if `base` is less than `min` or greater than `max` and debug assertions are enabled.
     fn base<B>(self, base: B) -> Self
     where
-        B: Fn() -> T + 'static;
+        B: SignalOrFn<Output = T> + 'static;
     /// Set a new `step` value
     /// reactively.
     ///
@@ -68,7 +69,7 @@ where
     /// Panics if `step` is zero or less and debug assertions are enabled.
     fn step<S>(self, step: S) -> Self
     where
-        S: Fn() -> T + 'static;
+        S: SignalOrFn<Output = T> + 'static;
     /// Set a new `snap` value
     /// reactively.
     ///
@@ -81,7 +82,7 @@ where
     /// Panics if `snap` is zero or less and debug assertions are enabled.
     fn snap<S>(self, snap: S) -> Self
     where
-        S: Fn() -> Option<T> + 'static;
+        S: SignalOrFn<Output = Option<T>> + 'static;
     /// Set new `min` and `max` bounds
     /// reactively.
     ///
@@ -93,7 +94,7 @@ where
     /// Panics if [`min`](StepInputBounds::min) is greater than [`max`](StepInputBounds::max) and debug assertions are enabled.
     fn bounds<B>(self, bounds: B) -> Self
     where
-        B: Fn() -> StepInputBounds<T> + 'static;
+        B: SignalOrFn<Output = StepInputBounds<T>> + 'static;
     /// Set a new wrap value
     /// reactively.
     ///
@@ -101,7 +102,7 @@ where
     /// where increasing above `max` results in `min` and decreasing below `min` results in `max`.
     fn wrap<W>(self, wrap: W) -> Self
     where
-        W: Fn() -> bool + 'static;
+        W: SignalOrFn<Output = bool> + 'static;
     /// Set a new custom display function
     /// reactively.
     ///
@@ -124,7 +125,7 @@ where
 {
     fn base<B>(self, base: B) -> Self
     where
-        B: Fn() -> T + 'static,
+        B: SignalOrFn<Output = T> + 'static,
     {
         self.use_widget_mut(base, |mut this, base| {
             StepInput::set_base(&mut this, base);
@@ -133,7 +134,7 @@ where
 
     fn step<S>(self, step: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
     {
         self.use_widget_mut(step, |mut this, step| {
             StepInput::set_step(&mut this, step);
@@ -142,7 +143,7 @@ where
 
     fn snap<S>(self, snap: S) -> Self
     where
-        S: Fn() -> Option<T> + 'static,
+        S: SignalOrFn<Output = Option<T>> + 'static,
     {
         self.use_widget_mut(snap, |mut this, snap| {
             StepInput::set_snap(&mut this, snap);
@@ -151,7 +152,7 @@ where
 
     fn bounds<B>(self, bounds: B) -> Self
     where
-        B: Fn() -> StepInputBounds<T> + 'static,
+        B: SignalOrFn<Output = StepInputBounds<T>> + 'static,
     {
         self.use_widget_mut(bounds, |mut this, bounds| {
             bounds.apply(&mut this);
@@ -160,7 +161,7 @@ where
 
     fn wrap<W>(self, wrap: W) -> Self
     where
-        W: Fn() -> bool + 'static,
+        W: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(wrap, |mut this, wrap| {
             StepInput::set_wrap(&mut this, wrap);

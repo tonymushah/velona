@@ -36,7 +36,7 @@ pub trait NewProseExt {
     /// Reactive variant of [`Prose::set_clip`]
     fn clip<C>(self, clip: C) -> Self
     where
-        C: Fn() -> bool + 'static;
+        C: SignalOrFn<Output = bool> + 'static;
     /// Use the underlying text area.
     ///
     /// It is worth noting that only the `use_fn` will run inside an [`Effect`].
@@ -53,9 +53,9 @@ pub trait NewProseExt {
 impl NewProseExt for NewWidget<Prose> {
     fn clip<C>(self, clip: C) -> Self
     where
-        C: Fn() -> bool + 'static,
+        C: SignalOrFn<Output = bool> + 'static,
     {
-        self.use_widget_mut(clip, move |mut this, clip| {
+        self.use_widget_mut(clip, |mut this, clip| {
             Prose::set_clip(&mut this, clip);
         })
     }

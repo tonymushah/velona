@@ -11,6 +11,7 @@ use masonry::{
     core::{NewWidget, WidgetMut},
     widgets::Slider,
 };
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -52,7 +53,7 @@ pub trait NewSliderExt {
     /// Set the [slider value](Slider::set_value) reactively.
     fn value<V>(self, value: V) -> Self
     where
-        V: Fn() -> f64 + 'static;
+        V: SignalOrFn<Output = f64> + 'static;
     /// Sets or removes the stepping interval of the slider.
     ///
     /// _A reactive version of [`Slider::set_step`]_.
@@ -68,11 +69,14 @@ pub trait NewSliderExt {
 impl NewSliderExt for NewWidget<Slider> {
     fn value<V>(self, value: V) -> Self
     where
-        V: Fn() -> f64 + 'static,
+        V: SignalOrFn<Output = f64> + 'static,
     {
-        self.use_widget_mut(value, |mut this, value| {
-            Slider::set_value(&mut this, value);
-        })
+        self.use_widget_mut(
+            move || value.run(),
+            |mut this, value| {
+                Slider::set_value(&mut this, value);
+            },
+        )
     }
 
     fn step<S>(self, step: S) -> Self

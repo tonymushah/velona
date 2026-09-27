@@ -39,6 +39,7 @@ use masonry::{
     core::{ArcStr, MutateCtx, NewWidget},
     widgets::Canvas,
 };
+use velona_core::reactive::traits::SignalOrFn;
 use velona_core::widget_ref::{UseWidgetFromRefError, VelonaWidgetRef};
 use velona_core::widgets::UseWidgetValResult;
 
@@ -82,7 +83,7 @@ pub trait NewCanvasExt {
     /// See [`Canvas::with_alt_text`] for details.
     fn alt_text<T>(self, alt_text: T) -> Self
     where
-        T: Fn() -> Option<ArcStr> + 'static;
+        T: SignalOrFn<Output = Option<ArcStr>> + 'static;
 }
 
 impl NewCanvasExt for NewWidget<Canvas> {
@@ -106,7 +107,7 @@ impl NewCanvasExt for NewWidget<Canvas> {
     }
     fn alt_text<T>(self, alt_text: T) -> Self
     where
-        T: Fn() -> Option<ArcStr> + 'static,
+        T: SignalOrFn<Output = Option<ArcStr>> + 'static,
     {
         self.use_widget_mut(alt_text, |mut this, alt_text| {
             Canvas::set_alt_text(&mut this, alt_text);

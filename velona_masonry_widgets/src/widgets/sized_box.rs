@@ -12,6 +12,7 @@ use masonry::{
 };
 use velona_core::{
     AnyNewWidget,
+    reactive::traits::SignalOrFn,
     widgets::{UseWidgetValResult, View},
 };
 
@@ -44,14 +45,14 @@ pub trait NewSizedBoxExt {
     /// if [`None`], the current container width will be [unset](SizedBox::unset_width).
     fn raw_width<W>(self, width_fn: W) -> Self
     where
-        W: Fn() -> Option<Length> + 'static;
+        W: SignalOrFn<Output = Option<Length>> + 'static;
     /// Similar to [`width_opt`](Self::raw_width)
     fn width<W>(self, width_fn: W) -> Self
     where
-        W: Fn() -> Length + 'static,
+        W: SignalOrFn<Output = Length> + 'static,
         Self: Sized,
     {
-        self.raw_width(move || Some(width_fn()))
+        self.raw_width(move || Some(width_fn.run()))
     }
     /// Set a reactive height for this [`SizedBox`].
     ///
@@ -61,14 +62,14 @@ pub trait NewSizedBoxExt {
     /// if [`None`], the current container height will be [unset](SizedBox::unset_height).
     fn raw_height<W>(self, height_fn: W) -> Self
     where
-        W: Fn() -> Option<Length> + 'static;
+        W: SignalOrFn<Output = Option<Length>> + 'static;
     /// Similar to [`height_opt`](Self::raw_height)
     fn height<W>(self, height_fn: W) -> Self
     where
-        W: Fn() -> Length + 'static,
+        W: SignalOrFn<Output = Length> + 'static,
         Self: Sized,
     {
-        self.raw_height(move || Some(height_fn()))
+        self.raw_height(move || Some(height_fn.run()))
     }
     fn use_child_opt<Vfn, Efn, V, O>(self, val_fn: Vfn, edit_fn: Efn) -> Self
     where
@@ -94,7 +95,7 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
 
     fn raw_width<W>(self, width_fn: W) -> Self
     where
-        W: Fn() -> Option<Length> + 'static,
+        W: SignalOrFn<Output = Option<Length>> + 'static,
     {
         self.use_widget_mut(width_fn, |mut this, width| {
             SizedBox::set_raw_width(&mut this, width);
@@ -103,7 +104,7 @@ impl NewSizedBoxExt for NewWidget<SizedBox> {
 
     fn raw_height<W>(self, height_fn: W) -> Self
     where
-        W: Fn() -> Option<Length> + 'static,
+        W: SignalOrFn<Output = Option<Length>> + 'static,
     {
         self.use_widget_mut(height_fn, |mut this, height| {
             SizedBox::set_raw_height(&mut this, height);

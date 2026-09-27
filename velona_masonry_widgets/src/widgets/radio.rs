@@ -18,7 +18,7 @@ use masonry::{
 
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
-use velona_core::widgets::UseWidgetValResult;
+use velona_core::{reactive::traits::SignalOrFn, widgets::UseWidgetValResult};
 
 use crate::{
     NewWidgetExt,
@@ -70,11 +70,11 @@ impl NewRadioButtonExt for NewWidget<RadioButton> {
 impl NewLabelExt for NewWidget<RadioButton> {
     fn text<S, T>(self, text: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<ArcStr>,
     {
         self.use_label_mut(
-            move |_| UseWidgetValResult::to_edit_fn(text().into()),
+            move |_| UseWidgetValResult::to_edit_fn(text.run().into()),
             |mut this, text| {
                 Label::set_text(&mut this, text);
             },
@@ -83,12 +83,12 @@ impl NewLabelExt for NewWidget<RadioButton> {
 
     fn style_opt<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> Option<T> + 'static,
+        S: SignalOrFn<Output = Option<T>> + 'static,
         T: Into<StyleProperty>,
     {
         self.use_label_mut(
             move |old_style: Option<Discriminant<StyleProperty>>| {
-                let new_style = style().map(Into::<StyleProperty>::into);
+                let new_style = style.run().map(Into::<StyleProperty>::into);
                 get_style_opt_action(old_style, new_style)
             },
             apply_label_style_actions,
@@ -96,18 +96,18 @@ impl NewLabelExt for NewWidget<RadioButton> {
     }
     fn style<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<StyleProperty>,
     {
-        self.style_opt(move || Some(style()))
+        self.style_opt(move || Some(style.run()))
     }
 
     fn hint<S>(self, hint: S) -> Self
     where
-        S: Fn() -> bool + 'static,
+        S: SignalOrFn<Output = bool> + 'static,
     {
         self.use_label_mut(
-            move |_| UseWidgetValResult::to_edit_fn(hint()),
+            move |_| UseWidgetValResult::to_edit_fn(hint.run()),
             |mut this, hint| {
                 Label::set_hint(&mut this, hint);
             },
@@ -116,13 +116,13 @@ impl NewLabelExt for NewWidget<RadioButton> {
 
     fn text_alignment<S>(self, align: S) -> Self
     where
-        S: Fn() -> TextAlign + 'static,
+        S: SignalOrFn<Output = TextAlign> + 'static,
     {
         // {
         //     self.widget = Box::new(self.widget.with_text_alignment(untrack(&align)));
         // }
         self.use_label_mut(
-            move |_| UseWidgetValResult::to_edit_fn(align()),
+            move |_| UseWidgetValResult::to_edit_fn(align.run()),
             |mut this, align| {
                 Label::set_text_alignment(&mut this, align);
             },

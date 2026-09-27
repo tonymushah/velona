@@ -26,6 +26,7 @@ use masonry::{
 use velona_core::AnyNewWidget;
 #[cfg(doc)]
 use velona_core::reactive::effect::Effect;
+use velona_core::reactive::traits::SignalOrFn;
 use velona_core::widgets::{UseWidgetValResult, View};
 
 use crate::NewWidgetExt;
@@ -46,11 +47,11 @@ pub trait NewBadgedTrait {
     /// Change the [badge placement](Badged::set_badge_placement) reactively.
     fn badge_placement<P>(self, placement_fn: P) -> Self
     where
-        P: Fn() -> BadgePlacement + 'static;
+        P: SignalOrFn<Output = BadgePlacement> + 'static;
     /// Change the [badge offset](Badged::set_badge_offset) reactively.
     fn badge_offset<O>(self, offset_fn: O) -> Self
     where
-        O: Fn() -> Vec2 + 'static;
+        O: SignalOrFn<Output = Vec2> + 'static;
     /// Use a mutable reference to the content widget.
     ///
     /// It is worth noting that only `val_fn` will run inside an [`Effect`].
@@ -96,7 +97,7 @@ impl NewBadgedTrait for NewWidget<Badged> {
 
     fn badge_placement<P>(self, placement_fn: P) -> Self
     where
-        P: Fn() -> BadgePlacement + 'static,
+        P: SignalOrFn<Output = BadgePlacement> + 'static,
     {
         self.use_widget_mut(placement_fn, |mut this, placement| {
             Badged::set_badge_placement(&mut this, placement);
@@ -105,7 +106,7 @@ impl NewBadgedTrait for NewWidget<Badged> {
 
     fn badge_offset<O>(self, offset_fn: O) -> Self
     where
-        O: Fn() -> Vec2 + 'static,
+        O: SignalOrFn<Output = Vec2> + 'static,
     {
         self.use_widget_mut(offset_fn, |mut this, offset| {
             Badged::set_badge_offset(&mut this, offset);

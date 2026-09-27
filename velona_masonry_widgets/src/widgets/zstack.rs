@@ -6,6 +6,7 @@
 //! _See the [widget](ZStack) documentation for more information_.
 
 use masonry::{core::NewWidget, layout::UnitPoint, widgets::ZStack};
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -17,14 +18,14 @@ pub trait NewZStackExt {
     /// See also [`with_alignment`](ZStack::with_alignment).
     fn alignment<A, U>(self, alignment: A) -> Self
     where
-        A: Fn() -> U + 'static,
+        A: SignalOrFn<Output = U> + 'static,
         U: Into<UnitPoint> + 'static;
 }
 
 impl NewZStackExt for NewWidget<ZStack> {
     fn alignment<A, U>(self, alignment: A) -> Self
     where
-        A: Fn() -> U + 'static,
+        A: SignalOrFn<Output = U> + 'static,
         U: Into<UnitPoint> + 'static,
     {
         self.use_widget_mut(alignment, |mut this, alignment| {

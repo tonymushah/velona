@@ -4,7 +4,7 @@ use velona::reactive::{
 };
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder,
-    components::{checkbox as _checkbox, label, sized_box},
+    components::{checkbox as _checkbox, sized_box},
     widgets::button::NewButtonPressEventsExt,
 };
 use velona::{

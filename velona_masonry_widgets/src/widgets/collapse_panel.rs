@@ -12,7 +12,10 @@ use masonry::{
     core::{ArcStr, NewWidget, WidgetMut},
     widgets::{CollapsePanel, DisclosureButton, Label},
 };
-use velona_core::widgets::{UseWidgetValResult, View};
+use velona_core::{
+    reactive::traits::SignalOrFn,
+    widgets::{UseWidgetValResult, View},
+};
 
 use crate::NewWidgetExt;
 
@@ -32,11 +35,11 @@ pub trait NewCollapsePanelExt {
     /// Set the [collapsed](CollapsePanel::set_collapsed) value reactively.
     fn collapsed<C>(self, collapsed: C) -> Self
     where
-        C: Fn() -> bool + 'static;
+        C: SignalOrFn<Output = bool> + 'static;
     /// Set the [text](CollapsePanel::set_text) reactively.
     fn text<Tf, T>(self, text: Tf) -> Self
     where
-        Tf: Fn() -> T + 'static,
+        Tf: SignalOrFn<Output = T> + 'static,
         T: Into<ArcStr>;
     /// Use the [discolure button](CollapsePanel::disclosure_button_mut).
     ///
@@ -61,7 +64,7 @@ pub trait NewCollapsePanelExt {
 impl NewCollapsePanelExt for NewWidget<CollapsePanel> {
     fn collapsed<C>(self, collapsed: C) -> Self
     where
-        C: Fn() -> bool + 'static,
+        C: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(collapsed, |mut this, collapsed| {
             CollapsePanel::set_collapsed(&mut this, collapsed);
@@ -70,11 +73,11 @@ impl NewCollapsePanelExt for NewWidget<CollapsePanel> {
 
     fn text<Tf, T>(self, text: Tf) -> Self
     where
-        Tf: Fn() -> T + 'static,
+        Tf: SignalOrFn<Output = T> + 'static,
         T: Into<ArcStr>,
     {
         self.use_widget_mut(
-            move || text().into(),
+            move || text.run().into(),
             |mut this, text| {
                 CollapsePanel::set_text(&mut this, text);
             },

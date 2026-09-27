@@ -13,6 +13,7 @@ use masonry_raw_box::RawBox;
 use reactive_graph::effect::Effect;
 
 use reactive_graph::owner::ArenaItem;
+use reactive_graph::traits::SignalOrFn;
 use send_wrapper::SendWrapper;
 
 use crate::utils::ConsumeResult;
@@ -91,7 +92,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
     where
         Efn: FnMut(WidgetMut<'_, Self::Widget>, V) + 'static,
         V: 'static,
-        Vfn: Fn() -> V + 'static;
+        Vfn: SignalOrFn<Output = V> + 'static;
 
     #[must_use]
     fn use_widget_ref_val<Vfn, Efn, V, O>(
@@ -110,7 +111,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
     where
         Efn: FnMut(WidgetRef<'_, Self::Widget>, V) + 'static,
         V: 'static,
-        Vfn: Fn() -> V + 'static;
+        Vfn: SignalOrFn<Output = V> + 'static;
 
     /// Very similar to [`on`](Self::on_action) but uses a [`&self`](self) instead of [`self`].
     /// _You get the idea._
@@ -127,13 +128,13 @@ pub trait NewWidgetExt: View + IsNewWidget {
     #[must_use]
     fn with_props_opt_reactive<F, P>(self, prop: F) -> NewWidget<Self::Widget>
     where
-        F: Fn() -> Option<P> + 'static,
+        F: SignalOrFn<Output = Option<P>> + 'static,
         P: Property;
     /// Set a [widget](Widget) [property](Property) reactively.
     #[must_use]
     fn with_props_reactive<F, P>(self, prop: F) -> NewWidget<Self::Widget>
     where
-        F: Fn() -> P + 'static,
+        F: SignalOrFn<Output = P> + 'static,
         P: Property,
         Self::Widget: HasProperty<P> + 'static;
     /// Update the internal [`NewWidget::widget`].
@@ -177,14 +178,14 @@ pub trait NewWidgetExt: View + IsNewWidget {
     #[must_use]
     fn class<C>(self, class: C) -> Self
     where
-        C: Fn() -> String + 'static;
+        C: SignalOrFn<Output = String> + 'static;
     /// Similar to [`class`](Self::class) but uses a [`Option<String>`] instead of [`String`].
     ///
     /// See [`MutateCtx::add_class`] and [`MutateCtx::remove_class`].
     #[must_use]
     fn class_opt<C>(self, class: C) -> Self
     where
-        C: Fn() -> Option<String> + 'static;
+        C: SignalOrFn<Output = Option<String>> + 'static;
     /// Similar to [`class`](Self::class) and [`class_opt`](Self::class_opt) but uses a [`Vec<String>`] (aka a list of classes).
     ///
     /// When the values changes, the old classes with be [removed](MutateCtx::remove_class).
@@ -193,7 +194,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
     #[must_use]
     fn classes<C>(self, classes: C) -> Self
     where
-        C: Fn() -> Box<[String]> + 'static;
+        C: SignalOrFn<Output = Box<[String]>> + 'static;
     /// Sets the disabled state for this widget.
     ///
     /// Setting this to `false` does not mean a widget is not still disabled;
@@ -204,7 +205,7 @@ pub trait NewWidgetExt: View + IsNewWidget {
     #[must_use]
     fn disabled_reactive<D>(self, disabled: D) -> Self
     where
-        D: Fn() -> bool + 'static;
+        D: SignalOrFn<Output = bool> + 'static;
     /// Sets the disabled state for this widget.
     ///
     /// Unlike the [`disabled`](Self::disabled), the function of this one have a `bool` param with it
@@ -223,14 +224,14 @@ pub trait NewWidgetExt: View + IsNewWidget {
     #[must_use]
     fn transform<T>(self, transform: T) -> Self
     where
-        T: Fn() -> Affine + 'static;
+        T: SignalOrFn<Output = Affine> + 'static;
     /// Sets which property stack this widget uses for property resolution.
     ///
     /// _Reactive version of [`MutateCtx::set_property_stack`]_.
     #[must_use]
     fn property_stack_id<P>(self, property_stack_id: P) -> Self
     where
-        P: Fn() -> PropertyStackId + 'static;
+        P: SignalOrFn<Output = PropertyStackId> + 'static;
 }
 
 impl<W> View for NewWidget<W>
@@ -286,9 +287,12 @@ where
     where
         Efn: FnMut(WidgetMut<'_, Self::Widget>, V) + 'static,
         V: 'static,
-        Vfn: Fn() -> V + 'static,
+        Vfn: SignalOrFn<Output = V> + 'static,
     {
-        self.use_widget_mut_val(move |_| UseWidgetValResult::to_edit_fn(val_fn()), edit_fn)
+        self.use_widget_mut_val(
+            move |_| UseWidgetValResult::to_edit_fn(val_fn.run()),
+            edit_fn,
+        )
     }
 
     #[track_caller]
@@ -313,7 +317,7 @@ where
     #[track_caller]
     fn with_props_opt_reactive<F, P>(self, prop: F) -> NewWidget<Self::Widget>
     where
-        F: Fn() -> Option<P> + 'static,
+        F: SignalOrFn<Output = Option<P>> + 'static,
         P: Property,
     {
         self.use_widget_mut(prop, move |mut widget_mut, prop| {
@@ -328,11 +332,11 @@ where
     #[track_caller]
     fn with_props_reactive<F, P>(self, prop: F) -> NewWidget<Self::Widget>
     where
-        F: Fn() -> P + 'static,
+        F: SignalOrFn<Output = P> + 'static,
         P: Property,
         Self::Widget: HasProperty<P> + 'static,
     {
-        self.with_props_opt_reactive(move || Some(prop()))
+        self.with_props_opt_reactive(move || Some(prop.run()))
     }
 
     #[track_caller]
@@ -384,15 +388,15 @@ where
     #[track_caller]
     fn class<C>(self, class: C) -> Self
     where
-        C: Fn() -> String + 'static,
+        C: SignalOrFn<Output = String> + 'static,
     {
-        self.class_opt(move || Some(class()))
+        self.class_opt(move || Some(class.run()))
     }
 
     #[track_caller]
     fn class_opt<C>(self, class: C) -> Self
     where
-        C: Fn() -> Option<String> + 'static,
+        C: SignalOrFn<Output = Option<String>> + 'static,
     {
         self.use_widget_mut_val(
             move |old_class_maybe: Option<String>| {
@@ -400,7 +404,7 @@ where
                 if let Some(old_class) = old_class_maybe {
                     instructions.push((old_class, ClassActionType::Remove));
                 }
-                let maybe_new_class = class();
+                let maybe_new_class = class.run();
                 if let Some(new_class) = maybe_new_class.as_ref() {
                     instructions.push((new_class.clone(), ClassActionType::Add));
                 }
@@ -416,7 +420,7 @@ where
     #[track_caller]
     fn classes<C>(self, classes: C) -> Self
     where
-        C: Fn() -> Box<[String]> + 'static,
+        C: SignalOrFn<Output = Box<[String]>> + 'static,
     {
         self.use_widget_mut_val(
             move |old_classes_maybe: Option<Box<[String]>>| {
@@ -426,7 +430,7 @@ where
                         instructions.push((old_class, ClassActionType::Remove));
                     }
                 }
-                let new_classes = classes();
+                let new_classes = classes.run();
                 for new_class in &new_classes {
                     instructions.push((new_class.clone(), ClassActionType::Add));
                 }
@@ -442,9 +446,9 @@ where
     #[track_caller]
     fn disabled_reactive<D>(self, disabled: D) -> Self
     where
-        D: Fn() -> bool + 'static,
+        D: SignalOrFn<Output = bool> + 'static,
     {
-        self.disabled_with_current(move |_| disabled())
+        self.disabled_with_current(move |_| disabled.run())
     }
 
     #[track_caller]
@@ -469,7 +473,7 @@ where
     #[track_caller]
     fn transform<T>(self, transform: T) -> Self
     where
-        T: Fn() -> Affine + 'static,
+        T: SignalOrFn<Output = Affine> + 'static,
     {
         self.use_widget_mut(transform, |mut widget_mut, transform| {
             widget_mut.ctx.set_transform(transform);
@@ -479,7 +483,7 @@ where
     #[track_caller]
     fn property_stack_id<P>(self, property_stack_id: P) -> Self
     where
-        P: Fn() -> PropertyStackId + 'static,
+        P: SignalOrFn<Output = PropertyStackId> + 'static,
     {
         self.use_widget_mut(property_stack_id, |mut widget_mut, stack_id| {
             widget_mut.ctx.set_property_stack(stack_id);
@@ -516,9 +520,12 @@ where
     where
         Efn: FnMut(WidgetRef<'_, Self::Widget>, V) + 'static,
         V: 'static,
-        Vfn: Fn() -> V + 'static,
+        Vfn: SignalOrFn<Output = V> + 'static,
     {
-        self.use_widget_ref_val(move |_| UseWidgetValResult::to_edit_fn(val_fn()), use_fn)
+        self.use_widget_ref_val(
+            move |_| UseWidgetValResult::to_edit_fn(val_fn.run()),
+            use_fn,
+        )
     }
 }
 

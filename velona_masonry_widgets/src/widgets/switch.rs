@@ -6,6 +6,7 @@
 //! _See the [widget](Switch) documentation for more information_.
 
 use masonry::{core::NewWidget, widgets::Switch};
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -17,13 +18,13 @@ pub trait NewSwitchExt {
     /// reactively.
     fn on<S>(self, on: S) -> Self
     where
-        S: Fn() -> bool + 'static;
+        S: SignalOrFn<Output = bool> + 'static;
 }
 
 impl NewSwitchExt for NewWidget<Switch> {
     fn on<S>(self, on: S) -> Self
     where
-        S: Fn() -> bool + 'static,
+        S: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(on, |mut this, on| {
             Switch::set_on(&mut this, on);

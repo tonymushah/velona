@@ -60,13 +60,13 @@ pub trait NewVariableLabelExt {
     /// The reactive variant of [`set_target_weight`](VariableLabel::set_target_weight).
     fn target_weight<T>(self, target_weight: T) -> Self
     where
-        T: Fn() -> VariableLabelTargetWeight + 'static;
+        T: SignalOrFn<Output = VariableLabelTargetWeight> + 'static;
 }
 
 impl NewVariableLabelExt for NewWidget<VariableLabel> {
     fn target_weight<T>(self, target_weight: T) -> Self
     where
-        T: Fn() -> VariableLabelTargetWeight + 'static,
+        T: SignalOrFn<Output = VariableLabelTargetWeight> + 'static,
     {
         self.use_widget_mut(target_weight, |mut this, target_weight| {
             target_weight.apply(&mut this);
@@ -89,11 +89,11 @@ impl NewVariableLabelExt for NewWidget<VariableLabel> {
 impl NewLabelExt for NewWidget<VariableLabel> {
     fn text<S, T>(self, text: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<ArcStr>,
     {
         self.use_label_mut(
-            move |_| UseWidgetValResult::to_edit_fn(text().into()),
+            move |_| UseWidgetValResult::to_edit_fn(text.run().into()),
             |mut this, text| {
                 Label::set_text(&mut this, text);
             },
@@ -102,20 +102,20 @@ impl NewLabelExt for NewWidget<VariableLabel> {
 
     fn style<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<StyleProperty>,
     {
-        self.style_opt(move || Some(style()))
+        self.style_opt(move || Some(style.run()))
     }
 
     fn style_opt<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> Option<T> + 'static,
+        S: SignalOrFn<Output = Option<T>> + 'static,
         T: Into<StyleProperty>,
     {
         self.use_label_mut(
             move |old_style: Option<Discriminant<StyleProperty>>| {
-                let new_style = style().map(Into::<StyleProperty>::into);
+                let new_style = style.run().map(Into::<StyleProperty>::into);
                 get_style_opt_action(old_style, new_style)
             },
             apply_label_style_actions,
@@ -124,10 +124,10 @@ impl NewLabelExt for NewWidget<VariableLabel> {
 
     fn hint<S>(self, hint: S) -> Self
     where
-        S: Fn() -> bool + 'static,
+        S: SignalOrFn<Output = bool> + 'static,
     {
         self.use_label_mut(
-            move |_| UseWidgetValResult::to_edit_fn(hint()),
+            move |_| UseWidgetValResult::to_edit_fn(hint.run()),
             |mut this, hint| {
                 Label::set_hint(&mut this, hint);
             },
@@ -136,10 +136,10 @@ impl NewLabelExt for NewWidget<VariableLabel> {
 
     fn text_alignment<S>(self, align: S) -> Self
     where
-        S: Fn() -> TextAlign + 'static,
+        S: SignalOrFn<Output = TextAlign> + 'static,
     {
         self.use_label_mut(
-            move |_| UseWidgetValResult::to_edit_fn(align()),
+            move |_| UseWidgetValResult::to_edit_fn(align.run()),
             |mut this, alignment| {
                 Label::set_text_alignment(&mut this, alignment);
             },

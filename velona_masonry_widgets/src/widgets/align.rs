@@ -19,7 +19,7 @@ use masonry::{
     widgets::Align,
 };
 use masonry_raw_box::RawBox;
-use velona_core::widgets::View;
+use velona_core::{reactive::traits::SignalOrFn, widgets::View};
 
 use crate::NewWidgetExt;
 
@@ -29,13 +29,13 @@ pub trait NewAlignExt {
     /// Make the [`Align::set_alignment`] reactive
     fn alignment<A>(self, alignment: A) -> Self
     where
-        A: Fn() -> UnitPoint + 'static;
+        A: SignalOrFn<Output = UnitPoint> + 'static;
 }
 
 impl NewAlignExt for NewWidget<Align> {
     fn alignment<A>(self, alignment: A) -> Self
     where
-        A: Fn() -> UnitPoint + 'static,
+        A: SignalOrFn<Output = UnitPoint> + 'static,
     {
         self.use_widget_mut(alignment, |mut this, alignment| {
             Align::set_alignment(&mut this, alignment);

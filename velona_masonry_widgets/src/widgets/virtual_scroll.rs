@@ -9,6 +9,7 @@ use masonry::{
     core::NewWidget,
     widgets::{ScrollDirection, VirtualScroll},
 };
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -23,27 +24,27 @@ pub trait NewVirtualScrollExt {
     /// Reactive equivalent of [`with_len`](VirtualScroll::with_len).
     fn len<L>(self, len: L) -> Self
     where
-        L: Fn() -> usize + 'static;
+        L: SignalOrFn<Output = usize> + 'static;
     /// Sets the point (as ratio of the main-axis length)
     /// where the first item starts in the viewport.
     ///
     /// Reactive equivalent of [`set_start`](VirtualScroll::set_start).
     fn start<S>(self, start_at: S) -> Self
     where
-        S: Fn() -> f64 + 'static;
+        S: SignalOrFn<Output = f64> + 'static;
     /// Sets the point (as ratio of the main-axis length)
     /// where the last item ends in the viewport.
     ///
     /// Reactive equivalent of [`set_end`](VirtualScroll::set_end).
     fn end<E>(self, end_at: E) -> Self
     where
-        E: Fn() -> f64 + 'static;
+        E: SignalOrFn<Output = f64> + 'static;
     /// Sets the direction in which children are laid out.
     ///
     /// Reactive equivalent of [`set_direction`](VirtualScroll::set_direction).
     fn direction<D>(self, direction: D) -> Self
     where
-        D: Fn() -> ScrollDirection + 'static;
+        D: SignalOrFn<Output = ScrollDirection> + 'static;
     /// Sets scrolling state.
     ///
     /// Adjusts pixel snapping for animations.
@@ -51,7 +52,7 @@ pub trait NewVirtualScrollExt {
     /// Reactive equivalent of [`set_scrolling`](VirtualScroll::set_scrolling).
     fn scrolling<S>(self, scrolling: S) -> Self
     where
-        S: Fn() -> bool + 'static;
+        S: SignalOrFn<Output = bool> + 'static;
     /// Forcefully aligns the top of the item at `idx`
     /// with the top of the virtual scroll area.
     ///
@@ -64,13 +65,13 @@ pub trait NewVirtualScrollExt {
     /// but can be used outside of tests (for example, in certain scrollbar schemes).
     fn scroll_to<I>(self, idx: I) -> Self
     where
-        I: Fn() -> usize + 'static;
+        I: SignalOrFn<Output = usize> + 'static;
 }
 
 impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
     fn len<L>(self, len: L) -> Self
     where
-        L: Fn() -> usize + 'static,
+        L: SignalOrFn<Output = usize> + 'static,
     {
         self.use_widget_mut(len, |mut this, len| {
             VirtualScroll::set_len(&mut this, len);
@@ -79,7 +80,7 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
 
     fn start<S>(self, start_at: S) -> Self
     where
-        S: Fn() -> f64 + 'static,
+        S: SignalOrFn<Output = f64> + 'static,
     {
         self.use_widget_mut(start_at, |mut this, start_at| {
             VirtualScroll::set_start(&mut this, start_at);
@@ -88,7 +89,7 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
 
     fn end<E>(self, end_at: E) -> Self
     where
-        E: Fn() -> f64 + 'static,
+        E: SignalOrFn<Output = f64> + 'static,
     {
         self.use_widget_mut(end_at, |mut this, end_at| {
             VirtualScroll::set_end(&mut this, end_at);
@@ -97,7 +98,7 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
 
     fn direction<D>(self, direction: D) -> Self
     where
-        D: Fn() -> ScrollDirection + 'static,
+        D: SignalOrFn<Output = ScrollDirection> + 'static,
     {
         self.use_widget_mut(direction, |mut this, direction| {
             VirtualScroll::set_direction(&mut this, direction);
@@ -106,7 +107,7 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
 
     fn scrolling<S>(self, scrolling: S) -> Self
     where
-        S: Fn() -> bool + 'static,
+        S: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(scrolling, |mut this, scrolling| {
             VirtualScroll::set_scrolling(&mut this, scrolling);
@@ -115,7 +116,7 @@ impl NewVirtualScrollExt for NewWidget<VirtualScroll> {
 
     fn scroll_to<I>(self, idx: I) -> Self
     where
-        I: Fn() -> usize + 'static,
+        I: SignalOrFn<Output = usize> + 'static,
     {
         self.use_widget_mut(idx, |mut this, idx| {
             VirtualScroll::scroll_to(&mut this, idx);

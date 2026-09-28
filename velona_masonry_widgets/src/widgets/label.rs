@@ -32,36 +32,36 @@ pub trait NewLabelExt {
     /// It is inefficient to call this function twice.
     fn text<S, T>(self, text: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<ArcStr>;
     /// Reactive text styles.
     fn style<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<StyleProperty>;
     /// Reactive optional text styles.
     fn style_opt<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> Option<T> + 'static,
+        S: SignalOrFn<Output = Option<T>> + 'static,
         T: Into<StyleProperty>;
     /// The reactive equivalent of [`with_hint`](Label::with_hint).
     fn hint<S>(self, hint: S) -> Self
     where
-        S: Fn() -> bool + 'static;
+        S: SignalOrFn<Output = bool> + 'static;
     /// The reactive equivalent of [`with_text_alignment`](Label::with_text_alignment).
     fn text_alignment<S>(self, align: S) -> Self
     where
-        S: Fn() -> TextAlign + 'static;
+        S: SignalOrFn<Output = TextAlign> + 'static;
 }
 
 impl NewLabelExt for NewWidget<Label> {
     fn text<S, T>(self, text: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<ArcStr>,
     {
         self.use_widget_mut(
-            move || text().into(),
+            move || text.run().into(),
             move |mut this, text| {
                 Label::set_text(&mut this, text);
             },
@@ -70,12 +70,12 @@ impl NewLabelExt for NewWidget<Label> {
 
     fn style_opt<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> Option<T> + 'static,
+        S: SignalOrFn<Output = Option<T>> + 'static,
         T: Into<StyleProperty>,
     {
         self.use_widget_mut_val(
             move |old_style: Option<Discriminant<StyleProperty>>| {
-                let new_style = style().map(Into::<StyleProperty>::into);
+                let new_style = style.run().map(Into::<StyleProperty>::into);
                 get_style_opt_action(old_style, new_style)
             },
             apply_label_style_actions,
@@ -83,15 +83,15 @@ impl NewLabelExt for NewWidget<Label> {
     }
     fn style<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<StyleProperty>,
     {
-        self.style_opt(move || Some(style()))
+        self.style_opt(move || Some(style.run()))
     }
 
     fn hint<S>(self, hint: S) -> Self
     where
-        S: Fn() -> bool + 'static,
+        S: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(hint, |mut this, hint| {
             Label::set_hint(&mut this, hint);
@@ -100,7 +100,7 @@ impl NewLabelExt for NewWidget<Label> {
 
     fn text_alignment<S>(self, align: S) -> Self
     where
-        S: Fn() -> TextAlign + 'static,
+        S: SignalOrFn<Output = TextAlign> + 'static,
     {
         // {
         //     self.widget = Box::new(self.widget.with_text_alignment(untrack(&align)));
@@ -117,26 +117,26 @@ pub trait NewChildedLabelExt {
     /// It is inefficient to call this function twice.
     fn text<S, T>(self, text: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<ArcStr>;
     /// Reactive text styles.
     fn style<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<StyleProperty>;
     /// Reactive optional text styles.
     fn style_opt<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> Option<T> + 'static,
+        S: SignalOrFn<Output = Option<T>> + 'static,
         T: Into<StyleProperty>;
     /// The reactive equivalent of [`with_hint`](Label::with_hint).
     fn hint<S>(self, hint: S) -> Self
     where
-        S: Fn() -> bool + 'static;
+        S: SignalOrFn<Output = bool> + 'static;
     /// The reactive equivalent of [`with_text_alignment`](Label::with_text_alignment).
     fn text_alignment<S>(self, align: S) -> Self
     where
-        S: Fn() -> TextAlign + 'static;
+        S: SignalOrFn<Output = TextAlign> + 'static;
 }
 
 impl<W> NewChildedLabelExt for W
@@ -145,11 +145,11 @@ where
 {
     fn text<S, T>(self, text: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<ArcStr>,
     {
         self.use_child(
-            move |_| UseWidgetValResult::to_edit_fn(text().into()),
+            move |_| UseWidgetValResult::to_edit_fn(text.run().into()),
             |mut this, text| {
                 Label::set_text(&mut this, text);
             },
@@ -158,12 +158,12 @@ where
 
     fn style_opt<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> Option<T> + 'static,
+        S: SignalOrFn<Output = Option<T>> + 'static,
         T: Into<StyleProperty>,
     {
         self.use_child(
             move |old_style: Option<Discriminant<StyleProperty>>| {
-                let new_style = style().map(Into::<StyleProperty>::into);
+                let new_style = style.run().map(Into::<StyleProperty>::into);
                 get_style_opt_action(old_style, new_style)
             },
             apply_label_style_actions,
@@ -171,18 +171,18 @@ where
     }
     fn style<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<StyleProperty>,
     {
-        self.style_opt(move || Some(style()))
+        self.style_opt(move || Some(style.run()))
     }
 
     fn hint<S>(self, hint: S) -> Self
     where
-        S: Fn() -> bool + 'static,
+        S: SignalOrFn<Output = bool> + 'static,
     {
         self.use_child(
-            move |_| UseWidgetValResult::to_edit_fn(hint()),
+            move |_| UseWidgetValResult::to_edit_fn(hint.run()),
             |mut this, hint| {
                 Label::set_hint(&mut this, hint);
             },
@@ -191,13 +191,13 @@ where
 
     fn text_alignment<S>(self, align: S) -> Self
     where
-        S: Fn() -> TextAlign + 'static,
+        S: SignalOrFn<Output = TextAlign> + 'static,
     {
         // {
         //     self.widget = Box::new(self.widget.with_text_alignment(untrack(&align)));
         // }
         self.use_child(
-            move |_| UseWidgetValResult::to_edit_fn(align()),
+            move |_| UseWidgetValResult::to_edit_fn(align.run()),
             |mut this, align| {
                 Label::set_text_alignment(&mut this, align);
             },

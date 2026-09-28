@@ -36,7 +36,7 @@ pub trait NewProseExt {
     /// Reactive variant of [`Prose::set_clip`]
     fn clip<C>(self, clip: C) -> Self
     where
-        C: Fn() -> bool + 'static;
+        C: SignalOrFn<Output = bool> + 'static;
     /// Use the underlying text area.
     ///
     /// It is worth noting that only the `use_fn` will run inside an [`Effect`].
@@ -53,9 +53,9 @@ pub trait NewProseExt {
 impl NewProseExt for NewWidget<Prose> {
     fn clip<C>(self, clip: C) -> Self
     where
-        C: Fn() -> bool + 'static,
+        C: SignalOrFn<Output = bool> + 'static,
     {
-        self.use_widget_mut(clip, move |mut this, clip| {
+        self.use_widget_mut(clip, |mut this, clip| {
             Prose::set_clip(&mut this, clip);
         })
     }
@@ -76,20 +76,20 @@ impl NewProseExt for NewWidget<Prose> {
 impl NewTextAreaExt<false> for NewWidget<Prose> {
     fn style<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> T + 'static,
+        S: SignalOrFn<Output = T> + 'static,
         T: Into<StyleProperty>,
     {
-        self.style_opt(move || Some(style()))
+        self.style_opt(move || Some(style.run()))
     }
 
     fn style_opt<S, T>(self, style: S) -> Self
     where
-        S: Fn() -> Option<T> + 'static,
+        S: SignalOrFn<Output = Option<T>> + 'static,
         T: Into<StyleProperty>,
     {
         self.use_text_mut(
             move |old_style: Option<Discriminant<StyleProperty>>| {
-                let new_style = style().map(Into::<StyleProperty>::into);
+                let new_style = style.run().map(Into::<StyleProperty>::into);
                 get_style_opt_action(old_style, new_style)
             },
             apply_text_style_actions,
@@ -98,10 +98,10 @@ impl NewTextAreaExt<false> for NewWidget<Prose> {
 
     fn hint<S>(self, hint: S) -> Self
     where
-        S: Fn() -> bool + 'static,
+        S: SignalOrFn<Output = bool> + 'static,
     {
         self.use_text_mut(
-            move |_| UseWidgetValResult::to_edit_fn(hint()),
+            move |_| UseWidgetValResult::to_edit_fn(hint.run()),
             |mut this, hint| {
                 TextArea::set_hint(&mut this, hint);
             },
@@ -110,10 +110,10 @@ impl NewTextAreaExt<false> for NewWidget<Prose> {
 
     fn text_alignment<S>(self, align: S) -> Self
     where
-        S: Fn() -> TextAlign + 'static,
+        S: SignalOrFn<Output = TextAlign> + 'static,
     {
         self.use_text_mut(
-            move |_| UseWidgetValResult::to_edit_fn(align()),
+            move |_| UseWidgetValResult::to_edit_fn(align.run()),
             |mut this, align| {
                 TextArea::set_text_alignment(&mut this, align);
             },
@@ -122,10 +122,10 @@ impl NewTextAreaExt<false> for NewWidget<Prose> {
 
     fn word_wrap<W>(self, wrap_words: W) -> Self
     where
-        W: Fn() -> bool + 'static,
+        W: SignalOrFn<Output = bool> + 'static,
     {
         self.use_text_mut(
-            move |_| UseWidgetValResult::to_edit_fn(wrap_words()),
+            move |_| UseWidgetValResult::to_edit_fn(wrap_words.run()),
             |mut this, wrap_words| {
                 TextArea::set_word_wrap(&mut this, wrap_words);
             },
@@ -134,10 +134,10 @@ impl NewTextAreaExt<false> for NewWidget<Prose> {
 
     fn insert_newline<I>(self, insert_newline: I) -> Self
     where
-        I: Fn() -> InsertNewline + 'static,
+        I: SignalOrFn<Output = InsertNewline> + 'static,
     {
         self.use_text_mut(
-            move |_| UseWidgetValResult::to_edit_fn(insert_newline()),
+            move |_| UseWidgetValResult::to_edit_fn(insert_newline.run()),
             |mut this, insert_newline| {
                 TextArea::set_insert_newline(&mut this, insert_newline);
             },
@@ -146,11 +146,11 @@ impl NewTextAreaExt<false> for NewWidget<Prose> {
 
     fn text<Tfn, T>(self, text: Tfn) -> Self
     where
-        Tfn: Fn() -> T + 'static,
+        Tfn: SignalOrFn<Output = T> + 'static,
         T: AsRef<str> + 'static,
     {
         self.use_text_mut(
-            move |_| UseWidgetValResult::to_edit_fn(text()),
+            move |_| UseWidgetValResult::to_edit_fn(text.run()),
             |mut this, text| {
                 TextArea::reset_text(&mut this, text.as_ref());
             },

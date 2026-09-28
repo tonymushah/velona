@@ -9,6 +9,7 @@ use masonry::{
     core::{NewWidget, WidgetMut},
     widgets::ScrollBar,
 };
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -34,17 +35,17 @@ pub trait NewScrollBarExt {
     /// Set the [scrollbar sizes](ScrollBar::set_sizes) reactively.
     fn sizes<S>(self, sizes: S) -> Self
     where
-        S: Fn() -> ScrollBarSizes + 'static;
+        S: SignalOrFn<Output = ScrollBarSizes> + 'static;
     /// Set the [scrollbar content size](ScrollBar::set_content_size) reactively.
     fn content_size<S>(self, size: S) -> Self
     where
-        S: Fn() -> f64 + 'static;
+        S: SignalOrFn<Output = f64> + 'static;
 }
 
 impl NewScrollBarExt for NewWidget<ScrollBar> {
     fn sizes<S>(self, sizes: S) -> Self
     where
-        S: Fn() -> ScrollBarSizes + 'static,
+        S: SignalOrFn<Output = ScrollBarSizes> + 'static,
     {
         self.use_widget_mut(sizes, |mut this, sizes| {
             sizes.apply(&mut this);
@@ -53,7 +54,7 @@ impl NewScrollBarExt for NewWidget<ScrollBar> {
 
     fn content_size<S>(self, content_size: S) -> Self
     where
-        S: Fn() -> f64 + 'static,
+        S: SignalOrFn<Output = f64> + 'static,
     {
         self.use_widget_mut(content_size, |mut this, content_size| {
             ScrollBar::set_content_size(&mut this, content_size);

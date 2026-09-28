@@ -12,6 +12,7 @@ use masonry::{
     properties::types::{CrossAxisAlignment, MainAxisAlignment},
     widgets::Flex,
 };
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -22,21 +23,21 @@ pub trait NewFlexExt {
     /// Set the [flex direction](Flex::set_direction) reactively.
     fn direction<D>(self, direction: D) -> Self
     where
-        D: Fn() -> Axis + 'static;
+        D: SignalOrFn<Output = Axis> + 'static;
     /// Set the [flex `cross_axis_alignment`](Flex::set_cross_axis_alignment) reactively.
     fn cross_axis_alignment<C>(self, alignment: C) -> Self
     where
-        C: Fn() -> CrossAxisAlignment + 'static;
+        C: SignalOrFn<Output = CrossAxisAlignment> + 'static;
     /// Set the [flex `main_axis_alignment`](Flex::set_main_axis_alignment) reactively.
     fn main_axis_alignment<M>(self, alignment: M) -> Self
     where
-        M: Fn() -> MainAxisAlignment + 'static;
+        M: SignalOrFn<Output = MainAxisAlignment> + 'static;
 }
 
 impl NewFlexExt for NewWidget<Flex> {
     fn direction<D>(self, direction: D) -> Self
     where
-        D: Fn() -> Axis + 'static,
+        D: SignalOrFn<Output = Axis> + 'static,
     {
         self.use_widget_mut(direction, |mut this, direction| {
             Flex::set_direction(&mut this, direction);
@@ -45,7 +46,7 @@ impl NewFlexExt for NewWidget<Flex> {
 
     fn cross_axis_alignment<C>(self, alignment: C) -> Self
     where
-        C: Fn() -> CrossAxisAlignment + 'static,
+        C: SignalOrFn<Output = CrossAxisAlignment> + 'static,
     {
         self.use_widget_mut(alignment, |mut this, alignment| {
             Flex::set_cross_axis_alignment(&mut this, alignment);
@@ -54,7 +55,7 @@ impl NewFlexExt for NewWidget<Flex> {
 
     fn main_axis_alignment<M>(self, alignment: M) -> Self
     where
-        M: Fn() -> MainAxisAlignment + 'static,
+        M: SignalOrFn<Output = MainAxisAlignment> + 'static,
     {
         self.use_widget_mut(alignment, |mut this, alignment| {
             Flex::set_main_axis_alignment(&mut this, alignment);

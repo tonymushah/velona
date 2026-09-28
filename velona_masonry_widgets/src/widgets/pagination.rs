@@ -6,6 +6,7 @@
 //! _See the [widget](Pagination) documentation for more information_.
 
 use masonry::{core::NewWidget, widgets::Pagination};
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -18,7 +19,7 @@ pub trait NewPaginationExt {
     /// The active page index is clamped to this new total.
     fn page_count<C>(self, page_count: C) -> Self
     where
-        C: Fn() -> usize + 'static;
+        C: SignalOrFn<Output = usize> + 'static;
     /// Set the [pagination active page](Pagination::set_active_page) reactively.
     ///
     /// This is a 0-based index.
@@ -26,27 +27,27 @@ pub trait NewPaginationExt {
     /// It is clamped to the total page count.
     fn active_page<C>(self, active_page: C) -> Self
     where
-        C: Fn() -> usize + 'static;
+        C: SignalOrFn<Output = usize> + 'static;
     /// Set the [pagination buttons start](Pagination::set_buttons_start) reactively.
     fn buttons_start<C>(self, buttons_start: C) -> Self
     where
-        C: Fn() -> u8 + 'static;
+        C: SignalOrFn<Output = u8> + 'static;
     /// Set the [pagination buttons end](Pagination::set_buttons_end) reactively.
     fn buttons_end<C>(self, buttons_end: C) -> Self
     where
-        C: Fn() -> u8 + 'static;
+        C: SignalOrFn<Output = u8> + 'static;
     /// Set the [pagination buttons total](Pagination::set_buttons_total) reactively.
     ///
     /// The effective button limit also depends on the total page count.
     fn buttons_total<C>(self, buttons_total: C) -> Self
     where
-        C: Fn() -> u8 + 'static;
+        C: SignalOrFn<Output = u8> + 'static;
 }
 
 impl NewPaginationExt for NewWidget<Pagination> {
     fn page_count<C>(self, page_count: C) -> Self
     where
-        C: Fn() -> usize + 'static,
+        C: SignalOrFn<Output = usize> + 'static,
     {
         self.use_widget_mut(page_count, |mut this, page_count| {
             Pagination::set_page_count(&mut this, page_count);
@@ -55,7 +56,7 @@ impl NewPaginationExt for NewWidget<Pagination> {
 
     fn active_page<C>(self, active_page: C) -> Self
     where
-        C: Fn() -> usize + 'static,
+        C: SignalOrFn<Output = usize> + 'static,
     {
         self.use_widget_mut(active_page, |mut this, active_page| {
             Pagination::set_active_page(&mut this, active_page);
@@ -64,7 +65,7 @@ impl NewPaginationExt for NewWidget<Pagination> {
 
     fn buttons_start<C>(self, buttons_start: C) -> Self
     where
-        C: Fn() -> u8 + 'static,
+        C: SignalOrFn<Output = u8> + 'static,
     {
         self.use_widget_mut(buttons_start, |mut this, buttons_start| {
             Pagination::set_buttons_start(&mut this, buttons_start);
@@ -73,7 +74,7 @@ impl NewPaginationExt for NewWidget<Pagination> {
 
     fn buttons_end<C>(self, buttons_end: C) -> Self
     where
-        C: Fn() -> u8 + 'static,
+        C: SignalOrFn<Output = u8> + 'static,
     {
         self.use_widget_mut(buttons_end, |mut this, buttons_end| {
             Pagination::set_buttons_end(&mut this, buttons_end);
@@ -82,7 +83,7 @@ impl NewPaginationExt for NewWidget<Pagination> {
 
     fn buttons_total<C>(self, buttons_total: C) -> Self
     where
-        C: Fn() -> u8 + 'static,
+        C: SignalOrFn<Output = u8> + 'static,
     {
         self.use_widget_mut(buttons_total, |mut this, buttons_total| {
             Pagination::set_buttons_total(&mut this, buttons_total);

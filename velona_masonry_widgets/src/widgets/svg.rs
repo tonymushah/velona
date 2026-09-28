@@ -16,6 +16,7 @@ use masonry::{
 pub use resvg::usvg;
 
 use usvg::Tree;
+use velona_core::reactive::traits::SignalOrFn;
 
 use crate::NewWidgetExt;
 
@@ -26,7 +27,7 @@ pub trait NewSvgExt {
     /// [Sets a new inner SVG](Svg::set_tree) reactively.
     fn tree<T>(self, tree: T) -> Self
     where
-        T: Fn() -> Arc<Tree> + 'static;
+        T: SignalOrFn<Output = Arc<Tree>> + 'static;
     /// *Reactive variant of [`Svg::set_decorative`].*
     ///
     /// Sets whether the SVG is decorative,
@@ -35,7 +36,7 @@ pub trait NewSvgExt {
     /// See [`Svg::decorative`] for details.
     fn decorative<D>(self, is_decorative: D) -> Self
     where
-        D: Fn() -> bool + 'static;
+        D: SignalOrFn<Output = bool> + 'static;
     /// *Reactive variant of [`Svg::set_alt_text`].*
     ///
     /// Sets the text that will describe the SVG to screen readers.
@@ -43,13 +44,13 @@ pub trait NewSvgExt {
     /// See [`Svg::with_alt_text`] for details.
     fn alt_text<A>(self, alt_text: A) -> Self
     where
-        A: Fn() -> Option<ArcStr> + 'static;
+        A: SignalOrFn<Output = Option<ArcStr>> + 'static;
 }
 
 impl NewSvgExt for NewWidget<Svg> {
     fn tree<T>(self, tree: T) -> Self
     where
-        T: Fn() -> Arc<Tree> + 'static,
+        T: SignalOrFn<Output = Arc<Tree>> + 'static,
     {
         self.use_widget_mut(tree, |mut this, tree| {
             Svg::set_tree(&mut this, tree);
@@ -58,7 +59,7 @@ impl NewSvgExt for NewWidget<Svg> {
 
     fn decorative<D>(self, is_decorative: D) -> Self
     where
-        D: Fn() -> bool + 'static,
+        D: SignalOrFn<Output = bool> + 'static,
     {
         self.use_widget_mut(is_decorative, |mut this, is_decorative| {
             Svg::set_decorative(&mut this, is_decorative);
@@ -67,7 +68,7 @@ impl NewSvgExt for NewWidget<Svg> {
 
     fn alt_text<A>(self, alt_text: A) -> Self
     where
-        A: Fn() -> Option<ArcStr> + 'static,
+        A: SignalOrFn<Output = Option<ArcStr>> + 'static,
     {
         self.use_widget_mut(alt_text, |mut this, alt_text| {
             Svg::set_alt_text(&mut this, alt_text);

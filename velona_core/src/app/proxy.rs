@@ -4,7 +4,7 @@ use masonry_core::accesskit;
 use thiserror::Error;
 use winit_core::{event_loop::EventLoopProxy, window::WindowId};
 
-use crate::{app::EventLoopEvent, utils::FlumeSender};
+use crate::{app::EventLoopEvent, events::accesskit::AccessKitWindowEvent, utils::FlumeSender};
 
 #[derive(derive_more::Debug, Clone)]
 pub struct AppEventLoopProxy {
@@ -23,9 +23,10 @@ pub(crate) trait WinitEventLoopProxy: Debug + Send + Sync {
     fn wake_up(&self) -> Result<(), EventLoopExisted>;
 }
 
-impl WinitEventLoopProxy for EventLoopProxy<()> {
+impl WinitEventLoopProxy for EventLoopProxy {
     fn wake_up(&self) -> Result<(), EventLoopExisted> {
-        self.send_event(()).map_err(|_| EventLoopExisted)
+        EventLoopProxy::wake_up(&self);
+        Ok(())
     }
 }
 
@@ -77,9 +78,9 @@ impl accesskit::ActivationHandler for AccessKitAppEventLoopProxy {
     fn request_initial_tree(&mut self) -> Option<accesskit::TreeUpdate> {
         self.proxy
             .send_event(
-                accesskit_winit::Event {
+                AccessKitWindowEvent {
                     window_id: self.window_id,
-                    window_event: accesskit_winit::WindowEvent::InitialTreeRequested,
+                    window_event: accesskit_xplat::WindowEvent::InitialTreeRequested,
                 }
                 .into(),
             )
@@ -92,9 +93,9 @@ impl accesskit::ActionHandler for AccessKitAppEventLoopProxy {
     fn do_action(&mut self, request: accesskit::ActionRequest) {
         self.proxy
             .send_event(
-                accesskit_winit::Event {
+                AccessKitWindowEvent {
                     window_id: self.window_id,
-                    window_event: accesskit_winit::WindowEvent::ActionRequested(request),
+                    window_event: accesskit_xplat::WindowEvent::ActionRequested(request),
                 }
                 .into(),
             )
@@ -106,9 +107,9 @@ impl accesskit::DeactivationHandler for AccessKitAppEventLoopProxy {
     fn deactivate_accessibility(&mut self) {
         self.proxy
             .send_event(
-                accesskit_winit::Event {
+                AccessKitWindowEvent {
                     window_id: self.window_id,
-                    window_event: accesskit_winit::WindowEvent::AccessibilityDeactivated,
+                    window_event: accesskit_xplat::WindowEvent::AccessibilityDeactivated,
                 }
                 .into(),
             )

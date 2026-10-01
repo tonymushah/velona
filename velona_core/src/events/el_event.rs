@@ -11,6 +11,7 @@ use velona_executor::TaskId;
 use winit_core::window::{Window, WindowId};
 
 use crate::app::event_listener::{RegisterAppEvent, UnRegisterAppEventHandler};
+use crate::events::accesskit::AccessKitWindowEvent;
 use crate::events::property_stack::PropertyStackMethods;
 use crate::manager::ManagerErasedAction;
 use crate::manager::OtherManagerMethods;
@@ -37,7 +38,7 @@ impl Debug for UseWindowRenderRootOnMain {
 
 pub(crate) struct UseWinitWindowOnMain {
     pub(crate) window_id: WindowId,
-    pub(crate) use_fn: Box<dyn FnOnce(&Window) + Send>,
+    pub(crate) use_fn: Box<dyn FnOnce(&dyn Window) + Send>,
 }
 
 impl Debug for UseWinitWindowOnMain {
@@ -82,7 +83,7 @@ pub(crate) enum UnregisterEventHandler {
 
 #[derive(derive_more::Debug)]
 pub(crate) enum EventLoopEvent {
-    AccessKitAction(Box<accesskit_winit::Event>),
+    AccessKitAction(Box<AccessKitWindowEvent>),
     NewWindow(#[debug(skip)] Box<WindowBuilder>),
     CloseWindow(WindowId),
     SetClipboardContent(String),
@@ -112,8 +113,8 @@ impl From<PropertyStackMethods> for EventLoopEvent {
     }
 }
 
-impl From<accesskit_winit::Event> for EventLoopEvent {
-    fn from(value: accesskit_winit::Event) -> Self {
+impl From<AccessKitWindowEvent> for EventLoopEvent {
+    fn from(value: AccessKitWindowEvent) -> Self {
         Self::AccessKitAction(Box::new(value))
     }
 }

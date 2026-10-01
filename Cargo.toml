@@ -34,8 +34,10 @@ members = [
     "examples/todo_softbuffer",
     "examples/todo_subsecond",
     "examples/todo_vello_hybrid",
-    "examples/router_example"
-, "examples/timer"]
+    "examples/router_example",
+    "examples/timer",
+    "examples/timer-async-io-example"
+]
 default-members = ["velona"]
 resolver = "3"
 
@@ -93,7 +95,8 @@ wgpu = "29"
 glifo = { version = "0.3", default-features = true}
 url = { version = "2" }
 arrayvec = { version = "0.7" }
-async_io = { version = "2" }
+async-io = { version = "2" }
+futures-util = { version = "0.3" }
 
 # subsecond support
 subsecond = "0.7"

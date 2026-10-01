@@ -133,6 +133,8 @@ velona_masonry_widgets = { path = "velona_masonry_widgets" }
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }
 velona_renderer_vello_cpu = { path = "velona_renderer_vello_cpu" }
 velona_renderer_vello_hybrid = { path = "velona_renderer_vello_hybrid" }
+
+# UI events stuff
 ui-events-velona_core = { path = "ui-events-velona_core" }
 
 # velona itself

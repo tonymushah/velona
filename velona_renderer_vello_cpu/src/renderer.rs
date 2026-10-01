@@ -3,7 +3,7 @@ use std::{future::ready, num::NonZero, sync::Arc};
 use softbuffer::Context;
 // use vello_common::fearless_simd;
 use velona_renderer::{WindowRenderer, window_handle::WindowHandle};
-use winit::event_loop::OwnedDisplayHandle;
+use winit_core::event_loop::OwnedDisplayHandle;
 
 use crate::{
     imaging_vello_cpu::VelloCpuRenderer,

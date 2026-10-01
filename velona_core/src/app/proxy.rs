@@ -1,6 +1,5 @@
 use std::{fmt::Debug, sync::Arc};
 
-use masonry_core::accesskit;
 use thiserror::Error;
 use winit_core::{event_loop::EventLoopProxy, window::WindowId};
 
@@ -74,42 +73,13 @@ pub struct AccessKitAppEventLoopProxy {
     proxy: AppEventLoopProxy,
 }
 
-impl accesskit::ActivationHandler for AccessKitAppEventLoopProxy {
-    fn request_initial_tree(&mut self) -> Option<accesskit::TreeUpdate> {
+impl velona_core_accesskit::EventHandler for AccessKitAppEventLoopProxy {
+    fn handle_accesskit_event(&self, event: velona_core_accesskit::WindowEvent) {
         self.proxy
             .send_event(
                 AccessKitWindowEvent {
                     window_id: self.window_id,
-                    window_event: accesskit_xplat::WindowEvent::InitialTreeRequested,
-                }
-                .into(),
-            )
-            .ok();
-        None
-    }
-}
-
-impl accesskit::ActionHandler for AccessKitAppEventLoopProxy {
-    fn do_action(&mut self, request: accesskit::ActionRequest) {
-        self.proxy
-            .send_event(
-                AccessKitWindowEvent {
-                    window_id: self.window_id,
-                    window_event: accesskit_xplat::WindowEvent::ActionRequested(request),
-                }
-                .into(),
-            )
-            .ok();
-    }
-}
-
-impl accesskit::DeactivationHandler for AccessKitAppEventLoopProxy {
-    fn deactivate_accessibility(&mut self) {
-        self.proxy
-            .send_event(
-                AccessKitWindowEvent {
-                    window_id: self.window_id,
-                    window_event: accesskit_xplat::WindowEvent::AccessibilityDeactivated,
+                    window_event: event,
                 }
                 .into(),
             )

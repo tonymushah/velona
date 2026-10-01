@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::time::Instant;
 use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
 use any_spawner::{PinnedFuture, PinnedLocalFuture};
@@ -15,6 +16,7 @@ use masonry_core::{
 };
 use reactive_graph::owner::Owner;
 use ui_events_velona_core::WindowEventTranslation;
+use velona_core_accesskit::{AdapterFactory, CreateAdapterArgs};
 use velona_executor::{TaskId, VelonaTasksExecutor};
 use velona_renderer::WindowRenderer;
 use winit_core::window::{ImeCapabilities, ImeEnableRequest, ImeRequestData};
@@ -29,6 +31,7 @@ use crate::app::OnEventLoopInitFns;
 use crate::app::event_listener::{
     AppEventHandlers, EmitAppEventToHandlers, UnRegisterAppEventHandler,
 };
+use crate::app::proxy::AppEventLoopProxy;
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
 use crate::events::property_stack::PropertyStackMethods;
 use crate::manager::OtherManagerMethods;
@@ -42,27 +45,30 @@ use crate::{
     window::{builder::WindowBuilder, renderer::WindowRendererFactory},
 };
 
-pub(crate) struct AppRunner<W>
+pub struct App<W>
 where
     W: WindowRenderer,
 {
-    pub(crate) app_handle: AppHandle,
     pub(crate) windows: HashMap<WindowId, Box<Window<W>>>,
     pub(crate) default_properties: Arc<DefaultProperties>,
     pub(crate) builder_windows: Option<Vec<WindowBuilder>>,
     pub(crate) owner: Owner,
     pub(crate) window_renderer_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
     pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
-    pub(crate) suspended: bool,
+    pub(crate) can_create_surfaces: bool,
     pub(crate) receiver: FlumeReceiver<EventLoopEvent>,
+    pub(crate) sender: flume::Sender<EventLoopEvent>,
     pub(crate) on_event_loop_init: Option<OnEventLoopInitFns>,
     pub(crate) app_event_listeners: AppEventHandlers,
     pub(crate) fut_executor: VelonaTasksExecutor,
+    pub(crate) accesskit_adapter_factory: Option<Box<dyn AdapterFactory>>,
+    pub(crate) first_time_ui_event: Option<Instant>,
+    pub(crate) spawn_fn: Option<Box<>>
 }
 
 // ------- Utilities --------- //
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl<W> AppRunner<W>
+impl<W> App<W>
 where
     W: WindowRenderer,
 {
@@ -103,14 +109,42 @@ where
     fn create_window_owner_children(&self, window_id: WindowId) -> Option<Owner> {
         self.use_window_ref(window_id, |window| window.create_children_owner())
     }
+    fn create_app_handle(
+        &self,
+        event_loop: &dyn winit_core::event_loop::ActiveEventLoop,
+    ) -> AppHandle {
+        AppHandle::new(AppEventLoopProxy::new(
+            event_loop.create_proxy(),
+            self.sender.clone(),
+        ))
+    }
 }
 
 // ------- Window creation -------- //
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl<W> AppRunner<W>
+impl<W> App<W>
 where
     W: WindowRenderer,
 {
+    fn create_window_access_kit_adapter(
+        &mut self,
+        window: &dyn winit_core::window::Window,
+        event_loop: &dyn winit_core::event_loop::ActiveEventLoop,
+    ) -> Option<Box<dyn velona_core_accesskit::Adapter>> {
+        let app_handle = self
+            .create_app_handle(event_loop)
+            .get_proxy()
+            .accesskit_handler(window.id());
+        if let Some(factory) = self.accesskit_adapter_factory.as_mut() {
+            factory.create_erased_adapter(CreateAdapterArgs {
+                active_event_loop: event_loop,
+                window,
+                event_handler: Box::new(app_handle),
+            })
+        } else {
+            None
+        }
+    }
     fn create_window(
         &mut self,
         builder: Box<WindowBuilder>,
@@ -120,19 +154,7 @@ where
         match event_loop.create_window(window_attributes) {
             Ok(window) => {
                 let window = window;
-                let access_kit = accesskit_xplat::Adapter::with_split_handlers(
-                    // TODO support android
-                    match window.rwh_06_window_handle().window_handle() {
-                        Ok(d) => d.as_raw(),
-                        Err(err) => {
-                            log::error!("Cannot get window handle");
-                            return;
-                        }
-                    },
-                    self.app_handle.get_proxy().accesskit_handler(window.id()),
-                    self.app_handle.get_proxy().accesskit_handler(window.id()),
-                    self.app_handle.get_proxy().accesskit_handler(window.id()),
-                );
+                let access_kit = self.create_window_access_kit_adapter(&*window, event_loop);
                 match Window::new(WindowNew {
                     window: Arc::new(window),
                     view: builder.view,
@@ -140,7 +162,7 @@ where
                         .default_propreties
                         .unwrap_or(self.default_properties.clone()),
                     access_kit,
-                    app_handle: self.app_handle.clone(),
+                    app_handle: self.create_app_handle(event_loop),
                     parent_owner: &self.owner,
                     base_color: builder.base_color,
                     factory: &mut *self.window_renderer_factory
@@ -149,7 +171,7 @@ where
                     use_system_fonts: builder.use_system_fonts,
                 }) {
                     Ok(mut new_instance) => {
-                        if !self.suspended {
+                        if !self.can_create_surfaces {
                             self.fut_executor.spawn(new_instance.resume());
                         }
                         if let Some(sender) = builder.window_handle_send {
@@ -172,7 +194,7 @@ where
 
 // ------- Event Handling --------- //
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl<W> AppRunner<W>
+impl<W> App<W>
 where
     W: WindowRenderer,
 {
@@ -230,16 +252,16 @@ where
 
 // --- WINIT miscs --- //
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl<W> AppRunner<W>
+impl<W> App<W>
 where
     W: WindowRenderer,
 {
-    fn resume_windows(&mut self) {
+    fn resume_windows_surfaces(&mut self) {
         for window in self.windows.values_mut() {
             self.fut_executor.spawn(window.resume());
         }
     }
-    fn suspend_windows(&mut self) {
+    fn suspend_windows_surfaces(&mut self) {
         for window in self.windows.values_mut() {
             window.suspend();
         }
@@ -248,7 +270,7 @@ where
 
 // --- Future executor --- //
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl<W> AppRunner<W>
+impl<W> App<W>
 where
     W: WindowRenderer,
 {
@@ -278,7 +300,7 @@ enum TaskType<T> {
 
 // --- manager method handling --- //
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl<W> AppRunner<W>
+impl<W> App<W>
 where
     W: WindowRenderer,
 {
@@ -314,7 +336,7 @@ where
 
 // --- Property Stack methods handling --- //
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl<W> AppRunner<W>
+impl<W> App<W>
 where
     W: WindowRenderer,
 {
@@ -361,7 +383,7 @@ where
 
 // --- WINIT event loop handlers --- //
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl<W> AppRunner<W>
+impl<W> App<W>
 where
     W: WindowRenderer,
 {
@@ -387,12 +409,14 @@ where
     }
     fn handle_signal(
         &mut self,
-        _event_loop: &winit_core::event_loop::ActiveEventLoop,
+        _event_loop: &dyn winit_core::event_loop::ActiveEventLoop,
         window_id: WindowId,
         signal: RenderRootSignal,
         to_redraw: &mut HashSet<WindowId>,
     ) {
-        let event_loop_proxy = self.app_handle.get_proxy().clone();
+        let app_handle = self.create_app_handle(_event_loop);
+
+        let event_loop_proxy = app_handle.get_proxy();
 
         self.use_window(window_id, |window| {
             match signal {
@@ -429,7 +453,10 @@ where
                 RenderRootSignal::ImeMoved(logical_position, logical_size) => {
                     window
                         .winit_window
-                        .set_ime_cursor_area(logical_position.into(), logical_size.into());
+                        .request_ime_update(winit_core::window::ImeRequest::Update(
+                            ImeRequestData::default()
+                                .with_cursor_area(logical_position.into(), logical_size.into()),
+                        ));
                 }
                 RenderRootSignal::ClipboardStore(text) => {
                     let _ = event_loop_proxy.send_event(EventLoopEvent::SetClipboardContent(text));
@@ -483,7 +510,9 @@ where
                     let _ = event_loop_proxy.send_event(EventLoopEvent::CloseWindow(window_id));
                 }
                 RenderRootSignal::ShowWindowMenu(logical_position) => {
-                    window.winit_window.show_window_menu(logical_position);
+                    window
+                        .winit_window
+                        .show_window_menu(logical_position.into());
                 }
                 RenderRootSignal::WidgetSelectedInInspector(widget_id) => {
                     let render_root = &window.render_root.tree;
@@ -512,22 +541,22 @@ where
         });
     }
 
-    fn handle_app_events(&mut self, event_loop: &ActiveEventLoop) {
+    fn handle_app_events(&mut self, event_loop: &dyn ActiveEventLoop) {
         let mut need_redraw = HashSet::<WindowId>::default();
         while let Some(event) = self.receiver.try_iter().next() {
             match event {
                 EventLoopEvent::AccessKitAction(event) => {
                     self.use_window(event.window_id, |window| match event.window_event {
-                        accesskit_winit::WindowEvent::InitialTreeRequested => {
+                        velona_core_accesskit::WindowEvent::InitialTreeRequested => {
                             window
                                 .render_root
                                 .tree
                                 .handle_window_event(MasonryWindowEvent::EnableAccessTree);
                         }
-                        accesskit_winit::WindowEvent::ActionRequested(action_request) => {
+                        velona_core_accesskit::WindowEvent::ActionRequested(action_request) => {
                             window.render_root.tree.handle_access_event(action_request);
                         }
-                        accesskit_winit::WindowEvent::AccessibilityDeactivated => {
+                        velona_core_accesskit::WindowEvent::AccessibilityDeactivated => {
                             window
                                 .render_root
                                 .tree
@@ -594,7 +623,7 @@ where
                 }
                 EventLoopEvent::UseWinitWindow(use_winit_window_on_main) => {
                     self.use_window_ref(use_winit_window_on_main.window_id, |window| {
-                        (use_winit_window_on_main.use_fn)(&window.winit_window);
+                        (use_winit_window_on_main.use_fn)(&**window.winit_window);
                     });
                 }
                 EventLoopEvent::GetWindowChildReactiveOwner(get_window_child_reactive_owner) => {
@@ -683,7 +712,7 @@ where
     }
 }
 
-impl<W> Drop for AppRunner<W>
+impl<W> Drop for App<W>
 where
     W: WindowRenderer,
 {
@@ -696,19 +725,29 @@ where
 }
 
 #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
-impl<W> ApplicationHandler<()> for AppRunner<W>
+impl<W> ApplicationHandler for App<W>
 where
     W: WindowRenderer,
 {
+    fn can_create_surfaces(&mut self, _event_loop: &dyn ActiveEventLoop) {
+        self.can_create_surfaces = true;
+        self.resume_windows_surfaces();
+    }
+    fn destroy_surfaces(&mut self, _event_loop: &dyn ActiveEventLoop) {
+        self.can_create_surfaces = false;
+        self.suspend_windows_surfaces();
+    }
+
     fn new_events(
         &mut self,
-        event_loop: &winit_core::event_loop::ActiveEventLoop,
+        event_loop: &dyn winit_core::event_loop::ActiveEventLoop,
         cause: winit_core::event::StartCause,
     ) {
         if cause == winit_core::event::StartCause::Init {
+            let app_handle = self.create_app_handle(event_loop);
             if let Some(on_init) = self.on_event_loop_init.take() {
                 for func in on_init {
-                    func(&self.app_handle);
+                    func(&app_handle);
                 }
             }
             if let Some(builder_windows) = self.builder_windows.take() {
@@ -717,8 +756,7 @@ where
                     event_loop.exit();
                 } else {
                     for window in builder_windows {
-                        if self
-                            .app_handle
+                        if app_handle
                             .send_event(EventLoopEvent::NewWindow(Box::new(window)))
                             .is_err()
                         {
@@ -730,8 +768,7 @@ where
         }
     }
     fn resumed(&mut self, _event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
-        self.suspended = false;
-        self.resume_windows();
+        self.resume_windows_surfaces();
         self.app_event_listeners
             .emit(EmitAppEventToHandlers::Resumed);
     }
@@ -745,14 +782,18 @@ where
         // #[cfg(feature = "hotpath")]
         // hotpath::dbg!((&window_id, &event));
         self.use_window(window_id, |window| {
-            window
-                .access_kit
-                .process_event(&window.winit_window, &event);
+            window.forward_to_accesskit_adapter(&event);
         });
         let clipboard_context = self.clipboard_context.clone();
-        self.use_window(window_id, |window| {
-            handle_ui_translated_event(&event, clipboard_context, window);
-        });
+        let first_time_ui_event = self.first_time_ui_event.clone();
+        let maybe_first_time = self
+            .use_window(window_id, |window| {
+                handle_ui_translated_event(first_time_ui_event, &event, clipboard_context, window)
+            })
+            .flatten();
+        if let Some(first_time) = maybe_first_time {
+            self.first_time_ui_event.replace(first_time);
+        }
         match event {
             WindowEvent::Destroyed if self.windows.is_empty() => {
                 event_loop.exit();
@@ -760,7 +801,7 @@ where
             WindowEvent::RedrawRequested => {
                 self.handle_redraw_request(window_id);
             }
-            WindowEvent::Resized(size) => {
+            WindowEvent::SurfaceResized(size) => {
                 self.handle_resize_event(window_id, size);
             }
             WindowEvent::CloseRequested => {
@@ -787,7 +828,7 @@ where
             }
         }
     }
-    fn memory_warning(&mut self, _event_loop: &winit_core::event_loop::ActiveEventLoop) {
+    fn memory_warning(&mut self, _event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
         self.windows.shrink_to_fit();
         self.windows
             .values_mut()
@@ -797,83 +838,88 @@ where
         self.app_event_listeners.shrink_to_fit();
         self.fut_executor.shrink_to_fit();
     }
-    fn suspended(&mut self, _event_loop: &winit_core::event_loop::ActiveEventLoop) {
-        self.suspended = true;
-        self.suspend_windows();
+    fn suspended(&mut self, _event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
         self.app_event_listeners
             .emit(EmitAppEventToHandlers::Suspended);
     }
-    fn user_event(&mut self, event_loop: &winit_core::event_loop::ActiveEventLoop, _: ()) {
+    fn proxy_wake_up(&mut self, event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
         // #[cfg(feature = "hotpath")]
         // hotpath::dbg!(&event);
         self.handle_app_events(event_loop);
     }
-    fn exiting(&mut self, _event_loop: &winit_core::event_loop::ActiveEventLoop) {
-        log::warn!("Exiting...");
-        let task_runned = self.run_exiting_task();
-        log::trace!("Number of exiting tasks: {task_runned}");
-    }
+
     fn device_event(
         &mut self,
-        _event_loop: &ActiveEventLoop,
-        device_id: winit_core::event::DeviceId,
+        _event_loop: &dyn ActiveEventLoop,
+        device_id: Option<winit_core::event::DeviceId>,
         event: winit_core::event::DeviceEvent,
     ) {
-        self.app_event_listeners
-            .emit(EmitAppEventToHandlers::Device(device_id, &event));
+        if let Some(device_id) = device_id {
+            self.app_event_listeners
+                .emit(EmitAppEventToHandlers::Device(device_id, &event));
+        }
     }
 }
 
 fn handle_ui_translated_event<W: WindowRenderer>(
+    mut first_time_stamp: Option<Instant>,
     event: &WindowEvent,
     clipboard_context: Rc<RefCell<copypasta::x11_clipboard::X11ClipboardContext>>,
     window: &mut Window<W>,
-) {
+) -> Option<Instant> {
     if !matches!(
         *event,
         WindowEvent::KeyboardInput {
             is_synthetic: true,
             ..
         }
-    ) && let Some(wet) = window
-        .event_reducer
-        .reduce(window.winit_window.scale_factor(), event)
-    {
-        match wet {
-            WindowEventTranslation::Keyboard(k) => {
-                // TODO - Detect in Masonry code instead
-                let action_mod = if cfg!(target_os = "macos") {
-                    k.modifiers.meta()
-                } else {
-                    k.modifiers.ctrl()
-                };
-                if let Key::Character(c) = &k.key
-                    && c.as_str().eq_ignore_ascii_case("v")
-                    && action_mod
-                    && k.state == KeyState::Down
-                {
-                    match clipboard_context.borrow_mut().get_contents() {
-                        Ok(content) => {
-                            window
-                                .render_root
-                                .tree
-                                .handle_text_event(TextEvent::ClipboardPaste(content));
-                            todo_warn_of_something("Clipboard Paste");
+    ) {
+        let time = Instant::now()
+            .duration_since(*first_time_stamp.get_or_insert_with(Instant::now))
+            .as_nanos() as u64;
+
+        if let Some(wet) =
+            window
+                .event_reducer
+                .reduce(window.winit_window.scale_factor(), event, time)
+        {
+            match wet {
+                WindowEventTranslation::Keyboard(k) => {
+                    // TODO - Detect in Masonry code instead
+                    let action_mod = if cfg!(target_os = "macos") {
+                        k.modifiers.meta()
+                    } else {
+                        k.modifiers.ctrl()
+                    };
+                    if let Key::Character(c) = &k.key
+                        && c.as_str().eq_ignore_ascii_case("v")
+                        && action_mod
+                        && k.state == KeyState::Down
+                    {
+                        match clipboard_context.borrow_mut().get_contents() {
+                            Ok(content) => {
+                                window
+                                    .render_root
+                                    .tree
+                                    .handle_text_event(TextEvent::ClipboardPaste(content));
+                                todo_warn_of_something("Clipboard Paste");
+                            }
+                            Err(err) => {
+                                log::error!("Cannot get clipboard content: {err}")
+                            }
                         }
-                        Err(err) => {
-                            log::error!("Cannot get clipboard content: {err}")
-                        }
+                    } else {
+                        window
+                            .render_root
+                            .tree
+                            .handle_text_event(masonry_core::core::TextEvent::Keyboard(k));
                     }
-                } else {
-                    window
-                        .render_root
-                        .tree
-                        .handle_text_event(masonry_core::core::TextEvent::Keyboard(k));
                 }
-            }
-            WindowEventTranslation::Pointer(p) => {
-                window.render_root.tree.handle_pointer_event(p);
+                WindowEventTranslation::Pointer(p) => {
+                    window.render_root.tree.handle_pointer_event(p);
+                }
             }
         }
     }
+    first_time_stamp
 }

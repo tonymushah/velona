@@ -1,4 +1,4 @@
-use accesskit_xplat::WindowEvent;
+use velona_core_accesskit::WindowEvent;
 use winit_core::window::WindowId;
 
 #[derive(Debug)]

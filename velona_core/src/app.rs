@@ -115,7 +115,7 @@ impl<W: WindowRenderer> Builder<W> {
 impl<W: WindowRenderer> Builder<W> {
     /// Run the app in a custom event loop
     // TODO refactor this to add a `build` method
-    pub fn run_in(self, event_loop: EventLoop<()>) -> Result<(), crate::error::Error> {
+    pub fn build(self, event_loop: EventLoop<()>) -> Result<(), crate::error::Error> {
         let spawn_fn = self
             .spawn_fn
             .unwrap_or_else(|| Box::new(|_| panic!("No spawn_fn provided")));
@@ -131,7 +131,7 @@ impl<W: WindowRenderer> Builder<W> {
 
         let (send, receiver) = utils::flume_channel::<EventLoopEvent>();
 
-        let proxy = AppEventLoopProxy::new(proxy, send);
+        // let proxy = AppEventLoopProxy::new(proxy, send);
 
         match any_spawner::Executor::init_local_custom_executor(executor::AppExecutor::new(
             spawn_fn,
@@ -141,27 +141,26 @@ impl<W: WindowRenderer> Builder<W> {
             Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
         }
 
-        #[cfg(feature = "subsecond")]
-        {
-            use crate::events::el_event::EventLoopEvent;
-            // Changes fut
-            {
-                let proxy = proxy.clone();
-                velona_subsecond::connect_to_dx_cli(move |msg| {
-                    let _ = proxy.send_event(EventLoopEvent::DxCliMessages(msg));
-                });
-            }
-        }
+        // #[cfg(feature = "subsecond")]
+        // {
+        //     use crate::events::el_event::EventLoopEvent;
+        //     // Changes fut
+        //     {
+        //         let proxy = proxy.clone();
+        //         velona_subsecond::connect_to_dx_cli(move |msg| {
+        //             let _ = proxy.send_event(EventLoopEvent::DxCliMessages(msg));
+        //         });
+        //     }
+        // }
 
-        let mut app = run::AppRunner {
-            app_handle: AppHandle::new(proxy.clone()),
+        let mut app = run::App {
             windows: Default::default(),
             window_renderer_factory: self.window_render_factory,
             default_properties: Arc::new(self.default_properties),
             builder_windows: Some(self.windows),
             owner: self.owner,
             clipboard_context: Rc::new(RefCell::new(ClipboardContext::new().unwrap())),
-            suspended: true,
+            can_create_surfaces: false,
             receiver,
             on_event_loop_init: {
                 if self.on_event_loop_init.is_empty() {
@@ -174,18 +173,12 @@ impl<W: WindowRenderer> Builder<W> {
             fut_executor: VelonaTasksExecutor::new(move |task_id| {
                 let _ = proxy.send_event(EventLoopEvent::PollTask(task_id));
             }),
+            sender: send,
+            
         };
         // event_loop.set_control_flow(winit_core::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;
         Ok(())
-    }
-
-    /// Run the app.
-    // TODO refactor this to add a `build` method
-    pub fn run(mut self) -> Result<(), crate::error::Error> {
-        let event_loop = self.event_loop_builder.build()?;
-
-        self.run_in(event_loop)
     }
 }
 

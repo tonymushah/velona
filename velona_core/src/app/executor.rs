@@ -35,7 +35,9 @@ impl CustomExecutor for AppExecutor {
         self.proxy.create_task(fut);
     }
 
-    fn poll_local(&self) {}
+    fn poll_local(&self) {
+        let _ = self.proxy.send_event(EventLoopEvent::PollAll);
+    }
 }
 
 impl AppExecutor {

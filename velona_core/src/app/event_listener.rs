@@ -1,8 +1,11 @@
 use winit::event::{DeviceEvent, DeviceId};
 
-use crate::utils::{
-    HandlerId,
-    events::{EventMap, NoParamHandler},
+use crate::{
+    manager::ManagerErasedAction,
+    utils::{
+        HandlerFnGeneric, HandlerId,
+        events::{EventMap, NoParamHandler},
+    },
 };
 
 pub type DeviceEventHandler = Box<dyn Fn(DeviceId, &DeviceEvent) + Send>;
@@ -19,6 +22,7 @@ pub enum RegisterAppEventType {
     MemoryWarning(#[debug(skip)] NoParamHandler),
     Resumed(#[debug(skip)] NoParamHandler),
     Suspended(#[debug(skip)] NoParamHandler),
+    ErasedAction(#[debug(skip)] HandlerFnGeneric<ManagerErasedAction>),
 }
 
 #[derive(Debug)]
@@ -33,6 +37,7 @@ pub enum UnRegisterAppEventType {
     MemoryWarning,
     Resumed,
     Suspended,
+    ErasedAction,
 }
 
 #[derive(Default, derive_more::Debug)]
@@ -45,6 +50,8 @@ pub struct AppEventHandlers {
     resumed: EventMap<NoParamHandler>,
     #[debug("HashMap<len = {}>", suspended.len())]
     suspended: EventMap<NoParamHandler>,
+    #[debug("HashMap<len = {}>", erased_action.len())]
+    erased_action: EventMap<HandlerFnGeneric<ManagerErasedAction>>,
 }
 
 pub enum EmitAppEventToHandlers<'a> {
@@ -52,6 +59,7 @@ pub enum EmitAppEventToHandlers<'a> {
     MemoryWarning,
     Resumed,
     Suspended,
+    ErasedAction(&'a ManagerErasedAction),
 }
 
 impl AppEventHandlers {
@@ -69,6 +77,9 @@ impl AppEventHandlers {
             RegisterAppEventType::Suspended(h) => {
                 self.suspended.insert(handler.handler_id, h);
             }
+            RegisterAppEventType::ErasedAction(h) => {
+                self.erased_action.insert(handler.handler_id, h);
+            }
         }
     }
     fn unregister_handler_from_none(&mut self, handler_id: &HandlerId) {
@@ -79,7 +90,7 @@ impl AppEventHandlers {
                 )*
             };
         }
-        unregister!(device, memory_warning, resumed, suspended,);
+        unregister!(device, memory_warning, resumed, suspended, erased_action,);
     }
     pub fn unregister_handler(&mut self, handler: UnRegisterAppEventHandler) {
         let handler_id = handler.handler_id;
@@ -97,6 +108,9 @@ impl AppEventHandlers {
                 UnRegisterAppEventType::Suspended => {
                     self.suspended.remove(&handler_id);
                 }
+                UnRegisterAppEventType::ErasedAction => {
+                    self.erased_action.remove(&handler_id);
+                }
             }
         } else {
             self.unregister_handler_from_none(&handler_id);
@@ -110,7 +124,7 @@ impl AppEventHandlers {
                 )*
             };
         }
-        impl_shrink_fit!(device, memory_warning, resumed, suspended,);
+        impl_shrink_fit!(device, memory_warning, resumed, suspended, erased_action,);
     }
     pub fn emit(&self, event: EmitAppEventToHandlers<'_>) {
         match event {
@@ -125,6 +139,11 @@ impl AppEventHandlers {
             }
             EmitAppEventToHandlers::Suspended => {
                 self.suspended.values().for_each(|h| h());
+            }
+            EmitAppEventToHandlers::ErasedAction(manager_erased_action) => {
+                self.erased_action
+                    .values()
+                    .for_each(|h| h(manager_erased_action));
             }
         }
     }

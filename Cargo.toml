@@ -14,6 +14,7 @@ members = [
     "velona_executor",
     "velona_core",
     "velona_core_child",
+    "velona_masonry_widgets",
     "velona",
     # Renderers
     "velona_renderer",
@@ -22,6 +23,8 @@ members = [
     "velona_renderer_vello_hybrid",
     # subsecond support
     "velona_subsecond",
+    # Various tools
+    "velona_router",
     # examples
     "examples/counter",
     "examples/align",
@@ -32,7 +35,10 @@ members = [
     "examples/todo",
     "examples/todo_softbuffer",
     "examples/todo_subsecond",
-    "examples/todo_vello_hybrid"
+    "examples/todo_vello_hybrid",
+    "examples/router_example",
+    "examples/timer",
+    "examples/timer-async-io-example"
 ]
 default-members = ["velona"]
 resolver = "3"
@@ -47,8 +53,10 @@ masonry = { version = "0.4", git = "https://github.com/linebender/xilem.git", de
 # masonry_imaging = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
 masonry_core = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
 masonry_testing = { version = "0.4", git = "https://github.com/linebender/xilem.git", default-features = false }
+tree_arena = { version = "0.2", git = "https://github.com/linebender/xilem.git", default-features = false }
 # TODO update to 0.3
 reactive_graph = { version = "0.3.0-beta2" }
+reactive_stores = { version = "0.5.0-beta" }
 thiserror = "2"
 # TODO update to 0.31 when stable
 winit = "=0.31.0-beta.3"
@@ -61,8 +69,7 @@ non-exhaustive = "0.1"
 send_wrapper = "0.6"
 # TODO remove this in favor of atomics counter
 uuid = { version = "1" }
-ui-events-winit = "0.3"
-# parking_lot = "0.12"
+# parking_lot = "-1.12"
 copypasta = "0.10.2"
 futures-channel = "0.3"
 hotpath = { version = "0.23" }
@@ -90,6 +97,10 @@ debug_timer = "0.1"
 wgpu = "29"
 glifo = { version = "0.3", default-features = true}
 ui-events = { version = "0.3" }
+url = { version = "2" }
+arrayvec = { version = "0.7" }
+async-io = { version = "2" }
+futures-util = { version = "0.3" }
 
 # subsecond support
 subsecond = "0.7"
@@ -113,6 +124,8 @@ velona_core_child = { path = "velona_core_child" }
 velona_scoped_styling = { path = "velona_scoped_styling" }
 velona_executor = { path = "velona_executor" }
 velona_subsecond = { path = "velona_subsecond" }
+velona_router = { path = "velona_router" }
+velona_masonry_widgets = { path = "velona_masonry_widgets" }
 
 # velona renderers
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }

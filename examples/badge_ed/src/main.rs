@@ -23,12 +23,12 @@ use velona::masonry::{
     widgets::SelectorItem,
     widgets::{Badged, Button, Flex, Label, Selector, SizedBox, Spinner},
 };
+use velona::reactive::owner::{expect_context, on_cleanup};
 use velona::reactive::{
     callback::{Callable, UnsyncCallback},
     computed::Memo,
     effect::Effect,
     signal::{WriteSignal, arc_signal, signal},
-    spawn,
     traits::{Get, Read, Set, Update},
 };
 use velona::scoped_styling::{ApplyScopedStyles, ScopedClasses};
@@ -237,11 +237,15 @@ fn main_view() -> AnyNewWidget {
         let show_towa = show_towa.clone();
         let should_show_towa = should_show_towa.clone();
         Effect::new(move || {
+            let tokio_handle = expect_context::<runtime::Handle>();
             let should_show_towa = should_show_towa.clone();
             if *show_towa.read() {
-                spawn(async move {
+                let join_h = tokio_handle.spawn(async move {
                     tokio::time::sleep(Duration::from_secs(2)).await;
                     should_show_towa.set(false);
+                });
+                on_cleanup(move || {
+                    join_h.abort();
                 });
             }
         });
@@ -343,6 +347,7 @@ fn main() {
                 handle.spawn(fut);
             }
         })
+        .provide_context(runtime.handle().clone())
         .with_window(WindowBuilder::new(main_view).with_base_color(WHITE))
         .with_default_properties(default_properties())
         .run()

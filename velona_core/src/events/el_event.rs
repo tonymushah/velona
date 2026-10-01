@@ -12,6 +12,7 @@ use winit::window::{Window, WindowId};
 
 use crate::app::event_listener::{RegisterAppEvent, UnRegisterAppEventHandler};
 use crate::events::property_stack::PropertyStackMethods;
+use crate::manager::ManagerErasedAction;
 use crate::manager::OtherManagerMethods;
 use crate::window::event_listener::{RegisterWindowEventHandler, UnregisterWindowEventHandlerType};
 use crate::{
@@ -102,6 +103,7 @@ pub(crate) enum EventLoopEvent {
     SpawnTask(#[debug(skip)] PinnedFuture<()>),
     #[cfg(feature = "subsecond")]
     DxCliMessages(velona_subsecond::DevserverMsg),
+    ManagerActions(Box<ManagerErasedAction>),
 }
 
 impl From<PropertyStackMethods> for EventLoopEvent {

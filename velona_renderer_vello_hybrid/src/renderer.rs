@@ -3,8 +3,10 @@ use futures_channel::oneshot;
 use imaging::{FillRef, GeometryRef, PaintSink};
 use kurbo::Rect;
 use peniko::{BrushRef, Color};
-use pollster::FutureExt;
-use std::sync::{Arc, RwLock};
+use std::{
+    future::ready,
+    sync::{Arc, RwLock},
+};
 use vello_hybrid::{RenderSettings, RenderTargetConfig, Scene as VelloHybridScene};
 use velona_renderer::{WindowRenderer, window_handle::WindowHandle};
 use wgpu::{CompositeAlphaMode, PresentMode, TextureFormat};
@@ -160,7 +162,12 @@ impl WindowRenderer for VelloHybridWindowRenderer {
         matches!(self.render_state, RenderState::Pending { .. })
     }
 
-    fn resume(&mut self, window_handle: Arc<dyn WindowHandle>, width: u32, height: u32) {
+    fn resume(
+        &mut self,
+        window_handle: Arc<dyn WindowHandle>,
+        width: u32,
+        height: u32,
+    ) -> std::pin::Pin<std::boxed::Box<dyn std::future::Future<Output = ()>>> {
         // Each `resume` must be preceded by `suspend` (or be the first call after
         // construction). Calling while `Pending` or `Active` is a state-machine bug
         // in the embedder: it would orphan the in-flight init's `WGPUContext` and
@@ -168,7 +175,7 @@ impl WindowRenderer for VelloHybridWindowRenderer {
         if !matches!(self.render_state, RenderState::Suspended) {
             // #[cfg(feature = "tracing")]
             // tracing::warn!("WindowRenderer::resume called from non-Suspended state");
-            return;
+            return Box::pin(ready(()));
         }
 
         let (sender, receiver) = oneshot::channel();
@@ -189,6 +196,9 @@ impl WindowRenderer for VelloHybridWindowRenderer {
         let instance = self.wgpu_context.write().unwrap().instance.clone();
         let extra_features = self.wgpu_context.read().unwrap().extra_features();
         let override_limits = self.wgpu_context.read().unwrap().override_limits();
+
+        let render_config = self.config.render_settings;
+
         // let mut composite_alpha_mode = match self.config.composite_alpha_mode {
         //     anyrender::CompositeAlphaMode::Auto => CompositeAlphaMode::Auto,
         //     anyrender::CompositeAlphaMode::Opaque => CompositeAlphaMode::Opaque,
@@ -213,105 +223,108 @@ impl WindowRenderer for VelloHybridWindowRenderer {
             .unwrap()
             .find_compatible_device_handle(Some(&surface));
 
-        let device_handle = match existing_device_handle {
-            Some(device_handle) => device_handle,
-            None => DeviceHandle::new_from_compatible_surface(
-                instance,
-                Some(&surface),
-                extra_features,
-                override_limits,
-            )
-            .block_on()
-            .expect("Error creating DeviceHandle"),
-        };
+        let fut = async move {
+            let device_handle = match existing_device_handle {
+                Some(device_handle) => device_handle,
+                None => DeviceHandle::new_from_compatible_surface(
+                    instance,
+                    Some(&surface),
+                    extra_features,
+                    override_limits,
+                )
+                .await
+                .expect("Error creating DeviceHandle"),
+            };
 
-        let adapter = &device_handle.adapter;
-        let caps = surface.get_capabilities(adapter);
-        let mut alpha_modes = caps.alpha_modes;
+            let adapter = &device_handle.adapter;
+            let caps = surface.get_capabilities(adapter);
+            let mut alpha_modes = caps.alpha_modes;
 
-        if !alpha_modes.contains(&composite_alpha_mode) {
-            alpha_modes.sort_unstable_by(
-                |first: &CompositeAlphaMode, second: &CompositeAlphaMode| {
-                    let first_num = match *first {
-                        CompositeAlphaMode::PreMultiplied => 0,
-                        CompositeAlphaMode::PostMultiplied => 1,
-                        CompositeAlphaMode::Opaque
-                        | CompositeAlphaMode::Inherit
-                        | CompositeAlphaMode::Auto => 2,
-                    };
-                    let second_num = match *second {
-                        CompositeAlphaMode::PreMultiplied => 0,
-                        CompositeAlphaMode::PostMultiplied => 1,
-                        CompositeAlphaMode::Opaque
-                        | CompositeAlphaMode::Inherit
-                        | CompositeAlphaMode::Auto => 2,
-                    };
-                    first_num.cmp(&second_num)
+            if !alpha_modes.contains(&composite_alpha_mode) {
+                alpha_modes.sort_unstable_by(
+                    |first: &CompositeAlphaMode, second: &CompositeAlphaMode| {
+                        let first_num = match *first {
+                            CompositeAlphaMode::PreMultiplied => 0,
+                            CompositeAlphaMode::PostMultiplied => 1,
+                            CompositeAlphaMode::Opaque
+                            | CompositeAlphaMode::Inherit
+                            | CompositeAlphaMode::Auto => 2,
+                        };
+                        let second_num = match *second {
+                            CompositeAlphaMode::PreMultiplied => 0,
+                            CompositeAlphaMode::PostMultiplied => 1,
+                            CompositeAlphaMode::Opaque
+                            | CompositeAlphaMode::Inherit
+                            | CompositeAlphaMode::Auto => 2,
+                        };
+                        first_num.cmp(&second_num)
+                    },
+                );
+                composite_alpha_mode = alpha_modes
+                    .first()
+                    .copied()
+                    .expect("Surface didn't report any alpha modes");
+            }
+
+            // Vello Hybrid emits premultiplied alpha and renders directly into
+            // its target. That matches a `PreMultiplied` surface (and Opaque
+            // ignores alpha), so those render straight to the surface. Only
+            // `PostMultiplied` (straight alpha) needs conversion, which routes
+            // through an intermediate texture (using the renderer's target
+            // format) that is un-premultiplied while blitting to the surface.
+            #[cfg(not(target_vendor = "apple"))]
+            let intermediate_texture = (composite_alpha_mode == CompositeAlphaMode::PostMultiplied)
+                .then(|| {
+                    use wgpu::TextureUsages;
+                    use wgpu_context::{AlphaConversion, TextureConfiguration};
+                    TextureConfiguration {
+                        usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
+                        format: DEFAULT_TEXTURE_FORMAT,
+                        alpha_conversion: Some(AlphaConversion::Unpremultiply),
+                    }
+                });
+
+            // Apple is almost guaranteed to be premultiplied
+            // TODO: Remove below once gfx-rs/wgpu#9896 gets fixed
+            #[cfg(target_vendor = "apple")]
+            let intermediate_texture = None;
+
+            let render_surface = SurfaceRenderer::new(
+                surface,
+                SurfaceRendererConfiguration {
+                    usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                    formats: vec![DEFAULT_TEXTURE_FORMAT],
+                    width,
+                    height,
+                    present_mode: PresentMode::AutoVsync,
+                    desired_maximum_frame_latency,
+                    alpha_mode: composite_alpha_mode,
+                    view_formats: vec![],
                 },
-            );
-            composite_alpha_mode = alpha_modes
-                .first()
-                .copied()
-                .expect("Surface didn't report any alpha modes");
-        }
+                intermediate_texture,
+                device_handle,
+            )
+            .expect("Error creating SurfaceRenderer");
 
-        // Vello Hybrid emits premultiplied alpha and renders directly into
-        // its target. That matches a `PreMultiplied` surface (and Opaque
-        // ignores alpha), so those render straight to the surface. Only
-        // `PostMultiplied` (straight alpha) needs conversion, which routes
-        // through an intermediate texture (using the renderer's target
-        // format) that is un-premultiplied while blitting to the surface.
-        #[cfg(not(target_vendor = "apple"))]
-        let intermediate_texture = (composite_alpha_mode == CompositeAlphaMode::PostMultiplied)
-            .then(|| {
-                use wgpu::TextureUsages;
-                use wgpu_context::{AlphaConversion, TextureConfiguration};
-                TextureConfiguration {
-                    usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
+            let renderer = VelloHybridRenderer::new_with_config(
+                render_surface.device().clone(),
+                render_surface.queue().clone(),
+                &RenderTargetConfig {
                     format: DEFAULT_TEXTURE_FORMAT,
-                    alpha_conversion: Some(AlphaConversion::Unpremultiply),
-                }
+                    width,
+                    height,
+                },
+                render_config,
+            );
+
+            let _ = sender.send(InitOutput {
+                active: ActiveRenderState {
+                    renderer,
+                    render_surface,
+                },
             });
-
-        // Apple is almost guaranteed to be premultiplied
-        // TODO: Remove below once gfx-rs/wgpu#9896 gets fixed
-        #[cfg(target_vendor = "apple")]
-        let intermediate_texture = None;
-
-        let render_surface = SurfaceRenderer::new(
-            surface,
-            SurfaceRendererConfiguration {
-                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-                formats: vec![DEFAULT_TEXTURE_FORMAT],
-                width,
-                height,
-                present_mode: PresentMode::AutoVsync,
-                desired_maximum_frame_latency,
-                alpha_mode: composite_alpha_mode,
-                view_formats: vec![],
-            },
-            intermediate_texture,
-            device_handle,
-        )
-        .expect("Error creating SurfaceRenderer");
-
-        let renderer = VelloHybridRenderer::new_with_config(
-            render_surface.device().clone(),
-            render_surface.queue().clone(),
-            &RenderTargetConfig {
-                format: DEFAULT_TEXTURE_FORMAT,
-                width,
-                height,
-            },
-            self.config.render_settings,
-        );
-
-        let _ = sender.send(InitOutput {
-            active: ActiveRenderState {
-                renderer,
-                render_surface,
-            },
-        });
+        };
+        Box::pin(fut)
     }
 
     fn complete_resume(&mut self) -> bool {

@@ -1,4 +1,4 @@
-use velona_core::masonry_core::core::{Property, Selector};
+use velona_core::masonry_core::core::{FromDynWidget, Property, Selector};
 
 use crate::{ApplyScopedStyles, ApplyToNewWidget, ApplyToWidgetMut, ScopedPropstack};
 
@@ -24,6 +24,34 @@ impl From<ScopedClassesState> for Selector {
 }
 
 impl ScopedClassesState {
+    pub const HOVERED: Self = Self {
+        is_hovered: Some(true),
+        is_active: None,
+        is_disabled: None,
+        has_focus_target: None,
+    };
+
+    pub const ACTIVE: Self = Self {
+        is_hovered: None,
+        is_active: Some(true),
+        is_disabled: None,
+        has_focus_target: None,
+    };
+
+    pub const DISABLED: Self = Self {
+        is_hovered: None,
+        is_active: None,
+        is_disabled: Some(true),
+        has_focus_target: None,
+    };
+
+    pub const FOCUS: Self = Self {
+        is_hovered: None,
+        is_active: None,
+        is_disabled: None,
+        has_focus_target: Some(true),
+    };
+
     pub fn hovered(mut self, is_hovered: bool) -> Self {
         self.is_hovered = Some(is_hovered);
         self
@@ -84,6 +112,12 @@ impl<const N: usize> ScopedClasses<N> {
     {
         self.prop_opt(state, move |old| Some(prop(old)))
     }
+    pub fn static_prop<P>(self, state: ScopedClassesState, prop: P) -> Self
+    where
+        P: Property + Clone,
+    {
+        self.prop(state, move |_| prop.clone())
+    }
     pub fn propstack_ref(&self) -> &ScopedPropstack {
         &self.prop_stack
     }
@@ -95,7 +129,7 @@ impl<const N: usize> ApplyToNewWidget for ScopedClasses<N> {
         new_widget: velona_core::masonry_core::core::NewWidget<W>,
     ) -> velona_core::masonry_core::core::NewWidget<W>
     where
-        W: velona_core::masonry_core::core::Widget + ?Sized,
+        W: velona_core::masonry_core::core::Widget + FromDynWidget + ?Sized,
     {
         new_widget
             .with_classes(self.classes.into_iter().map(String::from))
@@ -106,7 +140,7 @@ impl<const N: usize> ApplyToNewWidget for ScopedClasses<N> {
 impl<const N: usize> ApplyToWidgetMut for ScopedClasses<N> {
     fn apply_to_widget_mut<W>(&self, mut widget_mut: velona_core::masonry_core::core::WidgetMut<W>)
     where
-        W: velona_core::masonry_core::core::Widget + ?Sized,
+        W: velona_core::masonry_core::core::Widget + FromDynWidget + ?Sized,
     {
         for class in self.classes {
             widget_mut.ctx.add_class(class);

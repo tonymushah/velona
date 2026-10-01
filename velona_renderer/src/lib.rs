@@ -2,7 +2,7 @@
 //! but the `ScenePainter` uses a [`PaintSink`].
 //!
 
-use std::sync::Arc;
+use std::{pin::Pin, sync::Arc};
 
 use imaging::PaintSink;
 
@@ -17,7 +17,12 @@ pub trait WindowRenderer {
         Self: 'a;
 
     /// Begin resuming the renderer.
-    fn resume(&mut self, window: Arc<dyn WindowHandle>, width: u32, height: u32);
+    fn resume(
+        &mut self,
+        window: Arc<dyn WindowHandle>,
+        width: u32,
+        height: u32,
+    ) -> Pin<Box<dyn Future<Output = ()>>>;
 
     /// Finalize a previously-initiated resume. Returns `true` once the renderer is
     /// active and ready to render. Idempotent on already-active renderers; returns

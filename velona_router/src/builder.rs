@@ -1,0 +1,225 @@
+use velona_core::{AnyNewWidget, reactive::signal::ArcRwSignal};
+
+use crate::{
+    NavigationController,
+    location::LocationState,
+    route_tree::{RouteId, RouteNode, RouteSegment, RouteSegmentKind, RouteTree},
+    runtime::RouterState,
+};
+
+#[derive(Debug, Default)]
+pub struct Router {
+    pub(crate) tree: RouteTree,
+}
+
+impl Router {
+    pub fn route(mut self, route: Route) -> Self {
+        let mut stack = vec![route];
+
+        while let Some(route) = stack.pop() {
+            if let Some(parent_id) = route.parent_id {
+                let Some(mut parent_node) = self.tree.find_mut(parent_id) else {
+                    unreachable!("The parent child node should be always available")
+                };
+                parent_node.children.insert(route.id, route.node);
+            } else {
+                self.tree.roots_mut().insert(route.id, route.node);
+            }
+            let mut childs = route.childs;
+            stack.append(&mut childs);
+        }
+
+        self
+    }
+
+    pub fn build_with_start_path(self, path: &str) -> impl Fn() -> AnyNewWidget + Send + 'static {
+        RouterState::new(
+            self.tree,
+            NavigationController {
+                state: ArcRwSignal::new({
+                    let mut state = LocationState::default();
+                    state.goto(path).unwrap();
+                    state
+                }),
+            },
+        )
+        .build_view()
+    }
+
+    pub fn build(self) -> impl Fn() -> AnyNewWidget + Send + 'static {
+        RouterState::new(
+            self.tree,
+            NavigationController {
+                state: ArcRwSignal::new(LocationState::default()),
+            },
+        )
+        .build_view()
+    }
+}
+
+pub struct Route {
+    node: RouteNode,
+    id: RouteId,
+    childs: Vec<Route>,
+    parent_id: Option<RouteId>,
+}
+
+impl Route {
+    pub fn layout<V>(view: V) -> Self
+    where
+        V: Fn() -> AnyNewWidget + Send + Sync + 'static,
+    {
+        Self {
+            node: RouteNode {
+                segment: RouteSegment::Layout,
+                view: Box::new(view),
+            },
+            id: RouteId::next(),
+            childs: Default::default(),
+            parent_id: None,
+        }
+    }
+    pub fn index<V>(view: V) -> Self
+    where
+        V: Fn() -> AnyNewWidget + Send + Sync + 'static,
+    {
+        Self {
+            node: RouteNode {
+                segment: RouteSegment::Index,
+                view: Box::new(view),
+            },
+            id: RouteId::next(),
+            childs: Default::default(),
+            parent_id: None,
+        }
+    }
+    pub fn static_<V>(path: &str, view: V) -> Self
+    where
+        V: Fn() -> AnyNewWidget + Send + Sync + 'static,
+    {
+        Self {
+            node: RouteNode {
+                segment: RouteSegment::Static(path.into()),
+                view: Box::new(view),
+            },
+            id: RouteId::next(),
+            childs: Default::default(),
+            parent_id: None,
+        }
+    }
+    pub fn params<V>(name: &str, view: V) -> Self
+    where
+        V: Fn() -> AnyNewWidget + Send + Sync + 'static,
+    {
+        Self {
+            node: RouteNode {
+                segment: RouteSegment::Param { name: name.into() },
+                view: Box::new(view),
+            },
+            id: RouteId::next(),
+            childs: Default::default(),
+            parent_id: None,
+        }
+    }
+    pub fn wildcard<V>(name: &str, view: V) -> Self
+    where
+        V: Fn() -> AnyNewWidget + Send + Sync + 'static,
+    {
+        Self {
+            node: RouteNode {
+                segment: RouteSegment::Wildcard { name: name.into() },
+                view: Box::new(view),
+            },
+            id: RouteId::next(),
+            childs: Default::default(),
+            parent_id: None,
+        }
+    }
+}
+
+impl Route {
+    pub fn child(mut self, mut child: Route) -> Self {
+        if self.node.segment.kind() == RouteSegmentKind::Index {
+            panic!("An index route cannot have a children");
+        }
+        child.parent_id = Some(self.id);
+        self.childs.push(child);
+        self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::thread::spawn;
+
+    use super::*;
+
+    fn my_view() -> AnyNewWidget {
+        todo!()
+    }
+
+    #[test]
+    fn test_build_router_index_child() {
+        assert!(
+            spawn(|| {
+                let _ = Router::default().route(Route::index(my_view).child(Route::index(my_view)));
+            })
+            .join()
+            .is_err()
+        )
+    }
+
+    #[test]
+    fn test_build_router() {
+        let router = Router::default().route(
+            Route::layout(my_view)
+                .child(Route::static_("posts", my_view))
+                .child(Route::static_("users", my_view).child(Route::params("something", my_view)))
+                .child(Route::wildcard("any", my_view)),
+        );
+        assert_eq!(router.tree.len(), 5);
+        assert_eq!(router.tree.root_ids().count(), 1);
+        assert_eq!(
+            router
+                .tree
+                .roots()
+                .item(router.tree.root_ids().next().unwrap())
+                .unwrap()
+                .child_ids()
+                .into_iter()
+                .count(),
+            3
+        );
+        let child_routes = router
+            .tree
+            .roots()
+            .item(router.tree.root_ids().next().unwrap())
+            .unwrap()
+            .child_ids()
+            .into_iter()
+            .flat_map(|id| router.tree.find(id))
+            .collect::<Box<[_]>>();
+
+        assert!(child_routes.iter().any(|node| {
+            if let RouteSegment::Static(name) = &node.item.segment {
+                name == "posts"
+            } else {
+                false
+            }
+        }));
+        assert!(child_routes.iter().any(|node| {
+            if let RouteSegment::Static(name) = &node.item.segment {
+                name == "users"
+            } else {
+                false
+            }
+        }));
+        assert!(child_routes.iter().any(|node| {
+            if let RouteSegment::Wildcard { name } = &node.item.segment {
+                name == "any"
+            } else {
+                false
+            }
+        }))
+    }
+}

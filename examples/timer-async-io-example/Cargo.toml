@@ -1,0 +1,18 @@
+[package]
+name = "timer-async-io-example"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona.workspace = true
+velona_renderer_vello_hybrid.workspace = true
+env_logger.workspace = true
+log.workspace = true
+hotpath = { workspace = true, optional = true }
+async-io = { workspace = true }
+futures-util = { workspace = true }
+
+[features]
+hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]

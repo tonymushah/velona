@@ -10,7 +10,7 @@ wgpu_context.workspace = true
 futures-channel.workspace = true
 peniko.workspace = true
 kurbo.workspace = true
-pollster.workspace = true
+# pollster.workspace = true
 debug_timer.workspace = true
 # hotpath = {workspace = true, optional=true}
 vello = { workspace = true, features = ["wgpu"] }

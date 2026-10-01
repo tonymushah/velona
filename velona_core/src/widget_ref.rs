@@ -1,23 +1,19 @@
-use std::{
-    any::TypeId,
-    backtrace::{Backtrace, BacktraceStatus},
-    fmt::Debug,
-    marker::PhantomData,
-    thread::{self, ThreadId},
-};
+use std::{fmt::Debug, marker::PhantomData};
 
 use imaging::kurbo::{Affine, Point};
 use masonry_core::core::ErasedAction;
+use masonry_core::core::FromDynWidget;
 use masonry_core::core::PropertyStackId;
 use masonry_core::core::{LayerType, NewWidget, Widget, WidgetId, WidgetMut, WidgetRef};
 use winit::window::WindowId;
 
 use crate::{
     app::{EventLoopEvent, proxy::EventProxyHandle},
-    render_root::use_window_render_root_ref,
     utils::ConsumeResult,
-    window::event_listener::HandlerId,
-    window::handle::{WindowHandle, WindowHandleActionError},
+    window::{
+        event_listener::HandlerId,
+        handle::{WindowHandle, WindowHandleActionError},
+    },
 };
 
 type EditFn = Box<dyn FnOnce(WidgetMut<dyn Widget>) + Send>;
@@ -59,24 +55,22 @@ impl Debug for UseWidgetFnEvent {
 #[derive(Debug)]
 pub struct VelonaWidgetRef<W>
 where
-    W: Widget + ?Sized,
+    W: Widget + FromDynWidget + ?Sized,
 {
     pub(crate) id: WidgetId,
     pub(crate) window: Option<Box<WindowHandle>>,
     pub(crate) phantom: PhantomData<W>,
-    pub(crate) thread_id: ThreadId,
 }
 
 impl<W> Clone for VelonaWidgetRef<W>
 where
-    W: Widget + ?Sized,
+    W: Widget + FromDynWidget + ?Sized,
 {
     fn clone(&self) -> Self {
         Self {
             id: self.id,
             window: self.window.clone(),
             phantom: self.phantom,
-            thread_id: thread::current().id(),
         }
     }
 }
@@ -93,34 +87,14 @@ pub enum UseWidgetFromRefError {
     NoWindowHandleProvided,
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum EditWidgetLocalError {
-    #[error("You tried to edit a widget outside the componnent three")]
-    OutsideTree,
-    #[error("The widget specified is not found")]
-    WidgetNotFound,
-    #[error("The tree was dropped or mutably used somewhere")]
-    UnaccessibleTree,
-    #[error("Widget found but the type is not correct [{:?} != {:?}]", .original_cast, .current_cast)]
-    InvalidWidgetCast {
-        original_cast: TypeId,
-        current_cast: TypeId,
-    },
-    #[error("You are trying to edit a `VelonaWidgetRef` outside the main thread")]
-    OutsideMainThread,
-}
-
-impl<A> ConsumeResult for Result<A, EditWidgetLocalError> {
-    /// [`log::error`] the [`EditWidgetLocalError`]
-    /// and [`log::trace`] the backtrace if available
+impl<T> ConsumeResult for Result<T, UseWidgetFromRefError> {
+    #[track_caller]
     fn consume_with_log_err(self) {
         if let Err(err) = self {
-            log::error!("Cannot edit the widget locally => {err}");
-
-            let backtrace = Backtrace::capture();
-            if backtrace.status() == BacktraceStatus::Captured {
-                log::trace!("Backtrace: \n{backtrace}");
-            }
+            log::error!(
+                "cannot use widget from a velona ref ({err}) at {}",
+                std::panic::Location::caller()
+            );
         }
     }
 }
@@ -128,41 +102,70 @@ impl<A> ConsumeResult for Result<A, EditWidgetLocalError> {
 // #[cfg_attr(feature = "hotpath", hotpath::measure_all)]
 impl<W> VelonaWidgetRef<W>
 where
-    W: Widget + 'static,
+    W: Widget + FromDynWidget + ?Sized,
 {
-    /// Edit the current widget right now.
-    ///
-    /// This function will always fail if called outside the main thread.
-    pub fn edit_local_now<F, O>(&self, edit_fn: F) -> Result<O, EditWidgetLocalError>
-    where
-        F: FnOnce(WidgetMut<W>) -> O,
-    {
-        self.edit_erased_local_now(|mut widget_mut| -> Result<O, EditWidgetLocalError> {
-            let Some(widget_mut) = widget_mut.try_downcast::<W>() else {
-                return Err(EditWidgetLocalError::InvalidWidgetCast {
-                    original_cast: TypeId::of::<W>(),
-                    current_cast: widget_mut.widget.type_id(),
-                });
-            };
-            Ok(edit_fn(widget_mut))
-        })?
+    /// Change the widget signature
+    pub fn cast<W1: Widget + FromDynWidget + ?Sized>(self) -> VelonaWidgetRef<W1> {
+        VelonaWidgetRef::<W1> {
+            phantom: PhantomData::<W1>,
+            id: self.id,
+            window: self.window,
+        }
     }
-
+    /// Set the [`WidgetId`] that this reference belongs too
+    pub fn set_id(&mut self, widget_id: WidgetId) {
+        self.id = widget_id;
+    }
+    fn send_event(&self, event: EventLoopEvent) -> Result<(), UseWidgetFromRefError> {
+        if self
+            .window
+            .as_ref()
+            .ok_or(UseWidgetFromRefError::NoWindowHandleProvided)?
+            .send_event(event)
+            .is_err()
+        {
+            Err(UseWidgetFromRefError::AppExited)
+        } else {
+            Ok(())
+        }
+    }
     /// Edit the underlying widget "safely".
     ///
     /// Unlike the [`Self::edit_local_now`], this function is safe to use between threads.
     /// If you want to get a return value, use [`Self::edit_with_return`].
+    #[track_caller]
     pub fn edit<F>(&self, edit_fn: F) -> Result<(), UseWidgetFromRefError>
     where
         F: FnOnce(WidgetMut<W>) + Send + 'static,
     {
-        self.edit_erased(move |mut widget_mut| {
-            let Some(widget_mut) = widget_mut.try_downcast::<W>() else {
-                log::warn!("Invalid cast {}", widget_mut.widget.short_type_name());
-                return;
+        let window_id = {
+            let Some(window) = self
+                .window
+                .as_ref()
+                .ok_or(UseWidgetFromRefError::NoWindowHandleProvided)?
+                .window
+                .upgrade()
+            else {
+                return Err(UseWidgetFromRefError::AppExited);
             };
-            edit_fn(widget_mut);
-        })
+            window.id()
+        };
+        let event = EditWidgetFnEvent {
+            widget_id: self.id,
+            window_id,
+            edit_fn: Box::new(move |mut widget_mut| {
+                if let Some(widget_mut) = widget_mut.try_downcast::<W>() {
+                    edit_fn(widget_mut);
+                } else {
+                    log::warn!(
+                        "Invalid cast {} for edit at {}",
+                        widget_mut.widget.short_type_name(),
+                        std::panic::Location::caller()
+                    );
+                }
+            }),
+        };
+        self.send_event(EventLoopEvent::EditWidget(Box::new(event)))
     }
     /// Similar to [`Self::edit`] but allows you to return a value.
     pub async fn edit_with_return<F, R>(&self, edit_fn: F) -> Result<R, UseWidgetFromRefError>
@@ -183,17 +186,39 @@ where
     /// Use the underlying widget "safely".
     ///
     /// If you want to get a return value, use [`Self::use_with_return`].
+    #[track_caller]
     pub fn use_widget<F>(&self, use_fn: F) -> Result<(), UseWidgetFromRefError>
     where
         F: FnOnce(WidgetRef<W>) + Send + 'static,
     {
-        self.use_widget_erased(|widget_ref| {
-            let Some(widget_ref) = widget_ref.downcast::<W>() else {
-                log::warn!("Invalid cast {}", widget_ref.inner().short_type_name());
-                return;
+        let window_id = {
+            let Some(window) = self
+                .window
+                .as_ref()
+                .ok_or(UseWidgetFromRefError::NoWindowHandleProvided)?
+                .window
+                .upgrade()
+            else {
+                return Err(UseWidgetFromRefError::AppExited);
             };
-            use_fn(widget_ref);
-        })
+            window.id()
+        };
+        let event = UseWidgetFnEvent {
+            widget_id: self.id,
+            window_id,
+            use_fn: Box::new(|widget_ref| {
+                if let Some(widget_ref) = widget_ref.downcast::<W>() {
+                    use_fn(widget_ref)
+                } else {
+                    log::warn!(
+                        "Invalid cast {} for use at {}",
+                        widget_ref.inner().short_type_name(),
+                        std::panic::Location::caller()
+                    );
+                }
+            }),
+        };
+        self.send_event(EventLoopEvent::UseWidget(Box::new(event)))
     }
     /// Similar to [`Self::use_widget`] but allows you to return a value.
     pub async fn use_with_return<F, R>(&self, use_fn: F) -> Result<R, UseWidgetFromRefError>
@@ -221,7 +246,6 @@ where
             id: RawBox::empty().prepare().id(),
             window: None,
             phantom: PhantomData,
-            thread_id: thread::current().id(),
         }
     }
     /// Queues a callback that will be called with a [`WidgetMut`] for this widget.
@@ -230,6 +254,7 @@ where
     ///
     /// You might never use this thing, _since [`edit`](Self::edit) is what you use most of the time_
     /// but who knows?
+    #[track_caller]
     pub fn mutate_later<Fn>(&self, mutate_fn: Fn) -> Result<(), UseWidgetFromRefError>
     where
         Fn: FnOnce(WidgetMut<'_, W>) + Send + 'static,
@@ -284,130 +309,13 @@ where
         })
         .await
     }
+    #[track_caller]
     pub fn into_dyn(self) -> VelonaWidgetRef<dyn Widget> {
         VelonaWidgetRef {
             phantom: PhantomData::<dyn Widget>,
             id: self.id,
             window: self.window,
-            thread_id: self.thread_id,
         }
-    }
-}
-
-impl<W> VelonaWidgetRef<W>
-where
-    W: Widget + ?Sized,
-{
-    /// Edit the current widget right now.
-    ///
-    /// This function will always fail if called outside the main thread.
-    pub fn edit_erased_local_now<F, O>(&self, edit_fn: F) -> Result<O, EditWidgetLocalError>
-    where
-        F: FnOnce(WidgetMut<dyn Widget>) -> O,
-    {
-        if self.thread_id != thread::current().id() {
-            return Err(EditWidgetLocalError::OutsideMainThread);
-        }
-        let weak_root = use_window_render_root_ref().ok_or(EditWidgetLocalError::OutsideTree)?;
-        weak_root
-            .use_inner_render_root_mut(|render_root| {
-                if render_root.tree.has_widget(self.id) {
-                    render_root
-                        .tree
-                        .edit_widget(self.id, |widget_mut| Ok(edit_fn(widget_mut)))
-                } else {
-                    Err(EditWidgetLocalError::WidgetNotFound)
-                }
-            })
-            .ok_or(EditWidgetLocalError::UnaccessibleTree)?
-    }
-
-    /// Change the widget signature
-    pub fn cast<W1: Widget + 'static>(self) -> VelonaWidgetRef<W1> {
-        VelonaWidgetRef::<W1> {
-            phantom: PhantomData::<W1>,
-            id: self.id,
-            window: self.window,
-            thread_id: self.thread_id,
-        }
-    }
-    /// Set the [`WidgetId`] that this reference belongs too
-    pub fn set_id(&mut self, widget_id: WidgetId) {
-        self.id = widget_id;
-    }
-    fn send_event(&self, event: EventLoopEvent) -> Result<(), UseWidgetFromRefError> {
-        if self
-            .window
-            .as_ref()
-            .ok_or(UseWidgetFromRefError::NoWindowHandleProvided)?
-            .send_event(event)
-            .is_err()
-        {
-            Err(UseWidgetFromRefError::AppExited)
-        } else {
-            Ok(())
-        }
-    }
-    pub fn disarm(mut self) -> Self {
-        self.window.take();
-        self
-    }
-    /// Edit the underlying widget "safely".
-    ///
-    /// Unlike the [`Self::edit_local_now`], this function is safe to use between threads.
-    /// If you want to get a return value, use [`futures_channel::oneshot`] or signals.
-    pub fn edit_erased<F>(&self, edit_fn: F) -> Result<(), UseWidgetFromRefError>
-    where
-        F: FnOnce(WidgetMut<dyn Widget>) + Send + 'static,
-    {
-        let window_id = {
-            let Some(window) = self
-                .window
-                .as_ref()
-                .ok_or(UseWidgetFromRefError::NoWindowHandleProvided)?
-                .window
-                .upgrade()
-            else {
-                return Err(UseWidgetFromRefError::AppExited);
-            };
-            window.id()
-        };
-        let event = EditWidgetFnEvent {
-            widget_id: self.id,
-            window_id,
-            edit_fn: Box::new(|widget_mut| {
-                edit_fn(widget_mut);
-            }),
-        };
-        self.send_event(EventLoopEvent::EditWidget(Box::new(event)))
-    }
-    /// Use the underlying widget "safely".
-    ///
-    /// If you want to get a return value, use [`futures_channel::oneshot`] or signals.
-    pub fn use_widget_erased<F>(&self, use_fn: F) -> Result<(), UseWidgetFromRefError>
-    where
-        F: FnOnce(WidgetRef<dyn Widget>) + Send + 'static,
-    {
-        let window_id = {
-            let Some(window) = self
-                .window
-                .as_ref()
-                .ok_or(UseWidgetFromRefError::NoWindowHandleProvided)?
-                .window
-                .upgrade()
-            else {
-                return Err(UseWidgetFromRefError::AppExited);
-            };
-            window.id()
-        };
-        let event = UseWidgetFnEvent {
-            widget_id: self.id,
-            window_id,
-            use_fn: Box::new(|widget_ref| {
-                use_fn(widget_ref);
-            }),
-        };
-        self.send_event(EventLoopEvent::UseWidget(Box::new(event)))
     }
     /// Checks if the current widget is present in the tree.
     pub async fn is_present(&self) -> bool {
@@ -417,6 +325,7 @@ where
             false
         }
     }
+
     /// Sets this widget as the [focused widget](masonry_core::doc::masonry_concepts#text-focus)
     /// and the [focus anchor](masonry_core::doc::masonry_concepts#focus-anchor).
     pub fn set_focus(&self) {
@@ -441,7 +350,7 @@ where
         &self,
         property_stack_id: PropertyStackId,
     ) -> Result<(), UseWidgetFromRefError> {
-        self.edit_erased(move |mut this| {
+        self.edit(move |mut this| {
             this.ctx.set_property_stack(property_stack_id);
         })
     }
@@ -450,7 +359,7 @@ where
     /// For example, text widgets should call this for "cut" and "copy" user interactions.
     /// Note that we currently don't support the "Primary" selection buffer on X11/Wayland.
     pub fn set_clipboard(&self, contents: String) -> Result<(), UseWidgetFromRefError> {
-        self.edit_erased(move |mut this| {
+        self.edit(move |mut this| {
             this.ctx.set_clipboard(contents);
         })
     }
@@ -461,7 +370,7 @@ where
     ///
     /// It behaves similarly as CSS transforms.
     pub fn set_transform(&self, transform: Affine) -> Result<(), UseWidgetFromRefError> {
-        self.edit_erased(move |mut this| {
+        self.edit(move |mut this| {
             this.ctx.set_transform(transform);
         })
     }
@@ -478,7 +387,7 @@ pub enum ListenToWidgetActionFromRefError {
 // ----- Event Handlers ------
 impl<W> VelonaWidgetRef<W>
 where
-    W: Widget + ?Sized,
+    W: Widget + FromDynWidget + ?Sized,
 {
     pub fn listen_to_widget_action_erased<H>(
         &self,
@@ -523,14 +432,14 @@ where
     }
 }
 
-unsafe impl<W> Send for VelonaWidgetRef<W> where W: Widget + ?Sized {}
+unsafe impl<W> Send for VelonaWidgetRef<W> where W: Widget + FromDynWidget + ?Sized {}
 
-unsafe impl<W> Sync for VelonaWidgetRef<W> where W: Widget + ?Sized {}
+unsafe impl<W> Sync for VelonaWidgetRef<W> where W: Widget + FromDynWidget + ?Sized {}
 
 #[cfg(test)]
 mod tests {
 
-    use masonry::widgets::{Label, ZStack};
+    use masonry::widgets::ZStack;
 
     use crate::utils::{is_send, is_send_sync};
 
@@ -548,21 +457,5 @@ mod tests {
     #[test]
     fn is_use_fn_event_send_sync() {
         is_send::<UseWidgetFnEvent>();
-    }
-    #[test]
-    fn test_threading_test() {
-        let empty = VelonaWidgetRef::<Label>::create_empty();
-        assert!(matches!(
-            empty.edit_local_now(|_| {}),
-            Err(EditWidgetLocalError::OutsideTree)
-        ));
-        thread::spawn(move || {
-            assert!(matches!(
-                empty.edit_local_now(|_| {}),
-                Err(EditWidgetLocalError::OutsideMainThread)
-            ));
-        })
-        .join()
-        .unwrap();
     }
 }

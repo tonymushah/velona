@@ -1,0 +1,33 @@
+//! Various [`Switch`] implementations.
+//!
+//! The most important thing in the module is the [`NewSwitchExt`]
+//! which is implemented for [`NewWidget<Switch>`].
+//!
+//! _See the [widget](Switch) documentation for more information_.
+
+use masonry::{core::NewWidget, widgets::Switch};
+use velona_core::reactive::traits::SignalOrFn;
+
+use crate::NewWidgetExt;
+
+/// A [new](NewWidget) [`Switch`] trait extension.
+// TODO add example
+#[must_use]
+pub trait NewSwitchExt {
+    /// Sets the [switch state](Switch::set_on)
+    /// reactively.
+    fn on<S>(self, on: S) -> Self
+    where
+        S: SignalOrFn<Output = bool> + 'static;
+}
+
+impl NewSwitchExt for NewWidget<Switch> {
+    fn on<S>(self, on: S) -> Self
+    where
+        S: SignalOrFn<Output = bool> + 'static,
+    {
+        self.use_widget_mut(on, |mut this, on| {
+            Switch::set_on(&mut this, on);
+        })
+    }
+}

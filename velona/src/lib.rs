@@ -4,7 +4,6 @@
 pub use velona_core::app;
 #[doc(inline)]
 pub use velona_core::collection;
-pub mod components;
 #[doc(inline)]
 pub use velona_core::error;
 #[doc(inline)]
@@ -13,6 +12,8 @@ pub use velona_core::manager;
 pub use velona_core::render_root;
 #[doc(inline)]
 pub use velona_core::task;
+#[doc(inline)]
+pub use velona_masonry_widgets::components;
 pub mod utils;
 #[doc(inline)]
 pub use velona_core::widget_ref;

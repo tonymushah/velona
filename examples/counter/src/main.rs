@@ -3,7 +3,7 @@ use velona::masonry::{
     core::{NewWidget, Widget},
     kurbo::Point,
     layout::Length,
-    palette::css::WHITE,
+    palette::css::{BLACK, WHITE},
     properties::{
         Background, BorderColor, BorderWidth, BoxShadow, ContentColor, CornerRadius, Padding,
     },
@@ -95,7 +95,11 @@ fn main() {
     velona::app::Builder::new(move |_| {
         velona_renderer_vello::VelloWindowRenderer::new(g_context.clone())
     })
-    .with_window(WindowBuilder::new(view).with_title("aaaaaa"))
+    .with_window(
+        WindowBuilder::new(view)
+            .with_title("aaaaaa")
+            .with_base_color(BLACK),
+    )
     .run()
     .unwrap()
 }

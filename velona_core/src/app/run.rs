@@ -31,6 +31,7 @@ use crate::app::OnEventLoopInitFns;
 use crate::app::event_listener::{
     AppEventHandlers, EmitAppEventToHandlers, UnRegisterAppEventHandler,
 };
+use crate::app::executor::SpawnFn;
 use crate::app::proxy::AppEventLoopProxy;
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
 use crate::events::property_stack::PropertyStackMethods;
@@ -60,10 +61,10 @@ where
     pub(crate) sender: flume::Sender<EventLoopEvent>,
     pub(crate) on_event_loop_init: Option<OnEventLoopInitFns>,
     pub(crate) app_event_listeners: AppEventHandlers,
-    pub(crate) fut_executor: VelonaTasksExecutor,
+    pub(crate) fut_executor: Option<VelonaTasksExecutor>,
     pub(crate) accesskit_adapter_factory: Option<Box<dyn AdapterFactory>>,
     pub(crate) first_time_ui_event: Option<Instant>,
-    pub(crate) spawn_fn: Option<Box<>>
+    pub(crate) spawn_fn: Option<SpawnFn>,
 }
 
 // ------- Utilities --------- //
@@ -117,6 +118,69 @@ where
             event_loop.create_proxy(),
             self.sender.clone(),
         ))
+    }
+
+    fn on_init(&mut self, event_loop: &(dyn ActiveEventLoop + 'static)) {
+        let app_handle = self.create_app_handle(event_loop);
+
+        self.fut_executor = Some({
+            let proxy = app_handle.get_proxy().clone();
+            VelonaTasksExecutor::new(move |id| {
+                let _ = proxy.send_event(EventLoopEvent::PollTask(id));
+            })
+        });
+
+        #[cfg(feature = "subsecond")]
+        {
+            use crate::events::el_event::EventLoopEvent;
+            // Changes fut
+            {
+                let proxy = app_handle.get_proxy().clone();
+                velona_subsecond::connect_to_dx_cli(move |msg| {
+                    let _ = proxy.send_event(EventLoopEvent::DxCliMessages(msg));
+                });
+            }
+        }
+
+        let spawn_fn = self
+            .spawn_fn
+            .take()
+            .unwrap_or_else(|| Box::new(|_| panic!("No spawn_fn provided")));
+
+        match any_spawner::Executor::init_local_custom_executor(super::executor::AppExecutor::new(
+            spawn_fn,
+            app_handle.get_proxy().clone(),
+        )) {
+            Ok(_) => {}
+            Err(err) => {
+                panic!("{err}")
+            }
+        }
+
+        if let Some(on_init) = self.on_event_loop_init.take() {
+            for func in on_init {
+                func(&app_handle);
+            }
+        }
+        if let Some(builder_windows) = self.builder_windows.take() {
+            if builder_windows.is_empty() {
+                log::warn!("No window provided! Exiting...");
+                event_loop.exit();
+            } else {
+                for window in builder_windows {
+                    if app_handle
+                        .send_event(EventLoopEvent::NewWindow(Box::new(window)))
+                        .is_err()
+                    {
+                        log::warn!("the event loop is already dead lol");
+                    }
+                }
+            }
+        }
+    }
+    #[track_caller]
+    fn fut_executor(&mut self) -> &mut VelonaTasksExecutor {
+        self.fut_executor.as_mut().expect("The internal task executor must be available. Perhaps `winit` forgot to call the new_event with StartCause::Init")
     }
 }
 
@@ -172,7 +236,7 @@ where
                 }) {
                     Ok(mut new_instance) => {
                         if !self.can_create_surfaces {
-                            self.fut_executor.spawn(new_instance.resume());
+                            self.fut_executor().spawn(new_instance.resume());
                         }
                         if let Some(sender) = builder.window_handle_send {
                             let _ = sender.send(new_instance.get_handle());
@@ -258,7 +322,10 @@ where
 {
     fn resume_windows_surfaces(&mut self) {
         for window in self.windows.values_mut() {
-            self.fut_executor.spawn(window.resume());
+            self.fut_executor
+                .as_mut()
+                .expect("FutExecutor not loaded yet")
+                .spawn(window.resume());
         }
     }
     fn suspend_windows_surfaces(&mut self) {
@@ -275,7 +342,7 @@ where
     W: WindowRenderer,
 {
     fn poll_task(&mut self, task_id: TaskId) {
-        self.fut_executor.poll_task(task_id);
+        self.fut_executor().poll_task(task_id);
     }
     fn run_exiting_task(&mut self) -> usize {
         let mut tasks = 0usize;
@@ -286,7 +353,7 @@ where
         tasks
     }
     fn spawn_task(&mut self, task: TaskType<()>) {
-        self.fut_executor.spawn(match task {
+        self.fut_executor().spawn(match task {
             TaskType::Send(pin) => pin,
             TaskType::NonSend(pin) => pin,
         });
@@ -695,7 +762,7 @@ where
                     _ => {}
                 },
                 EventLoopEvent::PollAll => {
-                    let res = self.fut_executor.poll_all();
+                    let res = self.fut_executor().poll_all();
                     log::trace!("{:#?}", res);
                 }
                 EventLoopEvent::ManagerActions(manager_erased_action) => {
@@ -744,27 +811,7 @@ where
         cause: winit_core::event::StartCause,
     ) {
         if cause == winit_core::event::StartCause::Init {
-            let app_handle = self.create_app_handle(event_loop);
-            if let Some(on_init) = self.on_event_loop_init.take() {
-                for func in on_init {
-                    func(&app_handle);
-                }
-            }
-            if let Some(builder_windows) = self.builder_windows.take() {
-                if builder_windows.is_empty() {
-                    log::warn!("No window provided! Exiting...");
-                    event_loop.exit();
-                } else {
-                    for window in builder_windows {
-                        if app_handle
-                            .send_event(EventLoopEvent::NewWindow(Box::new(window)))
-                            .is_err()
-                        {
-                            log::warn!("the event loop is already dead lol");
-                        }
-                    }
-                }
-            }
+            self.on_init(event_loop);
         }
     }
     fn resumed(&mut self, _event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
@@ -836,7 +883,7 @@ where
         self.app_event_listeners
             .emit(EmitAppEventToHandlers::MemoryWarning);
         self.app_event_listeners.shrink_to_fit();
-        self.fut_executor.shrink_to_fit();
+        self.fut_executor().shrink_to_fit();
     }
     fn suspended(&mut self, _event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
         self.app_event_listeners

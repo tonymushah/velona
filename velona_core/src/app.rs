@@ -1,7 +1,6 @@
 use crate::events::el_event;
 mod executor;
 use crate::{
-    app::proxy::AppEventLoopProxy,
     utils,
     window::{renderer::WindowRendererFactory, runner as window},
 };
@@ -19,21 +18,20 @@ use any_spawner::PinnedFuture;
 use copypasta::ClipboardContext;
 use masonry_core::core::DefaultProperties;
 use reactive_graph::owner::Owner;
-use winit_core::event_loop::{ControlFlow, DeviceEvents, EventLoop, EventLoopBuilder};
+use winit_core::event_loop::{ControlFlow, DeviceEvents};
 
 pub(crate) use el_event::EventLoopEvent;
 
 type OnEventLoopInitFns = Vec<Box<dyn FnOnce(&AppHandle)>>;
 
 pub struct Builder<W: WindowRenderer> {
-    event_loop_builder: EventLoopBuilder<()>,
     window_render_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
     default_properties: DefaultProperties,
     spawn_fn: Option<SpawnFn>,
     windows: Vec<WindowBuilder>,
     owner: Owner,
-    allowed: Option<DeviceEvents>,
-    control_flow: Option<ControlFlow>,
+    pub allowed_device_events: Option<DeviceEvents>,
+    pub control_flow: Option<ControlFlow>,
     on_event_loop_init: OnEventLoopInitFns,
 }
 
@@ -64,13 +62,12 @@ impl<W: WindowRenderer> Builder<W> {
         F: WindowRendererFactory<WindowRenderer = W> + 'static,
     {
         Self {
-            event_loop_builder: EventLoop::with_user_event(),
             window_render_factory: Box::new(factory),
             default_properties: Default::default(),
             spawn_fn: None,
             windows: Vec::with_capacity(1),
             owner: Owner::new(),
-            allowed: None,
+            allowed_device_events: None,
             control_flow: None,
             on_event_loop_init: Vec::new(),
         }
@@ -92,7 +89,7 @@ impl<W: WindowRenderer> Builder<W> {
     ///
     /// See [`ActiveEventLoop::listen_device_events`](winit_core::event_loop::ActiveEventLoop::listen_device_events) for details.
     pub fn listen_device_events(mut self, allowed: DeviceEvents) -> Self {
-        self.allowed = Some(allowed);
+        self.allowed_device_events = Some(allowed);
         self
     }
     /// Sets the [`ControlFlow`].
@@ -115,43 +112,29 @@ impl<W: WindowRenderer> Builder<W> {
 impl<W: WindowRenderer> Builder<W> {
     /// Run the app in a custom event loop
     // TODO refactor this to add a `build` method
-    pub fn build(self, event_loop: EventLoop<()>) -> Result<(), crate::error::Error> {
-        let spawn_fn = self
-            .spawn_fn
-            .unwrap_or_else(|| Box::new(|_| panic!("No spawn_fn provided")));
+    pub fn build(self) -> Result<App<W>, crate::error::Error> {
+        // if let Some(allowed) = self.allowed_device_events {
+        //     event_loop.listen_device_events(allowed);
+        // }
+        // if let Some(control_flow) = self.control_flow {
+        //     event_loop.set_control_flow(control_flow);
+        // }
 
-        if let Some(allowed) = self.allowed {
-            event_loop.listen_device_events(allowed);
-        }
-        if let Some(control_flow) = self.control_flow {
-            event_loop.set_control_flow(control_flow);
-        }
-
-        let proxy = event_loop.create_proxy();
+        // let proxy = event_loop.create_proxy();
 
         let (send, receiver) = utils::flume_channel::<EventLoopEvent>();
 
         // let proxy = AppEventLoopProxy::new(proxy, send);
 
-        match any_spawner::Executor::init_local_custom_executor(executor::AppExecutor::new(
-            spawn_fn,
-            proxy.clone(),
-        )) {
-            Ok(_) => {}
-            Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
-        }
-
-        // #[cfg(feature = "subsecond")]
-        // {
-        //     use crate::events::el_event::EventLoopEvent;
-        //     // Changes fut
-        //     {
-        //         let proxy = proxy.clone();
-        //         velona_subsecond::connect_to_dx_cli(move |msg| {
-        //             let _ = proxy.send_event(EventLoopEvent::DxCliMessages(msg));
-        //         });
-        //     }
+        // match any_spawner::Executor::init_local_custom_executor(executor::AppExecutor::new(
+        //     spawn_fn,
+        //     proxy.clone(),
+        // )) {
+        //     Ok(_) => {}
+        //     Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
         // }
+
+        
 
         let mut app = run::App {
             windows: Default::default(),
@@ -170,18 +153,21 @@ impl<W: WindowRenderer> Builder<W> {
                 }
             },
             app_event_listeners: Default::default(),
-            fut_executor: VelonaTasksExecutor::new(move |task_id| {
-                let _ = proxy.send_event(EventLoopEvent::PollTask(task_id));
-            }),
+            // fut_executor: VelonaTasksExecutor::new(move |task_id| {
+            //     let _ = proxy.send_event(EventLoopEvent::PollTask(task_id));
+            // }),
             sender: send,
-            
+            spawn_fn: self.spawn_fn,
+            accesskit_adapter_factory: None,
+            first_time_ui_event: None,
         };
         // event_loop.set_control_flow(winit_core::event_loop::ControlFlow::Wait);
-        event_loop.run_app(&mut app)?;
-        Ok(())
+        // event_loop.run_app(&mut app)?;
+        Ok(app)
     }
 }
 
 // TODO add an Manager trait
 
 pub use handle::{AppHandle, AppHandleActionError, use_app_handle};
+pub use run::App;

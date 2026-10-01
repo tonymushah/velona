@@ -35,6 +35,7 @@ subsecond = { workspace = true, optional = true }
 dioxus-cli-config = { workspace = true, optional = true }
 dpi = { workspace = true }
 raw-window-handle.workspace = true
+velona_core_accesskit.workspace = true
 
 [dev-dependencies]
 masonry = { workspace = true }

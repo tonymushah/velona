@@ -5579,9 +5579,18 @@ dependencies = [
  "subsecond",
  "thiserror 2.0.21",
  "ui-events-velona_core",
+ "velona_core_accesskit",
  "velona_executor",
  "velona_renderer",
  "velona_subsecond",
+ "winit-core",
+]
+
+[[package]]
+name = "velona_core_accesskit"
+version = "0.1.0"
+dependencies = [
+ "accesskit",
  "winit-core",
 ]
 

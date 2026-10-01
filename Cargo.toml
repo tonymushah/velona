@@ -12,6 +12,7 @@ members = [
     # Velona core deps
     "velona_scoped_styling",
     "velona_executor",
+    "velona_core_accesskit",
     "velona_core",
     "velona_core_child",
     "velona_masonry_widgets",
@@ -128,6 +129,7 @@ velona_executor = { path = "velona_executor" }
 velona_subsecond = { path = "velona_subsecond" }
 velona_router = { path = "velona_router" }
 velona_masonry_widgets = { path = "velona_masonry_widgets" }
+velona_core_accesskit = { path = "velona_core_accesskit" }
 
 # velona renderers
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }

@@ -38,12 +38,12 @@ where
     last_anim: Option<Instant>,
     pub(crate) window_event_listeners: WindowEventHandlers,
     base_color: AlphaColor<Srgb>,
-    pub(crate) winit_window: Arc<dyn WinitWindow>,
+    pub(crate) winit_window: Arc<Box<dyn WinitWindow>>,
     handle: WindowHandle,
 }
 
 pub struct WindowNew<'i, V, W> {
-    pub window: Arc<dyn WinitWindow>,
+    pub window: Arc<Box<dyn WinitWindow>>,
     pub view: V,
     pub default_properties: Arc<DefaultProperties>,
     pub access_kit: accesskit_xplat::Adapter,
@@ -238,7 +238,7 @@ where
     }
 }
 
-struct WinitWindowHandle(Arc<dyn WinitWindow>);
+struct WinitWindowHandle(Arc<Box<dyn WinitWindow>>);
 
 impl HasWindowHandle for WinitWindowHandle {
     fn window_handle(

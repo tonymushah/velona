@@ -3,6 +3,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
 use any_spawner::{PinnedFuture, PinnedLocalFuture};
 use copypasta::{ClipboardContext, ClipboardProvider};
+use dpi::PhysicalSize;
 use log::warn;
 use masonry_core::app::RenderRootSignal;
 use masonry_core::{
@@ -13,12 +14,13 @@ use masonry_core::{
     },
 };
 use reactive_graph::owner::Owner;
-use ui_events_winit::WindowEventTranslation;
+use ui_events_velona_core::WindowEventTranslation;
 use velona_executor::{TaskId, VelonaTasksExecutor};
 use velona_renderer::WindowRenderer;
+use winit_core::window::{ImeCapabilities, ImeEnableRequest, ImeRequestData};
 use winit_core::{
-    application::ApplicationHandler, dpi::PhysicalSize, event::WindowEvent,
-    event_loop::ActiveEventLoop, window::WindowId,
+    application::ApplicationHandler, event::WindowEvent, event_loop::ActiveEventLoop,
+    window::WindowId,
 };
 
 use super::window::Window;
@@ -112,21 +114,27 @@ where
     fn create_window(
         &mut self,
         builder: Box<WindowBuilder>,
-        event_loop: &winit_core::event_loop::ActiveEventLoop,
+        event_loop: &dyn winit_core::event_loop::ActiveEventLoop,
     ) {
         let window_attributes = builder.window_attributes;
         match event_loop.create_window(window_attributes) {
             Ok(window) => {
-                let window = Arc::new(window);
-                let access_kit = accesskit_winit::Adapter::with_direct_handlers(
-                    event_loop,
-                    &window,
+                let window = window;
+                let access_kit = accesskit_xplat::Adapter::with_split_handlers(
+                    // TODO support android
+                    match window.rwh_06_window_handle().window_handle() {
+                        Ok(d) => d.as_raw(),
+                        Err(err) => {
+                            log::error!("Cannot get window handle");
+                            return;
+                        }
+                    },
                     self.app_handle.get_proxy().accesskit_handler(window.id()),
                     self.app_handle.get_proxy().accesskit_handler(window.id()),
                     self.app_handle.get_proxy().accesskit_handler(window.id()),
                 );
                 match Window::new(WindowNew {
-                    window,
+                    window: Arc::new(window),
                     view: builder.view,
                     default_properties: builder
                         .default_propreties
@@ -274,7 +282,7 @@ impl<W> AppRunner<W>
 where
     W: WindowRenderer,
 {
-    fn execute_manager_methods(&self, ev: &ActiveEventLoop, cmd: OtherManagerMethods) {
+    fn execute_manager_methods(&self, ev: &dyn ActiveEventLoop, cmd: OtherManagerMethods) {
         match cmd {
             OtherManagerMethods::SetControlFlow(control_flow) => {
                 ev.set_control_flow(control_flow);
@@ -401,15 +409,27 @@ where
                     });
                 }
                 RenderRootSignal::StartIme => {
-                    window.winit_window.set_ime_allowed(true);
+                    let maybe_request = ImeEnableRequest::new(
+                        ImeCapabilities::new()
+                            .with_cursor_area()
+                            .with_hint_and_purpose(),
+                        ImeRequestData::default(),
+                    );
+                    if let Some(request) = maybe_request {
+                        window
+                            .winit_window
+                            .request_ime_update(winit_core::window::ImeRequest::Enable(request));
+                    }
                 }
                 RenderRootSignal::EndIme => {
-                    window.winit_window.set_ime_allowed(false);
+                    window
+                        .winit_window
+                        .request_ime_update(winit_core::window::ImeRequest::Disable);
                 }
                 RenderRootSignal::ImeMoved(logical_position, logical_size) => {
                     window
                         .winit_window
-                        .set_ime_cursor_area(logical_position, logical_size);
+                        .set_ime_cursor_area(logical_position.into(), logical_size.into());
                 }
                 RenderRootSignal::ClipboardStore(text) => {
                     let _ = event_loop_proxy.send_event(EventLoopEvent::SetClipboardContent(text));
@@ -424,12 +444,15 @@ where
                     window.winit_window.focus_window();
                 }
                 RenderRootSignal::SetCursor(cursor_icon) => {
-                    window.winit_window.set_cursor(cursor_icon);
+                    window.winit_window.set_cursor(cursor_icon.into());
                 }
                 RenderRootSignal::SetSize(physical_size) => {
                     // TODO handle return value ??
-                    let _ = window.winit_window.request_inner_size(physical_size);
+                    let _ = window
+                        .winit_window
+                        .request_surface_size(physical_size.into());
                 }
+
                 RenderRootSignal::SetTitle(title) => {
                     window.winit_window.set_title(&title);
                 }
@@ -706,7 +729,7 @@ where
             }
         }
     }
-    fn resumed(&mut self, _event_loop: &winit_core::event_loop::ActiveEventLoop) {
+    fn resumed(&mut self, _event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
         self.suspended = false;
         self.resume_windows();
         self.app_event_listeners
@@ -715,7 +738,7 @@ where
 
     fn window_event(
         &mut self,
-        event_loop: &winit_core::event_loop::ActiveEventLoop,
+        event_loop: &dyn winit_core::event_loop::ActiveEventLoop,
         window_id: WindowId,
         event: winit_core::event::WindowEvent,
     ) {

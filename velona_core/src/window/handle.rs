@@ -48,7 +48,7 @@ use crate::{
 /// See [`use_window`](super::use_window) for more details.
 #[derive(Debug, Clone)]
 pub struct WindowHandle {
-    pub(crate) window: Weak<dyn Window>,
+    pub(crate) window: Weak<Box<dyn Window>>,
     pub(crate) app_handle: AppHandle,
 }
 
@@ -93,7 +93,7 @@ impl WindowHandle {
     {
         self.window
             .upgrade()
-            .map(|window| to_use(window.as_ref()))
+            .map(|window| to_use(window.as_ref().as_ref()))
             .ok_or(WindowHandleActionError::WindowClosed)
     }
     /// Use the underlying render root of the current window.

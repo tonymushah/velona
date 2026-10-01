@@ -72,7 +72,7 @@ uuid = { version = "1" }
 # parking_lot = "-1.12"
 copypasta = "0.10.2"
 futures-channel = "0.3"
-hotpath = { version = "0.23" }
+hotpath = { version = "0.28" }
 imaging = "0.0.1"
 env_logger = "0.11.10"
 image = { version = "0.25" }

@@ -5240,6 +5240,8 @@ dependencies = [
 name = "ui-events-velona_core"
 version = "0.1.0"
 dependencies = [
+ "bitflags 2.13.2",
+ "dpi",
  "ui-events",
  "winit-core",
 ]

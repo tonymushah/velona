@@ -101,6 +101,8 @@ url = { version = "2" }
 arrayvec = { version = "0.7" }
 async-io = { version = "2" }
 futures-util = { version = "0.3" }
+dpi = { version = "0.1.2" }
+bitflags = { version = ">=2.13.1, <3" }
 
 # subsecond support
 subsecond = "0.7"

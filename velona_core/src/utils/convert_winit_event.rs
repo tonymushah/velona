@@ -4,8 +4,8 @@
 // Tony Mushah: I copied this file from mansory_winit cause i am lazy to do this myself.
 
 use masonry_core::core::{Ime, ResizeDirection};
-use winit::event::Ime as WinitIme;
-use winit::window::ResizeDirection as WinitResizeDirection;
+use winit_core::event::Ime as WinitIme;
+use winit_core::window::ResizeDirection as WinitResizeDirection;
 
 pub(crate) fn masonry_resize_direction_to_winit(dir: ResizeDirection) -> WinitResizeDirection {
     match dir {

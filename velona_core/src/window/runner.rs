@@ -1,6 +1,7 @@
 use std::{sync::Arc, time::Instant};
 
 use any_spawner::PinnedLocalFuture;
+use dpi::PhysicalSize;
 use imaging::RenderSource;
 use masonry_core::app::WindowSizePolicy;
 use masonry_core::{
@@ -10,12 +11,12 @@ use masonry_core::{
     peniko::color::{AlphaColor, Srgb},
 };
 use masonry_imaging_lite::{Layer as ImagingLayer, PreparedFrame};
+use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use reactive_graph::owner::{Owner, provide_context};
 use send_wrapper::SendWrapper;
-use ui_events_winit::WindowEventReducer;
+use ui_events_velona_core::WindowEventReducer;
 use velona_renderer::WindowRenderer;
-use winit::dpi::PhysicalSize;
-use winit::window::Window as WinitWindow;
+use winit_core::window::Window as WinitWindow;
 
 use crate::{
     app::{AppHandle, EventLoopEvent, proxy::EventProxyHandle},
@@ -30,22 +31,22 @@ where
 {
     pub(crate) render_root: InnerRenderRoot,
     renderer: W,
-    pub(crate) access_kit: accesskit_winit::Adapter,
+    pub(crate) access_kit: accesskit_xplat::Adapter,
     owner: Owner,
     pub(crate) event_reducer: WindowEventReducer,
     // Is `Some` if the most recently displayed frame was an animation frame.
     last_anim: Option<Instant>,
     pub(crate) window_event_listeners: WindowEventHandlers,
     base_color: AlphaColor<Srgb>,
-    pub(crate) winit_window: Arc<WinitWindow>,
+    pub(crate) winit_window: Arc<dyn WinitWindow>,
     handle: WindowHandle,
 }
 
 pub struct WindowNew<'i, V, W> {
-    pub window: Arc<WinitWindow>,
+    pub window: Arc<dyn WinitWindow>,
     pub view: V,
     pub default_properties: Arc<DefaultProperties>,
-    pub access_kit: accesskit_winit::Adapter,
+    pub access_kit: accesskit_xplat::Adapter,
     #[allow(unused)]
     pub app_handle: AppHandle,
     pub parent_owner: &'i Owner,
@@ -102,7 +103,7 @@ where
         let window_owner = parent_owner.child();
         let event_handlers = WindowEventHandlers::default();
 
-        let size = window.inner_size();
+        let size = window.surface_size();
 
         let renderer = factory.create(&app_handle);
 
@@ -223,13 +224,34 @@ where
     }
     pub fn resume(&mut self) -> PinnedLocalFuture<()> {
         let size = self.render_root.tree.size();
-        self.renderer
-            .resume(self.winit_window.clone(), size.width, size.height)
+        self.renderer.resume(
+            Arc::new(WinitWindowHandle(self.winit_window.clone())),
+            size.width,
+            size.height,
+        )
     }
     pub fn suspend(&mut self) {
         self.renderer.suspend();
     }
     pub fn complete_resume(&mut self) -> bool {
         self.renderer.complete_resume()
+    }
+}
+
+struct WinitWindowHandle(Arc<dyn WinitWindow>);
+
+impl HasWindowHandle for WinitWindowHandle {
+    fn window_handle(
+        &self,
+    ) -> Result<raw_window_handle::WindowHandle<'_>, raw_window_handle::HandleError> {
+        self.0.rwh_06_window_handle().window_handle()
+    }
+}
+
+impl HasDisplayHandle for WinitWindowHandle {
+    fn display_handle(
+        &self,
+    ) -> Result<raw_window_handle::DisplayHandle<'_>, raw_window_handle::HandleError> {
+        self.0.rwh_06_display_handle().display_handle()
     }
 }

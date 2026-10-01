@@ -1,6 +1,6 @@
 use futures_channel::oneshot;
 use masonry_core::core::{PropertyStack, PropertyStackId};
-use winit::window::WindowId;
+use winit_core::window::WindowId;
 
 #[derive(Debug)]
 pub struct PropertyStackMethods {

@@ -1,7 +1,7 @@
 use futures_channel::oneshot;
 use masonry_core::core::ErasedAction;
 use reactive_graph::owner::on_cleanup;
-use winit::{
+use winit_core::{
     event_loop::{ControlFlow, DeviceEvents, OwnedDisplayHandle},
     monitor::MonitorHandle,
     window::{CustomCursor, CustomCursorSource},
@@ -36,7 +36,7 @@ pub(crate) enum OtherManagerMethods {
     SetControlFlow(ControlFlow),
     RegisterCustomCursor(CustomCursorSource, oneshot::Sender<CustomCursor>),
     ListenDeviceEventsMode(DeviceEvents),
-    SystemTheme(oneshot::Sender<Option<winit::window::Theme>>),
+    SystemTheme(oneshot::Sender<Option<winit_core::window::Theme>>),
     PrimaryMonitor(oneshot::Sender<Option<MonitorHandle>>),
     Exit,
     AvailableMonitors(oneshot::Sender<Vec<MonitorHandle>>),
@@ -105,7 +105,7 @@ pub trait Manager: EventProxyHandle {
             OtherManagerMethods::SetControlFlow(control_flow),
         )));
     }
-    /// See [`winit::window::CustomCursor`] for more details
+    /// See [`winit_core::window::CustomCursor`] for more details
     fn register_custom_cursor(
         &self,
         source: CustomCursorSource,
@@ -126,7 +126,7 @@ pub trait Manager: EventProxyHandle {
     }
     fn system_theme(
         &self,
-    ) -> impl Future<Output = Result<Option<winit::window::Theme>, AppHandleActionError>> + Send
+    ) -> impl Future<Output = Result<Option<winit_core::window::Theme>, AppHandleActionError>> + Send
     {
         let (send, receive) = oneshot::channel();
         let res = self.send_event(EventLoopEvent::ManagerMethods(Box::new(

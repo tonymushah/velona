@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt::Debug};
 
 use log::debug;
 use masonry_core::core::{ErasedAction, WidgetId};
-use winit::event::{DeviceId, KeyEvent, Modifiers, WindowEvent};
+use winit_core::event::{DeviceId, KeyEvent, Modifiers, WindowEvent};
 
 use crate::utils::{
     HandlerFn, HandlerFnGeneric, HandlerFnGenericStatic, NoParamHandlerFn, events::EventMap,
@@ -38,7 +38,7 @@ pub enum RegisterWindowEventHandlerType {
     OnOccluded(#[debug(skip)] HandlerFnGenericStatic<bool>),
     OnCursorEntered(#[debug(skip)] HandlerFnGeneric<DeviceId>),
     OnCursorLeft(#[debug(skip)] HandlerFnGeneric<DeviceId>),
-    OnThemeChanged(#[debug(skip)] HandlerFnGeneric<winit::window::Theme>),
+    OnThemeChanged(#[debug(skip)] HandlerFnGeneric<winit_core::window::Theme>),
     OnKeyboardInput(#[debug(skip)] HandlerFnGeneric<OnKeyboardInput>),
     OnModifiersChanged(#[debug(skip)] HandlerFnGeneric<Modifiers>),
 }
@@ -73,7 +73,7 @@ pub(crate) struct WindowEventHandlers {
     on_occluded_handler: EventMap<HandlerFnGenericStatic<bool>>,
     on_cursor_entered_handler: EventMap<HandlerFnGeneric<DeviceId>>,
     on_cursor_left_handler: EventMap<HandlerFnGeneric<DeviceId>>,
-    on_theme_changed_handler: EventMap<HandlerFnGeneric<winit::window::Theme>>,
+    on_theme_changed_handler: EventMap<HandlerFnGeneric<winit_core::window::Theme>>,
     on_keyboard_input_handler: EventMap<HandlerFnGeneric<OnKeyboardInput>>,
     on_modifiers_changed_handler: EventMap<HandlerFnGeneric<Modifiers>>,
 }

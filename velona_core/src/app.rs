@@ -19,7 +19,7 @@ use any_spawner::PinnedFuture;
 use copypasta::ClipboardContext;
 use masonry_core::core::DefaultProperties;
 use reactive_graph::owner::Owner;
-use winit::event_loop::{ControlFlow, DeviceEvents, EventLoop, EventLoopBuilder};
+use winit_core::event_loop::{ControlFlow, DeviceEvents, EventLoop, EventLoopBuilder};
 
 pub(crate) use el_event::EventLoopEvent;
 
@@ -88,9 +88,9 @@ impl<W: WindowRenderer> Builder<W> {
         });
         self
     }
-    /// Change if or when [`DeviceEvent`](winit::event::DeviceEvent)s are captured.
+    /// Change if or when [`DeviceEvent`](winit_core::event::DeviceEvent)s are captured.
     ///
-    /// See [`ActiveEventLoop::listen_device_events`](winit::event_loop::ActiveEventLoop::listen_device_events) for details.
+    /// See [`ActiveEventLoop::listen_device_events`](winit_core::event_loop::ActiveEventLoop::listen_device_events) for details.
     pub fn listen_device_events(mut self, allowed: DeviceEvents) -> Self {
         self.allowed = Some(allowed);
         self
@@ -100,9 +100,9 @@ impl<W: WindowRenderer> Builder<W> {
         self.control_flow = Some(controll_flow);
         self
     }
-    /// Register a callback that will run once the [winit::event_loop::EventLoop] has initiliazed.
+    /// Register a callback that will run once the [winit_core::event_loop::EventLoop] has initiliazed.
     ///
-    /// See [`winit::event::StartCause::Init`] for more details.
+    /// See [`winit_core::event::StartCause::Init`] for more details.
     pub fn on_event_loop_init<F>(mut self, after_init: F) -> Self
     where
         F: FnOnce(&AppHandle) + 'static,
@@ -175,7 +175,7 @@ impl<W: WindowRenderer> Builder<W> {
                 let _ = proxy.send_event(EventLoopEvent::PollTask(task_id));
             }),
         };
-        // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
+        // event_loop.set_control_flow(winit_core::event_loop::ControlFlow::Wait);
         event_loop.run_app(&mut app)?;
         Ok(())
     }

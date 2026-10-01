@@ -8,7 +8,7 @@ use masonry_core::app::RenderRootSignal;
 use reactive_graph::owner::Owner;
 use send_wrapper::SendWrapper;
 use velona_executor::TaskId;
-use winit::window::{Window, WindowId};
+use winit_core::window::{Window, WindowId};
 
 use crate::app::event_listener::{RegisterAppEvent, UnRegisterAppEventHandler};
 use crate::events::property_stack::PropertyStackMethods;

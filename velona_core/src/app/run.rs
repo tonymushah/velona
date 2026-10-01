@@ -16,7 +16,7 @@ use reactive_graph::owner::Owner;
 use ui_events_winit::WindowEventTranslation;
 use velona_executor::{TaskId, VelonaTasksExecutor};
 use velona_renderer::WindowRenderer;
-use winit::{
+use winit_core::{
     application::ApplicationHandler, dpi::PhysicalSize, event::WindowEvent,
     event_loop::ActiveEventLoop, window::WindowId,
 };
@@ -112,7 +112,7 @@ where
     fn create_window(
         &mut self,
         builder: Box<WindowBuilder>,
-        event_loop: &winit::event_loop::ActiveEventLoop,
+        event_loop: &winit_core::event_loop::ActiveEventLoop,
     ) {
         let window_attributes = builder.window_attributes;
         match event_loop.create_window(window_attributes) {
@@ -379,7 +379,7 @@ where
     }
     fn handle_signal(
         &mut self,
-        _event_loop: &winit::event_loop::ActiveEventLoop,
+        _event_loop: &winit_core::event_loop::ActiveEventLoop,
         window_id: WindowId,
         signal: RenderRootSignal,
         to_redraw: &mut HashSet<WindowId>,
@@ -679,10 +679,10 @@ where
 {
     fn new_events(
         &mut self,
-        event_loop: &winit::event_loop::ActiveEventLoop,
-        cause: winit::event::StartCause,
+        event_loop: &winit_core::event_loop::ActiveEventLoop,
+        cause: winit_core::event::StartCause,
     ) {
-        if cause == winit::event::StartCause::Init {
+        if cause == winit_core::event::StartCause::Init {
             if let Some(on_init) = self.on_event_loop_init.take() {
                 for func in on_init {
                     func(&self.app_handle);
@@ -706,7 +706,7 @@ where
             }
         }
     }
-    fn resumed(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
+    fn resumed(&mut self, _event_loop: &winit_core::event_loop::ActiveEventLoop) {
         self.suspended = false;
         self.resume_windows();
         self.app_event_listeners
@@ -715,9 +715,9 @@ where
 
     fn window_event(
         &mut self,
-        event_loop: &winit::event_loop::ActiveEventLoop,
+        event_loop: &winit_core::event_loop::ActiveEventLoop,
         window_id: WindowId,
-        event: winit::event::WindowEvent,
+        event: winit_core::event::WindowEvent,
     ) {
         // #[cfg(feature = "hotpath")]
         // hotpath::dbg!((&window_id, &event));
@@ -763,7 +763,7 @@ where
             }
         }
     }
-    fn memory_warning(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
+    fn memory_warning(&mut self, _event_loop: &winit_core::event_loop::ActiveEventLoop) {
         self.windows.shrink_to_fit();
         self.windows
             .values_mut()
@@ -773,18 +773,18 @@ where
         self.app_event_listeners.shrink_to_fit();
         self.fut_executor.shrink_to_fit();
     }
-    fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
+    fn suspended(&mut self, _event_loop: &winit_core::event_loop::ActiveEventLoop) {
         self.suspended = true;
         self.suspend_windows();
         self.app_event_listeners
             .emit(EmitAppEventToHandlers::Suspended);
     }
-    fn user_event(&mut self, event_loop: &winit::event_loop::ActiveEventLoop, _: ()) {
+    fn user_event(&mut self, event_loop: &winit_core::event_loop::ActiveEventLoop, _: ()) {
         // #[cfg(feature = "hotpath")]
         // hotpath::dbg!(&event);
         self.handle_app_events(event_loop);
     }
-    fn exiting(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
+    fn exiting(&mut self, _event_loop: &winit_core::event_loop::ActiveEventLoop) {
         log::warn!("Exiting...");
         let task_runned = self.run_exiting_task();
         log::trace!("Number of exiting tasks: {task_runned}");
@@ -792,8 +792,8 @@ where
     fn device_event(
         &mut self,
         _event_loop: &ActiveEventLoop,
-        device_id: winit::event::DeviceId,
-        event: winit::event::DeviceEvent,
+        device_id: winit_core::event::DeviceId,
+        event: winit_core::event::DeviceEvent,
     ) {
         self.app_event_listeners
             .emit(EmitAppEventToHandlers::Device(device_id, &event));

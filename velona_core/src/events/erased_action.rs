@@ -1,5 +1,5 @@
 use masonry_core::core::ErasedAction;
-use winit::window::WindowId;
+use winit_core::window::WindowId;
 
 #[derive(Debug, Default)]
 #[non_exhaustive]

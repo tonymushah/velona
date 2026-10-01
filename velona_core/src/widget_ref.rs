@@ -5,7 +5,7 @@ use masonry_core::core::ErasedAction;
 use masonry_core::core::FromDynWidget;
 use masonry_core::core::PropertyStackId;
 use masonry_core::core::{LayerType, NewWidget, Widget, WidgetId, WidgetMut, WidgetRef};
-use winit::window::WindowId;
+use winit_core::window::WindowId;
 
 use crate::{
     app::{EventLoopEvent, proxy::EventProxyHandle},

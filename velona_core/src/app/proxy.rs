@@ -2,7 +2,7 @@ use std::{fmt::Debug, sync::Arc};
 
 use masonry_core::accesskit;
 use thiserror::Error;
-use winit::{event_loop::EventLoopProxy, window::WindowId};
+use winit_core::{event_loop::EventLoopProxy, window::WindowId};
 
 use crate::{app::EventLoopEvent, utils::FlumeSender};
 
@@ -17,7 +17,7 @@ pub struct AppEventLoopProxy {
 #[error("The event loop has already exited")]
 pub struct EventLoopExisted;
 
-/// A trait from [`winit`] 0.31
+/// A trait from [`winit_core`] 0.31
 /// to ease the migration once it is released
 pub(crate) trait WinitEventLoopProxy: Debug + Send + Sync {
     fn wake_up(&self) -> Result<(), EventLoopExisted>;

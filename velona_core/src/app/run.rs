@@ -744,15 +744,16 @@ where
                 self.windows.remove(&window_id);
             }
             WindowEvent::Ime(ime) => {
-                let ime = winit_ime_to_masonry(ime);
-                self.use_window_render_root(window_id, |render_root| {
-                    render_root.handle_text_event(masonry_core::core::TextEvent::Ime(ime));
-                });
+                if let Some(ime) = winit_ime_to_masonry(ime) {
+                    self.use_window_render_root(window_id, |render_root| {
+                        render_root.handle_text_event(masonry_core::core::TextEvent::Ime(ime));
+                    });
+                }
             }
             WindowEvent::ScaleFactorChanged {
                 scale_factor,
                 // TODO use this??
-                inner_size_writer: _,
+                ..
             } => {
                 self.use_window_render_root(window_id, |rr| {
                     rr.handle_window_event(masonry_core::core::WindowEvent::Rescale(scale_factor));

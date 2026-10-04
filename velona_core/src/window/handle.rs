@@ -10,12 +10,14 @@ use masonry_core::core::Widget;
 use masonry_core::core::WidgetId;
 use masonry_core::core::{PropertyStack, PropertyStackId};
 use masonry_core::parley::fontique::{FamilyId, FontInfo};
-use winit_core::event::{DeviceId, Modifiers};
+use winit_core::event::Modifiers;
+use winit_core::monitor::Fullscreen;
+use winit_core::window::{ImeRequest, WindowPositioner};
 use winit_core::{
     monitor::MonitorHandle,
     window::{
-        Cursor, CursorGrabMode, Fullscreen, Icon, ImePurpose, ResizeDirection, Theme,
-        UserAttentionType, Window, WindowButtons, WindowId, WindowLevel,
+        CursorGrabMode, ResizeDirection, Theme, UserAttentionType, Window, WindowButtons, WindowId,
+        WindowLevel,
     },
 };
 
@@ -25,8 +27,8 @@ use crate::events::property_stack::{PropertyStackMethods, PropertyStackMethodsTy
 use crate::manager::{ManagerErasedAction, ManagerErasedActionOrigin};
 use crate::utils::{HandlerFn, HandlerFnGeneric, HandlerFnGenericStatic, NoParamHandlerFn};
 use crate::window::event_listener::{
-    OnKeyboardInput, RegisterWindowEventHandler, RegisterWindowEventHandlerType,
-    UnregisterWindowEventHandlerType,
+    OnKeyboardInput, OnPointerDoSomething, RegisterWindowEventHandler,
+    RegisterWindowEventHandlerType, UnregisterWindowEventHandlerType,
 };
 use crate::{
     Manager,
@@ -65,6 +67,10 @@ pub enum WindowHandleActionError {
     Ignored,
     #[error(transparent)]
     Os(#[from] winit_core::error::OsError),
+    #[error(transparent)]
+    EventLoop(#[from] winit_core::error::EventLoopError),
+    #[error(transparent)]
+    Request(#[from] winit_core::error::RequestError),
 }
 
 impl From<AppProxySendError> for WindowHandleActionError {
@@ -76,12 +82,6 @@ impl From<AppProxySendError> for WindowHandleActionError {
 impl From<winit_core::error::NotSupportedError> for WindowHandleActionError {
     fn from(_: winit_core::error::NotSupportedError) -> Self {
         Self::NotSupported
-    }
-}
-
-impl From<winit_core::error::EventLoopError> for WindowHandleActionError {
-    fn from(value: winit_core::error::EventLoopError) -> Self {
-        todo!()
     }
 }
 
@@ -132,7 +132,7 @@ impl WindowHandle {
     /// Use the underlying render root of the current window.
     pub fn use_winit_window_on_main<U>(&self, use_fn: U) -> Result<(), WindowHandleActionError>
     where
-        U: FnOnce(&Window) + Send + 'static,
+        U: FnOnce(&dyn Window) + Send + 'static,
     {
         let window_id = self.id()?;
         self.send_event(EventLoopEvent::UseWinitWindow(Box::new(
@@ -181,76 +181,52 @@ impl WindowHandle {
 
 /// [`winit_core::Window`](winit_core::window::Window) Position and size functions
 impl WindowHandle {
-    /// Returns the position of the top-left hand corner
-    /// of the window’s client area
-    /// relative to the top-left hand corner
-    /// of the desktop.
+    /// Returns the positioner used to place this window relative to its anchor rect.
     ///
-    /// Due to some limitation on iOS
-    /// (as [it](winit_core::window::Window::inner_position) can only be called on the main thread there),
-    /// this function is not available there.
+    /// Returns [`WindowPositioner::default`] if this window doesn't use anchor positioning, see
+    /// [`WindowAttributes::with_positioner`](winit_core::window::WindowAttributes::with_positioner).
     ///
-    /// We recommend using [`inner_position_async`](Self::inner_position_async) instead.
+    /// ## Platform-specific
     ///
-    /// See [`Window::inner_position`](winit_core::window::Window::inner_position) for more details.
-    #[cfg(not(target_os = "ios"))]
-    #[cfg_attr(docsrs, doc(not(target_os = "ios")))]
-    pub fn inner_position(&self) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
-        Ok(self.use_raw_window_now(|window| window.inner_position())??)
+    /// - **Wayland:** Always [`WindowPositioner::default`] unless the window is a
+    ///   [`WindowType::Popup`], since the Wayland positioner is part of the `xdg_popup` protocol
+    ///   role.
+    ///
+    /// See [`Window::positioner`](winit_core::window::Window::positioner) for more details.
+    pub fn positioner(&self) -> Result<WindowPositioner, WindowHandleActionError> {
+        Ok(WindowHandle::use_raw_window_now(&self, |window| {
+            window.positioner()
+        })?)
     }
-    /// Returns the position of the top-left hand corner
-    /// of the window’s client area
-    /// relative to the top-left hand corner
-    /// of the desktop.
+
+    /// Sets the positioner used to place this window relative to its anchor rect.
     ///
-    /// _Due to some limitation on iOS
-    /// (as [it](winit_core::window::Window::inner_position) can only be called on the main thread there),
-    /// this `async` function allow the [`inner_position`](winit_core::window::Window::inner_position) to be called on the main thread_.
+    /// No-op if this window doesn't use anchor positioning, see
+    /// [`WindowAttributes::with_positioner`](winit_core::window::WindowAttributes::with_positioner).
     ///
-    /// See [`Window::inner_position`](winit_core::window::Window::inner_position) for more details.
-    pub async fn inner_position_async(
+    /// ## Platform-specific
+    ///
+    /// - **Wayland:** No-op unless the window is a [`WindowType::Popup`], since the Wayland
+    ///   positioner is part of the `xdg_popup` protocol role.
+    ///
+    /// See [`Window::set_positioner`](winit_core::window::Window::set_positioner) for more details.
+    pub fn set_positioner(
         &self,
-    ) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
-        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
-        self.use_winit_window_on_main(move |window| {
-            let _ = sender.send(window.inner_position());
-        })?;
-        Ok(receiver
-            .await
-            .map_err(|_| WindowHandleActionError::AppExited)??)
-    }
-    /// Returns the position of the top-left hand corner of the window relative
-    /// to the top-left hand corner of the desktop.
-    ///
-    /// Due to some limitation on iOS
-    /// (as [it](winit_core::window::Window::outer_position) can only be called on the main thread there),
-    /// this function is not available there.
-    ///
-    /// See [`Window::outer_position`](winit_core::window::Window::outer_position) for more details.
-    #[cfg(not(target_os = "ios"))]
-    #[cfg_attr(docsrs, doc(not(target_os = "ios")))]
-    pub fn outer_position(&self) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
-        Ok(self.use_raw_window_now(|window| window.outer_position())??)
+        positioner: WindowPositioner,
+    ) -> Result<(), WindowHandleActionError> {
+        Ok(self.use_raw_window_now(|window| window.set_positioner(positioner))?)
     }
 
     /// Returns the position of the top-left hand corner of the window relative
     /// to the top-left hand corner of the desktop.
     ///
-    /// _Due to some limitation on iOS
+    /// Due to some limitation on iOS
     /// (as [it](winit_core::window::Window::outer_position) can only be called on the main thread there),
-    /// this `async` function allow the [`outerer_position`](winit_core::window::Window::outer_position) to be called on the main thread_.
+    /// this function is not available there.
     ///
     /// See [`Window::outer_position`](winit_core::window::Window::outer_position) for more details.
-    pub async fn outer_position_async(
-        &self,
-    ) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
-        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
-        self.use_winit_window_on_main(move |window| {
-            let _ = sender.send(window.outer_position());
-        })?;
-        Ok(receiver
-            .await
-            .map_err(|_| WindowHandleActionError::AppExited)??)
+    pub fn outer_position(&self) -> Result<PhysicalPosition<i32>, WindowHandleActionError> {
+        Ok(self.use_raw_window_now(|window| window.outer_position())??)
     }
 
     /// Modifies the position of the window.
@@ -261,124 +237,58 @@ impl WindowHandle {
         P: Into<dpi::Position> + Send + 'static,
     {
         self.use_winit_window_on_main(move |window| {
-            window.set_outer_position(position);
+            window.set_outer_position(position.into());
         })
     }
 
-    /// Request the new size for the window.
-    ///
-    /// Due to some limitation on iOS
-    /// (as [it](winit_core::window::Window::inner_size) can only be called on the main thread there),
-    /// this function is not available there.
-    ///
-    /// We recommend using [`inner_size_async`](Self::inner_size_async) instead.
-    ///
-    /// See [`Window::inner_size`](winit_core::window::Window::inner_size) for more details.
-    #[cfg(not(target_os = "ios"))]
-    #[cfg_attr(docsrs, doc(not(target_os = "ios")))]
-    pub fn inner_size(&self) -> Result<PhysicalSize<u32>, WindowHandleActionError> {
-        self.use_raw_window_now(|window| window.inner_size())
-    }
-    /// Returns the physical size of the window’s client area.
-    ///
-    /// _Due to some limitation on iOS
-    /// (as [it](winit_core::window::Window::inner_size) can only be called on the main thread there),
-    /// this function is `async`_.
-    ///
-    /// See [`Window::inner_size`](winit_core::window::Window::inner_size) for more details.
-    pub async fn inner_size_async(&self) -> Result<PhysicalSize<u32>, WindowHandleActionError> {
-        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
-        self.use_winit_window_on_main(move |window| {
-            let _ = sender.send(window.inner_size());
-        })?;
-        receiver
-            .await
-            .map_err(|_| WindowHandleActionError::AppExited)
-    }
-    /// Request the new size for the window.
-    ///
-    /// See [`Window::request_inner_size`](winit_core::window::Window::request_inner_size) for more details.
-    ///
-    /// _You can safely drop the future if you don't need it since it is just a [`futures_channel::oneshot::Receiver`]
-    /// awaiting for [`Window::request_inner_size`](winit_core::window::Window::request_inner_size) return value._
-    pub async fn request_inner_size<S>(
-        &self,
-        size: S,
-    ) -> Result<Option<PhysicalSize<u32>>, WindowHandleActionError>
-    where
-        S: Into<dpi::Size> + Send + 'static,
-    {
-        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
-        self.use_winit_window_on_main(move |window| {
-            let _ = sender.send(window.request_inner_size(size));
-        })?;
-        receiver
-            .await
-            .map_err(|_| WindowHandleActionError::AppExited)
-    }
     /// Returns the physical size of the entire window.
     ///
-    /// Due to some limitation on iOS
-    /// (as [it](winit_core::window::Window::outer_size) can only be called on the main thread there),
-    /// this function is not available there.
-    ///
-    /// We recommend using [`outer_size_async`](Self::outer_size_async) instead.
-    ///
     /// See [`Window::outer_size`](winit_core::window::Window::outer_size) for more details.
-    #[cfg(not(target_os = "ios"))]
-    #[cfg_attr(docsrs, doc(not(target_os = "ios")))]
     pub fn outer_size(&self) -> Result<PhysicalSize<u32>, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.outer_size())
     }
-    /// Returns the physical size of the entire window.
-    ///
-    /// _Due to some limitation on iOS
-    /// (as [it](winit_core::window::Window::outer_size) can only be called on the main thread there),
-    /// this function is `async`_.
-    ///
-    /// See [`Window::outer_size`](winit_core::window::Window::outer_size) for more details.
-    pub async fn outer_size_async(&self) -> Result<PhysicalSize<u32>, WindowHandleActionError> {
-        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
-        self.use_winit_window_on_main(move |window| {
-            let _ = sender.send(window.outer_size());
-        })?;
-        receiver
-            .await
-            .map_err(|_| WindowHandleActionError::AppExited)
-    }
+
     /// Sets a minimum dimension size for the window.
     ///
-    /// See [`Window::set_min_inner_size`](winit_core::window::Window::set_min_inner_size) for more details.
-    pub fn set_min_inner_size<S>(&self, min_size: Option<S>) -> Result<(), WindowHandleActionError>
+    /// See [`Window::set_min_surface_size`](winit_core::window::Window::set_min_surface_size) for more details.
+    pub fn set_min_surface_size<S>(
+        &self,
+        min_size: Option<S>,
+    ) -> Result<(), WindowHandleActionError>
     where
         S: Into<dpi::Size> + Send + 'static,
     {
         self.use_winit_window_on_main(move |window| {
-            window.set_min_inner_size(min_size);
+            window.set_min_surface_size(min_size.map(Into::into));
         })
     }
 
     /// Sets a maximum dimension size for the window.
     ///
-    /// See [`Window::set_max_inner_size`](winit_core::window::Window::set_max_inner_size) for more details.
-    pub fn set_max_inner_size<S>(&self, max_size: Option<S>) -> Result<(), WindowHandleActionError>
+    /// See [`Window::set_max_surface_size`](winit_core::window::Window::set_max_surface_size) for more details.
+    pub fn set_max_surface_size<S>(
+        &self,
+        max_size: Option<S>,
+    ) -> Result<(), WindowHandleActionError>
     where
         S: Into<dpi::Size> + Send + 'static,
     {
         self.use_winit_window_on_main(move |window| {
-            window.set_max_inner_size(max_size);
+            window.set_max_surface_size(max_size.map(Into::into));
         })
     }
     /// Returns window resize increments if any were set.
     ///
-    /// See [`Window::resize_increments`](winit_core::window::Window::resize_increments) for more details.
-    pub fn resize_increments(&self) -> Result<Option<PhysicalSize<u32>>, WindowHandleActionError> {
-        self.use_raw_window_now(|window| window.resize_increments())
+    /// See [`Window::surface_resize_increments`](winit_core::window::Window::surface_resize_increments) for more details.
+    pub fn surface_resize_increments(
+        &self,
+    ) -> Result<Option<PhysicalSize<u32>>, WindowHandleActionError> {
+        self.use_raw_window_now(|window| window.surface_resize_increments())
     }
     /// Sets window resize increments.
     ///
-    /// See [`Window::set_resize_increments`](winit_core::window::Window::set_resize_increments) for more details.
-    pub fn set_resize_increment<S>(
+    /// See [`Window::set_surface_resize_increments`](winit_core::window::Window::set_surface_resize_increments) for more details.
+    pub fn set_surface_resize_increment<S>(
         &self,
         increments: Option<S>,
     ) -> Result<(), WindowHandleActionError>
@@ -386,7 +296,7 @@ impl WindowHandle {
         S: Into<dpi::Size> + Send + 'static,
     {
         self.use_winit_window_on_main(move |window| {
-            window.set_resize_increments(increments);
+            window.set_surface_resize_increments(increments.map(Into::into));
         })
     }
 }
@@ -501,36 +411,14 @@ impl WindowHandle {
             window.set_fullscreen(fullscreen);
         })
     }
+
     /// Gets the window’s current fullscreen state.
     ///
-    /// Due to some limitation on iOS
-    /// (as [it](winit_core::window::Window::fullscreen) can only be called on the main thread there),
-    /// this function is not available there.
-    ///
-    /// We recommend using [`fullscreen_async`](Self::fullscreen_async) instead.
-    ///
     /// See [`Window::fullscreen`](winit_core::window::Window::fullscreen) for more details.
-    #[cfg(not(target_os = "ios"))]
-    #[cfg_attr(docsrs, doc(not(target_os = "ios")))]
     pub fn fullscreen(&self) -> Result<Option<Fullscreen>, WindowHandleActionError> {
         self.use_raw_window_now(|window| window.fullscreen())
     }
-    /// Gets the window’s current fullscreen state.
-    ///
-    /// _Due to some limitation on iOS
-    /// (as [it](winit_core::window::Window::fullscreen) can only be called on the main thread there),
-    /// this function is `async`_.
-    ///
-    /// See [`Window::fullscreen`](winit_core::window::Window::fullscreen) for more details.
-    pub async fn fullscreen_async(&self) -> Result<Option<Fullscreen>, WindowHandleActionError> {
-        let (sender, receiver) = futures_channel::oneshot::channel::<_>();
-        self.use_winit_window_on_main(move |window| {
-            let _ = sender.send(window.fullscreen());
-        })?;
-        receiver
-            .await
-            .map_err(|_| WindowHandleActionError::AppExited)
-    }
+
     /// Turn window decorations on or off.
     ///
     /// See [`Window::set_decorations`](winit_core::window::Window::set_decorations) for more details.
@@ -556,43 +444,23 @@ impl WindowHandle {
     /// Sets the window icon.
     ///
     /// See [`Window::set_window_icon`](winit_core::window::Window::set_window_icon) for more details.
-    pub fn set_window_icon(&self, level: Option<Icon>) -> Result<(), WindowHandleActionError> {
+    pub fn set_window_icon(
+        &self,
+        level: Option<winit_core::icon::Icon>,
+    ) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| {
             window.set_window_icon(level);
         })
     }
-    /// Set the IME cursor editing area,
-    /// where the `position` is the top left corner of that area
-    /// and `size` is the size of this area starting from the position.
+    /// Atomically apply request to IME.
     ///
-    /// See [`Window::set_ime_cursor_area`](winit_core::window::Window::set_ime_cursor_area) for more details.
-    pub fn set_ime_cursor_area<P, S>(
+    /// See [`Window::request_ime_update`](winit_core::window::Window::request_ime_update) for more details.
+    pub fn request_ime_update<P, S>(
         &self,
-        position: P,
-        size: S,
-    ) -> Result<(), WindowHandleActionError>
-    where
-        P: Into<dpi::Position>,
-        S: Into<dpi::Size>,
-    {
+        request: ImeRequest,
+    ) -> Result<(), WindowHandleActionError> {
         self.use_raw_window_now(|window| {
-            window.set_ime_cursor_area(position.into(), size.into());
-        })
-    }
-    /// Sets whether the window should get IME events.
-    ///
-    /// See [`Window::set_ime_allowed`](winit_core::window::Window::set_ime_allowed) for more details.
-    pub fn set_ime_allowed(&self, allowed: bool) -> Result<(), WindowHandleActionError> {
-        self.use_raw_window_now(|window| {
-            window.set_ime_allowed(allowed);
-        })
-    }
-    /// Sets the IME purpose for the window using [`ImePurpose`].
-    ///
-    /// See [`Window::set_ime_purpose`](winit_core::window::Window::set_ime_purpose) for more details.
-    pub fn set_ime_purpose(&self, purpose: ImePurpose) -> Result<(), WindowHandleActionError> {
-        self.use_raw_window_now(|window| {
-            window.set_ime_purpose(purpose);
+            window.request_ime_update(request);
         })
     }
     /// Brings the window to the front and sets input focus.
@@ -665,9 +533,9 @@ impl WindowHandle {
     /// See [`Window::set_cursor`](winit_core::window::Window::set_cursor) for more details.
     pub fn set_cursor<C>(&self, cursor: C) -> Result<(), WindowHandleActionError>
     where
-        C: Into<Cursor>,
+        C: Into<winit_core::cursor::Cursor>,
     {
-        self.use_raw_window_now(|window| window.set_cursor(cursor))
+        self.use_raw_window_now(|window| window.set_cursor(cursor.into()))
     }
     /// Changes the position of the cursor in window coordinates.
     ///
@@ -676,7 +544,7 @@ impl WindowHandle {
     where
         C: Into<dpi::Position>,
     {
-        Ok(self.use_raw_window_now(|window| window.set_cursor_position(position))??)
+        Ok(self.use_raw_window_now(|window| window.set_cursor_position(position.into()))??)
     }
     /// Set grabbing [mode](CursorGrabMode) on the cursor preventing it from leaving the window.
     ///
@@ -715,7 +583,7 @@ impl WindowHandle {
         P: Into<dpi::Position>,
     {
         self.use_raw_window_now(|window| {
-            window.show_window_menu(position);
+            window.show_window_menu(position.into());
         })
     }
     /// Modifies whether the window catches cursor events.
@@ -1109,7 +977,7 @@ impl WindowHandle {
 
     pub fn register_on_cursor_entered_handler(
         &self,
-        handler_fn: HandlerFnGeneric<DeviceId>,
+        handler_fn: HandlerFnGeneric<OnPointerDoSomething>,
     ) -> Result<HandlerId, WindowHandleActionError> {
         let handler_id = HandlerId::next();
         self.send_event(EventLoopEvent::RegisterHandler(Box::new(
@@ -1117,7 +985,7 @@ impl WindowHandle {
                 window_id: self.id()?,
                 type_: RegisterWindowEventHandler {
                     handler_id,
-                    type_: RegisterWindowEventHandlerType::OnCursorEntered(handler_fn),
+                    type_: RegisterWindowEventHandlerType::OnPointerEntered(handler_fn),
                 },
             },
         )))?;
@@ -1141,7 +1009,7 @@ impl WindowHandle {
 
     pub fn register_on_cursor_left_handler(
         &self,
-        handler_fn: HandlerFnGeneric<DeviceId>,
+        handler_fn: HandlerFnGeneric<OnPointerDoSomething>,
     ) -> Result<HandlerId, WindowHandleActionError> {
         let handler_id = HandlerId::next();
         self.send_event(EventLoopEvent::RegisterHandler(Box::new(
@@ -1149,7 +1017,7 @@ impl WindowHandle {
                 window_id: self.id()?,
                 type_: RegisterWindowEventHandler {
                     handler_id,
-                    type_: RegisterWindowEventHandlerType::OnCursorLeft(handler_fn),
+                    type_: RegisterWindowEventHandlerType::OnPointerLeft(handler_fn),
                 },
             },
         )))?;

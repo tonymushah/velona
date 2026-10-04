@@ -2,9 +2,9 @@ use futures_channel::oneshot;
 use masonry_core::core::ErasedAction;
 use reactive_graph::owner::on_cleanup;
 use winit_core::{
+    cursor::{CustomCursor, CustomCursorSource},
     event_loop::{ControlFlow, DeviceEvents, OwnedDisplayHandle},
     monitor::MonitorHandle,
-    window::{CustomCursor, CustomCursorSource},
 };
 
 pub use crate::events::erased_action::{ManagerErasedAction, ManagerErasedActionOrigin};
@@ -26,6 +26,8 @@ use crate::{
 pub enum CreateWindowError {
     #[error("The app is already closed or exiting")]
     AppAlreadyClosed,
+    #[error(transparent)]
+    Request(#[from] winit_core::error::RequestError),
     // TODO implement this properly
     #[error("Cannot create window because of other error")]
     OtherError,
@@ -34,7 +36,10 @@ pub enum CreateWindowError {
 #[derive(Debug)]
 pub(crate) enum OtherManagerMethods {
     SetControlFlow(ControlFlow),
-    RegisterCustomCursor(CustomCursorSource, oneshot::Sender<CustomCursor>),
+    RegisterCustomCursor(
+        CustomCursorSource,
+        oneshot::Sender<Result<CustomCursor, winit_core::error::RequestError>>,
+    ),
     ListenDeviceEventsMode(DeviceEvents),
     SystemTheme(oneshot::Sender<Option<winit_core::window::Theme>>),
     PrimaryMonitor(oneshot::Sender<Option<MonitorHandle>>),
@@ -116,7 +121,8 @@ pub trait Manager: EventProxyHandle {
         )));
         async move {
             res?;
-            receive.await.map_err(|_| AppHandleActionError::AppExited)
+            let res = receive.await.map_err(|_| AppHandleActionError::AppExited)?;
+            Ok(res?)
         }
     }
     fn listen_device_events_mode(&self, mode: DeviceEvents) {

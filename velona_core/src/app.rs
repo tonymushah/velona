@@ -134,8 +134,6 @@ impl<W: WindowRenderer> Builder<W> {
         //     Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
         // }
 
-        
-
         let mut app = run::App {
             windows: Default::default(),
             window_renderer_factory: self.window_render_factory,
@@ -160,6 +158,7 @@ impl<W: WindowRenderer> Builder<W> {
             spawn_fn: self.spawn_fn,
             accesskit_adapter_factory: None,
             first_time_ui_event: None,
+            fut_executor: None,
         };
         // event_loop.set_control_flow(winit_core::event_loop::ControlFlow::Wait);
         // event_loop.run_app(&mut app)?;

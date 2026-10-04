@@ -14,6 +14,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppHandleActionError {
+    #[error(transparent)]
+    Request(#[from] winit_core::error::RequestError),
     #[error("The app has already exited")]
     AppExited,
 }

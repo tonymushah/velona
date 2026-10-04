@@ -9,6 +9,7 @@ velona_renderer_vello_hybrid.workspace = true
 env_logger.workspace = true
 log.workspace = true
 hotpath = { workspace = true, optional = true }
+velona_accesskit_xplat = { workspace = true }
 
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]

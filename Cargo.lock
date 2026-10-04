@@ -5008,6 +5008,7 @@ dependencies = [
  "hotpath",
  "log",
  "velona",
+ "velona_accesskit_xplat",
  "velona_renderer_vello",
 ]
 
@@ -5021,6 +5022,7 @@ dependencies = [
  "softbuffer",
  "vello_cpu 0.2.0",
  "velona",
+ "velona_accesskit_xplat",
  "velona_renderer_vello_cpu",
  "winit",
 ]
@@ -5034,6 +5036,7 @@ dependencies = [
  "log",
  "subsecond",
  "velona",
+ "velona_accesskit_xplat",
  "velona_renderer_vello",
 ]
 
@@ -5045,6 +5048,7 @@ dependencies = [
  "hotpath",
  "log",
  "velona",
+ "velona_accesskit_xplat",
  "velona_renderer_vello_hybrid",
 ]
 

@@ -130,6 +130,7 @@ fn main() {
             .with_title("Todos")
             .with_base_color(WHITE),
     )
+    .accesskit_adapter_factory(velona_accesskit_xplat::XPlatAdapterFactory)
     .build()
     .run()
     .unwrap()

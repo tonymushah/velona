@@ -24,7 +24,7 @@ pub(crate) trait WinitEventLoopProxy: Debug + Send + Sync {
 
 impl WinitEventLoopProxy for EventLoopProxy {
     fn wake_up(&self) -> Result<(), EventLoopExisted> {
-        EventLoopProxy::wake_up(&self);
+        EventLoopProxy::wake_up(self);
         Ok(())
     }
 }

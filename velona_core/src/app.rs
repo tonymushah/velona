@@ -6,7 +6,6 @@ use crate::{
 };
 mod handle;
 mod run;
-use velona_executor::VelonaTasksExecutor;
 use velona_renderer::WindowRenderer;
 pub(crate) mod event_listener;
 pub(crate) mod proxy;
@@ -134,7 +133,7 @@ impl<W: WindowRenderer> Builder<W> {
         //     Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
         // }
 
-        let mut app = run::App {
+        let app = run::App {
             windows: Default::default(),
             window_renderer_factory: self.window_render_factory,
             default_properties: Arc::new(self.default_properties),

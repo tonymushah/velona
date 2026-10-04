@@ -36,7 +36,7 @@ use crate::app::proxy::AppEventLoopProxy;
 use crate::events::el_event::{RegisterEventHandler, UnregisterEventHandler};
 use crate::events::property_stack::PropertyStackMethods;
 use crate::manager::OtherManagerMethods;
-use crate::utils::HandlerId;
+use crate::utils::{ConsumeResult, HandlerId};
 use crate::window;
 use crate::{
     app::proxy::EventProxyHandle,
@@ -509,13 +509,15 @@ where
                     if let Some(request) = maybe_request {
                         window
                             .winit_window
-                            .request_ime_update(winit_core::window::ImeRequest::Enable(request));
+                            .request_ime_update(winit_core::window::ImeRequest::Enable(request))
+                            .consume_with_log_err();
                     }
                 }
                 RenderRootSignal::EndIme => {
                     window
                         .winit_window
-                        .request_ime_update(winit_core::window::ImeRequest::Disable);
+                        .request_ime_update(winit_core::window::ImeRequest::Disable)
+                        .consume_with_log_err();
                 }
                 RenderRootSignal::ImeMoved(logical_position, logical_size) => {
                     window
@@ -523,7 +525,8 @@ where
                         .request_ime_update(winit_core::window::ImeRequest::Update(
                             ImeRequestData::default()
                                 .with_cursor_area(logical_position.into(), logical_size.into()),
-                        ));
+                        ))
+                        .consume_with_log_err();
                 }
                 RenderRootSignal::ClipboardStore(text) => {
                     let _ = event_loop_proxy.send_event(EventLoopEvent::SetClipboardContent(text));
@@ -832,7 +835,7 @@ where
             window.forward_to_accesskit_adapter(&event);
         });
         let clipboard_context = self.clipboard_context.clone();
-        let first_time_ui_event = self.first_time_ui_event.clone();
+        let first_time_ui_event = self.first_time_ui_event;
         let maybe_first_time = self
             .use_window(window_id, |window| {
                 handle_ui_translated_event(first_time_ui_event, &event, clipboard_context, window)

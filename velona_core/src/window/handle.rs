@@ -71,6 +71,8 @@ pub enum WindowHandleActionError {
     EventLoop(#[from] winit_core::error::EventLoopError),
     #[error(transparent)]
     Request(#[from] winit_core::error::RequestError),
+    #[error(transparent)]
+    ImeRequest(#[from] winit_core::window::ImeRequestError),
 }
 
 impl From<AppProxySendError> for WindowHandleActionError {
@@ -194,9 +196,7 @@ impl WindowHandle {
     ///
     /// See [`Window::positioner`](winit_core::window::Window::positioner) for more details.
     pub fn positioner(&self) -> Result<WindowPositioner, WindowHandleActionError> {
-        Ok(WindowHandle::use_raw_window_now(&self, |window| {
-            window.positioner()
-        })?)
+        WindowHandle::use_raw_window_now(self, |window| window.positioner())
     }
 
     /// Sets the positioner used to place this window relative to its anchor rect.
@@ -214,7 +214,7 @@ impl WindowHandle {
         &self,
         positioner: WindowPositioner,
     ) -> Result<(), WindowHandleActionError> {
-        Ok(self.use_raw_window_now(|window| window.set_positioner(positioner))?)
+        self.use_raw_window_now(|window| window.set_positioner(positioner))
     }
 
     /// Returns the position of the top-left hand corner of the window relative
@@ -459,9 +459,8 @@ impl WindowHandle {
         &self,
         request: ImeRequest,
     ) -> Result<(), WindowHandleActionError> {
-        self.use_raw_window_now(|window| {
-            window.request_ime_update(request);
-        })
+        self.use_raw_window_now(|window| window.request_ime_update(request))??;
+        Ok(())
     }
     /// Brings the window to the front and sets input focus.
     /// Has no effect if the window is already in focus, minimized, or not visible.

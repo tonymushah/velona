@@ -36,9 +36,10 @@ impl Debug for UseWindowRenderRootOnMain {
     }
 }
 
+type UseWinitWindowOnMainFn = Box<dyn FnOnce(&dyn Window) + Send>;
 pub(crate) struct UseWinitWindowOnMain {
     pub(crate) window_id: WindowId,
-    pub(crate) use_fn: Box<dyn FnOnce(&dyn Window) + Send>,
+    pub(crate) use_fn: UseWinitWindowOnMainFn,
 }
 
 impl Debug for UseWinitWindowOnMain {

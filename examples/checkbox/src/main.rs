@@ -1,13 +1,16 @@
-use velona::masonry::{
-    core::Widget,
-    palette::css::WHITE,
-    properties::types::MainAxisAlignment,
-    theme::DEFAULT_SPACER_LEN,
-    widgets::{Align, Flex},
-};
 use velona::reactive::signal::signal;
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, components::checkbox as _checkbox,
+};
+use velona::{
+    VelonaAppExt,
+    masonry::{
+        core::Widget,
+        palette::css::WHITE,
+        properties::types::MainAxisAlignment,
+        theme::DEFAULT_SPACER_LEN,
+        widgets::{Align, Flex},
+    },
 };
 use velona_renderer_vello::create_wgpu_context;
 
@@ -46,6 +49,7 @@ fn main() {
                 .with_title("Checkbox")
                 .with_base_color(WHITE),
         )
+        .build()
         .run()
         .unwrap();
 }

@@ -3,7 +3,7 @@ use std::time::Duration;
 use async_io::Timer;
 use futures_util::StreamExt;
 use velona::{
-    NewWidgetExt, WindowBuilder,
+    NewWidgetExt, VelonaAppExt, WindowBuilder,
     masonry::{
         core::Widget,
         layout::AsUnit,
@@ -165,6 +165,7 @@ fn main() {
             .with_title("Timer")
             .with_base_color(WHITE),
     )
+    .build()
     .run()
     .unwrap()
 }

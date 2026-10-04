@@ -15,6 +15,7 @@ velona_core_child = { workspace = true, features = ["masonry_widget_impls"] }
 velona_scoped_styling = { workspace = true }
 winit.workspace = true
 velona_masonry_widgets = { workspace = true }
+velona_renderer = { workspace = true }
 
 [features]
 hotpath = ["dep:hotpath", "velona_core/hotpath", "velona_masonry_widgets/hotpath"]

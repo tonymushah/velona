@@ -2,20 +2,23 @@ use std::sync::Arc;
 
 use vello_cpu::RasterizerSettings;
 // use log::trace;
-use velona::masonry::{
-    self,
-    core::Widget,
-    layout::{AsUnit, Length},
-    palette::css::{BEIGE, BLACK, WHITE},
-    properties::{Background, BorderColor, BorderWidth, Padding},
-    widgets::{Button, Flex, FlexParams, Label, Portal, Prose, TextInput},
-};
 use velona::reactive::traits::Read;
 use velona::reactive::{signal::signal, traits::Update};
 use velona::{
     AnyNewWidget, WindowBuilder,
     collection::NewCollectionWidgetExt,
     widgets::{button::NewButtonPressEventsExt, text_input::NewTextInputActionExt},
+};
+use velona::{
+    VelonaAppExt,
+    masonry::{
+        self,
+        core::Widget,
+        layout::{AsUnit, Length},
+        palette::css::{BEIGE, BLACK, WHITE},
+        properties::{Background, BorderColor, BorderWidth, Padding},
+        widgets::{Button, Flex, FlexParams, Label, Portal, Prose, TextInput},
+    },
 };
 use velona_renderer_vello_cpu::{SurfaceSettings, VelloSoftbufferRenderer};
 use winit::event_loop::EventLoop;
@@ -130,6 +133,7 @@ fn main() {
             .with_title("Todos")
             .with_base_color(WHITE),
     )
-    .run_in(event_loop)
+    .build()
+    .run_in_event_loop(event_loop)
     .unwrap()
 }

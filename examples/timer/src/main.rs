@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use tokio::runtime;
 use velona::{
-    NewWidgetExt, WindowBuilder,
+    NewWidgetExt, VelonaAppExt, WindowBuilder,
     masonry::{
         core::Widget,
         layout::AsUnit,
@@ -180,6 +180,7 @@ fn main() {
             .with_title("Timer")
             .with_base_color(WHITE),
     )
+    .build()
     .run()
     .unwrap()
 }

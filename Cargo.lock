@@ -5143,6 +5143,7 @@ dependencies = [
  "velona_core",
  "velona_core_child",
  "velona_masonry_widgets",
+ "velona_renderer",
  "velona_scoped_styling",
  "winit",
 ]

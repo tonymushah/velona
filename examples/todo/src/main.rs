@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use velona::VelonaAppExt;
 // use log::trace;
 use velona::reactive::{signal::signal, traits::Update};
 use velona::{
@@ -116,6 +117,7 @@ fn main() {
             .with_title("Todos")
             .with_base_color(WHITE),
     )
+    .build()
     .run()
     .unwrap()
 }

@@ -1,11 +1,14 @@
-use velona::reactive::{
-    signal::signal,
-    traits::{Get, Read, Set, Update},
-};
 use velona::{
     AnyNewWidget, Builder, NewWidgetExt, WindowBuilder,
     components::{checkbox as _checkbox, sized_box},
     widgets::button::NewButtonPressEventsExt,
+};
+use velona::{
+    VelonaAppExt,
+    reactive::{
+        signal::signal,
+        traits::{Get, Read, Set, Update},
+    },
 };
 use velona::{
     masonry::{
@@ -173,6 +176,7 @@ fn main() {
                 .with_title("Fragment")
                 .with_base_color(WHEAT),
         )
+        .build()
         .run()
         .unwrap();
 }

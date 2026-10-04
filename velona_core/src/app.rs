@@ -111,7 +111,7 @@ impl<W: WindowRenderer> Builder<W> {
 impl<W: WindowRenderer> Builder<W> {
     /// Run the app in a custom event loop
     // TODO refactor this to add a `build` method
-    pub fn build(self) -> Result<App<W>, crate::error::Error> {
+    pub fn build(self) -> App<W> {
         // if let Some(allowed) = self.allowed_device_events {
         //     event_loop.listen_device_events(allowed);
         // }
@@ -161,7 +161,7 @@ impl<W: WindowRenderer> Builder<W> {
         };
         // event_loop.set_control_flow(winit_core::event_loop::ControlFlow::Wait);
         // event_loop.run_app(&mut app)?;
-        Ok(app)
+        app
     }
 }
 

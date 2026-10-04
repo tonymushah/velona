@@ -1,6 +1,7 @@
 use std::sync::Arc;
 mod views;
 
+use velona::VelonaAppExt;
 // use log::trace;
 // use velona::NewWidgetExt;
 use velona::components::label;
@@ -129,6 +130,7 @@ fn main() {
             .with_title("Todos")
             .with_base_color(WHITE),
     )
+    .build()
     .run()
     .unwrap()
 }

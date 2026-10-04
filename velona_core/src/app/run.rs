@@ -162,6 +162,14 @@ where
                 func(&app_handle);
             }
         }
+        self.create_init_windows(event_loop, app_handle);
+    }
+
+    fn create_init_windows(
+        &mut self,
+        event_loop: &(dyn ActiveEventLoop + 'static),
+        app_handle: AppHandle,
+    ) {
         if let Some(builder_windows) = self.builder_windows.take() {
             if builder_windows.is_empty() {
                 log::warn!("No window provided! Exiting...");
@@ -818,7 +826,6 @@ where
         }
     }
     fn resumed(&mut self, _event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
-        self.resume_windows_surfaces();
         self.app_event_listeners
             .emit(EmitAppEventToHandlers::Resumed);
     }
@@ -895,6 +902,8 @@ where
     fn proxy_wake_up(&mut self, event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
         // #[cfg(feature = "hotpath")]
         // hotpath::dbg!(&event);
+        log::info!("Proxy wake up");
+
         self.handle_app_events(event_loop);
     }
 

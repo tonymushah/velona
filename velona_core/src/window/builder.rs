@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use dpi::{Position, Size};
 use futures_channel::oneshot;
 use masonry_core::app::WindowSizePolicy;
 use masonry_core::core::DefaultProperties;
@@ -7,9 +8,10 @@ use masonry_core::{
     core::{NewWidget, Widget},
     peniko::color::{AlphaColor, Srgb},
 };
+use winit_core::cursor;
 use winit_core::{
-    dpi::{Position, Size},
-    window::{Cursor, Fullscreen, Theme, WindowAttributes, WindowButtons, WindowLevel},
+    monitor::Fullscreen,
+    window::{Theme, WindowAttributes, WindowButtons, WindowLevel},
 };
 
 use crate::Manager;
@@ -80,35 +82,35 @@ impl WindowBuilder {
     ///
     /// If this is not set, some platform-specific dimensions will be used.
     ///
-    /// See [`winit_core::Window::request_inner_size`](winit_core::window::Window::request_inner_size) for details.
-    pub fn with_inner_size<S>(self, size: S) -> Self
+    /// See [`winit_core::Window::request_surface_size`](winit_core::window::Window::request_surface_size) for details.
+    pub fn with_surface_size<S>(self, size: S) -> Self
     where
         S: Into<Size>,
     {
-        self.update_window_attributes(|att| att.with_inner_size(size))
+        self.update_window_attributes(|att| att.with_surface_size(size))
     }
-    /// Sets the minimum dimensions a window can have.
+    /// Sets the minimum dimensions the surface can have.
     ///
     /// If this is not set, the window will have no minimum dimensions (aside from reserved).
     ///
-    /// See [`Window::set_min_inner_size`](winit_core::window::Window::set_min_inner_size) for details.
-    pub fn with_min_inner_size<S>(self, size: S) -> Self
+    /// See [`Window::set_min_surface_size`](winit_core::window::Window::set_min_surface_size) for details.
+    pub fn with_min_surface_size<S>(self, size: S) -> Self
     where
         S: Into<Size>,
     {
-        self.update_window_attributes(|att| att.with_min_inner_size(size))
+        self.update_window_attributes(|att| att.with_min_surface_size(size))
     }
-    /// Sets the maximum dimensions a window can have.
+    /// Sets the maximum dimensions the surface can have.
     ///
     /// If this is not set, the window will have no maximum or will be set
     /// to the primary monitor’s dimensions by the platform.
     ///
-    /// See [`Window::set_max_inner_size`](winit_core::window::Window::set_max_inner_size) for details.
-    pub fn with_max_inner_size<S>(self, size: S) -> Self
+    /// See [`Window::set_max_surface_size`](winit_core::window::Window::set_max_surface_size) for details.
+    pub fn with_max_surfae_size<S>(self, size: S) -> Self
     where
         S: Into<Size>,
     {
-        self.update_window_attributes(|att| att.with_max_inner_size(size))
+        self.update_window_attributes(|att| att.with_max_surface_size(size))
     }
     /// Sets a desired initial position for the window.
     ///
@@ -214,7 +216,7 @@ impl WindowBuilder {
     /// The default is `None`.
     ///
     /// See [`Window::set_window_icon`](winit_core::window::Window::set_window_icon) for details.
-    pub fn with_window_icon(self, window_icon: Option<winit_core::window::Icon>) -> Self {
+    pub fn with_window_icon(self, window_icon: Option<winit_core::icon::Icon>) -> Self {
         self.update_window_attributes(|att| att.with_window_icon(window_icon))
     }
     /// Sets a specific theme for the window.
@@ -231,12 +233,12 @@ impl WindowBuilder {
     ///
     /// The default is `None`.
     ///
-    /// See [`Window::set_resize_increments`](winit_core::window::Window::set_resize_increments) for details.
-    pub fn with_resize_increments<S>(self, size: S) -> Self
+    /// See [`Window::set_surface_resize_increments`](winit_core::window::Window::set_surface_resize_increments) for details.
+    pub fn with_surface_resize_increments<S>(self, size: S) -> Self
     where
         S: Into<Size>,
     {
-        self.update_window_attributes(|att| att.with_resize_increments(size))
+        self.update_window_attributes(|att| att.with_surface_resize_increments(size))
     }
     /// Prevents the window contents from being captured by other apps.
     ///
@@ -259,7 +261,7 @@ impl WindowBuilder {
     /// See [`Window::set_cursor`](winit_core::window::Window::set_cursor) for more details.
     pub fn with_cursor<C>(self, cursor: C) -> Self
     where
-        C: Into<Cursor>,
+        C: Into<cursor::Cursor>,
     {
         self.update_window_attributes(|att| att.with_cursor(cursor))
     }

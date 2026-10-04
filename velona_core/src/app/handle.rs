@@ -1,5 +1,5 @@
 use reactive_graph::owner::use_context;
-use winit::event::{DeviceEvent, DeviceId};
+use winit_core::event::{DeviceEvent, DeviceId};
 
 use crate::{
     Manager,
@@ -14,6 +14,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppHandleActionError {
+    #[error(transparent)]
+    Request(#[from] winit_core::error::RequestError),
     #[error("The app has already exited")]
     AppExited,
 }
@@ -36,7 +38,7 @@ impl AppHandle {
 }
 
 impl AppHandle {
-    /// Register an event listener that will listen to any [device event](winit::application::ApplicationHandler::device_event).
+    /// Register an event listener that will listen to any [device event](winit_core::application::ApplicationHandler::device_event).
     ///
     /// Worth noting that this listener will not run inside of the current context owner.
     pub fn register_device_event_listener<L>(
@@ -67,7 +69,7 @@ impl AppHandle {
         )))?;
         Ok(())
     }
-    /// Register a callback that will run when a [memory warning](winit::application::ApplicationHandler::memory_warning) is emitted.
+    /// Register a callback that will run when a [memory warning](winit_core::application::ApplicationHandler::memory_warning) is emitted.
     ///
     /// Worth noting that this listener will not run inside of the current context owner.
     pub fn register_memory_warning_event_listener<L>(
@@ -98,7 +100,7 @@ impl AppHandle {
         )))?;
         Ok(())
     }
-    /// Register a callback that will run when the app [resumes](winit::application::ApplicationHandler::resumed) its execution.
+    /// Register a callback that will run when the app [resumes](winit_core::application::ApplicationHandler::resumed) its execution.
     ///
     /// Worth noting that this listener will not run inside of the current context owner.
     pub fn register_app_resumed_event_listener<L>(
@@ -129,7 +131,7 @@ impl AppHandle {
         )))?;
         Ok(())
     }
-    /// Register a callback that will run when the app got [suspended](winit::application::ApplicationHandler::suspended).
+    /// Register a callback that will run when the app got [suspended](winit_core::application::ApplicationHandler::suspended).
     ///
     /// Worth noting that this listener will not run inside of the current context owner.
     pub fn register_app_suspended_event_listener<L>(

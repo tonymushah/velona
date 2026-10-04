@@ -1,13 +1,12 @@
 use crate::events::el_event;
 mod executor;
 use crate::{
-    app::proxy::AppEventLoopProxy,
     utils,
     window::{renderer::WindowRendererFactory, runner as window},
 };
 mod handle;
 mod run;
-use velona_executor::VelonaTasksExecutor;
+use velona_core_accesskit::AdapterFactory;
 use velona_renderer::WindowRenderer;
 pub(crate) mod event_listener;
 pub(crate) mod proxy;
@@ -19,22 +18,20 @@ use any_spawner::PinnedFuture;
 use copypasta::ClipboardContext;
 use masonry_core::core::DefaultProperties;
 use reactive_graph::owner::Owner;
-use winit::event_loop::{ControlFlow, DeviceEvents, EventLoop, EventLoopBuilder};
+// use winit_core::event_loop::{ControlFlow, DeviceEvents};
 
 pub(crate) use el_event::EventLoopEvent;
 
 type OnEventLoopInitFns = Vec<Box<dyn FnOnce(&AppHandle)>>;
 
 pub struct Builder<W: WindowRenderer> {
-    event_loop_builder: EventLoopBuilder<()>,
     window_render_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
     default_properties: DefaultProperties,
     spawn_fn: Option<SpawnFn>,
     windows: Vec<WindowBuilder>,
     owner: Owner,
-    allowed: Option<DeviceEvents>,
-    control_flow: Option<ControlFlow>,
     on_event_loop_init: OnEventLoopInitFns,
+    acceskit_factory: Option<Box<dyn AdapterFactory>>,
 }
 
 impl<W: WindowRenderer> Builder<W> {
@@ -64,15 +61,13 @@ impl<W: WindowRenderer> Builder<W> {
         F: WindowRendererFactory<WindowRenderer = W> + 'static,
     {
         Self {
-            event_loop_builder: EventLoop::with_user_event(),
             window_render_factory: Box::new(factory),
             default_properties: Default::default(),
             spawn_fn: None,
             windows: Vec::with_capacity(1),
             owner: Owner::new(),
-            allowed: None,
-            control_flow: None,
             on_event_loop_init: Vec::new(),
+            acceskit_factory: None,
         }
     }
     pub fn new<F>(factory: F) -> Self
@@ -88,21 +83,9 @@ impl<W: WindowRenderer> Builder<W> {
         });
         self
     }
-    /// Change if or when [`DeviceEvent`](winit::event::DeviceEvent)s are captured.
+    /// Register a callback that will run once the [winit_core::event_loop::EventLoop] has initiliazed.
     ///
-    /// See [`ActiveEventLoop::listen_device_events`](winit::event_loop::ActiveEventLoop::listen_device_events) for details.
-    pub fn listen_device_events(mut self, allowed: DeviceEvents) -> Self {
-        self.allowed = Some(allowed);
-        self
-    }
-    /// Sets the [`ControlFlow`].
-    pub fn control_flow(mut self, controll_flow: ControlFlow) -> Self {
-        self.control_flow = Some(controll_flow);
-        self
-    }
-    /// Register a callback that will run once the [winit::event_loop::EventLoop] has initiliazed.
-    ///
-    /// See [`winit::event::StartCause::Init`] for more details.
+    /// See [`winit_core::event::StartCause::Init`] for more details.
     pub fn on_event_loop_init<F>(mut self, after_init: F) -> Self
     where
         F: FnOnce(&AppHandle) + 'static,
@@ -110,58 +93,46 @@ impl<W: WindowRenderer> Builder<W> {
         self.on_event_loop_init.push(Box::new(after_init));
         self
     }
+    pub fn accesskit_adapter_factory(mut self, factory: impl AdapterFactory + 'static) -> Self {
+        self.acceskit_factory = Some(Box::new(factory));
+        self
+    }
 }
 
 impl<W: WindowRenderer> Builder<W> {
     /// Run the app in a custom event loop
     // TODO refactor this to add a `build` method
-    pub fn run_in(self, event_loop: EventLoop<()>) -> Result<(), crate::error::Error> {
-        let spawn_fn = self
-            .spawn_fn
-            .unwrap_or_else(|| Box::new(|_| panic!("No spawn_fn provided")));
+    pub fn build(self) -> App<W> {
+        // if let Some(allowed) = self.allowed_device_events {
+        //     event_loop.listen_device_events(allowed);
+        // }
+        // if let Some(control_flow) = self.control_flow {
+        //     event_loop.set_control_flow(control_flow);
+        // }
 
-        if let Some(allowed) = self.allowed {
-            event_loop.listen_device_events(allowed);
-        }
-        if let Some(control_flow) = self.control_flow {
-            event_loop.set_control_flow(control_flow);
-        }
-
-        let proxy = event_loop.create_proxy();
+        // let proxy = event_loop.create_proxy();
 
         let (send, receiver) = utils::flume_channel::<EventLoopEvent>();
 
-        let proxy = AppEventLoopProxy::new(proxy, send);
+        // let proxy = AppEventLoopProxy::new(proxy, send);
 
-        match any_spawner::Executor::init_local_custom_executor(executor::AppExecutor::new(
-            spawn_fn,
-            proxy.clone(),
-        )) {
-            Ok(_) => {}
-            Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
-        }
+        // match any_spawner::Executor::init_local_custom_executor(executor::AppExecutor::new(
+        //     spawn_fn,
+        //     proxy.clone(),
+        // )) {
+        //     Ok(_) => {}
+        //     Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
+        // }
 
-        #[cfg(feature = "subsecond")]
-        {
-            use crate::events::el_event::EventLoopEvent;
-            // Changes fut
-            {
-                let proxy = proxy.clone();
-                velona_subsecond::connect_to_dx_cli(move |msg| {
-                    let _ = proxy.send_event(EventLoopEvent::DxCliMessages(msg));
-                });
-            }
-        }
-
-        let mut app = run::AppRunner {
-            app_handle: AppHandle::new(proxy.clone()),
+        log::debug!("Window to build: {}", self.windows.len());
+        let app = run::App {
             windows: Default::default(),
             window_renderer_factory: self.window_render_factory,
             default_properties: Arc::new(self.default_properties),
             builder_windows: Some(self.windows),
             owner: self.owner,
             clipboard_context: Rc::new(RefCell::new(ClipboardContext::new().unwrap())),
-            suspended: true,
+            can_create_surfaces: false,
             receiver,
             on_event_loop_init: {
                 if self.on_event_loop_init.is_empty() {
@@ -171,24 +142,22 @@ impl<W: WindowRenderer> Builder<W> {
                 }
             },
             app_event_listeners: Default::default(),
-            fut_executor: VelonaTasksExecutor::new(move |task_id| {
-                let _ = proxy.send_event(EventLoopEvent::PollTask(task_id));
-            }),
+            // fut_executor: VelonaTasksExecutor::new(move |task_id| {
+            //     let _ = proxy.send_event(EventLoopEvent::PollTask(task_id));
+            // }),
+            sender: send,
+            spawn_fn: self.spawn_fn,
+            accesskit_adapter_factory: self.acceskit_factory,
+            first_time_ui_event: None,
+            fut_executor: None,
         };
-        // event_loop.set_control_flow(winit::event_loop::ControlFlow::Wait);
-        event_loop.run_app(&mut app)?;
-        Ok(())
-    }
-
-    /// Run the app.
-    // TODO refactor this to add a `build` method
-    pub fn run(mut self) -> Result<(), crate::error::Error> {
-        let event_loop = self.event_loop_builder.build()?;
-
-        self.run_in(event_loop)
+        // event_loop.set_control_flow(winit_core::event_loop::ControlFlow::Wait);
+        // event_loop.run_app(&mut app)?;
+        app
     }
 }
 
 // TODO add an Manager trait
 
 pub use handle::{AppHandle, AppHandleActionError, use_app_handle};
+pub use run::App;

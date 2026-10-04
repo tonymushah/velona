@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-velona = { workspace = true }
+velona = { workspace = true, default-features = true }
 velona_router = { workspace = true }
 velona_renderer_vello = { workspace = true }
 hotpath = { workspace = true, optional=true}

@@ -4,9 +4,10 @@ use std::{collections::HashMap, fmt::Debug};
 
 // use parking_lot::RwLock;
 
+use dpi::PhysicalPosition;
 use log::debug;
 use masonry_core::core::{ErasedAction, WidgetId};
-use winit::event::{DeviceId, KeyEvent, Modifiers, WindowEvent};
+use winit_core::event::{DeviceId, KeyEvent, Modifiers, PointerKind, WindowEvent};
 
 use crate::utils::{
     HandlerFn, HandlerFnGeneric, HandlerFnGenericStatic, NoParamHandlerFn, events::EventMap,
@@ -23,7 +24,7 @@ pub struct RegisterWindowEventHandler {
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct OnKeyboardInput {
-    pub device_id: DeviceId,
+    pub device_id: Option<DeviceId>,
     pub event: KeyEvent,
     pub is_synthetic: bool,
 }
@@ -36,11 +37,22 @@ pub enum RegisterWindowEventHandlerType {
     // breaking changes for this one see #130
     // OnDropFile(#[debug(skip)] HandlerFnGeneric<>)
     OnOccluded(#[debug(skip)] HandlerFnGenericStatic<bool>),
-    OnCursorEntered(#[debug(skip)] HandlerFnGeneric<DeviceId>),
-    OnCursorLeft(#[debug(skip)] HandlerFnGeneric<DeviceId>),
-    OnThemeChanged(#[debug(skip)] HandlerFnGeneric<winit::window::Theme>),
+    OnPointerEntered(#[debug(skip)] HandlerFnGeneric<OnPointerDoSomething>),
+    OnPointerLeft(#[debug(skip)] HandlerFnGeneric<OnPointerDoSomething>),
+    OnThemeChanged(#[debug(skip)] HandlerFnGeneric<winit_core::window::Theme>),
     OnKeyboardInput(#[debug(skip)] HandlerFnGeneric<OnKeyboardInput>),
     OnModifiersChanged(#[debug(skip)] HandlerFnGeneric<Modifiers>),
+}
+
+#[derive(Debug)]
+pub struct OnPointerDoSomething {
+    pub device_id: Option<DeviceId>,
+
+    pub position: Option<PhysicalPosition<f64>>,
+
+    pub primary: bool,
+
+    pub kind: PointerKind,
 }
 
 #[derive(Debug)]
@@ -71,9 +83,9 @@ pub(crate) struct WindowEventHandlers {
     on_destroy_handler: EventMap<NoParamHandlerFn>,
     on_focused_handler: EventMap<HandlerFnGenericStatic<bool>>,
     on_occluded_handler: EventMap<HandlerFnGenericStatic<bool>>,
-    on_cursor_entered_handler: EventMap<HandlerFnGeneric<DeviceId>>,
-    on_cursor_left_handler: EventMap<HandlerFnGeneric<DeviceId>>,
-    on_theme_changed_handler: EventMap<HandlerFnGeneric<winit::window::Theme>>,
+    on_pointer_entered_handler: EventMap<HandlerFnGeneric<OnPointerDoSomething>>,
+    on_pointer_left_handler: EventMap<HandlerFnGeneric<OnPointerDoSomething>>,
+    on_theme_changed_handler: EventMap<HandlerFnGeneric<winit_core::window::Theme>>,
     on_keyboard_input_handler: EventMap<HandlerFnGeneric<OnKeyboardInput>>,
     on_modifiers_changed_handler: EventMap<HandlerFnGeneric<Modifiers>>,
 }
@@ -102,15 +114,35 @@ impl WindowEventHandlers {
                         .values()
                         .for_each(|h| (h)(*is_occluded));
                 }
-                WindowEvent::CursorEntered { device_id } => {
-                    self.on_cursor_entered_handler
-                        .values()
-                        .for_each(|h| (h)(device_id));
+                WindowEvent::PointerEntered {
+                    device_id,
+                    position,
+                    primary,
+                    kind,
+                } => {
+                    self.on_pointer_entered_handler.values().for_each(|h| {
+                        (h)(&OnPointerDoSomething {
+                            device_id: *device_id,
+                            position: Some(*position),
+                            primary: *primary,
+                            kind: *kind,
+                        })
+                    });
                 }
-                WindowEvent::CursorLeft { device_id } => {
-                    self.on_cursor_left_handler
-                        .values()
-                        .for_each(|h| (h)(device_id));
+                WindowEvent::PointerLeft {
+                    device_id,
+                    position,
+                    primary,
+                    kind,
+                } => {
+                    self.on_pointer_left_handler.values().for_each(|h| {
+                        (h)(&OnPointerDoSomething {
+                            device_id: *device_id,
+                            position: *position,
+                            primary: *primary,
+                            kind: *kind,
+                        })
+                    });
                 }
                 WindowEvent::ThemeChanged(theme) => {
                     self.on_theme_changed_handler
@@ -160,12 +192,12 @@ impl WindowEventHandlers {
                 self.on_occluded_handler
                     .insert(handler.handler_id, handler_fn);
             }
-            RegisterWindowEventHandlerType::OnCursorEntered(handler_fn) => {
-                self.on_cursor_entered_handler
+            RegisterWindowEventHandlerType::OnPointerEntered(handler_fn) => {
+                self.on_pointer_entered_handler
                     .insert(handler.handler_id, handler_fn);
             }
-            RegisterWindowEventHandlerType::OnCursorLeft(handler_fn) => {
-                self.on_cursor_left_handler
+            RegisterWindowEventHandlerType::OnPointerLeft(handler_fn) => {
+                self.on_pointer_left_handler
                     .insert(handler.handler_id, handler_fn);
             }
             RegisterWindowEventHandlerType::OnThemeChanged(handler_fn) => {
@@ -298,10 +330,10 @@ impl WindowEventHandlers {
         self.on_occluded_handler.remove(handler_id).is_some()
     }
     fn remove_on_cursor_entered_handler(&mut self, handler_id: &HandlerId) -> bool {
-        self.on_cursor_entered_handler.remove(handler_id).is_some()
+        self.on_pointer_entered_handler.remove(handler_id).is_some()
     }
     fn remove_on_cursor_left_handler(&mut self, handler_id: &HandlerId) -> bool {
-        self.on_cursor_left_handler.remove(handler_id).is_some()
+        self.on_pointer_left_handler.remove(handler_id).is_some()
     }
     fn remove_on_theme_changed_handler(&mut self, handler_id: &HandlerId) -> bool {
         self.on_theme_changed_handler.remove(handler_id).is_some()

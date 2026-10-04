@@ -17,6 +17,9 @@ cloc-project:
 run_bin:
     cargo run -p {{ to_run }} -F {{ features }}
 
+run_bin_no_default_features:
+    cargo run -p {{ to_run }} --no-default-features -F {{ features }}
+
 run_example_with_hotpath:
     cargo run -p {{ to_run }} -F hotpath,hotpath-cpu,hotpath-alloc
 

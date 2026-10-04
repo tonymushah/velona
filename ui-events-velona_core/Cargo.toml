@@ -1,0 +1,10 @@
+[package]
+name = "ui-events-velona_core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+winit-core = { workspace = true }
+ui-events = { workspace = true, features = ["std"] }
+bitflags = { workspace = true }
+dpi = { workspace = true }

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use velona::{
-    AnyNewWidget, WindowBuilder,
+    AnyNewWidget, VelonaAppExt, WindowBuilder,
     masonry::{
         core::{FromDynWidget, NewWidget, Widget},
         layout::{AsUnit, Length},
@@ -150,6 +150,7 @@ fn main() {
             .with_title("Router example")
             .with_base_color(WHITE),
     )
+    .build()
     .run()
     .unwrap()
 }

@@ -1,18 +1,21 @@
-use velona::masonry::{
-    self,
-    core::{NewWidget, Widget},
-    kurbo::Point,
-    layout::Length,
-    palette::css::{BLACK, WHITE},
-    properties::{
-        Background, BorderColor, BorderWidth, BoxShadow, ContentColor, CornerRadius, Padding,
-    },
-    theme::DEFAULT_SPACER_LEN,
-    widgets::{Align, Button, Flex, Label},
-};
 use velona::reactive::{
     signal::{WriteSignal, signal},
     traits::{Get, Update},
+};
+use velona::{
+    VelonaAppExt,
+    masonry::{
+        self,
+        core::{NewWidget, Widget},
+        kurbo::Point,
+        layout::Length,
+        palette::css::{BLACK, WHITE},
+        properties::{
+            Background, BorderColor, BorderWidth, BoxShadow, ContentColor, CornerRadius, Padding,
+        },
+        theme::DEFAULT_SPACER_LEN,
+        widgets::{Align, Button, Flex, Label},
+    },
 };
 use velona::{
     components::label,
@@ -100,6 +103,7 @@ fn main() {
             .with_title("aaaaaa")
             .with_base_color(BLACK),
     )
+    .build()
     .run()
     .unwrap()
 }

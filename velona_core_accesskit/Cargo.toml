@@ -1,0 +1,8 @@
+[package]
+name = "velona_core_accesskit"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+accesskit.workspace = true
+winit-core.workspace = true

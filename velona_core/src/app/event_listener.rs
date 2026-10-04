@@ -1,4 +1,4 @@
-use winit::event::{DeviceEvent, DeviceId};
+use winit_core::event::{DeviceEvent, DeviceId};
 
 use crate::{
     manager::ManagerErasedAction,

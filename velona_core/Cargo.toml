@@ -4,21 +4,21 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-accesskit_winit.workspace = true
+accesskit.workspace = true
 any_spawner.workspace = true
 masonry_imaging_lite.workspace = true
 masonry_core.workspace = true
 reactive_graph = { workspace = true, features = ["effects"] }
 masonry_raw_box = { workspace = true }
 thiserror.workspace = true
-winit.workspace = true
+winit-core.workspace = true
 log.workspace = true
 # TODO remove this
 non-exhaustive.workspace = true
 send_wrapper.workspace = true
 # TODO remove this in favor of atomics counter
 # uuid = { workspace = true, features = ["v4"] }
-ui-events-winit.workspace = true
+ui-events-velona_core.workspace = true
 # parking_lot = "0.12"
 copypasta.workspace = true
 futures-channel.workspace = true
@@ -32,6 +32,9 @@ velona_executor = { workspace = true }
 velona_subsecond = { workspace = true, optional = true }
 subsecond = { workspace = true, optional = true }
 dioxus-cli-config = { workspace = true, optional = true }
+dpi = { workspace = true }
+raw-window-handle.workspace = true
+velona_core_accesskit.workspace = true
 
 [dev-dependencies]
 masonry = { workspace = true }

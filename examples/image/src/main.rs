@@ -1,17 +1,20 @@
 use std::{process, sync};
 
-use velona::masonry::{
-    self,
-    core::Widget,
-    layout::Length,
-    palette::css::WHITE,
-    peniko::{Blob, ImageBrush, ImageData, ImageSampler},
-    widgets::{Flex, Label, SizedBox, Spinner},
-};
 use velona::reactive::{computed::Memo, signal::signal, traits::Read};
 use velona::{
     AnyNewWidget, Builder, WindowBuilder,
     components::{LazyImageOptions, lazy_image},
+};
+use velona::{
+    VelonaAppExt,
+    masonry::{
+        self,
+        core::Widget,
+        layout::Length,
+        palette::css::WHITE,
+        peniko::{Blob, ImageBrush, ImageData, ImageSampler},
+        widgets::{Flex, Label, SizedBox, Spinner},
+    },
 };
 use velona_renderer_vello::create_wgpu_context;
 
@@ -107,6 +110,7 @@ fn main() {
                     .with_title("Image")
                     .with_base_color(WHITE),
             )
+            .build()
             .run()
     {
         eprintln!("{err}");

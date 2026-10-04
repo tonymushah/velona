@@ -19,6 +19,7 @@ pub mod utils;
 pub use velona_core::widget_ref;
 #[doc(inline)]
 pub use velona_core::window;
+use velona_renderer::WindowRenderer;
 #[doc(inline)]
 pub use velona_scoped_styling as scoped_styling;
 pub mod widgets;
@@ -40,5 +41,26 @@ pub use manager::Manager;
 pub use widgets::NewWidgetExt;
 pub use window::WindowBuilder;
 pub use window::WindowRendererFactory;
+use winit::event_loop;
+use winit::event_loop::EventLoop;
 
 pub type AnyNewWidget = NewWidget<dyn Widget>;
+
+pub trait VelonaAppExt {
+    fn run_in_event_loop(self, event_loop: EventLoop) -> Result<(), winit::error::EventLoopError>;
+    fn run(self) -> Result<(), winit::error::EventLoopError>
+    where
+        Self: Sized,
+    {
+        self.run_in_event_loop(event_loop::EventLoopBuilder::default().build()?)
+    }
+}
+
+impl<V> VelonaAppExt for velona_core::app::App<V>
+where
+    V: WindowRenderer + 'static,
+{
+    fn run_in_event_loop(self, event_loop: EventLoop) -> Result<(), winit::error::EventLoopError> {
+        event_loop.run_app(self)
+    }
+}

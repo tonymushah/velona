@@ -4,8 +4,8 @@
 // Tony Mushah: I copied this file from mansory_winit cause i am lazy to do this myself.
 
 use masonry_core::core::{Ime, ResizeDirection};
-use winit::event::Ime as WinitIme;
-use winit::window::ResizeDirection as WinitResizeDirection;
+use winit_core::event::Ime as WinitIme;
+use winit_core::window::ResizeDirection as WinitResizeDirection;
 
 pub(crate) fn masonry_resize_direction_to_winit(dir: ResizeDirection) -> WinitResizeDirection {
     match dir {
@@ -20,11 +20,12 @@ pub(crate) fn masonry_resize_direction_to_winit(dir: ResizeDirection) -> WinitRe
     }
 }
 
-pub(crate) fn winit_ime_to_masonry(event: WinitIme) -> Ime {
-    match event {
+pub(crate) fn winit_ime_to_masonry(event: WinitIme) -> Option<Ime> {
+    Some(match event {
         WinitIme::Enabled => Ime::Enabled,
         WinitIme::Disabled => Ime::Disabled,
         WinitIme::Preedit(text, cursor) => Ime::Preedit(text, cursor),
         WinitIme::Commit(text) => Ime::Commit(text),
-    }
+        _ => return None,
+    })
 }

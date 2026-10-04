@@ -1,20 +1,23 @@
 use derive_more::{Display, FromStr};
 use enum_all_variants::AllVariants;
-use velona::masonry::{
-    self,
-    core::Widget,
-    layout::{Length, UnitPoint},
-    palette::css::{BLACK, WHITE, WHITE_SMOKE},
-    properties::{Background, BorderColor, BorderWidth, CornerRadius, Padding},
-    theme::DEFAULT_SPACER_LEN,
-    widgets::{Align, Flex, Label, Selector, SizedBox},
-};
 use velona::reactive::{
     computed::Memo,
     signal::signal,
     traits::{Get, Set},
 };
 use velona::{AnyNewWidget, Builder, NewWidgetExt, WindowBuilder, widgets::align::NewAlignExt};
+use velona::{
+    VelonaAppExt,
+    masonry::{
+        self,
+        core::Widget,
+        layout::{Length, UnitPoint},
+        palette::css::{BLACK, WHITE, WHITE_SMOKE},
+        properties::{Background, BorderColor, BorderWidth, CornerRadius, Padding},
+        theme::DEFAULT_SPACER_LEN,
+        widgets::{Align, Flex, Label, Selector, SizedBox},
+    },
+};
 use velona_renderer_vello::create_wgpu_context;
 
 #[derive(Debug, Clone, Copy, Display, FromStr, AllVariants)]
@@ -106,6 +109,7 @@ fn main() {
                 .with_title("Align")
                 .with_base_color(WHITE),
         )
+        .build()
         .run()
         .unwrap();
 }

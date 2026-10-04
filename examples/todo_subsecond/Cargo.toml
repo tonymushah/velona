@@ -4,12 +4,13 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-velona = { workspace = true, features = ["subsecond"] }
+velona = { workspace = true, default-features = true, features = ["subsecond"] }
 subsecond = { workspace = true }
 velona_renderer_vello.workspace = true
 env_logger.workspace = true
 log.workspace = true
 hotpath = { workspace = true, optional = true }
+velona_accesskit_xplat = { workspace = true }
 
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]

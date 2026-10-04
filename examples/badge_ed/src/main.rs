@@ -6,6 +6,7 @@ use derive_more::{Display, FromStr};
 use enum_all_variants::AllVariants;
 use image::open;
 use tokio::runtime;
+use velona::VelonaAppExt;
 use velona::masonry::{
     self,
     core::DefaultProperties,
@@ -350,6 +351,7 @@ fn main() {
         .provide_context(runtime.handle().clone())
         .with_window(WindowBuilder::new(main_view).with_base_color(WHITE))
         .with_default_properties(default_properties())
+        .build()
         .run()
         .unwrap();
 }

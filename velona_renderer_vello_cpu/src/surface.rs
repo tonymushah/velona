@@ -6,7 +6,7 @@ use softbuffer::{
 };
 use vello_cpu::{Pixmap, RasterizerSettings, RenderSettings};
 use velona_renderer::window_handle::WindowHandle;
-use winit::event_loop::OwnedDisplayHandle;
+use winit_core::event_loop::OwnedDisplayHandle;
 
 use crate::imaging_vello_cpu::VelloCpuRenderer;
 

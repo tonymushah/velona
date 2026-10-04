@@ -1,11 +1,14 @@
 use log::warn;
 use masonry_core::core::{Widget, WidgetId};
 use reactive_graph::owner::{Owner, on_cleanup};
-use winit::event::{DeviceId, Modifiers};
+use winit_core::event::Modifiers;
 
 use crate::window::{
     WindowHandle,
-    event_listener::{HandlerFnGeneric, HandlerFnGenericStatic, NoParamHandlerFn, OnKeyboardInput},
+    event_listener::{
+        HandlerFnGeneric, HandlerFnGenericStatic, NoParamHandlerFn, OnKeyboardInput,
+        OnPointerDoSomething,
+    },
     use_window,
 };
 
@@ -144,7 +147,9 @@ pub fn register_on_window_occluded_listener(mut handler_fn: HandlerFnGenericStat
 }
 
 #[track_caller]
-pub fn register_on_window_cursor_entered_listener(mut handler_fn: HandlerFnGeneric<DeviceId>) {
+pub fn register_on_window_cursor_entered_listener(
+    mut handler_fn: HandlerFnGeneric<OnPointerDoSomething>,
+) {
     let window = use_window_with_panic();
     if let Some(current) = Owner::current() {
         let to_send = current.child();
@@ -166,7 +171,9 @@ pub fn register_on_window_cursor_entered_listener(mut handler_fn: HandlerFnGener
 }
 
 #[track_caller]
-pub fn register_on_window_cursor_left_listener(mut handler_fn: HandlerFnGeneric<DeviceId>) {
+pub fn register_on_window_cursor_left_listener(
+    mut handler_fn: HandlerFnGeneric<OnPointerDoSomething>,
+) {
     let window = use_window_with_panic();
     if let Some(current) = Owner::current() {
         let to_send = current.child();
@@ -186,7 +193,9 @@ pub fn register_on_window_cursor_left_listener(mut handler_fn: HandlerFnGeneric<
 }
 
 #[track_caller]
-pub fn register_on_theme_changed_listener(mut handler_fn: HandlerFnGeneric<winit::window::Theme>) {
+pub fn register_on_theme_changed_listener(
+    mut handler_fn: HandlerFnGeneric<winit_core::window::Theme>,
+) {
     let window = use_window_with_panic();
     if let Some(current) = Owner::current() {
         let to_send = current.child();

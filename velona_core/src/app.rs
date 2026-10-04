@@ -6,6 +6,7 @@ use crate::{
 };
 mod handle;
 mod run;
+use velona_core_accesskit::AdapterFactory;
 use velona_renderer::WindowRenderer;
 pub(crate) mod event_listener;
 pub(crate) mod proxy;
@@ -17,7 +18,7 @@ use any_spawner::PinnedFuture;
 use copypasta::ClipboardContext;
 use masonry_core::core::DefaultProperties;
 use reactive_graph::owner::Owner;
-use winit_core::event_loop::{ControlFlow, DeviceEvents};
+// use winit_core::event_loop::{ControlFlow, DeviceEvents};
 
 pub(crate) use el_event::EventLoopEvent;
 
@@ -29,9 +30,8 @@ pub struct Builder<W: WindowRenderer> {
     spawn_fn: Option<SpawnFn>,
     windows: Vec<WindowBuilder>,
     owner: Owner,
-    pub allowed_device_events: Option<DeviceEvents>,
-    pub control_flow: Option<ControlFlow>,
     on_event_loop_init: OnEventLoopInitFns,
+    acceskit_factory: Option<Box<dyn AdapterFactory>>,
 }
 
 impl<W: WindowRenderer> Builder<W> {
@@ -66,9 +66,8 @@ impl<W: WindowRenderer> Builder<W> {
             spawn_fn: None,
             windows: Vec::with_capacity(1),
             owner: Owner::new(),
-            allowed_device_events: None,
-            control_flow: None,
             on_event_loop_init: Vec::new(),
+            acceskit_factory: None,
         }
     }
     pub fn new<F>(factory: F) -> Self
@@ -84,18 +83,6 @@ impl<W: WindowRenderer> Builder<W> {
         });
         self
     }
-    /// Change if or when [`DeviceEvent`](winit_core::event::DeviceEvent)s are captured.
-    ///
-    /// See [`ActiveEventLoop::listen_device_events`](winit_core::event_loop::ActiveEventLoop::listen_device_events) for details.
-    pub fn listen_device_events(mut self, allowed: DeviceEvents) -> Self {
-        self.allowed_device_events = Some(allowed);
-        self
-    }
-    /// Sets the [`ControlFlow`].
-    pub fn control_flow(mut self, controll_flow: ControlFlow) -> Self {
-        self.control_flow = Some(controll_flow);
-        self
-    }
     /// Register a callback that will run once the [winit_core::event_loop::EventLoop] has initiliazed.
     ///
     /// See [`winit_core::event::StartCause::Init`] for more details.
@@ -104,6 +91,10 @@ impl<W: WindowRenderer> Builder<W> {
         F: FnOnce(&AppHandle) + 'static,
     {
         self.on_event_loop_init.push(Box::new(after_init));
+        self
+    }
+    pub fn accesskit_adapter_factory(mut self, factory: impl AdapterFactory + 'static) -> Self {
+        self.acceskit_factory = Some(Box::new(factory));
         self
     }
 }
@@ -155,7 +146,7 @@ impl<W: WindowRenderer> Builder<W> {
             // }),
             sender: send,
             spawn_fn: self.spawn_fn,
-            accesskit_adapter_factory: None,
+            accesskit_adapter_factory: self.acceskit_factory,
             first_time_ui_event: None,
             fut_executor: None,
         };

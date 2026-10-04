@@ -85,7 +85,7 @@ pub(crate) enum UnregisterEventHandler {
 #[derive(derive_more::Debug)]
 pub(crate) enum EventLoopEvent {
     AccessKitAction(Box<AccessKitWindowEvent>),
-    NewWindow(#[debug(skip)] Box<WindowBuilder>),
+    NewWindow(Box<WindowBuilder>),
     CloseWindow(WindowId),
     SetClipboardContent(String),
     HandleRenderRootSignals(WindowId, Box<SendWrapper<RenderRootSignal>>),

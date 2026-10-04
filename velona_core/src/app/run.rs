@@ -121,6 +121,12 @@ where
     }
 
     fn on_init(&mut self, event_loop: &(dyn ActiveEventLoop + 'static)) {
+        if !self.has_builder_windows() {
+            event_loop.exit();
+            log::warn!("No window to build. Exiting!");
+            return;
+        }
+
         let app_handle = self.create_app_handle(event_loop);
 
         self.fut_executor = Some({
@@ -163,6 +169,13 @@ where
             }
         }
         self.create_init_windows(event_loop, app_handle);
+    }
+
+    fn has_builder_windows(&self) -> bool {
+        self.builder_windows.as_ref().is_some_and(|ws| {
+            // log::debug!("{}, {}", ws.len(), ws.is_empty());
+            !ws.is_empty()
+        })
     }
 
     fn create_init_windows(
@@ -243,7 +256,7 @@ where
                     use_system_fonts: builder.use_system_fonts,
                 }) {
                     Ok(mut new_instance) => {
-                        if !self.can_create_surfaces {
+                        if self.can_create_surfaces {
                             self.fut_executor().spawn(new_instance.resume());
                         }
                         if let Some(sender) = builder.window_handle_send {
@@ -335,6 +348,7 @@ where
                 .expect("FutExecutor not loaded yet")
                 .spawn(window.resume());
         }
+        // log::info!("{}", self.windows.len());
     }
     fn suspend_windows_surfaces(&mut self) {
         for window in self.windows.values_mut() {
@@ -622,6 +636,7 @@ where
     fn handle_app_events(&mut self, event_loop: &dyn ActiveEventLoop) {
         let mut need_redraw = HashSet::<WindowId>::default();
         while let Some(event) = self.receiver.try_iter().next() {
+            log::trace!("{:#?}", event);
             match event {
                 EventLoopEvent::AccessKitAction(event) => {
                     self.use_window(event.window_id, |window| match event.window_event {
@@ -809,6 +824,7 @@ where
 {
     fn can_create_surfaces(&mut self, _event_loop: &dyn ActiveEventLoop) {
         self.can_create_surfaces = true;
+        log::info!("Can create surfaces");
         self.resume_windows_surfaces();
     }
     fn destroy_surfaces(&mut self, _event_loop: &dyn ActiveEventLoop) {
@@ -821,7 +837,9 @@ where
         event_loop: &dyn winit_core::event_loop::ActiveEventLoop,
         cause: winit_core::event::StartCause,
     ) {
+        // log::info!("Windows {}", self.windows.len());
         if cause == winit_core::event::StartCause::Init {
+            log::info!("init event_loop");
             self.on_init(event_loop);
         }
     }

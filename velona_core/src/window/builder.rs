@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use dpi::{Position, Size};
+use dpi::{PhysicalSize, Position, Size};
 use futures_channel::oneshot;
 use masonry_core::app::WindowSizePolicy;
 use masonry_core::core::DefaultProperties;
@@ -22,7 +22,9 @@ use crate::window::handle::WindowHandle;
 /// The `velona` window builder.
 ///
 /// Use [`Manager::create_window`] or [`Self::build`] method to show it on the screen.
+#[derive(derive_more::Debug)]
 pub struct WindowBuilder {
+    #[debug(skip)]
     pub(crate) view: Box<dyn FnOnce() -> NewWidget<dyn Widget + 'static> + Send>,
     pub(crate) window_attributes: WindowAttributes,
     pub(crate) base_color: Option<AlphaColor<Srgb>>,
@@ -41,7 +43,9 @@ impl WindowBuilder {
     {
         Self {
             view: Box::new(move || view_fn().into_erased()),
-            window_attributes: WindowAttributes::default().with_title("velona window"),
+            window_attributes: WindowAttributes::default()
+                .with_title("velona window")
+                .with_surface_size(PhysicalSize::new(800u32, 600u32)),
             base_color: None,
             window_handle_send: None,
             default_propreties: None,

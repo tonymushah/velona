@@ -124,6 +124,7 @@ impl<W: WindowRenderer> Builder<W> {
         //     Err(_) => return Err(crate::error::Error::ExecutorAlreadyBeenSet),
         // }
 
+        log::debug!("Window to build: {}", self.windows.len());
         let app = run::App {
             windows: Default::default(),
             window_renderer_factory: self.window_render_factory,

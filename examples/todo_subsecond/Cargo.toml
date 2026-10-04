@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-velona = { workspace = true, features = ["subsecond"] }
+velona = { workspace = true, default-features = true, features = ["subsecond"] }
 subsecond = { workspace = true }
 velona_renderer_vello.workspace = true
 env_logger.workspace = true

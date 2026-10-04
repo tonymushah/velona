@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-velona.workspace = true
+velona = { workspace = true, default-features = true}
 velona_renderer_vello_hybrid.workspace = true
 env_logger.workspace = true
 log.workspace = true

@@ -4,13 +4,24 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-velona.workspace = true
+velona = { workspace = true, default-features = false }
 velona_renderer_vello.workspace = true
 env_logger.workspace = true
 log.workspace = true
 hotpath = { workspace = true, optional = true }
 
 [features]
+default = ["wayland", "wayland-dlopen", "wayland-csd-adwaita"]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
 hotpath-cpu = ["hotpath/hotpath-cpu"]
 hotpath-alloc = ["hotpath/hotpath-alloc"]
+
+wayland = ["velona/wayland"]
+wayland-csd-adwaita = ["velona/wayland-csd-adwaita"]
+wayland-csd-adwaita-cosmic-text = ["velona/wayland-csd-adwaita-cosmic-text"]
+wayland-csd-adwaita-crossfont = ["velona/wayland-csd-adwaita-crossfont"]
+wayland-csd-adwaita-notitle = ["velona/wayland-csd-adwaita-notitle"]
+wayland-csd-adwaita-notitlebar = ["velona/wayland-csd-adwaita-notitlebar"]
+wayland-csd-adwaita-skrifa = ["velona/wayland-csd-adwaita-skrifa"]
+wayland-dlopen = ["velona/wayland-dlopen"]
+x11 = ["velona/x11"]

@@ -22,6 +22,8 @@ members = [
     "velona_renderer_vello",
     "velona_renderer_vello_cpu",
     "velona_renderer_vello_hybrid",
+    # accesskit adapter factories
+    "velona_accesskit_xplat",
     # subsecond support
     "velona_subsecond",
     # Various tools
@@ -138,6 +140,9 @@ velona_renderer_vello_hybrid = { path = "velona_renderer_vello_hybrid" }
 
 # UI events stuff
 ui-events-velona_core = { path = "ui-events-velona_core" }
+
+# accesskit adapter factories
+velona_accesskit_xplat = { path = "velona_accesskit_xplat" }
 
 # velona itself
 velona = { path = "velona" }

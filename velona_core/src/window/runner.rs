@@ -241,7 +241,7 @@ where
     }
     pub fn forward_to_accesskit_adapter(&mut self, window_event: &WindowEvent) {
         if let Some(adapter) = self.access_kit.as_mut() {
-            adapter.handle_winit_window_event(window_event);
+            adapter.handle_winit_window_event(window_event, &**self.winit_window);
         }
     }
     fn update_if_active_tree(&mut self, tree: impl FnOnce() -> TreeUpdate + 'static) {

@@ -1,0 +1,11 @@
+[package]
+name = "velona_accesskit_xplat"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona_core_accesskit.workspace = true
+accesskit_xplat.workspace = true
+winit.workspace = true
+accesskit.workspace = true
+raw-window-handle.workspace = true

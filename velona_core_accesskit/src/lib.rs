@@ -13,7 +13,11 @@ pub trait EventHandler: Send + Sync + 'static {
 }
 
 pub trait Adapter {
-    fn handle_winit_window_event(&mut self, event: &winit_core::event::WindowEvent);
+    fn handle_winit_window_event(
+        &mut self,
+        event: &winit_core::event::WindowEvent,
+        window: &dyn Window,
+    );
     fn update_if_active(&mut self, updater: Box<dyn FnOnce() -> TreeUpdate>);
 }
 

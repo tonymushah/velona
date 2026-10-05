@@ -5,7 +5,7 @@ use velona::{
     masonry::{
         core::Widget,
         layout::AsUnit,
-        palette::css::{BLACK, BLUE, GREEN, RED, WHITE, WHITE_SMOKE},
+        palette::css::{BLACK, BLUE, RED, WHITE, WHITE_SMOKE},
         properties::{Background, ContentColor, Padding},
         widgets::{Button, Flex, Label, Svg},
     },

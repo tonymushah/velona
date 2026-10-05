@@ -1249,6 +1249,8 @@ dependencies = [
  "futures-util",
  "hotpath",
  "log",
+ "masonry_raw_box",
+ "tracing",
  "velona",
  "velona_renderer_vello_hybrid",
 ]

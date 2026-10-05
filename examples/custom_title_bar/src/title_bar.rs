@@ -2,8 +2,8 @@ mod widget;
 
 use std::sync::Arc;
 
+use masonry_widget_wrappers::WidgetWrapper;
 use velona::{
-    Manager,
     masonry::{
         core::Widget,
         layout::AsUnit,
@@ -37,17 +37,17 @@ pub fn title_bar() -> impl View {
                     .prepare()
                     .with_props(ContentColor::new(WHITE)),
             )
-            .prepare(), // .on_primary(clonelicious::clone!(window => move | | {
-                        //     // let window2 = window.clone();
+            .into_new_widget(), // .on_primary(clonelicious::clone!(window => move | | {
+                                //     // let window2 = window.clone();
 
-                        //     // window.run_task(async move {
-                        //         // println!("sadsadsada");
-                        //         if let Err(err) = window.drag_window() {
-                        //             log::error!("cannot drag window {err}");
-                        //         }
-                        //         log::debug!("Send drag_request")
-                        //     // });
-                        // })),
+                                //     // window.run_task(async move {
+                                //         // println!("sadsadsada");
+                                //         if let Err(err) = window.drag_window() {
+                                //             log::error!("cannot drag window {err}");
+                                //         }
+                                //         log::debug!("Send drag_request")
+                                //     // });
+                                // })),
         )
         .with_fixed(
             Flex::row()

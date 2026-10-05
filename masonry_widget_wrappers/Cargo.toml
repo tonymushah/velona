@@ -1,0 +1,12 @@
+[package]
+name = "masonry_widget_wrappers"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+masonry_core = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+masonry_raw_box = { workspace = true }
+masonry_testing = { workspace = true }

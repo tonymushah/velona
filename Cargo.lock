@@ -1250,6 +1250,7 @@ dependencies = [
  "hotpath",
  "log",
  "masonry_raw_box",
+ "masonry_widget_wrappers",
  "tracing",
  "velona",
  "velona_renderer_vello_hybrid",
@@ -3082,6 +3083,16 @@ dependencies = [
  "imaging_vello_cpu",
  "masonry_core",
  "oxipng",
+ "tracing",
+]
+
+[[package]]
+name = "masonry_widget_wrappers"
+version = "0.1.0"
+dependencies = [
+ "masonry_core",
+ "masonry_raw_box",
+ "masonry_testing",
  "tracing",
 ]
 

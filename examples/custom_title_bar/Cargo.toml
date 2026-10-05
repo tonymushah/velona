@@ -1,0 +1,19 @@
+[package]
+name = "custom_title_bar"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona = { workspace = true, default-features = true }
+velona_renderer_vello_hybrid.workspace = true
+env_logger.workspace = true
+log.workspace = true
+hotpath = { workspace = true, optional = true }
+async-io = { workspace = true }
+futures-util = { workspace = true }
+clonelicious = "10"
+
+[features]
+hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]

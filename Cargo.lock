@@ -903,6 +903,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "clonelicious"
+version = "10.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2533e6f66f23c33f19f7e617a6e467a7ddb4c900bdbc40361506ceecf6c4d2ca"
+
+[[package]]
 name = "codespan-reporting"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1232,6 +1238,20 @@ name = "cursor-icon"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
+
+[[package]]
+name = "custom_title_bar"
+version = "0.1.0"
+dependencies = [
+ "async-io",
+ "clonelicious",
+ "env_logger",
+ "futures-util",
+ "hotpath",
+ "log",
+ "velona",
+ "velona_renderer_vello_hybrid",
+]
 
 [[package]]
 name = "data-encoding"
@@ -4510,7 +4530,7 @@ dependencies = [
  "crossfont",
  "log",
  "memmap2",
- "skrifa 0.40.0",
+ "skrifa 0.44.0",
  "smithay-client-toolkit 0.21.1",
  "tiny-skia",
 ]
@@ -4928,7 +4948,7 @@ version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c2499c2d826531388872b2268718aed907a39bd785ab0dcfe57fab26283f92e"
 dependencies = [
- "skrifa 0.40.0",
+ "skrifa 0.44.0",
  "yazi",
  "zeno",
 ]

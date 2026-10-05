@@ -41,7 +41,8 @@ members = [
     "examples/todo_vello_hybrid",
     "examples/router_example",
     "examples/timer",
-    "examples/timer-async-io-example"
+    "examples/timer-async-io-example",
+    "examples/custom_title_bar"
 ]
 default-members = ["velona"]
 resolver = "3"

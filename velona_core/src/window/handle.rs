@@ -181,6 +181,14 @@ impl WindowHandle {
     }
 }
 
+impl WindowHandle {
+    /// Closes the window
+    pub fn close_window(&self) -> Result<(), WindowHandleActionError> {
+        self.send_event(EventLoopEvent::CloseWindow(self.id()?))?;
+        Ok(())
+    }
+}
+
 /// [`winit_core::Window`](winit_core::window::Window) Position and size functions
 impl WindowHandle {
     /// Returns the positioner used to place this window relative to its anchor rect.

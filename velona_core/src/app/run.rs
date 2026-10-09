@@ -854,8 +854,9 @@ where
         window_id: WindowId,
         event: winit_core::event::WindowEvent,
     ) {
-        // #[cfg(feature = "hotpath")]
-        // hotpath::dbg!((&window_id, &event));
+        // log::trace!("got {:#?} for {:?}", event, window_id);
+        #[cfg(feature = "hotpath")]
+        hotpath::dbg!((&window_id, &event));
         self.use_window(window_id, |window| {
             window.forward_to_accesskit_adapter(&event);
         });

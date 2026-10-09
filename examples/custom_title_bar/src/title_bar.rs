@@ -1,7 +1,9 @@
+mod widget;
+
 use std::sync::Arc;
 
+use masonry_widget_wrappers::WidgetWrapper;
 use velona::{
-    Manager,
     masonry::{
         core::Widget,
         layout::AsUnit,
@@ -12,6 +14,8 @@ use velona::{
     widgets::{View, button::NewButtonPressEventsExt, svg::usvg},
     window::use_window,
 };
+
+use crate::title_bar::widget::TitleBarContainer;
 
 const X_ICON: &[u8] = include_bytes!("../svgs/x.svg");
 
@@ -28,22 +32,22 @@ pub fn title_bar() -> impl View {
         .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::SpaceBetween)
         .cross_axis_alignment(velona::masonry::properties::types::CrossAxisAlignment::Center)
         .with_fixed(
-            Button::new(
+            TitleBarContainer::new(
                 Label::new("Custom title bar....")
                     .prepare()
                     .with_props(ContentColor::new(WHITE)),
             )
-            .prepare()
-            .on_primary(clonelicious::clone!(window => move | | {
-                let window2 = window.clone();
+            .into_new_widget(), // .on_primary(clonelicious::clone!(window => move | | {
+                                //     // let window2 = window.clone();
 
-                window.run_task(async move {
-                    println!("sadsadsada");
-                    if let Err(err) = window2.drag_window() {
-                        log::error!("cannot drag window {err}");
-                    }
-                });
-            })),
+                                //     // window.run_task(async move {
+                                //         // println!("sadsadsada");
+                                //         if let Err(err) = window.drag_window() {
+                                //             log::error!("cannot drag window {err}");
+                                //         }
+                                //         log::debug!("Send drag_request")
+                                //     // });
+                                // })),
         )
         .with_fixed(
             Flex::row()

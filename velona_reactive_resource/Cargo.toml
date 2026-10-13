@@ -1,0 +1,7 @@
+[package]
+name = "velona_reactive_resource"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+reactive_graph = { workspace = true }

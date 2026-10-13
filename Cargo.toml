@@ -29,6 +29,7 @@ members = [
     "velona_subsecond",
     # Various tools
     "velona_router",
+    "velona_reactive_resource",
     # examples
     "examples/counter",
     "examples/align",

@@ -12,7 +12,6 @@ use velona::{
         widgets::{Flex, Label, Portal},
     },
     widgets::{View, align::IntoAlign},
-    window::use_window,
 };
 use velona_renderer_vello_hybrid::{VelloHybridRendererOptions, create_wgpu_context};
 

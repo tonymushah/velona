@@ -3,7 +3,7 @@ use masonry_widget_wrappers::WidgetWrapper;
 use tracing::{Span, trace_span};
 
 use masonry::core::{NewWidget, NoAction, Widget, WidgetId};
-use velona::masonry;
+use velona::masonry::{self};
 
 pub struct TitleBarContainer {
     inner: RawBox,

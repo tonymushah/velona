@@ -1,0 +1,25 @@
+[package]
+name = "nekosia"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+reqwest = { workspace =true, features = ["http2", "rustls", "charset", "gzip", "brotli","zstd", "system-proxy"] }
+serde = { workspace= true, features= ["derive"] }
+serde_json = { workspace = true }
+velona = { workspace = true, default-features = true }
+velona_renderer_vello_hybrid.workspace = true
+env_logger.workspace = true
+log.workspace = true
+hotpath = { workspace = true, optional = true }
+tokio = { workspace = true }
+futures-util = { workspace = true }
+clonelicious.workspace = true
+tracing = { workspace = true }
+masonry_raw_box = { workspace = true }
+masonry_widget_wrappers = { workspace = true }
+
+[features]
+hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]

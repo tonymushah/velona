@@ -31,6 +31,7 @@ members = [
     "velona_router",
     "velona_reactive_resource",
     "velona_tokio",
+    "utils/drag_resize_regions",
     # examples
     "examples/counter",
     "examples/align",
@@ -156,6 +157,7 @@ velona = { path = "velona", default-features = false }
 
 # various utilities
 velona_tokio = { path = "velona_tokio" }
+drag_resize_regions = { path = "utils/drag_resize_regions" }
 
 # nekosia dependencies
 reqwest = { version = "0.13", default-features = false }

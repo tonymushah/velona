@@ -2,8 +2,7 @@ use masonry_raw_box::RawBox;
 use masonry_widget_wrappers::WidgetWrapper;
 use tracing::{Span, trace_span};
 
-use masonry::core::{NewWidget, NoAction, Widget, WidgetId};
-use velona::masonry::{self};
+use masonry_core::core::{NewWidget, NoAction, Widget, WidgetId};
 
 pub struct TitleBarContainer {
     inner: RawBox,
@@ -34,9 +33,9 @@ impl WidgetWrapper for TitleBarContainer {
     }
     fn on_pointer_event(
         &mut self,
-        ctx: &mut masonry::core::EventCtx<'_>,
-        _props: &mut masonry::core::PropertiesMut<'_>,
-        event: &masonry::core::PointerEvent,
+        ctx: &mut masonry_core::core::EventCtx<'_>,
+        _props: &mut masonry_core::core::PropertiesMut<'_>,
+        event: &masonry_core::core::PointerEvent,
     ) {
         if event.is_primary_pointer() {
             ctx.drag_window();

@@ -1,9 +1,9 @@
-use masonry_widget_wrappers::WidgetWrapper;
-use tracing::trace_span;
-use velona::masonry::{
+use masonry_core::{
     core::{CursorIcon, FromDynWidget, ResizeDirection, Widget},
     kurbo::{Point, Rect},
 };
+use masonry_widget_wrappers::WidgetWrapper;
+use tracing::trace_span;
 
 pub struct DragRegions {
     north_west: Rect,
@@ -92,24 +92,24 @@ where
     where
         Self: Sized;
 
-    fn inner(&self) -> &dyn velona::masonry::core::Widget {
+    fn inner(&self) -> &dyn masonry_core::core::Widget {
         &self.inner
     }
 
-    fn inner_mut(&mut self) -> &mut dyn velona::masonry::core::Widget {
+    fn inner_mut(&mut self) -> &mut dyn masonry_core::core::Widget {
         &mut self.inner
     }
 
-    fn make_trace_span(&self, id: velona::masonry::core::WidgetId) -> tracing::Span {
+    fn make_trace_span(&self, id: masonry_core::core::WidgetId) -> tracing::Span {
         trace_span!("ResizeRegion", id = id.trace())
     }
     fn on_pointer_event(
         &mut self,
-        ctx: &mut velona::masonry::core::EventCtx<'_>,
-        _props: &mut velona::masonry::core::PropertiesMut<'_>,
-        event: &velona::masonry::core::PointerEvent,
+        ctx: &mut masonry_core::core::EventCtx<'_>,
+        _props: &mut masonry_core::core::PropertiesMut<'_>,
+        event: &masonry_core::core::PointerEvent,
     ) {
-        if let velona::masonry::core::PointerEvent::Down(pointer_button_event) = event
+        if let masonry_core::core::PointerEvent::Down(pointer_button_event) = event
             && pointer_button_event.pointer.is_primary_pointer()
             && let Some(drag_region) = get_drag_regions(ctx.border_box(), ctx.content_box())
             && let Some(resize_region) = drag_region
@@ -120,9 +120,9 @@ where
     }
     fn get_cursor(
         &self,
-        ctx: &velona::masonry::core::QueryCtx<'_>,
+        ctx: &masonry_core::core::QueryCtx<'_>,
         pos: Point,
-    ) -> velona::masonry::core::CursorIcon {
+    ) -> masonry_core::core::CursorIcon {
         if let Some(drag_region) = get_drag_regions(ctx.border_box(), ctx.content_box())
             && let Some(resize_region) = drag_region.get_resize_region(ctx.to_local(pos))
         {

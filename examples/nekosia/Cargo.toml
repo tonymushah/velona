@@ -19,6 +19,7 @@ tracing = { workspace = true }
 masonry_raw_box = { workspace = true }
 masonry_widget_wrappers = { workspace = true }
 velona_tokio = { workspace = true }
+kurbo = { workspace = true }
 
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]

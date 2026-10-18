@@ -1,5 +1,3 @@
-mod widget;
-
 use std::sync::Arc;
 
 use masonry_widget_wrappers::WidgetWrapper;
@@ -15,7 +13,7 @@ use velona::{
     window::use_window,
 };
 
-use crate::title_bar::widget::TitleBarContainer;
+use drag_resize_regions::TitleBarContainer;
 
 const X_ICON: &[u8] = include_bytes!("../svgs/x.svg");
 

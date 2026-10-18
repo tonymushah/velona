@@ -1,6 +1,6 @@
-mod resize_region;
 mod title_bar;
 
+use drag_resize_regions::ResizeRegion;
 use masonry_widget_wrappers::WidgetWrapper;
 use velona::{
     VelonaAppExt, WindowBuilder,
@@ -14,8 +14,6 @@ use velona::{
     widgets::{View, align::IntoAlign},
 };
 use velona_renderer_vello_hybrid::{VelloHybridRendererOptions, create_wgpu_context};
-
-use crate::resize_region::ResizeRegion;
 
 fn view() -> impl View {
     ResizeRegion::new(

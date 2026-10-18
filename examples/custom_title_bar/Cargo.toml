@@ -13,8 +13,8 @@ async-io = { workspace = true }
 futures-util = { workspace = true }
 clonelicious.workspace = true
 tracing = { workspace = true }
-masonry_raw_box = { workspace = true }
 masonry_widget_wrappers = { workspace = true }
+drag_resize_regions.workspace = true
 
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]

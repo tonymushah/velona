@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-reqwest = { workspace =true, features = ["http2", "rustls", "charset", "gzip", "brotli","zstd", "system-proxy"] }
+reqwest = { workspace =true, features = ["http2", "rustls", "charset", "gzip", "brotli","zstd", "system-proxy", "json"] }
 serde = { workspace= true, features= ["derive"] }
 serde_json = { workspace = true }
 velona = { workspace = true, default-features = true }
@@ -16,10 +16,14 @@ tokio = { workspace = true, features = ["rt-multi-thread"] }
 futures-util = { workspace = true }
 clonelicious.workspace = true
 tracing = { workspace = true }
-masonry_raw_box = { workspace = true }
 masonry_widget_wrappers = { workspace = true }
 velona_tokio = { workspace = true }
 kurbo = { workspace = true }
+drag_resize_regions = { workspace = true }
+reactive_stores = { workspace = true  }
+thiserror = { workspace = true }
+url = { workspace = true, features = ["serde"] }
+governor = { workspace = true }
 
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]

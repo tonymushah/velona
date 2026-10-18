@@ -1,3 +1,5 @@
+pub mod client;
+
 use velona::{
     masonry::{core::NewWidget, widgets::Flex},
     widgets::View,

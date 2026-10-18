@@ -156,6 +156,5 @@ velona = { path = "velona", default-features = false }
 # nekosia dependencies
 reqwest = { version = "0.13", default-features = false }
 serde = { version = "1" }
-serde_json = { version = "1" }
 governor = { version = "0.10" }
 tempfile = { version = "3" }

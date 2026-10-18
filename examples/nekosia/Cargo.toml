@@ -12,12 +12,13 @@ velona_renderer_vello_hybrid.workspace = true
 env_logger.workspace = true
 log.workspace = true
 hotpath = { workspace = true, optional = true }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 futures-util = { workspace = true }
 clonelicious.workspace = true
 tracing = { workspace = true }
 masonry_raw_box = { workspace = true }
 masonry_widget_wrappers = { workspace = true }
+velona_tokio = { workspace = true }
 
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]

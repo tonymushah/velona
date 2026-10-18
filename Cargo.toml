@@ -30,6 +30,7 @@ members = [
     # Various tools
     "velona_router",
     "velona_reactive_resource",
+    "velona_tokio",
     # examples
     "examples/counter",
     "examples/align",
@@ -152,6 +153,9 @@ velona_accesskit_xplat = { path = "velona_accesskit_xplat" }
 
 # velona itself
 velona = { path = "velona", default-features = false }
+
+# various utilities
+velona_tokio = { path = "velona_tokio" }
 
 # nekosia dependencies
 reqwest = { version = "0.13", default-features = false }

@@ -1,0 +1,9 @@
+[package]
+name = "velona_tokio"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona_core.workspace = true
+tokio = { workspace = true, features = ["rt"] }
+any_spawner = { workspace = true }

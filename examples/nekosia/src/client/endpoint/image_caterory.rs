@@ -432,4 +432,204 @@ mod tests {
 
         assert_eq!(res.images[0].tags.len(), 12);
     }
+
+    #[tokio::test]
+    async fn test_multiple_parsing() {
+        let (server, client) = create_wiremock_client().await;
+
+        let response = json!({
+          "success": true,
+          "status": 200,
+          "count": 1608,
+          "images": [
+            {
+              "id": "67f1afb50d94aa59fbc9811d",
+              "colors": {
+                "main": "#5373BD",
+                "palette": [
+                  "#F2BAB8",
+                  "#1266B1",
+                  "#E7E8FD",
+                  "#B2769A",
+                  "#A18EAE",
+                  "#76BEEC",
+                  "#3F2F4F",
+                  "#A65D69",
+                  "#612E39",
+                  "#DE7B90",
+                  "#E2FCE3",
+                  "#2E5CE4",
+                  "#50E8FF",
+                  "#C8446C"
+                ]
+              },
+              "image": {
+                "original": {
+                  "url": "https://cdn.nekosia.cat/images/catgirl/67f1afb50d94aa59fbc9811d.png",
+                  "extension": "png"
+                },
+                "compressed": {
+                  "url": "https://cdn.nekosia.cat/images/catgirl/67f1afb50d94aa59fbc9811d-compressed.jpg",
+                  "extension": "jpeg"
+                }
+              },
+              "metadata": {
+                "original": {
+                  "width": 1254,
+                  "height": 1771,
+                  "size": 1739522,
+                  "extension": "png",
+                  "colorProfile": null
+                },
+                "compressed": {
+                  "width": 1280,
+                  "height": 1808,
+                  "size": 446282,
+                  "extension": "jpeg",
+                  "colorProfile": null
+                }
+              },
+              "category": "catgirl",
+              "tags": [
+                "catgirl",
+                "cat-ears",
+                "animal-ears",
+                "tail",
+                "cute",
+                "young-girl",
+                "skirt",
+                "socks",
+                "tail-from-under-skirt",
+                "uniform"
+              ],
+              "rating": "safe",
+              "anime": {
+                "title": null,
+                "character": null
+              },
+              "source": {
+                "url": "https://www.pixiv.net/en/artworks/128820223",
+                "direct": "https://i.pximg.net/img-original/img/2025/04/01/00/00/29/128820223_p0.png"
+              },
+              "attribution": {
+                "artist": {
+                  "username": "ぴろ瀬",
+                  "profile": "https://www.pixiv.net/en/users/19731971"
+                },
+                "copyright": "Copyright 2025 © by ぴろ瀬. All Rights Reserved."
+              }
+            },
+            {
+              "id": "6859b280acca2a268bbf97ed",
+              "colors": {
+                "main": "#E0C5B9",
+                "palette": [
+                  "#D9CED8",
+                  "#D8B8AE",
+                  "#A75C45",
+                  "#542E29",
+                  "#BBDDD4",
+                  "#BA8B7A",
+                  "#E66F73",
+                  "#F1DCD5",
+                  "#EFECDF",
+                  "#473443",
+                  "#F9F0EC",
+                  "#77617D",
+                  "#EC9B97",
+                  "#DD71A2"
+                ]
+              },
+              "image": {
+                "original": {
+                  "url": "https://cdn.nekosia.cat/images/catgirl/6859b280acca2a268bbf97ed.jpg",
+                  "extension": "jpeg"
+                },
+                "compressed": {
+                  "url": "https://cdn.nekosia.cat/images/catgirl/6859b280acca2a268bbf97ed-compressed.jpg",
+                  "extension": "jpeg"
+                }
+              },
+              "metadata": {
+                "original": {
+                  "width": 1191,
+                  "height": 1860,
+                  "size": 1871927,
+                  "extension": "jpeg",
+                  "colorProfile": "Display P3"
+                },
+                "compressed": {
+                  "width": 1280,
+                  "height": 1999,
+                  "size": 584995,
+                  "extension": "jpeg",
+                  "colorProfile": null
+                }
+              },
+              "category": "catgirl",
+              "tags": [
+                "catgirl",
+                "cat-ears",
+                "animal-ears",
+                "cute",
+                "blushing",
+                "donut",
+                "white-hair",
+                "yellow-eyes"
+              ],
+              "rating": "safe",
+              "anime": {
+                "title": null,
+                "character": null
+              },
+              "source": {
+                "url": "https://www.pixiv.net/en/artworks/92774035",
+                "direct": "https://i.pximg.net/img-original/img/2021/09/15/23/45/53/92774035_p0.jpg"
+              },
+              "attribution": {
+                "artist": {
+                  "username": "ツユハ",
+                  "profile": "https://www.pixiv.net/en/users/29694453"
+                },
+                "copyright": "Copyright 2021 © by ツユハ. All Rights Reserved."
+              }
+            }
+          ]
+        });
+
+        Mock::given(method("GET"))
+            .and(path("/images/cat-girl"))
+            .and(query_param("additionalTags", "skirt,twintails"))
+            .and(query_param("count", "2"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(response))
+            .mount(&server)
+            .await;
+
+        let res = client
+            .send_endpoint({
+                let mut endpoint = GetRandomFromCategory::new("cat-girl");
+                endpoint
+                    .additional_tag("skirt")
+                    .unwrap()
+                    .additional_tag("twintails")
+                    .unwrap()
+                    .count(NonZeroU8::new(2).unwrap())
+                    .unwrap();
+                endpoint
+            })
+            .await
+            .unwrap();
+
+        assert!(res.success);
+
+        assert_eq!(res.images.len(), 2);
+
+        assert_eq!(res.images[0].tags.len(), 10);
+
+        assert_eq!(res.images[0].category, "catgirl");
+
+        assert_eq!(res.images[1].tags.len(), 8);
+
+        assert_eq!(res.images[1].category, "catgirl");
+    }
 }

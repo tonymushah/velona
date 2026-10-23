@@ -1,4 +1,5 @@
 pub mod image;
+pub mod image_id;
 
 use serde::{Deserialize, Serialize};
 

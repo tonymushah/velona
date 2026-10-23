@@ -1,3 +1,4 @@
+pub mod get_image;
 pub mod image_caterory;
 
 use reqwest::{Request, Response};

@@ -1,4 +1,4 @@
-use std::{future::Pending, num::NonZeroU8};
+use std::num::NonZeroU8;
 
 use arrayvec::ArrayVec;
 use reqwest::Method;
@@ -248,6 +248,14 @@ impl Endpoint for GetRandomFromCategory {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+    use wiremock::{
+        Mock, ResponseTemplate,
+        matchers::{method, path, query_param},
+    };
+
+    use crate::client::for_tests::create_wiremock_client;
+
     use super::*;
 
     #[test]
@@ -309,5 +317,119 @@ mod tests {
                 serde_qs::to_string(&endpoint).unwrap().as_str()
             );
         }
+    }
+
+    #[tokio::test]
+    async fn test_single_parsing() {
+        let (server, client) = create_wiremock_client().await;
+
+        let response = json!({
+            "success": true,
+            "status": 200,
+            "count": 1608,
+            "id": "66e0c27d8358c411f61a94fe",
+            "colors": {
+                "main": "#ECC3BC",
+                "palette": [
+                    "#E7CDDF",
+                    "#EECCCC",
+                    "#BF6E7B",
+                    "#D79696",
+                    "#71484F",
+                    "#654F5D",
+                    "#F7EFDB",
+                    "#A07A8F",
+                    "#EF7E99",
+                    "#FDF2F0",
+                    "#E983AE",
+                    "#F6ACB0",
+                    "#F3F5F1",
+                    "#99B8E5"
+                ]
+            },
+            "image": {
+                "original": {
+                    "url": "https://cdn.nekosia.cat/images/catgirl/66e0c27d8358c411f61a94fe.jpg",
+                    "extension": "jpeg"
+                },
+                "compressed": {
+                    "url": "https://cdn.nekosia.cat/images/catgirl/66e0c27d8358c411f61a94fe-compressed.jpg",
+                    "extension": "jpeg"
+                }
+            },
+            "metadata": {
+                "original": {
+                    "width": 1290,
+                    "height": 1821,
+                    "size": 2117089,
+                    "extension": "jpeg",
+                    "colorProfile": null
+                },
+                "compressed": {
+                    "width": 1280,
+                    "height": 1807,
+                    "size": 508294,
+                    "extension": "jpeg",
+                    "colorProfile": null
+                }
+            },
+            "category": "catgirl",
+            "tags": [
+                "catgirl",
+                "cat-ears",
+                "animal-ears",
+                "tail",
+                "cute",
+                "w-sitting",
+                "blue-eyes",
+                "blushing",
+                "pink-hair",
+                "rawr",
+                "skirt",
+                "twintails"
+            ],
+            "rating": "safe",
+            "anime": {
+                "title": null,
+                "character": null
+            },
+            "source": {
+                "url": "https://www.pixiv.net/en/artworks/105116761",
+                "direct": "https://i.pximg.net/img-original/img/2023/02/05/20/53/38/105116761_p0.jpg"
+            },
+            "attribution": {
+                "artist": {
+                    "username": "めいび",
+                    "profile": "https://www.pixiv.net/en/users/89796887"
+                },
+                "copyright": "Copyright 2023 © by めいび. All Rights Reserved."
+            }
+        });
+
+        Mock::given(method("GET"))
+            .and(path("/images/cat-girl"))
+            .and(query_param("additionalTags", "skirt,twintails"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(response))
+            .mount(&server)
+            .await;
+
+        let res = client
+            .send_endpoint({
+                let mut endpoint = GetRandomFromCategory::new("cat-girl");
+                endpoint
+                    .additional_tag("skirt")
+                    .unwrap()
+                    .additional_tag("twintails")
+                    .unwrap();
+                endpoint
+            })
+            .await
+            .unwrap();
+
+        assert!(res.success);
+
+        assert_eq!(res.images.len(), 1);
+
+        assert_eq!(res.images[0].tags.len(), 12);
     }
 }

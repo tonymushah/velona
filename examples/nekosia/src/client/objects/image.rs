@@ -1,5 +1,5 @@
 use color::DynamicColor;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use url::Url;
 
 use crate::client::objects::Rating;
@@ -7,7 +7,9 @@ use crate::client::objects::Rating;
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ImageObjectColors {
+    #[serde(deserialize_with = "color_deser")]
     pub main: DynamicColor,
+    #[serde(deserialize_with = "colors_deser")]
     pub palette: Vec<DynamicColor>,
 }
 
@@ -76,10 +78,30 @@ pub struct ImageObject {
     pub id: String,
     pub colors: ImageObjectColors,
     pub image: ImageUrls,
-    pub metadata: String,
+    pub metadata: ImageMetadatas,
+    pub category: String,
     pub tags: Vec<String>,
     pub rating: Rating,
     pub anime: ImageAnimeSource,
     pub source: ImageSource,
     pub attribution: ImageAttribution,
+}
+
+fn color_deser<'de, D>(deserializer: D) -> Result<DynamicColor, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let hex = String::deserialize(deserializer)?;
+    color::parse_color(&hex).map_err(serde::de::Error::custom)
+}
+
+fn colors_deser<'de, D>(deserializer: D) -> Result<Vec<DynamicColor>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Vec::<String>::deserialize(deserializer)?
+        .into_iter()
+        .map(|a| color::parse_color(&a))
+        .collect::<Result<Vec<_>, color::ParseError>>()
+        .map_err(serde::de::Error::custom)
 }

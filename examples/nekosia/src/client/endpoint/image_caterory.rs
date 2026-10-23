@@ -1,7 +1,9 @@
-use std::num::NonZeroU8;
+use std::{future::Pending, num::NonZeroU8};
 
 use arrayvec::ArrayVec;
 use serde::Serialize;
+
+use crate::client::endpoint::Endpoint;
 
 type Tags20Array = ArrayVec<String, 20>;
 
@@ -103,6 +105,25 @@ impl GetRandomFromCategory {
             self.blacklisted_tags.push(tag.to_string());
             Ok(self)
         }
+    }
+}
+
+pub struct GetRandomFromCategoryResponse {}
+
+impl Endpoint for GetRandomFromCategory {
+    type Response = GetRandomFromCategoryResponse;
+
+    const PREHANDLE_ERRORS: bool = true;
+
+    fn build_request(&self, ctx: super::BuildRequestContext<'_>) -> reqwest::Request {
+        todo!()
+    }
+
+    fn handle_response(
+        &self,
+        response: reqwest::Response,
+    ) -> impl Future<Output = Result<Self::Response, crate::client::error::Error>> + Send {
+        todo!() as Pending<_>
     }
 }
 

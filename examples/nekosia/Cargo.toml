@@ -27,6 +27,10 @@ governor = { workspace = true }
 serde_qs = { workspace = true }
 arrayvec = { workspace = true, features = ["serde"] }
 
+[dev-dependencies]
+wiremock = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt"] }
+
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
 hotpath-cpu = ["hotpath/hotpath-cpu"]

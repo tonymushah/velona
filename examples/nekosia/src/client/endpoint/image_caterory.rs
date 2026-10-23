@@ -1,9 +1,13 @@
 use std::{future::Pending, num::NonZeroU8};
 
 use arrayvec::ArrayVec;
-use serde::Serialize;
+use reqwest::Method;
+use serde::{Deserialize, Serialize};
 
-use crate::client::{endpoint::Endpoint, objects::Rating};
+use crate::client::{
+    endpoint::{Endpoint, handle_response_as_json},
+    objects::{Rating, image::ImageObject},
+};
 
 type Tags20Array = ArrayVec<String, 20>;
 
@@ -168,22 +172,77 @@ enum SessionTypeRepr {
     Id,
 }
 
-pub struct GetRandomFromCategoryResponse {}
+#[derive(Debug, Clone)]
+pub struct GetRandomFromCategoryResponse {
+    pub success: bool,
+    pub status: u16,
+    pub key: Option<String>,
+    pub count: u64,
+    pub images: Vec<ImageObject>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ResponseBase {
+    success: bool,
+    status: u16,
+    key: Option<String>,
+    count: u64,
+}
+
+#[derive(Debug, Deserialize)]
+struct SingleResponse {
+    #[serde(flatten)]
+    base: ResponseBase,
+    #[serde(flatten)]
+    object: ImageObject,
+}
+
+#[derive(Debug, Deserialize)]
+struct MultiResponse {
+    #[serde(flatten)]
+    base: ResponseBase,
+    images: Vec<ImageObject>,
+}
 
 impl Endpoint for GetRandomFromCategory {
     type Response = GetRandomFromCategoryResponse;
 
     const PREHANDLE_ERRORS: bool = true;
 
-    fn build_request(&self, ctx: super::BuildRequestContext<'_>) -> reqwest::Request {
-        todo!()
+    fn build_request(
+        &self,
+        ctx: super::BuildRequestContext<'_>,
+    ) -> Result<reqwest::Request, crate::client::error::Error> {
+        let mut url = ctx
+            .base_url
+            .join(format!("images/{}", self.category).as_str())?;
+        url.set_query(serde_qs::to_string(self).ok().as_deref());
+        Ok(reqwest::Request::new(Method::GET, url))
     }
 
-    fn handle_response(
+    async fn handle_response(
         &self,
         response: reqwest::Response,
-    ) -> impl Future<Output = Result<Self::Response, crate::client::error::Error>> + Send {
-        todo!() as Pending<_>
+    ) -> Result<Self::Response, crate::client::error::Error> {
+        if self.count.is_some_and(|count| count.get() > 1) {
+            let res: MultiResponse = handle_response_as_json(response).await?;
+            Ok(GetRandomFromCategoryResponse {
+                success: res.base.success,
+                status: res.base.status,
+                key: res.base.key,
+                count: res.base.count,
+                images: res.images,
+            })
+        } else {
+            let res: SingleResponse = handle_response_as_json(response).await?;
+            Ok(GetRandomFromCategoryResponse {
+                success: res.base.success,
+                status: res.base.status,
+                key: res.base.key,
+                count: res.base.count,
+                images: vec![res.object],
+            })
+        }
     }
 }
 

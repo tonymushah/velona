@@ -166,3 +166,4 @@ governor = { version = "0.10" }
 tempfile = { version = "3" }
 serde_qs = { version = "1" }
 wiremock = { version = "0.6" }
+color = { version = "0.3" }

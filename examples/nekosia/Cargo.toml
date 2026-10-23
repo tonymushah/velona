@@ -24,6 +24,8 @@ reactive_stores = { workspace = true  }
 thiserror = { workspace = true }
 url = { workspace = true, features = ["serde"] }
 governor = { workspace = true }
+serde_qs = { workspace = true }
+arrayvec = { workspace = true, features = ["serde"] }
 
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]

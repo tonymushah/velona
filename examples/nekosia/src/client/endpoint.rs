@@ -1,3 +1,5 @@
+pub mod image_caterory;
+
 use reqwest::{Request, Response};
 use serde::de::DeserializeOwned;
 use url::Url;

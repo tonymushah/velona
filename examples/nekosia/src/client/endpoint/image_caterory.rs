@@ -409,6 +409,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path("/images/cat-girl"))
             .and(query_param("additionalTags", "skirt,twintails"))
+            .and(query_param("session", "ip"))
             .respond_with(ResponseTemplate::new(200).set_body_json(response))
             .mount(&server)
             .await;
@@ -420,7 +421,8 @@ mod tests {
                     .additional_tag("skirt")
                     .unwrap()
                     .additional_tag("twintails")
-                    .unwrap();
+                    .unwrap()
+                    .session(SessionType::Ip);
                 endpoint
             })
             .await
@@ -601,6 +603,8 @@ mod tests {
             .and(path("/images/cat-girl"))
             .and(query_param("additionalTags", "skirt,twintails"))
             .and(query_param("count", "2"))
+            .and(query_param("session", "id"))
+            .and(query_param("id", "2345"))
             .respond_with(ResponseTemplate::new(200).set_body_json(response))
             .mount(&server)
             .await;
@@ -614,7 +618,8 @@ mod tests {
                     .additional_tag("twintails")
                     .unwrap()
                     .count(NonZeroU8::new(2).unwrap())
-                    .unwrap();
+                    .unwrap()
+                    .session(SessionType::Id("2345".into()));
                 endpoint
             })
             .await

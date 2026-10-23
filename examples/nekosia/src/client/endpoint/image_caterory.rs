@@ -3,7 +3,7 @@ use std::{future::Pending, num::NonZeroU8};
 use arrayvec::ArrayVec;
 use serde::Serialize;
 
-use crate::client::endpoint::Endpoint;
+use crate::client::{endpoint::Endpoint, objects::Rating};
 
 type Tags20Array = ArrayVec<String, 20>;
 
@@ -11,6 +11,7 @@ type Tags20Array = ArrayVec<String, 20>;
 ///
 /// Check [https://nekosia.cat/documentation?page=endpoints#get-image-category] for more details
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetRandomFromCategory {
     #[serde(skip_serializing)]
     category: String,
@@ -29,6 +30,15 @@ pub struct GetRandomFromCategory {
         skip_serializing_if = "ArrayVec::is_empty"
     )]
     blacklisted_tags: ArrayVec<String, 20>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    rating: Option<Rating>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    session: Option<SessionTypeRepr>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    id: Option<String>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -49,6 +59,9 @@ impl GetRandomFromCategory {
             count: None,
             additional_tags: Default::default(),
             blacklisted_tags: Default::default(),
+            rating: None,
+            session: None,
+            id: None,
         }
     }
 }
@@ -106,6 +119,53 @@ impl GetRandomFromCategory {
             Ok(self)
         }
     }
+    /// &rating: Filters images by content rating.
+    ///
+    /// See [Content Ratings](https://nekosia.cat/documentation?page=introduction#content-ratings) for more details.
+    pub fn rating(&mut self, rating: Rating) -> &mut Self {
+        self.rating.replace(rating);
+        self
+    }
+
+    /// Session type used to avoid duplicates.
+    pub fn session(&mut self, session: SessionType) -> &mut Self {
+        self.session.replace(session.to_repr());
+        match session {
+            SessionType::Ip => {
+                self.id.take();
+            }
+            SessionType::Id(id) => {
+                self.id.replace(id);
+            }
+        }
+        self
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum SessionType {
+    /// Session identified based on the User's IP Address.
+    /// This is useful when you do not have a unique user identifier.
+    Ip,
+    /// Session identified based on a unique user identifier passed in the `id` parameter.
+    /// This can be, for example, a specific person's ID on Discord.
+    Id(String),
+}
+
+impl SessionType {
+    fn to_repr(&self) -> SessionTypeRepr {
+        match self {
+            SessionType::Ip => SessionTypeRepr::Ip,
+            SessionType::Id(_) => SessionTypeRepr::Id,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "camelCase")]
+enum SessionTypeRepr {
+    Ip,
+    Id,
 }
 
 pub struct GetRandomFromCategoryResponse {}
@@ -155,8 +215,40 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            "count=10&additional_tags=aaaa,asdd&blacklisted_tags=neko,opd-a",
+            "count=10&additionalTags=aaaa,asdd&blacklistedTags=neko,opd-a",
             serde_qs::to_string(&endpoint).unwrap().as_str()
         );
+    }
+
+    #[test]
+    fn test_query_string_with_session() {
+        let mut endpoint = GetRandomFromCategory::new("catgirl");
+
+        {
+            endpoint
+                .count(NonZeroU8::new(10).unwrap())
+                .unwrap()
+                .additional_tag("aaaa")
+                .unwrap()
+                .additional_tag("asdd")
+                .unwrap()
+                .blacklisted_tag("neko")
+                .unwrap()
+                .blacklisted_tag("opd-a")
+                .unwrap()
+                .session(SessionType::Ip);
+
+            assert_eq!(
+                "count=10&additionalTags=aaaa,asdd&blacklistedTags=neko,opd-a&session=ip",
+                serde_qs::to_string(&endpoint).unwrap().as_str()
+            );
+        }
+        {
+            endpoint.session(SessionType::Id("oooo".into()));
+            assert_eq!(
+                "count=10&additionalTags=aaaa,asdd&blacklistedTags=neko,opd-a&session=id&id=oooo",
+                serde_qs::to_string(&endpoint).unwrap().as_str()
+            );
+        }
     }
 }

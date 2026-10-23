@@ -1,5 +1,6 @@
 pub mod endpoint;
 pub mod error;
+pub mod objects;
 
 use std::{num::NonZeroU32, sync::Arc, time::Duration};
 

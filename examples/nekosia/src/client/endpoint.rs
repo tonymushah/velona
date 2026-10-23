@@ -1,5 +1,6 @@
 pub mod get_image;
 pub mod image_caterory;
+pub mod image_of_day;
 
 use reqwest::{Request, Response};
 use serde::de::DeserializeOwned;

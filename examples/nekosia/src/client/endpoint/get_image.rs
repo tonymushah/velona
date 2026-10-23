@@ -171,7 +171,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_error_parsing() {
+    async fn test_get_image_error_parsing() {
         let (server, client) = create_wiremock_client().await;
 
         let response = json!({

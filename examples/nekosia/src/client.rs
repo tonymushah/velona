@@ -27,15 +27,24 @@ pub struct NekosiaClient {
 
 impl NekosiaClient {
     pub fn new(reqwest_client: Client) -> NekosiaClient {
+        Self::new_with_base_url(reqwest_client, Url::parse(NEKOSIA_API_URL).unwrap())
+    }
+
+    pub fn new_with_base_url(reqwest_client: Client, base_url: Url) -> NekosiaClient {
         NekosiaClient {
             reqwest_client,
-            base_url: Url::parse(NEKOSIA_API_URL).unwrap(),
+            base_url,
             rate_limiter: DefaultDirectRateLimiter::direct(
                 Quota::with_period(Duration::from_secs(RATE_LIMIT_PERIOD_SECONDS))
                     .map(|e| e.allow_burst(NonZeroU32::new(RATE_LIMIT_QUOTA).unwrap()))
                     .unwrap_or(Quota::per_minute(NonZeroU32::new(10).unwrap())),
             ),
         }
+    }
+
+    pub fn rate_limiter(mut self, rate_limiter: DefaultDirectRateLimiter) -> NekosiaClient {
+        self.rate_limiter = rate_limiter;
+        self
     }
 }
 
@@ -77,6 +86,23 @@ impl NekosiaClient {
             self.send_request_without_handling_error(request).await?
         };
         endpoint.handle_response(response).await
+    }
+}
+
+#[cfg(test)]
+pub mod for_tests {
+    use wiremock::MockServer;
+
+    use super::*;
+    pub async fn create_wiremock_client() -> (MockServer, NekosiaClient) {
+        let mock_server = MockServer::start().await;
+
+        let client = NekosiaClient::new_with_base_url(
+            Client::new(),
+            Url::parse(mock_server.uri().as_str()).unwrap(),
+        );
+
+        (mock_server, client)
     }
 }
 

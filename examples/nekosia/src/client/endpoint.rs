@@ -14,7 +14,7 @@ pub trait Endpoint {
 
     const PREHANDLE_ERRORS: bool;
 
-    fn build_request(&self, ctx: BuildRequestContext<'_>) -> Request;
+    fn build_request(&self, ctx: BuildRequestContext<'_>) -> Result<Request, super::error::Error>;
 
     fn handle_response(
         &self,

@@ -70,7 +70,7 @@ impl NekosiaClient {
     {
         let request = endpoint.build_request(BuildRequestContext {
             base_url: &self.base_url,
-        });
+        })?;
         let response = if E::PREHANDLE_ERRORS {
             self.send_request(request).await?
         } else {
@@ -107,7 +107,10 @@ mod tests {
 
         const PREHANDLE_ERRORS: bool = true;
 
-        fn build_request(&self, _ctx: BuildRequestContext<'_>) -> Request {
+        fn build_request(
+            &self,
+            _ctx: BuildRequestContext<'_>,
+        ) -> Result<Request, super::error::Error> {
             todo!()
         }
 

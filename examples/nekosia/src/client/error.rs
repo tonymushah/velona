@@ -6,6 +6,7 @@ use url::Url;
 pub enum Error {
     Reqwest(#[from] reqwest::Error),
     NekosiaRequest(#[from] Box<RequestError>),
+    Url(#[from] url::ParseError),
 }
 
 #[derive(Debug, Deserialize, thiserror::Error)]

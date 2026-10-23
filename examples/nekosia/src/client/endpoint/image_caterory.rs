@@ -637,4 +637,49 @@ mod tests {
 
         assert_eq!(res.images[1].category, "catgirl");
     }
+
+    #[tokio::test]
+    async fn test_error_parsing() {
+        let (server, client) = create_wiremock_client().await;
+
+        let response = json!({
+          "success": false,
+          "status": 500,
+          "message": "Internal Error"
+        });
+
+        Mock::given(method("GET"))
+            .and(path("/images/cat-girl"))
+            .and(query_param("additionalTags", "skirt,twintails"))
+            .and(query_param("count", "2"))
+            .and(query_param("session", "id"))
+            .and(query_param("id", "2345"))
+            .respond_with(ResponseTemplate::new(500).set_body_json(response))
+            .mount(&server)
+            .await;
+
+        let res = client
+            .send_endpoint({
+                let mut endpoint = GetRandomFromCategory::new("cat-girl");
+                endpoint
+                    .additional_tag("skirt")
+                    .unwrap()
+                    .additional_tag("twintails")
+                    .unwrap()
+                    .count(NonZeroU8::new(2).unwrap())
+                    .unwrap()
+                    .session(SessionType::Id("2345".into()));
+                endpoint
+            })
+            .await
+            .unwrap_err();
+
+        assert_eq!(
+            match res {
+                crate::client::error::Error::NekosiaRequest(err) => err.message,
+                _ => unreachable!(),
+            },
+            "Internal Error"
+        )
+    }
 }

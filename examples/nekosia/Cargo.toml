@@ -28,6 +28,7 @@ serde_qs = { workspace = true }
 arrayvec = { workspace = true, features = ["serde"] }
 color = { workspace = true, features = ["serde"] }
 time = { workspace = true, features = ["parsing", "macros"] }
+velona_suspense = { workspace = true }
 
 [dev-dependencies]
 wiremock = { workspace = true }

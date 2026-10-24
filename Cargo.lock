@@ -3673,6 +3673,7 @@ dependencies = [
  "url",
  "velona",
  "velona_renderer_vello_hybrid",
+ "velona_suspense",
  "velona_tokio",
  "wiremock",
 ]
@@ -6876,6 +6877,7 @@ dependencies = [
 name = "velona_suspense"
 version = "0.1.0"
 dependencies = [
+ "futures-util",
  "masonry_raw_box",
  "reactive_graph",
  "velona_core",

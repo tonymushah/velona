@@ -7,3 +7,4 @@ edition.workspace = true
 velona_core.workspace = true
 reactive_graph.workspace = true
 masonry_raw_box.workspace = true
+futures-util.workspace = true

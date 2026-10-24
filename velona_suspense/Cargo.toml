@@ -1,0 +1,9 @@
+[package]
+name = "velona_suspense"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+velona_core.workspace = true
+reactive_graph.workspace = true
+masonry_raw_box.workspace = true

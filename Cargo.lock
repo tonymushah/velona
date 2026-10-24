@@ -6873,6 +6873,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "velona_suspense"
+version = "0.1.0"
+dependencies = [
+ "masonry_raw_box",
+ "reactive_graph",
+ "velona_core",
+]
+
+[[package]]
 name = "velona_tokio"
 version = "0.1.0"
 dependencies = [

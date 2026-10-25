@@ -23,7 +23,7 @@ fn main() {
     .with_spawn_fn(tokio_runtime.boxed_spawn_fn())
     .provide_context(tokio_runtime.handle())
     .with_window(
-        WindowBuilder::new(nekosia::main_view)
+        WindowBuilder::new(nekosia::layout)
             .with_title("Custom Title Bar")
             .with_decorations(false)
             .with_base_color(TRANSPARENT)

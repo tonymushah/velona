@@ -6690,6 +6690,7 @@ dependencies = [
  "velona_masonry_widgets",
  "velona_renderer",
  "velona_scoped_styling",
+ "velona_window_handlers_utils",
  "winit",
 ]
 
@@ -6890,6 +6891,15 @@ dependencies = [
  "any_spawner",
  "tokio",
  "velona_core",
+]
+
+[[package]]
+name = "velona_window_handlers_utils"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "velona_core",
+ "winit-core",
 ]
 
 [[package]]

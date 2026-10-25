@@ -32,6 +32,7 @@ members = [
     "velona_reactive_resource",
     "velona_tokio",
     "velona_suspense",
+    "velona_window_handlers_utils",
     "utils/drag_resize_regions",
     # examples
     "examples/counter",
@@ -48,7 +49,7 @@ members = [
     "examples/timer",
     "examples/timer-async-io-example",
     "examples/custom_title_bar",
-    "examples/nekosia"
+    "examples/nekosia",
 ]
 default-members = ["velona"]
 resolver = "3"
@@ -105,7 +106,7 @@ or_poisoned = { version = "0.1" }
 vello_hybrid = { version = "0.2", default-features = false }
 debug_timer = "0.1"
 wgpu = "29"
-glifo = { version = "0.3", default-features = true}
+glifo = { version = "0.3", default-features = true }
 ui-events = { version = "0.3" }
 url = { version = "2" }
 arrayvec = { version = "0.7" }
@@ -141,6 +142,7 @@ velona_subsecond = { path = "velona_subsecond" }
 velona_router = { path = "velona_router" }
 velona_masonry_widgets = { path = "velona_masonry_widgets" }
 velona_core_accesskit = { path = "velona_core_accesskit" }
+velona_window_handlers_utils = { path = "velona_window_handlers_utils" }
 
 # velona renderers
 velona_renderer_vello = { version = "0.1", path = "velona_renderer_vello" }

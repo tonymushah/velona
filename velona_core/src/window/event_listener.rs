@@ -100,76 +100,80 @@ impl WindowEventHandlers {
                 };
                 handlers.values().for_each(|h| (h)(action));
             }
-            HandleEvent::WindowEvent(event) => match event {
-                WindowEvent::Destroyed => {
-                    self.on_destroy_handler.values().for_each(|h| (h)());
-                }
-                WindowEvent::Focused(is_focused) => {
-                    self.on_focused_handler
-                        .values()
-                        .for_each(|h| (h)(*is_focused));
-                }
-                WindowEvent::Occluded(is_occluded) => {
-                    self.on_occluded_handler
-                        .values()
-                        .for_each(|h| (h)(*is_occluded));
-                }
-                WindowEvent::PointerEntered {
-                    device_id,
-                    position,
-                    primary,
-                    kind,
-                } => {
-                    self.on_pointer_entered_handler.values().for_each(|h| {
-                        (h)(&OnPointerDoSomething {
-                            device_id: *device_id,
-                            position: Some(*position),
-                            primary: *primary,
-                            kind: *kind,
-                        })
-                    });
-                }
-                WindowEvent::PointerLeft {
-                    device_id,
-                    position,
-                    primary,
-                    kind,
-                } => {
-                    self.on_pointer_left_handler.values().for_each(|h| {
-                        (h)(&OnPointerDoSomething {
-                            device_id: *device_id,
-                            position: *position,
-                            primary: *primary,
-                            kind: *kind,
-                        })
-                    });
-                }
-                WindowEvent::ThemeChanged(theme) => {
-                    self.on_theme_changed_handler
-                        .values()
-                        .for_each(|h| (h)(theme));
-                }
-                WindowEvent::KeyboardInput {
-                    device_id,
-                    event,
-                    is_synthetic,
-                } => {
-                    let to_send = OnKeyboardInput {
+            HandleEvent::WindowEvent(event) => self.handle_window_events(event),
+        }
+    }
+
+    fn handle_window_events(&self, event: &WindowEvent) {
+        match event {
+            WindowEvent::Destroyed => {
+                self.on_destroy_handler.values().for_each(|h| (h)());
+            }
+            WindowEvent::Focused(is_focused) => {
+                self.on_focused_handler
+                    .values()
+                    .for_each(|h| (h)(*is_focused));
+            }
+            WindowEvent::Occluded(is_occluded) => {
+                self.on_occluded_handler
+                    .values()
+                    .for_each(|h| (h)(*is_occluded));
+            }
+            WindowEvent::PointerEntered {
+                device_id,
+                position,
+                primary,
+                kind,
+            } => {
+                self.on_pointer_entered_handler.values().for_each(|h| {
+                    (h)(&OnPointerDoSomething {
                         device_id: *device_id,
-                        event: event.clone(),
-                        is_synthetic: *is_synthetic,
-                    };
-                    self.on_keyboard_input_handler
-                        .values()
-                        .for_each(|h| (h)(&to_send));
-                }
-                WindowEvent::ModifiersChanged(modifiers) => {
-                    self.on_modifiers_changed_handler
-                        .values()
-                        .for_each(|h| (h)(modifiers));
-                }
-                _ => {}
-            },
+                        position: Some(*position),
+                        primary: *primary,
+                        kind: *kind,
+                    })
+                });
+            }
+            WindowEvent::PointerLeft {
+                device_id,
+                position,
+                primary,
+                kind,
+            } => {
+                self.on_pointer_left_handler.values().for_each(|h| {
+                    (h)(&OnPointerDoSomething {
+                        device_id: *device_id,
+                        position: *position,
+                        primary: *primary,
+                        kind: *kind,
+                    })
+                });
+            }
+            WindowEvent::ThemeChanged(theme) => {
+                self.on_theme_changed_handler
+                    .values()
+                    .for_each(|h| (h)(theme));
+            }
+            WindowEvent::KeyboardInput {
+                device_id,
+                event,
+                is_synthetic,
+            } => {
+                let to_send = OnKeyboardInput {
+                    device_id: *device_id,
+                    event: event.clone(),
+                    is_synthetic: *is_synthetic,
+                };
+                self.on_keyboard_input_handler
+                    .values()
+                    .for_each(|h| (h)(&to_send));
+            }
+            WindowEvent::ModifiersChanged(modifiers) => {
+                self.on_modifiers_changed_handler
+                    .values()
+                    .for_each(|h| (h)(modifiers));
+            }
+            _ => {}
         }
     }
     pub fn add_handler_fn(&mut self, handler: RegisterWindowEventHandler) {

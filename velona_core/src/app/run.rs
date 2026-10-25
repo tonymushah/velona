@@ -870,7 +870,7 @@ where
         if let Some(first_time) = maybe_first_time {
             self.first_time_ui_event.replace(first_time);
         }
-        match event {
+        match &event {
             WindowEvent::Destroyed if self.windows.is_empty() => {
                 event_loop.exit();
             }
@@ -878,13 +878,13 @@ where
                 self.handle_redraw_request(window_id);
             }
             WindowEvent::SurfaceResized(size) => {
-                self.handle_resize_event(window_id, size);
+                self.handle_resize_event(window_id, *size);
             }
             WindowEvent::CloseRequested => {
                 self.windows.remove(&window_id);
             }
             WindowEvent::Ime(ime) => {
-                if let Some(ime) = winit_ime_to_masonry(ime) {
+                if let Some(ime) = winit_ime_to_masonry(ime.clone()) {
                     self.use_window_render_root(window_id, |render_root| {
                         render_root.handle_text_event(masonry_core::core::TextEvent::Ime(ime));
                     });
@@ -896,13 +896,19 @@ where
                 ..
             } => {
                 self.use_window_render_root(window_id, |rr| {
-                    rr.handle_window_event(masonry_core::core::WindowEvent::Rescale(scale_factor));
+                    rr.handle_window_event(masonry_core::core::WindowEvent::Rescale(*scale_factor));
                 });
             }
             _e => {
                 // log::trace!("event {:#?} handling is not implemented yet", _e);
             }
         }
+        // IMPORTANT We put this at the end because it might trigger some proxy wake up that might fail actions like "drag_resize".
+        self.use_window_ref(window_id, |window| {
+            window
+                .window_event_listeners
+                .handle_event(window::event_listener::HandleEvent::WindowEvent(&event));
+        });
     }
     fn memory_warning(&mut self, _event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
         self.windows.shrink_to_fit();

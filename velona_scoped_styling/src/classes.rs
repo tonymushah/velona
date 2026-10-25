@@ -9,6 +9,7 @@ pub struct ScopedClasses<const N: usize> {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+// TODO transform into bitflags
 pub struct ScopedClassesState {
     pub is_hovered: Option<bool>,
     pub is_active: Option<bool>,

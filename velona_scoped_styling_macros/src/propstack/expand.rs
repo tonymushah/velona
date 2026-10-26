@@ -23,20 +23,20 @@ pub fn expand(input: SelectorDeclarations) -> TokenStream {
 
 fn property_stack_declaration() -> TokenStream {
     quote! {
-        let mut property_stack = <$crate::ScopedPropstack as core::default::Default>::default();
+        let mut property_stack = <ScopedPropstack as core::default::Default>::default();
     }
 }
 
 fn create_classes_declaration(classes: RawClasses) -> TokenStream {
     let classes = classes.classes.iter();
     quote! {
-        const CLASSES: &[&str] = &[#(#classes),*]
+        const CLASSES: &[&str] = &[#(#classes),*];
     }
 }
 
 fn make_selector(state: Option<PropertyStateAtt>) -> TokenStream {
     let selector = quote! {
-        let mut selector = $crate::for_macros::Selector::classes(CLASSES);
+        let mut selector = Selector::classes(CLASSES);
     };
     let val = state.iter().flat_map(|state| {
         state.values.iter().map(|value| match value {
@@ -107,6 +107,7 @@ fn make_selector(state: Option<PropertyStateAtt>) -> TokenStream {
     }}
 }
 
+// TODO Dedup state declaration
 fn expand_property_declaration(property: Property) -> TokenStream {
     let state = make_selector(property.state);
     match property.property {

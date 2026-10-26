@@ -1,12 +1,20 @@
-use color::palette::css::{BLACK, WHITE};
+use clonelicious::clone;
+use color::{
+    AlphaColor,
+    palette::css::{BLACK, WHITE},
+};
 use drag_resize_regions::TitleBarContainer;
 use masonry_widget_wrappers::WidgetWrapper;
 use velona::{
     masonry::{
-        core::Widget,
-        properties::{Background, ContentColor},
+        core::{Selector, Widget},
+        layout::AsUnit,
+        properties::{Background, ContentColor, CornerRadius},
         widgets::{Button, Flex, Label, Svg},
-    }, widgets::{View, svg::usvg}, window::expect_window,
+    },
+    scoped_styling::{ApplyScopedStyles, ScopedPropstack},
+    widgets::{View, button::NewButtonPressEventsExt, svg::usvg},
+    window::expect_window,
 };
 
 const X_ICON: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/svgs/x.svg"));
@@ -20,17 +28,33 @@ const MINUS_ICON: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/s
 
 pub fn title_bar() -> impl View {
     let window = expect_window();
-    
-    Flex::row()
+
+    let button_styles = ScopedPropstack::default()
+        .static_prop(Selector::classes(&["buttons"]), CornerRadius::all(3.px()))
+        .static_prop(
+            Selector::classes(&["buttons"]),
+            Background::Color(AlphaColor::from_rgb8(0xaa, 0xaa, 0xaa)),
+        )
+        .static_prop(
+            Selector::classes(&["buttons", "min"]).with_hovered(true),
+            Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0xff)),
+        )
+        .static_prop(
+            Selector::classes(&["buttons", "max"]).with_hovered(true),
+            Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0x99)),
+        )
+        .static_prop(
+            Selector::classes(&["buttons", "close"]).with_hovered(true),
+            Background::Color(AlphaColor::from_rgb8(0xff, 0xaa, 0xaa)),
+        );
+
+    TitleBarContainer::new(Flex::row()
         .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::SpaceBetween)
         .cross_axis_alignment(velona::masonry::properties::types::CrossAxisAlignment::Center)
         .with_fixed(
-            TitleBarContainer::new(
-                Label::new("Nekosia")
-                    .prepare()
-                    .with_props(ContentColor::new(WHITE)),
-            )
-            .into_new_widget(),
+            Label::new("Nekosia")
+                .prepare()
+                .with_props(ContentColor::new(WHITE)),
         )
         .with_fixed(
             Flex::row()
@@ -38,15 +62,45 @@ pub fn title_bar() -> impl View {
                 .cross_axis_alignment(
                     velona::masonry::properties::types::CrossAxisAlignment::Center,
                 )
-                .with_fixed(action_button(MINUS_ICON))
-                .with_fixed(action_button(MAXIMIZE_ICON))
-                .with_fixed(action_button(X_ICON))
+                .with_fixed(
+                    action_button(MINUS_ICON)
+                        .with_class("min")
+                        .on_primary(clone!(window => move | | {
+                            if let Err(err) = window.set_minimized(true) {
+                                log::error!("{err}");
+                            }
+                        }))
+                        .apply(&button_styles))
+                .with_fixed_spacer(10.px())
+                .with_fixed(
+                    action_button(MAXIMIZE_ICON)
+                        .with_class("max")
+                        .on_primary(clone!(window => move | | {
+                            if let Err(err) = window.is_maximized().and_then(|maximized| window.set_maximized(!maximized)) {
+                                log::error!("{err}")
+                            }
+                        }))
+                        .apply(&button_styles)
+                )
+                .with_fixed_spacer(10.px())
+                .with_fixed(
+                    action_button(X_ICON)
+                        .with_class("close")
+                        .on_primary(clone!(window => move | | {
+                            if let Err(err) = window.close_window() {
+                                log::error!("{err}");
+                            }
+                        }))
+                        .apply(&button_styles)
+                )
                 .prepare(),
         )
         .prepare()
         // .with_props(BorderColor::new(BLACK))
         // .with_props(BorderWidth::all(20.px()))
         .with_props(Background::Color(BLACK))
+    )
+    .into_new_widget()
 }
 
 fn action_button(data: &[u8]) -> velona::masonry::core::NewWidget<Button> {
@@ -57,4 +111,5 @@ fn action_button(data: &[u8]) -> velona::masonry::core::NewWidget<Button> {
         .prepare(),
     )
     .prepare()
+    .with_class("buttons")
 }

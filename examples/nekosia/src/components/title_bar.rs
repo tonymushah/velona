@@ -12,7 +12,7 @@ use velona::{
         properties::{Background, ContentColor, CornerRadius},
         widgets::{Button, Flex, Label, Svg},
     },
-    scoped_styling::{ApplyScopedStyles, ScopedPropstack},
+    scoped_styling::{ApplyScopedStyles, ScopedPropstack, propstack},
     widgets::{View, button::NewButtonPressEventsExt, svg::usvg},
     window::expect_window,
 };
@@ -29,24 +29,24 @@ const MINUS_ICON: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/s
 pub fn title_bar() -> impl View {
     let window = expect_window();
 
-    let button_styles = ScopedPropstack::default()
-        .static_prop(Selector::classes(&["buttons"]), CornerRadius::all(3.px()))
-        .static_prop(
-            Selector::classes(&["buttons"]),
-            Background::Color(AlphaColor::from_rgb8(0xaa, 0xaa, 0xaa)),
-        )
-        .static_prop(
-            Selector::classes(&["buttons", "min"]).with_hovered(true),
-            Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0xff)),
-        )
-        .static_prop(
-            Selector::classes(&["buttons", "max"]).with_hovered(true),
-            Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0x99)),
-        )
-        .static_prop(
-            Selector::classes(&["buttons", "close"]).with_hovered(true),
-            Background::Color(AlphaColor::from_rgb8(0xff, 0xaa, 0xaa)),
-        );
+    let button_styles = propstack! {
+        ["buttons"] {
+            CornerRadius::all(3.px());
+            Background::Color(AlphaColor::from_rgb8(0xaa, 0xaa, 0xaa))
+        }
+        ["buttons", "min"] {
+            #[hover]
+            Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0xff));
+        }
+        ["buttons", "max"] {
+            #[hover]
+            Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0x99))
+        }
+        ["buttons", "close"] {
+            #[hover]
+            Background::Color(AlphaColor::from_rgb8(0xff, 0xaa, 0xaa))
+        }
+    };
 
     TitleBarContainer::new(Flex::row()
         .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::SpaceBetween)

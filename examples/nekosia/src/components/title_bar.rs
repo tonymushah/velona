@@ -37,14 +37,20 @@ pub fn title_bar() -> impl View {
         ["buttons", "min"] {
             #[hover]
             Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0xff));
+            #[active]
+            Background::Color(AlphaColor::from_rgb8(0x22, 0xff, 0xff))
         }
         ["buttons", "max"] {
             #[hover]
-            Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0x99))
+            Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0x99));
+            #[active]
+            Background::Color(AlphaColor::from_rgb8(0x22, 0xff, 0x22))
         }
         ["buttons", "close"] {
             #[hover]
-            Background::Color(AlphaColor::from_rgb8(0xff, 0xaa, 0xaa))
+            Background::Color(AlphaColor::from_rgb8(0xff, 0xaa, 0xaa));
+            #[active]
+            Background::Color(AlphaColor::from_rgb8(0xff,0x22, 0x22))
         }
     };
 

@@ -3650,6 +3650,7 @@ dependencies = [
 name = "nekosia"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "arrayvec",
  "clonelicious",
  "color",
@@ -3660,6 +3661,7 @@ dependencies = [
  "hotpath",
  "kurbo",
  "log",
+ "masonry_raw_box",
  "masonry_widget_wrappers",
  "reactive_stores",
  "reqwest",

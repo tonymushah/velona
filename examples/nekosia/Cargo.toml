@@ -29,6 +29,8 @@ arrayvec = { workspace = true, features = ["serde"] }
 color = { workspace = true, features = ["serde"] }
 time = { workspace = true, features = ["parsing", "macros"] }
 velona_suspense = { workspace = true }
+anyhow.workspace = true
+masonry_raw_box.workspace = true
 
 [dev-dependencies]
 wiremock = { workspace = true }

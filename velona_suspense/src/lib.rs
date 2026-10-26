@@ -12,10 +12,21 @@ use reactive_graph::{
 use velona_core::{NewWidgetExt, masonry_core::core::Widget, task::spawn_local, widgets::View};
 
 #[derive(Debug)]
-pub struct Suspsense;
+pub struct Suspsense<F: View> {
+    pub fallback: F,
+}
 
-impl Suspsense {
-    pub fn from_async_fn<C, V>(comp: C) -> impl View
+impl Default for Suspsense<()> {
+    fn default() -> Self {
+        Self { fallback: () }
+    }
+}
+
+impl<F> Suspsense<F>
+where
+    F: View + 'static,
+{
+    pub fn from_async_fn<C, V>(self, comp: C) -> impl View
     where
         C: AsyncFnOnce() -> V + 'static,
         V: View + 'static,
@@ -43,29 +54,31 @@ impl Suspsense {
                 let _ = task.await;
             });
         }
-        RawBox::empty().prepare().use_widget_mut(
-            move || {
-                notify.track();
-                value
-                    .write()
-                    .ok()
-                    .and_then(|mut d| d.take())
-                    .map(|v| v.into_new_widget())
-            },
-            |mut this, maybe_view| {
-                if let Some(new) = maybe_view {
-                    RawBox::set_child(&mut this, new);
-                } else {
-                    RawBox::remove_child(&mut this);
-                }
-            },
-        )
+        RawBox::new(self.fallback.into_new_widget())
+            .prepare()
+            .use_widget_mut(
+                move || {
+                    notify.track();
+                    value
+                        .write()
+                        .ok()
+                        .and_then(|mut d| d.take())
+                        .map(|v| v.into_new_widget())
+                },
+                |mut this, maybe_view| {
+                    if let Some(new) = maybe_view {
+                        RawBox::set_child(&mut this, new);
+                    } else {
+                        RawBox::remove_child(&mut this);
+                    }
+                },
+            )
     }
-    pub fn from_sync_fn<C, V>(comp: C) -> impl View
+    pub fn from_sync_fn<C, V>(self, comp: C) -> impl View
     where
         C: FnOnce() -> V + 'static,
         V: View + 'static,
     {
-        Suspsense::from_async_fn(async move || comp())
+        Suspsense::from_async_fn(self, async move || comp())
     }
 }

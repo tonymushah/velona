@@ -24,7 +24,7 @@ fn main() {
     .provide_context(tokio_runtime.handle())
     .with_window(
         WindowBuilder::new(nekosia::window_content)
-            .with_title("Custom Title Bar")
+            .with_title("Nekosia")
             .with_decorations(false)
             .with_base_color(TRANSPARENT)
             .with_transparent(true)

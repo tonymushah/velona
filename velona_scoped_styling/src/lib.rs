@@ -16,7 +16,7 @@ pub mod for_macros {
     pub use velona_core::masonry_core::core::Selector;
 }
 
-pub use velona_scoped_styling_macros::propstack;
+pub use velona_scoped_styling_macros::scoped_propstack;
 
 pub(crate) fn use_window_local() -> WindowHandle {
     use_window().expect("Cannot find current window handle in the current context")

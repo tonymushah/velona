@@ -12,7 +12,7 @@ use velona::{
         properties::{Background, ContentColor, CornerRadius},
         widgets::{Button, Flex, Label, Svg},
     },
-    scoped_styling::{ApplyScopedStyles, ScopedPropstack, propstack},
+    scoped_styling::{ApplyScopedStyles, ScopedPropstack, scoped_propstack},
     widgets::{View, button::NewButtonPressEventsExt, svg::usvg},
     window::expect_window,
 };
@@ -29,7 +29,7 @@ const MINUS_ICON: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/s
 pub fn title_bar() -> impl View {
     let window = expect_window();
 
-    let button_styles = propstack! {
+    let button_styles = scoped_propstack! {
         ["buttons"] {
             CornerRadius::all(3.px());
             Background::Color(AlphaColor::from_rgb8(0xaa, 0xaa, 0xaa))

@@ -1,6 +1,7 @@
 mod propstack;
 
 use proc_macro::TokenStream;
+use proc_macro_error3::proc_macro_error;
 
 // ```
 // propstack! {
@@ -14,6 +15,7 @@ use proc_macro::TokenStream;
 //	}
 // }
 // ```
+#[proc_macro_error]
 #[proc_macro]
 pub fn propstack(input: TokenStream) -> TokenStream {
     propstack::propstack_impl(proc_macro2::TokenStream::from(input)).into()

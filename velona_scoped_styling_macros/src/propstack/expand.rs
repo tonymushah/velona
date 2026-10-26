@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use proc_macro_error3::abort;
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::Expr;
+use quote::{format_ident, quote};
+use syn::{Expr, Ident};
 
 use crate::propstack::parsing::{
     Property, PropertyStateAtt, RawClasses, SelectorDeclaration, SelectorDeclarations,
@@ -34,7 +36,7 @@ fn create_classes_declaration(classes: RawClasses) -> TokenStream {
     }
 }
 
-fn make_selector(state: Option<PropertyStateAtt>) -> TokenStream {
+fn make_selector(state: Option<&PropertyStateAtt>) -> TokenStream {
     let selector = quote! {
         let mut selector = Selector::classes(CLASSES);
     };
@@ -108,13 +110,18 @@ fn make_selector(state: Option<PropertyStateAtt>) -> TokenStream {
 }
 
 // TODO Dedup state declaration
-fn expand_property_declaration(property: Property) -> TokenStream {
-    let state = make_selector(property.state);
-    match property.property {
+fn expand_property_declaration(
+    property: &Property,
+    state_map: &HashMap<&Option<PropertyStateAtt>, Ident>,
+) -> TokenStream {
+    let Some(state) = state_map.get(&property.state) else {
+        abort!(property.property, "Cannont find internal state ident");
+    };
+    match &property.property {
         Expr::Closure(value) => {
             let mut opt = false;
             let mut clones = Vec::<TokenStream>::new();
-            for att in property.attrs {
+            for att in &property.attrs {
                 if att.name == "opt" {
                     if opt {
                         abort!(att.name, "Cannot have `@opt` attribute twice");
@@ -134,11 +141,11 @@ fn expand_property_declaration(property: Property) -> TokenStream {
             if value.inputs.is_empty() {
                 let prop_fn = if opt {
                     quote! {
-                        property_stack = property_stack.prop_opt(#state, move|_| prop_fn());
+                        property_stack = property_stack.prop_opt(#state.clone(), move|_| prop_fn());
                     }
                 } else {
                     quote! {
-                        property_stack = property_stack.prop(#state, move|_| prop_fn());
+                        property_stack = property_stack.prop(#state.clone(), move|_| prop_fn());
                     }
                 };
                 quote! {{
@@ -151,11 +158,11 @@ fn expand_property_declaration(property: Property) -> TokenStream {
             } else {
                 if opt {
                     quote! {
-                        property_stack = property_stack.prop_opt(#state, #value)
+                        property_stack = property_stack.prop_opt(#state.clone(), #value)
                     }
                 } else {
                     quote! {
-                        property_stack = property_stack.prop(#state, #value)
+                        property_stack = property_stack.prop(#state.clone(), #value)
                     }
                 }
             }
@@ -168,7 +175,7 @@ fn expand_property_declaration(property: Property) -> TokenStream {
                 );
             } else {
                 quote! {
-                    property_stack = property_stack.static_prop(#state, #value);
+                    property_stack = property_stack.static_prop(#state.clone(), #value);
                 }
             }
         }
@@ -178,14 +185,31 @@ fn expand_property_declaration(property: Property) -> TokenStream {
 fn expand_declaration(input: SelectorDeclaration) -> TokenStream {
     let classes = create_classes_declaration(input.classes);
 
+    let state_map = input
+        .properties
+        .properties
+        .iter()
+        .enumerate()
+        .map(|a| (&a.1.state, format_ident!("state_{}", a.0)))
+        .collect::<HashMap<_, _>>();
+
+    let states = state_map.iter().map(|(state, name)| {
+        let selector = make_selector(state.as_ref());
+        quote! {
+            let #name = #selector;
+        }
+    });
+
     let properties = input
         .properties
         .properties
-        .into_iter()
-        .map(expand_property_declaration);
+        .iter()
+        .map(|a| expand_property_declaration(a, &state_map));
 
     quote! {{
         #classes
+
+        #(#states)*
 
         #(#properties)*
 

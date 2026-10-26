@@ -63,6 +63,7 @@ impl Parse for PropertyAAttribute {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PropertyStateAttValue {
     Single(Ident),
     Parenthed {
@@ -90,6 +91,7 @@ impl Parse for PropertyStateAttValue {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PropertyStateAtt {
     #[allow(unused)]
     pub pound_token: Token![#],

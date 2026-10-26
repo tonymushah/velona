@@ -6,3 +6,4 @@ edition.workspace = true
 [dependencies]
 velona_core.workspace = true
 log.workspace = true
+velona_scoped_styling_macros.workspace = true

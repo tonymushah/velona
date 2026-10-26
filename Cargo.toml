@@ -49,7 +49,7 @@ members = [
     "examples/timer",
     "examples/timer-async-io-example",
     "examples/custom_title_bar",
-    "examples/nekosia",
+    "examples/nekosia", "velona_scoped_styling_macros",
 ]
 default-members = ["velona"]
 resolver = "3"
@@ -137,6 +137,7 @@ velona_core = { path = "velona_core" }
 velona_renderer = { version = "0.1", path = "velona_renderer" }
 velona_core_child = { path = "velona_core_child" }
 velona_scoped_styling = { path = "velona_scoped_styling" }
+velona_scoped_styling_macros = { path = "velona_scoped_styling_macros" }
 velona_executor = { path = "velona_executor" }
 velona_subsecond = { path = "velona_subsecond" }
 velona_router = { path = "velona_router" }
@@ -162,6 +163,13 @@ velona = { path = "velona", default-features = false }
 velona_tokio = { path = "velona_tokio" }
 velona_suspense = { path = "velona_suspense" }
 drag_resize_regions = { path = "utils/drag_resize_regions" }
+
+# macros dependencies
+syn = "3"
+proc-macro2 = "1.0"
+quote = "1.0"
+prettyplease = "0.3"
+proc-macro-error3 = {version = "3", default-features = false}
 
 # nekosia dependencies
 reqwest = { version = "0.13", default-features = false }

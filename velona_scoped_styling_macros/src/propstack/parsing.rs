@@ -6,26 +6,14 @@ use syn::{
     token,
 };
 
-pub struct RawClass {
-    pub value: LitStr,
-    pub delimited: Option<Token![,]>,
-}
-
-impl Parse for RawClass {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        Ok(Self {
-            value: input.parse()?,
-            delimited: input.parse()?,
-        })
-    }
-}
-
 pub struct RawClasses {
+    #[allow(unused)]
     pub braquet: token::Bracket,
     pub classes: Punctuated<LitStr, Token![,]>,
 }
 
 impl RawClasses {
+    #[allow(unused)]
     pub fn get_classes_string(&self) -> Vec<String> {
         self.classes.iter().map(|class| class.value()).collect()
     }
@@ -46,6 +34,7 @@ impl Parse for RawClasses {
 pub struct PropertyAAttribute {
     pub suffix: Token![@],
     pub name: Ident,
+    #[allow(unused)]
     pub parenthesises: Option<token::Paren>,
     pub parenthesises_content: Option<Punctuated<Ident, Token![,]>>,
 }
@@ -78,6 +67,7 @@ pub enum PropertyStateAttValue {
     Single(Ident),
     Parenthed {
         parent: Ident,
+        #[allow(unused)]
         paren: token::Paren,
         inner_value: Ident,
     },
@@ -101,7 +91,9 @@ impl Parse for PropertyStateAttValue {
 }
 
 pub struct PropertyStateAtt {
+    #[allow(unused)]
     pub pound_token: Token![#],
+    #[allow(unused)]
     pub bracket: token::Bracket,
     pub values: Punctuated<PropertyStateAttValue, Token![,]>,
 }
@@ -147,6 +139,7 @@ impl Parse for Property {
 }
 
 pub struct Properties {
+    #[allow(unused)]
     pub braces: token::Brace,
     pub properties: Punctuated<Property, Token![;]>,
 }

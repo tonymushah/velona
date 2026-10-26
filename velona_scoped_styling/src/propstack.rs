@@ -135,6 +135,12 @@ impl ScopedPropstack {
     {
         self.prop_opt(selector, move |old_prop| Some(prop(old_prop)))
     }
+    pub fn static_prop<P>(self, selector: Selector, prop: P) -> Self
+    where
+        P: Property,
+    {
+        self.prop(selector, move |_| prop.clone())
+    }
 }
 
 impl ApplyToNewWidget for ScopedPropstack {

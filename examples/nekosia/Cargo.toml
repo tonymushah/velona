@@ -4,8 +4,17 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-reqwest = { workspace =true, features = ["http2", "rustls", "charset", "gzip", "brotli","zstd", "system-proxy", "json"] }
-serde = { workspace= true, features= ["derive"] }
+reqwest = { workspace = true, features = [
+    "http2",
+    "rustls",
+    "charset",
+    "gzip",
+    "brotli",
+    "zstd",
+    "system-proxy",
+    "json",
+] }
+serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 velona = { workspace = true, default-features = true }
 velona_renderer_vello_hybrid.workspace = true
@@ -20,7 +29,7 @@ masonry_widget_wrappers = { workspace = true }
 velona_tokio = { workspace = true }
 kurbo = { workspace = true }
 drag_resize_regions = { workspace = true }
-reactive_stores = { workspace = true  }
+reactive_stores = { workspace = true }
 thiserror = { workspace = true }
 url = { workspace = true, features = ["serde"] }
 governor = { workspace = true }
@@ -38,5 +47,5 @@ tokio = { workspace = true, features = ["macros", "rt"] }
 
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
-hotpath-cpu = ["hotpath","hotpath/hotpath-cpu"]
-hotpath-alloc = ["hotpath","hotpath/hotpath-alloc"]
+hotpath-cpu = ["hotpath", "hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath", "hotpath/hotpath-alloc"]

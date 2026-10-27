@@ -7,4 +7,4 @@ edition.workspace = true
 masonry_widget_wrappers.workspace = true
 tracing = { workspace = true }
 masonry_raw_box = { workspace = true }
-masonry_core = {workspace = true }
+masonry_core = { workspace = true }

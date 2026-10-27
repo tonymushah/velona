@@ -5,7 +5,11 @@ edition.workspace = true
 
 [dependencies]
 velona_renderer.workspace = true
-vello_cpu = { version = "0.2", default-features = false, features = ["std", "text", "u8_pipeline"] }
+vello_cpu = { version = "0.2", default-features = false, features = [
+    "std",
+    "text",
+    "u8_pipeline",
+] }
 softbuffer = { workspace = true }
 imaging.workspace = true
 kurbo.workspace = true

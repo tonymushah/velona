@@ -50,7 +50,7 @@ members = [
     "examples/timer",
     "examples/timer-async-io-example",
     "examples/custom_title_bar",
-    "examples/nekosia"
+    "examples/nekosia",
 ]
 default-members = ["velona"]
 resolver = "3"
@@ -170,7 +170,7 @@ syn = "3"
 proc-macro2 = "1.0"
 quote = "1.0"
 # prettyplease = "0.3"
-proc-macro-error3 = {version = "3", default-features = false}
+proc-macro-error3 = { version = "3", default-features = false }
 
 # nekosia dependencies
 reqwest = { version = "0.13", default-features = false }

@@ -43,4 +43,9 @@ masonry = { workspace = true }
 # default = ["hotpath"]
 hotpath = ["dep:hotpath", "hotpath/flume"]
 # testing = []
-subsecond = ["dep:velona_subsecond", "reactive_graph/subsecond", "dep:subsecond", "dep:dioxus-cli-config"]
+subsecond = [
+    "dep:velona_subsecond",
+    "reactive_graph/subsecond",
+    "dep:subsecond",
+    "dep:dioxus-cli-config",
+]

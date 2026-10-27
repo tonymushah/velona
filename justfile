@@ -34,7 +34,16 @@ clean:
     cargo clean
 
 hack_clippy:
-    cargo hack --each-feature clippy
+    cargo hack --each-feature \
+        --exclude velona \
+        --exclude velona_accesskit_xplat \
+        --exclude counter \
+        clippy
+    cargo hack \
+        -p velona \
+        -p velona_accesskit_xplat \
+        -p counter \
+         clippy
 
 fmt:
     cargo hack fmt
@@ -54,9 +63,11 @@ run_tests:
         --exclude todo_softbuffer \
         --exclude todo_subsecond \
         --exclude todo_vello_hybrid \
-        --exclude nekosia \
         --exclude counter \
-        --exclude timer \
+        --exclude router_example \
+        --exclude timer_example \
         --exclude timer-async-io-example \
         --exclude custom_title_bar \
+        --exclude velona \
+        --exclude velona_accesskit_xplat \
         test

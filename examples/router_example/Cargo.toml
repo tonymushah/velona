@@ -11,6 +11,6 @@ hotpath = { workspace = true, optional=true}
 env_logger = { workspace = true }
 
 [features]
-hotpath = ["dep:hotpath"]
-hotpath-cpu = ["hotpath/hotpath-cpu"]
-hotpath-alloc = ["hotpath/hotpath-alloc"]
+hotpath = ["dep:hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath", "hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath","hotpath/hotpath-alloc"]

@@ -7,8 +7,8 @@ edition.workspace = true
 proc-macro = true
 
 [dependencies]
-syn = { workspace = true }
+syn = { workspace = true, features = ["extra-traits", "full"] }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
-prettyplease = { workspace = true }
+# prettyplease = { workspace = true }
 proc-macro-error3 = { workspace = true, features = ["syn3-error"] }

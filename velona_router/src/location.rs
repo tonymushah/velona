@@ -35,6 +35,6 @@ mod tests {
 
         assert!(url.domain().is_none());
         assert!(!url.origin().is_tuple());
-        assert!(url.path_segments().is_none());
+        assert!(url.path_segments().is_some());
     }
 }

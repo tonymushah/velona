@@ -80,6 +80,7 @@ pub fn from_winit_key(winit_key: winit_core::keyboard::Key) -> Key {
             WNK::Meta => NamedKey::Super,
             #[expect(deprecated, reason = "Deprecated but not unused.")]
             WNK::Hyper => NamedKey::Hyper,
+            #[allow(deprecated)]
             WNK::Super => NamedKey::Meta,
             WNK::Enter => NamedKey::Enter,
             WNK::Tab => NamedKey::Tab,

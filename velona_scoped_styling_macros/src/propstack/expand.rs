@@ -226,7 +226,7 @@ mod tests {
     fn test_property_stack_declaration() {
         assert_eq!(
             property_stack_declaration().to_string(),
-            "let property_stack = < $ crate :: ScopedPropstack as core :: default :: Default > :: default () ;"
+            "let mut property_stack = < ScopedPropstack as core :: default :: Default > :: default () ;"
         );
     }
 
@@ -235,6 +235,6 @@ mod tests {
         let raw_classes: RawClasses = parse_quote!(["a", "b", "c"]);
 
         let val = create_classes_declaration(raw_classes).to_string();
-        assert_eq!(val, "const CLASSES : & [& str] = & [\"a\" , \"b\" , \"c\"]");
+        assert_eq!(val, "const CLASSES : & [& str] = & [\"a\" , \"b\" , \"c\"] ;");
     }
 }

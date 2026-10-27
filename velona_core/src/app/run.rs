@@ -42,7 +42,7 @@ use crate::{
     app::proxy::EventProxyHandle,
     app::{AppHandle, EventLoopEvent, window::WindowNew},
     utils::convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
-    utils::{FlumeReceiver, todo_warn_of_something},
+    utils::{FlumeReceiver, FlumeSender, todo_warn_of_something},
     window::{builder::WindowBuilder, renderer::WindowRendererFactory},
 };
 
@@ -58,7 +58,7 @@ where
     pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
     pub(crate) can_create_surfaces: bool,
     pub(crate) receiver: FlumeReceiver<EventLoopEvent>,
-    pub(crate) sender: flume::Sender<EventLoopEvent>,
+    pub(crate) sender: FlumeSender<EventLoopEvent>,
     pub(crate) on_event_loop_init: Option<OnEventLoopInitFns>,
     pub(crate) app_event_listeners: AppEventHandlers,
     pub(crate) fut_executor: Option<VelonaTasksExecutor>,

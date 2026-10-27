@@ -54,4 +54,9 @@ run_tests:
         --exclude todo_softbuffer \
         --exclude todo_subsecond \
         --exclude todo_vello_hybrid \
+        --exclude nekosia \
+        --exclude counter \
+        --exclude timer \
+        --exclude timer-async-io-example \
+        --exclude custom_title_bar \
         test

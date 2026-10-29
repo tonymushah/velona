@@ -933,7 +933,7 @@ where
     fn proxy_wake_up(&mut self, event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
         // #[cfg(feature = "hotpath")]
         // hotpath::dbg!(&event);
-        log::info!("Proxy wake up");
+        log::trace!("Proxy wake up");
 
         self.handle_app_events(event_loop);
     }

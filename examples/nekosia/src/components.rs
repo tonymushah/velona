@@ -1,9 +1,12 @@
+mod image_metadata;
 mod title_bar;
 
 use std::time::Duration;
 
+use clonelicious::clone;
 use color::{AlphaColor, palette::css::BLACK};
 use drag_resize_regions::ResizeRegion;
+use futures_util::FutureExt;
 use masonry_raw_box::RawBox;
 use masonry_widget_wrappers::WidgetWrapper;
 use velona::{
@@ -11,14 +14,20 @@ use velona::{
         core::Widget,
         layout::AsUnit,
         properties::{Background, BorderColor, BorderWidth, CornerRadius},
-        widgets::{Align, Flex, Label},
+        widgets::{Align, Button, Flex, Label, SizedBox},
     },
-    widgets::{View, align::IntoAlign, label::IntoLabel, portal::IntoPortal},
+    reactive::traits::Read,
+    widgets::{
+        View, align::IntoAlign, label::IntoLabel, portal::IntoPortal, sized_box::NewSizedBoxExt,
+    },
 };
-use velona_suspense::Suspsense;
+use velona_reactive_resource::Resource;
 use velona_tokio::expect_tokio_handle;
 
-use crate::client::{NekosiaClient, provide_client};
+use crate::{
+    client::{NekosiaClient, endpoint::image_of_day::ImageOfTheDay, expect_client, provide_client},
+    components::image_metadata::image_metadata_flex,
+};
 
 pub fn window_content() -> impl View {
     ResizeRegion::new(
@@ -75,4 +84,39 @@ async fn real_window_content() -> impl View {
     }
 }
 
-fn after_client_loaded() -> impl View {}
+fn after_client_loaded() -> impl View {
+    let client = expect_client();
+    let resource = Resource::new(move || {
+        velona_tokio::tokio_spawn(clone!(client => async move {
+            client.read().await.send_endpoint(ImageOfTheDay).await
+        }))
+        .map(|res| anyhow::Ok(res??))
+    });
+    Flex::column()
+        .with_fixed(
+            Flex::row()
+                .with_fixed(Button::new("Refetch".into_label().prepare()).prepare())
+                .prepare(),
+        )
+        .with_fixed(
+            SizedBox::new("Loading".into_label().prepare())
+                .prepare()
+                .child_opt(move || {
+                    log::debug!("aaaaaaaaaa");
+                    let read = resource.read();
+                    log::trace!("read done");
+                    let image_of_day = read.as_ref()?;
+                    log::debug!("Not empty");
+                    Some(match image_of_day {
+                        Ok(metadata) => image_metadata_flex(&metadata.object, None)
+                            .prepare()
+                            .erased(),
+                        Err(err) => {
+                            log::error!("{err}");
+                            Label::new(format!("{err}")).prepare().erased()
+                        }
+                    })
+                }),
+        )
+        .prepare()
+}

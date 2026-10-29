@@ -103,17 +103,17 @@ fn after_client_loaded() -> impl View {
             SizedBox::new("Loading".into_label().prepare())
                 .prepare()
                 .child_opt(move || {
-                    log::debug!("aaaaaaaaaa");
+                    // log::debug!("aaaaaaaaaa");
                     let read = resource.read();
-                    log::trace!("read done");
+                    // log::trace!("read done");
                     let image_of_day = read.as_ref()?;
-                    log::debug!("Not empty");
+                    // log::debug!("Not empty");
                     Some(match image_of_day {
                         Ok(metadata) => image_metadata_flex(&metadata.object, None)
                             .prepare()
                             .erased(),
                         Err(err) => {
-                            log::error!("{err}");
+                            // log::error!("{err}");
                             Label::new(format!("{err}")).prepare().erased()
                         }
                     })

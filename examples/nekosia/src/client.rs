@@ -12,7 +12,7 @@ use velona::reactive::owner::{expect_context, provide_context};
 
 use crate::client::endpoint::{BuildRequestContext, Endpoint};
 
-pub const NEKOSIA_API_URL: &str = "https://api.nekosia.cat/api/v1";
+pub const NEKOSIA_API_URL: &str = "https://api.nekosia.cat/api/v1/";
 
 pub const RATE_LIMIT_QUOTA: u32 = 300;
 

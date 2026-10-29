@@ -3659,6 +3659,7 @@ dependencies = [
  "futures-util",
  "governor",
  "hotpath",
+ "image",
  "kurbo",
  "log",
  "masonry_raw_box",

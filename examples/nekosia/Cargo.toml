@@ -40,6 +40,7 @@ time = { workspace = true, features = ["parsing", "macros"] }
 anyhow.workspace = true
 masonry_raw_box.workspace = true
 velona_reactive_resource.workspace = true
+image = {workspace = true, default-features = true }
 
 [dev-dependencies]
 wiremock = { workspace = true }

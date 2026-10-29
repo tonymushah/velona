@@ -8,10 +8,18 @@ use reactive_graph::{
     traits::{DefinedAt, IsDisposed, Read, ReadUntracked, Update},
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 pub struct Resource<T, S = SyncStorage> {
     derived: AsyncDerived<T, S>,
     refetch: WriteSignal<u64>,
+}
+
+impl<T, S> Copy for Resource<T, S> {}
+
+impl<T, S> Clone for Resource<T, S> {
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<T, S> Resource<T, S>

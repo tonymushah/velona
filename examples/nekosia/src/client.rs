@@ -46,6 +46,10 @@ impl NekosiaClient {
         self.rate_limiter = rate_limiter;
         self
     }
+
+    pub fn use_reqwest_client(&self) -> &Client {
+        &self.reqwest_client
+    }
 }
 
 impl NekosiaClient {

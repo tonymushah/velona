@@ -9,7 +9,7 @@ use velona::{
         core::Widget,
         layout::AsUnit,
         peniko::{Blob, ImageBrush, ImageData, ImageSampler},
-        properties::Dimensions,
+        properties::{Dimensions, Padding},
         widgets::Flex,
     },
     reactive::{computed::Memo, traits::Read},
@@ -102,5 +102,7 @@ pub fn image_view(obj: &ImageObject) -> impl View {
             })
             .into_new_sized_box(),
         );
-    image_metadata_flex(obj, Some(flex)).prepare()
+    image_metadata_flex(obj, Some(flex))
+        .prepare()
+        .with_props(Padding::bottom(10.px()))
 }

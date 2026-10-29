@@ -30,6 +30,7 @@ fn main() {
             .with_transparent(true)
             .with_blur(true),
     )
+    .accesskit_adapter_factory(velona_accesskit_xplat::XPlatAdapterFactory)
     .build()
     .run()
     .unwrap()

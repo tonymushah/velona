@@ -28,6 +28,8 @@ pub mod widgets;
 #[cfg_attr(docsrs, doc(feature = "subsecond"))]
 pub use velona_core::subsecond;
 // TODO add `layers` module
+#[doc(inline)]
+pub use velona_core::suspense;
 
 #[doc(inline)]
 pub use velona_core::reactive;

@@ -678,6 +678,7 @@ where
                         self.create_window_owner_children(edit_widget_fn_event.window_id);
                     self.use_window_render_root(edit_widget_fn_event.window_id, |root| {
                         if root.has_widget(edit_widget_fn_event.widget_id) {
+                            log::trace!("Trace editing widget {}", edit_widget_fn_event.widget_id);
                             root.edit_widget(edit_widget_fn_event.widget_id, |widget_mut| {
                                 if let Some(owner) = maybe_owner {
                                     owner.with_cleanup(|| {
@@ -687,6 +688,11 @@ where
                                     (edit_widget_fn_event.edit_fn)(widget_mut);
                                 }
                             });
+                        } else {
+                            log::warn!(
+                                "No widget found with id {}",
+                                edit_widget_fn_event.widget_id
+                            );
                         }
                     });
                 }

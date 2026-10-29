@@ -1,15 +1,21 @@
 use std::sync::{Arc, RwLock};
 
+use super::{NewWidgetExt, masonry_core::core::Widget, task::spawn_local, widgets::View};
 use futures_util::future::{AbortHandle, Abortable};
 use masonry_raw_box::RawBox;
 use reactive_graph::{
     computed::ScopedFuture,
-    owner::on_cleanup,
-    signal::Trigger,
+    owner::{on_cleanup, provide_context},
+    signal::{ReadSignal, Trigger, signal},
     traits::{Notify, Track},
     transition::AsyncTransition,
 };
-use velona_core::{NewWidgetExt, masonry_core::core::Widget, task::spawn_local, widgets::View};
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct SuspenseContext {
+    pub is_loaded: ReadSignal<bool>,
+    _n: (),
+}
 
 #[derive(Debug)]
 pub struct Suspsense<F: View> {
@@ -31,11 +37,16 @@ where
         C: AsyncFnOnce() -> V + 'static,
         V: View + 'static,
     {
+        let (is_loaded, set_loaded) = signal(false);
+
         let notify = Trigger::new();
-        let value = Arc::new(RwLock::new(None::<V>));
+        let value = Arc::new(RwLock::new(None::<Box<V>>));
         {
             let value = value.clone();
-            let transition = AsyncTransition::run(|| comp());
+            let transition = AsyncTransition::run(move || {
+                provide_context(SuspenseContext { is_loaded, _n: () });
+                comp()
+            });
 
             let (abort_handle, abort_registration) = AbortHandle::new_pair();
             on_cleanup(move || abort_handle.abort());
@@ -43,7 +54,7 @@ where
             let task = Abortable::new(
                 async move {
                     let view = transition.await;
-                    value.write().unwrap().replace(view);
+                    value.write().unwrap().replace(Box::new(view));
                     notify.notify();
                 },
                 abort_registration,
@@ -52,6 +63,7 @@ where
             let task = ScopedFuture::new_untracked(task);
             spawn_local(async move {
                 let _ = task.await;
+                set_loaded(true);
             });
         }
         RawBox::new(self.fallback.into_new_widget())

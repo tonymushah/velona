@@ -7,6 +7,7 @@ pub(crate) mod events;
 pub mod manager;
 pub mod render_root;
 pub mod subsecond;
+pub mod suspense;
 pub mod task;
 pub mod utils;
 pub mod widget_ref;

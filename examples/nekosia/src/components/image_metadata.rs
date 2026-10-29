@@ -7,7 +7,9 @@ use velona::{
     masonry::{
         self,
         core::Widget,
+        layout::AsUnit,
         peniko::{Blob, ImageBrush, ImageData, ImageSampler},
+        properties::Dimensions,
         widgets::Flex,
     },
     reactive::{computed::Memo, traits::Read},
@@ -65,6 +67,7 @@ pub fn image_view(obj: &ImageObject) -> impl View {
             .as_ref()
             .and_then(|d| d.as_ref().ok())
             .map(|data| {
+                let data = data.resize(500, 500, image::imageops::FilterType::Lanczos3);
                 let data = data.to_rgba8();
                 let width = data.width();
                 let height = data.height();
@@ -78,13 +81,16 @@ pub fn image_view(obj: &ImageObject) -> impl View {
                         width,
                         height,
                     },
-                    sampler: ImageSampler::new().with_quality(masonry::peniko::ImageQuality::Low),
+                    sampler: ImageSampler::new().with_quality(masonry::peniko::ImageQuality::High),
                 }
             })
     });
 
     let flex = Flex::column()
-        .with_fixed(lazy_image(image_data, None))
+        .with_fixed(lazy_image(image_data, None).with_props(Dimensions::new(
+            masonry::layout::Dim::Ratio(0.5),
+            masonry::layout::Dim::MinContent,
+        )))
         .with_fixed(
             (move || {
                 let read = maybe_image.read();

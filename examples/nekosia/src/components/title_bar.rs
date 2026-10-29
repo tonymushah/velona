@@ -110,6 +110,7 @@ pub fn title_bar() -> impl View {
 }
 
 fn action_button(data: &[u8]) -> velona::masonry::core::NewWidget<Button> {
+    log::debug!("Loadasdasdad asd");
     Button::new(
         Svg::new(std::sync::Arc::new(
             usvg::Tree::from_data(data, &Default::default()).unwrap(),

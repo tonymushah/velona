@@ -34,7 +34,7 @@ pub fn window_content() -> impl View {
     ResizeRegion::new(
         Flex::column()
             .with_fixed(title_bar::title_bar().into_new_widget())
-            .with_fixed(
+            .with(
                 Suspsense {
                     fallback: Align::centered(Label::new("Loading").prepare()).prepare(),
                 }
@@ -44,6 +44,7 @@ pub fn window_content() -> impl View {
                 .content_must_fill(true)
                 .constrain_horizontal(true)
                 .prepare(),
+                1.,
             ),
     )
     .into_new_widget()

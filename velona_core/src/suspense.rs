@@ -1,6 +1,6 @@
 use std::sync::{Arc, RwLock};
 
-use crate::task::tick;
+use crate::task::tick_local;
 
 use super::{NewWidgetExt, masonry_core::core::Widget, task::spawn_local, widgets::View};
 use futures_util::future::{AbortHandle, Abortable};
@@ -65,7 +65,7 @@ where
             let task = ScopedFuture::new_untracked(task);
             spawn_local(async move {
                 let _ = task.await;
-                tick().await;
+                tick_local().await;
                 set_loaded(true);
             });
         }

@@ -5,7 +5,7 @@ use std::{collections::HashMap, fmt::Debug};
 // use parking_lot::RwLock;
 
 use dpi::PhysicalPosition;
-use log::debug;
+use log::warn;
 use masonry_core::core::{ErasedAction, WidgetId};
 use winit_core::event::{DeviceId, KeyEvent, Modifiers, PointerKind, WindowEvent};
 
@@ -95,7 +95,7 @@ impl WindowEventHandlers {
         match ev {
             HandleEvent::Widget { widget_id, action } => {
                 let Some(handlers) = self.widget_handlers.get(&widget_id) else {
-                    debug!("no event handler registered for {:?}", widget_id);
+                    warn!("no event handler registered for {:?}", widget_id);
                     return;
                 };
                 handlers.values().for_each(|h| (h)(action));

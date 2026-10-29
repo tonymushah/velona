@@ -1,11 +1,13 @@
 use std::sync::{Arc, RwLock};
 
+use crate::task::tick;
+
 use super::{NewWidgetExt, masonry_core::core::Widget, task::spawn_local, widgets::View};
 use futures_util::future::{AbortHandle, Abortable};
 use masonry_raw_box::RawBox;
 use reactive_graph::{
     computed::ScopedFuture,
-    owner::{on_cleanup, provide_context},
+    owner::{on_cleanup, provide_context, use_context},
     signal::{ReadSignal, Trigger, signal},
     traits::{Notify, Track},
     transition::AsyncTransition,
@@ -63,9 +65,16 @@ where
             let task = ScopedFuture::new_untracked(task);
             spawn_local(async move {
                 let _ = task.await;
+                tick().await;
                 set_loaded(true);
             });
         }
+
+        debug_assert!(
+            use_context::<SuspenseContext>().is_none(),
+            "There should be no `SuspenseContext` available"
+        );
+
         RawBox::new(self.fallback.into_new_widget())
             .prepare()
             .use_widget_mut(

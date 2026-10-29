@@ -17,6 +17,7 @@ use velona::{
         widgets::{Align, Button, Flex, Label, SizedBox},
     },
     reactive::traits::Read,
+    suspense::Suspsense,
     widgets::{
         View, align::IntoAlign, label::IntoLabel, portal::IntoPortal, sized_box::NewSizedBoxExt,
     },

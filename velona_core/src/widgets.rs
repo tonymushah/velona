@@ -267,6 +267,10 @@ where
         let widget_ref = self.create_velona_ref();
         let edit_fn = ArenaItem::new_local(edit_fn);
         let suspense_context = use_context::<crate::suspense::SuspenseContext>();
+
+        if suspense_context.is_some() {
+            log::info!("Has suspense context!");
+        }
         Effect::new(move |effect_param: Option<Option<O>>| {
             let res = val_fn(effect_param.flatten());
 

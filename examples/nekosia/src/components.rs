@@ -22,11 +22,13 @@ use velona::{
 use velona_tokio::expect_tokio_handle;
 
 use crate::{
+    app_ctx::init_app_styles_store,
     client::{NekosiaClient, provide_client},
     components::routes::routes,
 };
 
 pub fn window_content() -> impl View {
+    init_app_styles_store();
     ResizeRegion::new(
         Flex::column()
             .with_fixed(title_bar::title_bar().into_new_widget())

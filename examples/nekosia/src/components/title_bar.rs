@@ -1,20 +1,23 @@
 use clonelicious::clone;
-use color::{
-    AlphaColor,
-    palette::css::{BLACK, WHITE},
-};
 use drag_resize_regions::TitleBarContainer;
 use masonry_widget_wrappers::WidgetWrapper;
 use velona::{
+    NewWidgetExt,
     masonry::{
         core::{Selector, Widget},
         layout::AsUnit,
         properties::{Background, ContentColor, CornerRadius},
         widgets::{Button, Flex, Label, Svg},
     },
+    reactive::traits::Get,
     scoped_styling::{ApplyScopedStyles, ScopedPropstack, scoped_propstack},
     widgets::{View, button::NewButtonPressEventsExt, svg::usvg},
     window::expect_window,
+};
+
+use crate::app_ctx::{
+    AppStylesStoreStoreFields, TitleBarActionButtonStyleStoreFields,
+    TitleBarActionButtonsStyleStoreFields, TitleBarStyleStoreFields, expect_app_styles_store,
 };
 
 const X_ICON: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/svgs/x.svg"));
@@ -28,29 +31,30 @@ const MINUS_ICON: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/s
 
 pub fn title_bar() -> impl View {
     let window = expect_window();
+    let app_styles = expect_app_styles_store();
 
     let button_styles = scoped_propstack! {
         ["buttons"] {
             CornerRadius::all(3.px());
-            Background::Color(AlphaColor::from_rgb8(0xaa, 0xaa, 0xaa))
+            move|| app_styles.title_bar_style().action_buttons().base_background().get()
         }
         ["buttons", "min"] {
             #[hover]
-            Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0xff));
+            move || app_styles.title_bar_style().action_buttons().min().hover().get();
             #[active]
-            Background::Color(AlphaColor::from_rgb8(0x22, 0xff, 0xff))
+            move || app_styles.title_bar_style().action_buttons().min().active().get()
         }
         ["buttons", "max"] {
             #[hover]
-            Background::Color(AlphaColor::from_rgb8(0xaa, 0xff, 0x99));
+            move || app_styles.title_bar_style().action_buttons().max().hover().get();
             #[active]
-            Background::Color(AlphaColor::from_rgb8(0x22, 0xff, 0x22))
+            move || app_styles.title_bar_style().action_buttons().max().active().get()
         }
         ["buttons", "close"] {
             #[hover]
-            Background::Color(AlphaColor::from_rgb8(0xff, 0xaa, 0xaa));
+            move || app_styles.title_bar_style().action_buttons().close().hover().get();
             #[active]
-            Background::Color(AlphaColor::from_rgb8(0xff,0x22, 0x22))
+            move || app_styles.title_bar_style().action_buttons().close().active().get()
         }
     };
 
@@ -60,7 +64,7 @@ pub fn title_bar() -> impl View {
         .with_fixed(
             Label::new("Nekosia")
                 .prepare()
-                .with_props(ContentColor::new(WHITE)),
+                .with_props_reactive(move|| ContentColor::new(app_styles.title_bar_style().text_color().get())),
         )
         .with_fixed(
             Flex::row()
@@ -104,13 +108,12 @@ pub fn title_bar() -> impl View {
         .prepare()
         // .with_props(BorderColor::new(BLACK))
         // .with_props(BorderWidth::all(20.px()))
-        .with_props(Background::Color(BLACK))
+        .with_props_reactive(move|| Background::Color(app_styles.title_bar_style().border_color().get()))
     )
     .into_new_widget()
 }
 
 fn action_button(data: &[u8]) -> velona::masonry::core::NewWidget<Button> {
-    log::debug!("Loadasdasdad asd");
     Button::new(
         Svg::new(std::sync::Arc::new(
             usvg::Tree::from_data(data, &Default::default()).unwrap(),

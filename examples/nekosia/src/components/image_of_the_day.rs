@@ -4,14 +4,17 @@ use velona::{
     AnyNewWidget,
     masonry::{
         core::Widget,
+        layout::AsUnit,
+        properties::Padding,
         widgets::{Button, Flex, Label, SizedBox},
     },
     reactive::traits::Read,
-    widgets::{View, label::IntoLabel, sized_box::NewSizedBoxExt},
+    widgets::{View, button::NewButtonPressEventsExt, label::IntoLabel, sized_box::NewSizedBoxExt},
 };
 use velona_reactive_resource::Resource;
 
 use crate::{
+    app_ctx::ApplyAppButtonStyle,
     client::{endpoint::image_of_day::ImageOfTheDay, expect_client},
     components::image_metadata::image_view,
 };
@@ -27,8 +30,16 @@ pub fn image_of_the_day() -> AnyNewWidget {
     Flex::column()
         .with_fixed(
             Flex::row()
-                .with_fixed(Button::new("Refetch".into_label().prepare()).prepare())
-                .prepare(),
+                .with_fixed(
+                    Button::new("Refetch".into_label().prepare())
+                        .prepare()
+                        .apply_primary_button_style()
+                        .on_primary(move || {
+                            resource.refetch();
+                        }),
+                )
+                .prepare()
+                .with_props(Padding::from_vh(4.px(), 2.px())),
         )
         .with_fixed(
             SizedBox::new("Loading".into_label().prepare())

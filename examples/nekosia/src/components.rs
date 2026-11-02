@@ -5,30 +5,32 @@ mod title_bar;
 
 use std::time::Duration;
 
-use color::{AlphaColor, palette::css::BLACK};
+use color::AlphaColor;
 use drag_resize_regions::ResizeRegion;
 use masonry_raw_box::RawBox;
 use masonry_widget_wrappers::WidgetWrapper;
 use velona::{
+    NewWidgetExt,
     masonry::{
         core::Widget,
         layout::AsUnit,
         properties::{Background, BorderColor, BorderWidth, CornerRadius},
         widgets::{Align, Flex, Label},
     },
+    reactive::traits::Get,
     suspense::Suspsense,
     widgets::{View, align::IntoAlign, label::IntoLabel, portal::IntoPortal},
 };
 use velona_tokio::expect_tokio_handle;
 
 use crate::{
-    app_ctx::init_app_styles_store,
+    app_ctx::{AppStylesStoreStoreFields, TitleBarStyleStoreFields, init_app_styles_store},
     client::{NekosiaClient, provide_client},
     components::routes::routes,
 };
 
 pub fn window_content() -> impl View {
-    init_app_styles_store();
+    let app_styles = init_app_styles_store();
     ResizeRegion::new(
         Flex::column()
             .with_fixed(title_bar::title_bar().into_new_widget())
@@ -47,7 +49,10 @@ pub fn window_content() -> impl View {
     )
     .into_new_widget()
     .with_props(Background::Color(AlphaColor::from_rgb8(0xff, 0xff, 0xff)))
-    .with_props((BorderWidth::all(5.px()), BorderColor::new(BLACK)))
+    .with_props(BorderWidth::all(5.px()))
+    .with_props_reactive(move || {
+        BorderColor::new(app_styles.title_bar_style().border_color().get())
+    })
     .with_props(CornerRadius::all(3.px()))
 }
 

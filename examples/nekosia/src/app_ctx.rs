@@ -81,6 +81,7 @@ pub struct ContentButtonStyleUnit {
     active: Background,
     hover: Background,
     border_color: BorderColor,
+    base_background: Background,
 }
 
 #[derive(Debug, Store)]
@@ -95,6 +96,7 @@ impl Default for ContentButtonStyles {
                 active: Background::Color(AlphaColor::from_rgba8(0x22, 0x22, 0x22, 0xff)),
                 hover: Background::Color(AlphaColor::from_rgba8(0xdd, 0xdd, 0xdd, 0xff)),
                 border_color: BorderColor::new(AlphaColor::from_rgba8(0, 0, 0, 0xff)),
+                base_background: Background::Color(AlphaColor::from_rgba8(0xf2, 0xf2, 0xf2, 0xff)),
             },
         }
     }
@@ -138,6 +140,7 @@ pub fn init_app_styles_store() -> Store<AppStylesStore> {
         }
         ["base_button", "primary"] {
             move || store.content_buttons_styles().primary().border_color().get();
+            move || store.content_buttons_styles().primary().base_background().get();
             #[hover]
             move || store.content_buttons_styles().primary().hover().get();
             #[active]

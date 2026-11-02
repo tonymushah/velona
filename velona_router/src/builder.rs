@@ -1,4 +1,4 @@
-use velona_core::{AnyNewWidget, reactive::signal::ArcRwSignal};
+use velona_core::{AnyNewWidget, reactive::signal::ArcRwSignal, widgets::View};
 
 use crate::{
     NavigationController,
@@ -54,6 +54,11 @@ impl Router {
             },
         )
         .build_view()
+    }
+
+    pub fn into_view(self) -> impl View {
+        let view_fn = self.build();
+        view_fn()
     }
 }
 

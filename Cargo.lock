@@ -3678,6 +3678,7 @@ dependencies = [
  "velona_accesskit_xplat",
  "velona_reactive_resource",
  "velona_renderer_vello_hybrid",
+ "velona_router",
  "velona_tokio",
  "wiremock",
 ]

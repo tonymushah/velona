@@ -42,6 +42,7 @@ masonry_raw_box.workspace = true
 velona_reactive_resource.workspace = true
 image = {workspace = true, default-features = true }
 velona_accesskit_xplat = { workspace = true }
+velona_router = { workspace = true }
 
 [dev-dependencies]
 wiremock = { workspace = true }

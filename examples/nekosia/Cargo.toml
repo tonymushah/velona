@@ -21,7 +21,7 @@ velona_renderer_vello_hybrid.workspace = true
 env_logger.workspace = true
 log.workspace = true
 hotpath = { workspace = true, optional = true }
-tokio = { workspace = true, features = ["rt-multi-thread"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "fs", "io-util"] }
 futures-util = { workspace = true }
 clonelicious.workspace = true
 tracing = { workspace = true }

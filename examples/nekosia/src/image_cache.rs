@@ -1,14 +1,10 @@
-use std::{
-    fs::File,
-    num::NonZeroUsize,
-    ops::{Deref, DerefMut},
-    sync::{Arc, Weak},
-};
+use std::{num::NonZeroUsize, sync::Arc};
 
-use clonelicious::clone;
+use image::ImageFormat;
 use lru::LruCache;
-use reactive_stores::{ArcStore, KeyedAccess, Store, StoreField};
+use reqwest::header::CONTENT_TYPE;
 use tokio::{
+    io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt, BufStream},
     sync::{
         mpsc::{UnboundedReceiver, UnboundedSender},
         oneshot,
@@ -21,10 +17,7 @@ use velona::{
         dpi::PhysicalSize,
         peniko::{Blob, ImageData, WeakBlob},
     },
-    reactive::{
-        computed::ArcMemo,
-        traits::{Read, ReadUntracked, SignalOrFn, UpdateUntracked, WithUntracked, Write},
-    },
+    reactive::traits::SignalOrFn,
 };
 use velona_reactive_resource::ArcResource;
 
@@ -44,19 +37,86 @@ pub enum ImageCacheError {
     TokioJoin(#[from] tokio::task::JoinError),
     #[error("the task tread already ended")]
     TaskThreadEnded,
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 }
 
-#[derive(Debug, Store)]
+#[derive(Debug)]
 struct ImageCacheEntryValue {
     image: WeakBlob<u8>,
     // The image blob temp file
-    file: File,
+    file: BufStream<tokio::fs::File>,
     size: PhysicalSize<u32>,
 }
 
 #[derive(Debug)]
 struct ImageCacheInner {
-    lru: LruCache<ImageCacheEntryKey, Result<ImageCacheEntryValue, Arc<ImageCacheError>>>,
+    lru: LruCache<ImageCacheEntryKey, ImageCacheEntryValue>,
+}
+
+impl ImageCacheInner {
+    async fn get_image_data(
+        &mut self,
+        key: &ImageCacheEntryKey,
+    ) -> Result<Option<ImageData>, ImageCacheError> {
+        match self.lru.get_mut(key) {
+            Some(entry) => {
+                let blob: Blob<u8> = match entry.image.upgrade() {
+                    Some(blob) => blob,
+                    None => {
+                        entry.file.rewind().await?;
+                        let mut buf = Vec::<u8>::new();
+                        entry.file.read_to_end(&mut buf).await?;
+                        let blob = Blob::new(Arc::new(buf));
+                        entry.image = blob.downgrade();
+                        blob
+                    }
+                };
+                Ok(Some(ImageData {
+                    data: blob,
+                    format: velona::masonry::peniko::ImageFormat::Rgba8,
+                    alpha_type: velona::masonry::peniko::ImageAlphaType::Alpha,
+                    width: entry.size.width,
+                    height: entry.size.height,
+                }))
+            }
+            None => Ok(None),
+        }
+    }
+    // Assuming that the `image` correspond at what said.
+    async fn insert_rgba_image(
+        &mut self,
+        entry: ImageCacheEntryKey,
+        image: image::RgbaImage,
+    ) -> Result<ImageData, ImageCacheError> {
+        let mut file = tokio::io::BufStream::new(tokio::fs::File::from_std(
+            tokio::task::spawn_blocking(tempfile::tempfile).await??,
+        ));
+        let size = PhysicalSize {
+            width: image.width(),
+            height: image.height(),
+        };
+        let buf = image.into_vec().into_boxed_slice();
+        file.write_all(&buf).await?;
+        file.flush().await?;
+        let blob = Blob::new(Arc::new(buf));
+        let weak_blob = blob.downgrade();
+        self.lru.put(
+            entry,
+            ImageCacheEntryValue {
+                image: weak_blob,
+                file,
+                size,
+            },
+        );
+        Ok(ImageData {
+            data: blob,
+            format: velona::masonry::peniko::ImageFormat::Rgba8,
+            alpha_type: velona::masonry::peniko::ImageAlphaType::Alpha,
+            width: size.width,
+            height: size.height,
+        })
+    }
 }
 
 struct ImageActionVal {
@@ -113,12 +173,61 @@ impl ImageCache {
     }
 }
 
+async fn fetch_rgba_image(
+    key: &ImageCacheEntryKey,
+    client: &reqwest::Client,
+) -> Result<image::RgbaImage, ImageCacheError> {
+    let response = client
+        .get(key.url.clone())
+        .send()
+        .await?
+        .error_for_status()?;
+
+    let format: ImageFormat = if let Some(format) = response
+        .headers()
+        .get(CONTENT_TYPE)
+        .and_then(|d| image::ImageFormat::from_mime_type(d.to_str().ok()?))
+    {
+        format
+    } else {
+        image::ImageFormat::from_path(key.url.path())?
+    };
+
+    let body_bytes = response.bytes().await?;
+    let mut dyn_img = image::load_from_memory_with_format(&body_bytes, format)?;
+    if let Some(target_size) = &key.size {
+        dyn_img = dyn_img.resize(
+            target_size.width,
+            target_size.height,
+            image::imageops::FilterType::Lanczos3,
+        );
+    }
+    Ok(dyn_img.into_rgba8())
+}
+
+async fn fetch_image(
+    key: ImageCacheEntryKey,
+    client: &reqwest::Client,
+    images: &mut ImageCacheInner,
+) -> Result<ImageData, ImageCacheError> {
+    let img = fetch_rgba_image(&key, client).await?;
+    images.insert_rgba_image(key, img).await
+}
+
 async fn task_run_fn(
     client: reqwest::Client,
     mut receiver: UnboundedReceiver<ImageActionVal>,
     mut images: ImageCacheInner,
 ) {
-    while let Some(todo) = receiver.recv().await {}
+    while let Some(todo) = receiver.recv().await {
+        if let Some(data) = images.get_image_data(&todo.key).await.transpose() {
+            let _ = todo.sender.send(data);
+        } else {
+            let _ = todo
+                .sender
+                .send(fetch_image(todo.key, &client, &mut images).await);
+        }
+    }
 }
 
 impl ImageCache {

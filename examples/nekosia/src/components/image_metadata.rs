@@ -9,7 +9,7 @@ use velona::{
         properties::{Dimensions, Padding},
         widgets::Flex,
     },
-    reactive::{computed::Memo, traits::Read},
+    reactive::{callback::UnsyncCallback, computed::Memo, traits::Read},
     widgets::{View, label::IntoLabel, sized_box::IntoNewSizedBox},
 };
 
@@ -67,11 +67,38 @@ pub fn image_view(obj: &ImageObject) -> impl View {
             })
     });
 
+    let source = obj.anime.clone();
     let flex = Flex::column()
-        .with_fixed(lazy_image(image_data, None).with_props(Dimensions::new(
-            masonry::layout::Dim::Ratio(0.5),
-            masonry::layout::Dim::MinContent,
-        )))
+        .with_fixed(
+            lazy_image(
+                image_data,
+                Some(velona::components::LazyImageOptions {
+                    fallback: Some(UnsyncCallback::new(move |_| {
+                        let mut to_show: String = "Loading".into();
+                        match (source.character.as_ref(), source.title.as_ref()) {
+                            (None, Some(title)) => {
+                                to_show = format!("{to_show} something from {title}...");
+                            }
+                            (Some(character), None) => {
+                                to_show = format!("{to_show} {character}...");
+                            }
+                            (Some(character), Some(title)) => {
+                                to_show = format!("{to_show} {character} from {title}...");
+                            }
+                            (None, None) => {
+                                to_show = format!("{to_show}...");
+                            }
+                        }
+                        to_show.into_label().prepare().erased()
+                    })),
+                    object_fit: None,
+                }),
+            )
+            .with_props(Dimensions::new(
+                masonry::layout::Dim::Ratio(0.5),
+                masonry::layout::Dim::MinContent,
+            )),
+        )
         .with_fixed(
             (move || {
                 let read = maybe_image.read();

@@ -10,8 +10,10 @@ use reactive_graph::{
 
 #[derive(Debug)]
 pub struct Resource<T, S = SyncStorage> {
-    derived: AsyncDerived<T, S>,
-    refetch: WriteSignal<u64>,
+    #[cfg(debug_assertions)]
+    pub(crate) defined_at: &'static Location<'static>,
+    pub(crate) derived: AsyncDerived<T, S>,
+    pub(crate) refetch: WriteSignal<u64>,
 }
 
 impl<T, S> Copy for Resource<T, S> {}
@@ -45,6 +47,8 @@ where
     {
         let (refetch, set_refetch) = signal(0u64);
         Self {
+            #[cfg(debug_assertions)]
+            defined_at: std::panic::Location::caller(),
             derived: AsyncDerived::new_with_initial(initial_value, move || {
                 let _ = refetch.read();
                 fun()
@@ -72,6 +76,8 @@ where
     {
         let (refetch, set_refetch) = signal(0u64);
         Self {
+            #[cfg(debug_assertions)]
+            defined_at: std::panic::Location::caller(),
             derived: AsyncDerived::new_unsync_threadsafe_storage(move || {
                 let _ = refetch.read();
                 fun()
@@ -95,6 +101,8 @@ where
     {
         let (refetch, set_refetch) = signal(0u64);
         Self {
+            #[cfg(debug_assertions)]
+            defined_at: std::panic::Location::caller(),
             derived: AsyncDerived::new_unsync_with_initial(initial_value, move || {
                 let _ = refetch.read();
                 fun()
@@ -117,7 +125,7 @@ impl<T> DefinedAt for Resource<T> {
     fn defined_at(&self) -> Option<&'static Location<'static>> {
         #[cfg(debug_assertions)]
         {
-            self.derived.defined_at()
+            Some(self.defined_at)
         }
         #[cfg(not(debug_assertions))]
         {

@@ -7,7 +7,6 @@ use std::time::Duration;
 
 use color::AlphaColor;
 use drag_resize_regions::ResizeRegion;
-use masonry_raw_box::RawBox;
 use masonry_widget_wrappers::WidgetWrapper;
 use velona::{
     NewWidgetExt,
@@ -27,6 +26,7 @@ use crate::{
     app_ctx::{AppStylesStoreStoreFields, TitleBarStyleStoreFields, init_app_styles_store},
     client::{NekosiaClient, provide_client},
     components::routes::routes,
+    image_cache::{ImageCache, provide_image_cache},
 };
 
 pub fn window_content() -> impl View {
@@ -75,17 +75,20 @@ async fn load_client() -> anyhow::Result<NekosiaClient> {
 async fn real_window_content() -> impl View {
     match load_client().await {
         Ok(client) => {
+            provide_image_cache(ImageCache::new(
+                client.use_reqwest_client().clone(),
+                expect_tokio_handle(),
+            ));
             provide_client(client);
-            RawBox::new(after_client_loaded().into_new_widget()).prepare()
+
+            after_client_loaded().into_erased()
         }
-        Err(err) => RawBox::new(
-            format!("{err}")
-                .into_label()
-                .prepare()
-                .align_centered()
-                .prepare(),
-        )
-        .prepare(),
+        Err(err) => format!("{err}")
+            .into_label()
+            .prepare()
+            .align_centered()
+            .prepare()
+            .erased(),
     }
 }
 

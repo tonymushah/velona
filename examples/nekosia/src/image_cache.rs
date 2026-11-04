@@ -17,7 +17,10 @@ use velona::{
         dpi::PhysicalSize,
         peniko::{Blob, ImageData, WeakBlob},
     },
-    reactive::traits::SignalOrFn,
+    reactive::{
+        owner::{expect_context, provide_context},
+        traits::SignalOrFn,
+    },
 };
 use velona_reactive_resource::ArcResource;
 
@@ -154,6 +157,13 @@ impl ImageCache {
     pub async fn image_of(&self, entry: ImageCacheEntryKey) -> Result<ImageData, ImageCacheError> {
         image_of_inner(self.sender_task.clone(), entry).await
     }
+    pub fn image_of_as_res(
+        &self,
+        entry: ImageCacheEntryKey,
+    ) -> ArcResource<Result<ImageData, ImageCacheError>> {
+        let sender = self.sender_task.clone();
+        ArcResource::new(move || image_of_inner(sender.clone(), entry.clone()))
+    }
     pub fn image_of_signal<E>(&self, entry: E) -> ArcResource<Result<ImageData, ImageCacheError>>
     where
         E: SignalOrFn<Output = ImageCacheEntryKey> + Send + Sync + 'static,
@@ -250,4 +260,14 @@ impl Drop for ImageCache {
     fn drop(&mut self) {
         self.task_thread.abort();
     }
+}
+
+pub fn provide_image_cache(cache: ImageCache) -> Arc<ImageCache> {
+    let cache = Arc::new(cache);
+    provide_context(cache.clone());
+    cache
+}
+
+pub fn expect_image_cache() -> Arc<ImageCache> {
+    expect_context()
 }

@@ -7,6 +7,8 @@ use reactive_graph::{
     traits::{DefinedAt, IsDisposed, Read, ReadUntracked, Update},
 };
 
+use crate::Resource;
+
 #[derive(Debug, Clone)]
 pub struct ArcResource<T> {
     #[cfg(debug_assertions)]
@@ -81,6 +83,15 @@ where
         Fut: Future<Output = T> + 'static,
     {
         Self::new_unsync_with_initial(None, fun)
+    }
+
+    pub fn into_resource(self) -> Resource<T> {
+        Resource {
+            #[cfg(debug_assertions)]
+            defined_at: std::panic::Location::caller(),
+            derived: self.derived.into(),
+            refetch: self.refetch.into(),
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-use std::panic::Location;
+use std::{ops::Deref, panic::Location};
 
 use reactive_graph::{
     computed::AsyncDerived,
@@ -14,6 +14,13 @@ pub struct Resource<T, S = SyncStorage> {
     pub(crate) defined_at: &'static Location<'static>,
     pub(crate) derived: AsyncDerived<T, S>,
     pub(crate) refetch: WriteSignal<u64>,
+}
+
+impl<T, S> Deref for Resource<T, S> {
+    type Target = AsyncDerived<T, S>;
+    fn deref(&self) -> &Self::Target {
+        &self.derived
+    }
 }
 
 impl<T, S> Copy for Resource<T, S> {}

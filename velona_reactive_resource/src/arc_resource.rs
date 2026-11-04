@@ -1,4 +1,4 @@
-use std::panic::Location;
+use std::{ops::Deref, panic::Location};
 
 use reactive_graph::{
     computed::ArcAsyncDerived,
@@ -15,6 +15,14 @@ pub struct ArcResource<T> {
     defined_at: &'static Location<'static>,
     derived: ArcAsyncDerived<T>,
     refetch: ArcWriteSignal<u64>,
+}
+
+impl<T> Deref for ArcResource<T> {
+    type Target = ArcAsyncDerived<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.derived
+    }
 }
 
 impl<T> ArcResource<T>

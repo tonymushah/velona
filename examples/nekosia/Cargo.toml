@@ -43,10 +43,13 @@ velona_reactive_resource.workspace = true
 image = {workspace = true, default-features = true }
 velona_accesskit_xplat = { workspace = true }
 velona_router = { workspace = true }
+tempfile = { workspace = true }
+lru = { workspace = true }
 
 [dev-dependencies]
 wiremock = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt"] }
+any_spawner = { workspace = true, features = ["async-executor"] }
 
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]

@@ -18,7 +18,7 @@ use velona::{
     },
     reactive::traits::Get,
     suspense::Suspsense,
-    widgets::{View, align::IntoAlign, label::IntoLabel, portal::IntoPortal},
+    widgets::{View, align::IntoAlign, label::IntoLabel},
 };
 use velona_tokio::expect_tokio_handle;
 
@@ -39,11 +39,7 @@ pub fn window_content() -> impl View {
                     fallback: Align::centered(Label::new("Loading").prepare()).prepare(),
                 }
                 .from_async_fn(real_window_content)
-                .into_new_widget()
-                .into_portal()
-                .content_must_fill(true)
-                .constrain_horizontal(true)
-                .prepare(),
+                .into_new_widget(),
                 1.,
             ),
     )

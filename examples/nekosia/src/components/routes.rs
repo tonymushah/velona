@@ -4,12 +4,15 @@ use velona::{
     masonry::{
         core::{NewWidget, Selector, Widget},
         layout::AsUnit,
-        properties::{Background, BorderColor, BorderWidth},
+        properties::{Background, BorderColor, BorderWidth, Padding},
         widgets::{Button, Flex, Split},
     },
     reactive::computed::Memo,
     scoped_styling::{ApplyScopedStyles, ScopedPropstack, scoped_propstack},
-    widgets::{View, button::NewButtonPressEventsExt, label::IntoLabel},
+    widgets::{
+        View, align::IntoAlign, button::NewButtonPressEventsExt, label::IntoLabel,
+        portal::IntoPortal,
+    },
 };
 use velona_router::{Route, Router, components::outlet, use_navigation_controller};
 
@@ -17,17 +20,33 @@ use crate::components::image_of_the_day;
 
 pub fn routes() -> impl View {
     Router::default()
-        .route(Route::layout(routes_layout).child(Route::index(image_of_the_day::image_of_the_day)))
+        .route(
+            Route::layout(routes_layout)
+                .child(Route::index(image_of_the_day::image_of_the_day))
+                .child(Route::wildcard("any", not_found)),
+        )
         .into_view()
 }
 
 fn routes_layout() -> AnyNewWidget {
-    Split::new(sidebar_content().into_erased(), outlet())
-        .solid_bar(true)
-        .draggable(false)
-        .split_point_from_start(50.px())
-        .prepare()
-        .erased()
+    Split::new(
+        sidebar_content()
+            .into_erased()
+            .into_portal()
+            .content_must_fill(true)
+            .prepare(),
+        outlet()
+            .into_portal()
+            .content_must_fill(true)
+            .constrain_horizontal(true)
+            .prepare()
+            .with_props(Padding::from_vh(0.px(), 10.px())),
+    )
+    .solid_bar(true)
+    .draggable(false)
+    .split_point_from_start(150.px())
+    .prepare()
+    .erased()
 }
 
 fn sidebar_content() -> impl View {
@@ -37,7 +56,7 @@ fn sidebar_content() -> impl View {
             Background::Color(AlphaColor::from_rgb8(0xfa, 0xfe, 0xfd));
             BorderWidth::all(1.px());
         }
-        ["active-button"] {
+        ["active-route"] {
             Background::Color(AlphaColor::from_rgb8(0xef, 0xef, 0xef))
         }
     };
@@ -54,7 +73,7 @@ fn sidebar_button(route: String, label: String) -> NewWidget<Button> {
     let current = n_c.current();
     let is_active = {
         let route = route.clone();
-        Memo::new(move |_| current().path().starts_with(&route))
+        Memo::new(move |_| current().path() == route)
     };
     Button::new(label.into_label().prepare())
         .prepare()
@@ -71,4 +90,13 @@ fn sidebar_button(route: String, label: String) -> NewWidget<Button> {
             }
         })
         .disabled_reactive(is_active)
+}
+
+fn not_found() -> AnyNewWidget {
+    "Not found or Not yet implement"
+        .into_label()
+        .prepare()
+        .align_centered()
+        .prepare()
+        .erased()
 }

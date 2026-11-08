@@ -64,7 +64,7 @@ fn sidebar_content() -> impl View {
         .cross_axis_alignment(velona::masonry::properties::types::CrossAxisAlignment::Center)
         .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::Start)
         .with_fixed(sidebar_button("/".into(), "Image of the day".into()).apply(&btn_style))
-        .with_fixed(sidebar_button("/images".into(), "Images".into()).apply(&btn_style))
+        .with_fixed(sidebar_button("/booru".into(), "Booru".into()).apply(&btn_style))
         .prepare()
 }
 

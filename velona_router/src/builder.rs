@@ -78,6 +78,7 @@ pub struct Route {
     parent_id: Option<RouteId>,
 }
 
+// TODO refactor view fns into Fn() -> V where V is View
 impl Route {
     pub fn layout<V>(view: V) -> Self
     where

@@ -16,13 +16,17 @@ use velona::{
 };
 use velona_router::{Route, Router, components::outlet, use_navigation_controller};
 
-use crate::components::image_of_the_day;
+use crate::components::{booru_page, image_of_the_day};
 
 pub fn routes() -> impl View {
     Router::default()
         .route(
             Route::layout(routes_layout)
                 .child(Route::index(image_of_the_day::image_of_the_day))
+                .child(
+                    Route::static_("booru", booru_page::booru_layout)
+                        .child(Route::params("category", booru_page::booru_page)),
+                )
                 .child(Route::wildcard("any", not_found)),
         )
         .into_view()

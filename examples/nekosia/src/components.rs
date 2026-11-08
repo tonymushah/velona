@@ -1,3 +1,4 @@
+mod booru_page;
 mod image_metadata;
 mod image_of_the_day;
 mod routes;

@@ -25,11 +25,20 @@ pub fn routes() -> impl View {
                 .child(Route::index(image_of_the_day::image_of_the_day))
                 .child(
                     Route::static_("booru", booru_page::booru_layout)
+                        .child(Route::index(|| redirect("/booru/random")))
                         .child(Route::params("category", booru_page::booru_page)),
                 )
                 .child(Route::wildcard("any", not_found)),
         )
         .into_view()
+}
+
+fn redirect(route: &'static str) -> AnyNewWidget {
+    if let Err(err) = use_navigation_controller().push(route) {
+        log::error!("{err}");
+    }
+
+    ().into_erased()
 }
 
 fn routes_layout() -> AnyNewWidget {
@@ -67,17 +76,24 @@ fn sidebar_content() -> impl View {
     Flex::column()
         .cross_axis_alignment(velona::masonry::properties::types::CrossAxisAlignment::Center)
         .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::Start)
-        .with_fixed(sidebar_button("/".into(), "Image of the day".into()).apply(&btn_style))
-        .with_fixed(sidebar_button("/booru".into(), "Booru".into()).apply(&btn_style))
+        .with_fixed(sidebar_button("/".into(), "Image of the day".into(), false).apply(&btn_style))
+        .with_fixed(sidebar_button("/booru".into(), "Booru".into(), true).apply(&btn_style))
         .prepare()
 }
 
-fn sidebar_button(route: String, label: String) -> NewWidget<Button> {
+fn sidebar_button(route: String, label: String, start_with: bool) -> NewWidget<Button> {
     let n_c = use_navigation_controller();
     let current = n_c.current();
     let is_active = {
         let route = route.clone();
-        Memo::new(move |_| current().path() == route)
+        Memo::new(move |_| {
+            let current = current();
+            if start_with {
+                current.path() == route
+            } else {
+                current.path().starts_with(&route)
+            }
+        })
     };
     Button::new(label.into_label().prepare())
         .prepare()

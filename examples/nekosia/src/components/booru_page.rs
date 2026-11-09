@@ -14,7 +14,10 @@ use velona::{
 use velona_reactive_resource::Resource;
 use velona_tokio::expect_tokio_handle;
 
-use crate::client::{endpoint::tags::GetTags, expect_client};
+use crate::{
+    booru::provide_booru_context,
+    client::{endpoint::tags::GetTags, expect_client},
+};
 
 #[derive(Debug, thiserror::Error)]
 #[error(transparent)]
@@ -33,6 +36,7 @@ type ResourceTagsResult =
 fn booru_page_inner() -> impl View {
     let client = expect_client();
     let tokio_handle = expect_tokio_handle();
+    provide_booru_context();
     let tags: ResourceTagsResult = Resource::new(move || {
         let tokio_handle = tokio_handle.clone();
         let client = client.clone();

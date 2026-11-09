@@ -44,6 +44,7 @@ pub fn provide_booru_context() -> Store<BooruContext> {
     store
 }
 
+#[track_caller]
 pub fn expect_booru_context() -> Store<BooruContext> {
     expect_context()
 }

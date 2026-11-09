@@ -84,7 +84,7 @@ fn sidebar_button(route: String, label: String, start_with: bool) -> NewWidget<B
         let route = route.clone();
         Memo::new(move |_| {
             let current = current();
-            if start_with {
+            if !start_with {
                 current.path() == route
             } else {
                 current.path().starts_with(&route)

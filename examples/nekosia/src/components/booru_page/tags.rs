@@ -6,7 +6,7 @@ use velona::{
     masonry::{
         core::{Selector, StyleProperty, Widget},
         layout::AsUnit,
-        properties::{BorderColor, BorderWidth, ContentColor, Padding},
+        properties::{BorderColor, BorderWidth, ContentColor, CornerRadius, Padding},
         widgets::{Button, Flex},
     },
     reactive::{
@@ -38,6 +38,7 @@ pub fn tags_view(tags: ResourceTagsResult) -> impl View {
             BorderColor::new(AlphaColor::from_rgb8(0x06, 0x06, 0x06));
             BorderWidth::all(1.px());
             Padding::from_vh(2.px(), 4.px());
+            CornerRadius::all(3.px())
         }
         ["switch", "included"] {
             BorderColor::new(AlphaColor::from_rgb8(0x06, 0xa0, 0x06))
@@ -74,15 +75,17 @@ pub fn tags_view(tags: ResourceTagsResult) -> impl View {
 }
 
 fn tags_view_base(mut flex: Flex, label: &str, tags: &[String]) -> Flex {
-    flex = flex.with_fixed(
-        label
-            .into_label()
-            .with_style(StyleProperty::Underline(true))
-            .prepare(),
-    );
+    flex = flex
+        .with_fixed(
+            label
+                .into_label()
+                .with_style(StyleProperty::Underline(true))
+                .prepare(),
+        )
+        .with_fixed_spacer(2.px());
     let mut tags_flex = Flex::row()
         .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::Center);
-    for tag in tags {
+    for tag in tags.iter().take(20) {
         tags_flex = tags_flex
             .with_fixed(tag_switch(tag.as_str().into()).into_new_widget())
             .with_fixed_spacer(4.px());

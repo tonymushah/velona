@@ -75,6 +75,7 @@ impl ImageCacheInner {
                         blob
                     }
                 };
+                log::trace!("Obtained image from key {:#?}", key);
                 Ok(Some(ImageData {
                     data: blob,
                     format: velona::masonry::peniko::ImageFormat::Rgba8,
@@ -89,7 +90,7 @@ impl ImageCacheInner {
     // Assuming that the `image` correspond at what said.
     async fn insert_rgba_image(
         &mut self,
-        entry: ImageCacheEntryKey,
+        key: ImageCacheEntryKey,
         image: image::RgbaImage,
     ) -> Result<ImageData, ImageCacheError> {
         let mut file = tokio::io::BufStream::new(tokio::fs::File::from_std(
@@ -104,14 +105,18 @@ impl ImageCacheInner {
         file.flush().await?;
         let blob = Blob::new(Arc::new(buf));
         let weak_blob = blob.downgrade();
+
+        log::trace!("Fetched image from key {:#?}", key);
+
         self.lru.put(
-            entry,
+            key,
             ImageCacheEntryValue {
                 image: weak_blob,
                 file,
                 size,
             },
         );
+
         Ok(ImageData {
             data: blob,
             format: velona::masonry::peniko::ImageFormat::Rgba8,

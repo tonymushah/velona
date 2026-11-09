@@ -7,27 +7,21 @@ use velona::{
         core::{Selector, Widget},
         layout::AsUnit,
         properties::{Background, ContentColor, CornerRadius},
-        widgets::{Button, Flex, Label, Svg},
+        widgets::{Button, Flex, Label},
     },
     reactive::traits::Get,
     scoped_styling::{ApplyScopedStyles, ScopedPropstack, scoped_propstack},
-    widgets::{View, button::NewButtonPressEventsExt, svg::usvg},
+    widgets::{View, button::NewButtonPressEventsExt},
     window::expect_window,
 };
 
-use crate::app_ctx::{
-    AppStylesStoreStoreFields, TitleBarActionButtonStyleStoreFields,
-    TitleBarActionButtonsStyleStoreFields, TitleBarStyleStoreFields, expect_app_styles_store,
+use crate::{
+    app_ctx::{
+        AppStylesStoreStoreFields, TitleBarActionButtonStyleStoreFields,
+        TitleBarActionButtonsStyleStoreFields, TitleBarStyleStoreFields, expect_app_styles_store,
+    },
+    svgs::{MAXIMIZE_ICON, MINUS_ICON, X_ICON, build_static_svg},
 };
-
-const X_ICON: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/svgs/x.svg"));
-
-const MAXIMIZE_ICON: &[u8] =
-    include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/svgs/maximize.svg"));
-
-// const MINIMIZE_ICON: &[u8] = include_bytes!("../svgs/minimize.svg");
-
-const MINUS_ICON: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/svgs/minus.svg"));
 
 pub fn title_bar() -> impl View {
     let window = expect_window();
@@ -113,13 +107,8 @@ pub fn title_bar() -> impl View {
     .into_new_widget()
 }
 
-fn action_button(data: &[u8]) -> velona::masonry::core::NewWidget<Button> {
-    Button::new(
-        Svg::new(std::sync::Arc::new(
-            usvg::Tree::from_data(data, &Default::default()).unwrap(),
-        ))
-        .prepare(),
-    )
-    .prepare()
-    .with_class("buttons")
+fn action_button(data: &'static [u8]) -> velona::masonry::core::NewWidget<Button> {
+    Button::new(build_static_svg(data).prepare())
+        .prepare()
+        .with_class("buttons")
 }

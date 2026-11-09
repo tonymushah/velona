@@ -75,7 +75,11 @@ impl ImageCacheInner {
                         blob
                     }
                 };
-                log::trace!("Obtained image from key {:#?}", key);
+                log::trace!(
+                    "Obtained image cache from key {} (size: {:?})",
+                    key.url,
+                    key.size
+                );
                 Ok(Some(ImageData {
                     data: blob,
                     format: velona::masonry::peniko::ImageFormat::Rgba8,
@@ -106,7 +110,7 @@ impl ImageCacheInner {
         let blob = Blob::new(Arc::new(buf));
         let weak_blob = blob.downgrade();
 
-        log::trace!("Fetched image from key {:#?}", key);
+        log::trace!("Fetched image from key {} (size: {:?})", key.url, key.size);
 
         self.lru.put(
             key,

@@ -1,4 +1,8 @@
-use velona_core::masonry_core::core::{FromDynWidget, Property};
+use velona_core::{
+    NewWidgetExt,
+    masonry_core::core::{FromDynWidget, Property},
+    reactive::{owner::ArenaItem, traits::Get},
+};
 
 use crate::{ApplyScopedStyles, ApplyToNewWidget, ApplyToWidgetMut, ScopedPropstack};
 
@@ -58,6 +62,32 @@ impl<const N: usize> ApplyToNewWidget for ScopedClasses<N> {
         new_widget
             .with_classes(self.classes.into_iter().map(String::from))
             .apply(self.propstack_ref())
+    }
+}
+
+impl<const N: usize> ApplyToNewWidget for ArenaItem<ScopedClasses<N>> {
+    fn apply_to_widget<W>(
+        &self,
+        new_widget: velona_core::masonry_core::core::NewWidget<W>,
+    ) -> velona_core::masonry_core::core::NewWidget<W>
+    where
+        W: velona_core::masonry_core::core::Widget + FromDynWidget + ?Sized,
+    {
+        let Some((id, classes)) =
+            self.try_with_value(|_self| (_self.propstack_ref().get_id(), _self.classes))
+        else {
+            return new_widget;
+        };
+        new_widget
+            .with_classes(classes.into_iter().map(String::from))
+            .use_widget_mut(
+                move || id.get(),
+                |mut this, maybe_id| {
+                    if let Some(id) = maybe_id {
+                        this.ctx.set_property_stack(id);
+                    }
+                },
+            )
     }
 }
 

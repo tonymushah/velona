@@ -1,5 +1,6 @@
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
+use arrayvec::ArrayVec;
 use rand::RngExt;
 use reactive_stores::Store;
 use velona::reactive::owner::{expect_context, provide_context};
@@ -8,8 +9,8 @@ use crate::client::objects::Rating;
 
 #[derive(Debug, Store, Default)]
 pub struct BooruTagsSelection {
-    pub excluded_tags: HashSet<Arc<str>>,
-    pub additional_tags: HashSet<Arc<str>>,
+    pub excluded_tags: ArrayVec<Arc<str>, 20>,
+    pub additional_tags: ArrayVec<Arc<str>, 20>,
 }
 
 #[derive(Debug, Store, Default)]

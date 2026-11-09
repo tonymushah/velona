@@ -1,15 +1,20 @@
 use std::sync::Arc;
 
+use color::AlphaColor;
 use velona::{
+    NewWidgetExt,
     masonry::{
-        core::{StyleProperty, Widget},
+        core::{Selector, StyleProperty, Widget},
         layout::AsUnit,
+        properties::{BorderColor, BorderWidth, ContentColor, Padding},
         widgets::{Button, Flex},
     },
     reactive::{
         computed::Memo,
+        owner::{ArenaItem, expect_context, provide_context},
         traits::{Read, ReadUntracked, Update},
     },
+    scoped_styling::{ApplyScopedStyles, ScopedPropstack, scoped_propstack},
     widgets::{
         View, button::NewButtonPressEventsExt, label::IntoLabel, sized_box::IntoNewSizedBox,
     },
@@ -18,78 +23,39 @@ use velona_reactive_resource::Resource;
 
 use crate::{
     booru::{BooruContextStoreFields, expect_booru_context},
-    components::booru_page::FetchError,
     svgs::{MINUS_ICON, PLUS_ICON, build_static_svg},
 };
 
 type ResourceTagsResult =
     Resource<Result<crate::client::endpoint::tags::GetTagsResponse, super::FetchError>>;
 
-pub fn tags_error(tags: ResourceTagsResult) -> impl View {
-    (move || {
-        let tags_read = tags.read();
-        let err = tags_read.as_ref()?.as_ref().err()?;
-        Some(
-            Flex::column()
-                .cross_axis_alignment(
-                    velona::masonry::properties::types::CrossAxisAlignment::Center,
-                )
-                .with_fixed(format!("{err}").into_label().prepare())
-                .with_fixed(
-                    "Details"
-                        .into_label()
-                        .with_style(StyleProperty::Underline(true))
-                        .prepare(),
-                )
-                .with_fixed(match err {
-                    FetchError::Client(crate::client::error::Error::NekosiaRequest(err)) => {
-                        format!("{} (status: {})", err.message, err.status)
-                            .into_label()
-                            .prepare()
-                    }
-                    FetchError::Client(crate::client::error::Error::Reqwest(err)) => format!(
-                        "Reqwest err: [url: {}] [type: {}]",
-                        err.url().map(|e| e.as_str()).unwrap_or("(nothing)"),
-                        if err.is_body() {
-                            "body"
-                        } else if err.is_builder() {
-                            "builder"
-                        } else if err.is_connect() {
-                            "connect"
-                        } else if err.is_decode() {
-                            "decode"
-                        } else if err.is_dns() {
-                            "dns"
-                        } else if err.is_redirect() {
-                            "redirect"
-                        } else if err.is_request() {
-                            "request"
-                        } else if err.is_status() {
-                            "status"
-                        } else if err.is_timeout() {
-                            "timeout"
-                        } else if err.is_upgrade() {
-                            "upgrade"
-                        } else {
-                            "unknown"
-                        }
-                    )
-                    .into_label()
-                    .prepare(),
-                    FetchError::Client(crate::client::error::Error::Url(url)) => {
-                        format!("Url parsing error: {}", url).into_label().prepare()
-                    }
-                    FetchError::TokioJoin(join_error) => format!("Tokio Join error ({join_error})")
-                        .into_label()
-                        .prepare(),
-                })
-                .prepare(),
-        )
-    })
-    .into_new_sized_box()
-}
+#[derive(Debug, Clone, Copy)]
+struct TagsViewStyle(ArenaItem<ScopedPropstack>);
 
 pub fn tags_view(tags: ResourceTagsResult) -> impl View {
+    let style = ArenaItem::new(scoped_propstack! {
+        ["switch"] {
+            BorderColor::new(AlphaColor::from_rgb8(0x06, 0x06, 0x06));
+            BorderWidth::all(1.px());
+            Padding::from_vh(2.px(), 4.px());
+        }
+        ["switch", "included"] {
+            BorderColor::new(AlphaColor::from_rgb8(0x06, 0xa0, 0x06))
+        }
+        ["switch", "excluded"] {
+            BorderColor::new(AlphaColor::from_rgb8(0xa0, 0x06, 0x06));
+        }
+        ["label"] {
+            ContentColor::new(AlphaColor::from_rgb8(0x06, 0x06, 0x06));
+        }
+        ["label", "included"] {
+            ContentColor::new(AlphaColor::from_rgb8(0x06, 0xa0, 0x06))
+        }
+        ["label", "excluded"] {
+            ContentColor::new(AlphaColor::from_rgb8(0xa0, 0x06, 0x06));
+        }
+    });
+    provide_context(TagsViewStyle(style));
     (move || {
         let tags_read = tags.read();
         let tags_result = tags_read.as_ref().and_then(|a| a.as_ref().ok())?;
@@ -132,39 +98,65 @@ enum TagState {
 }
 
 fn tag_switch(tag: Arc<str>) -> impl View {
+    let switch_style: TagsViewStyle = expect_context();
     let ctx = expect_booru_context();
     let tag_state = {
         let tag = tag.clone();
         Memo::new(move |_| {
             let selection = ctx.selection().read();
-            if selection.additional_tags.contains(&*tag) {
+            if selection.additional_tags.contains(&tag) {
                 Some(TagState::Included)
-            } else if selection.excluded_tags.contains(&*tag) {
+            } else if selection.excluded_tags.contains(&tag) {
                 Some(TagState::Excluded)
             } else {
                 None
             }
         })
     };
+    let class_state = move || -> Option<String> {
+        let tag_state_read = tag_state.read();
+        match tag_state_read.as_ref()? {
+            TagState::Included => Some("included".into()),
+            TagState::Excluded => Some("excluded".into()),
+        }
+    };
     let set_tag_state = {
         let tag = tag.clone();
         move |state: Option<TagState>| match state {
             Some(TagState::Excluded) => {
-                ctx.selection().update(|selection| {
-                    selection.additional_tags.take(&tag);
-                    selection.excluded_tags.insert(tag.clone());
+                ctx.selection().maybe_update(|selection| {
+                    if selection.excluded_tags.is_full() {
+                        false
+                    } else {
+                        selection
+                            .additional_tags
+                            .retain(|inner_tag| inner_tag != &tag);
+                        selection.excluded_tags.push(tag.clone());
+                        true
+                    }
                 });
             }
             Some(TagState::Included) => {
-                ctx.selection().update(|selection| {
-                    selection.excluded_tags.take(&tag);
-                    selection.additional_tags.insert(tag.clone());
+                ctx.selection().maybe_update(|selection| {
+                    if selection.additional_tags.is_full() {
+                        false
+                    } else {
+                        selection
+                            .excluded_tags
+                            .retain(|inner_tag| inner_tag != &tag);
+                        selection.additional_tags.push(tag.clone());
+                        true
+                    }
                 });
             }
             None => {
                 ctx.selection().update(|selection| {
-                    selection.excluded_tags.take(&tag);
-                    selection.additional_tags.take(&tag.clone());
+                    selection
+                        .excluded_tags
+                        .retain(|inner_tag| inner_tag != &tag);
+                    selection
+                        .additional_tags
+                        .retain(|inner_tag| inner_tag != &tag);
                 });
             }
         }
@@ -181,7 +173,13 @@ fn tag_switch(tag: Arc<str>) -> impl View {
                 .into_new_sized_box(),
             )
             .with_fixed_spacer(4.px())
-            .with_fixed(tag.into_label().prepare())
+            .with_fixed(
+                tag.into_label()
+                    .prepare()
+                    .with_class("label")
+                    .class_opt(class_state)
+                    .apply(&switch_style.0),
+            )
             .prepare(),
     )
     .prepare()
@@ -194,4 +192,7 @@ fn tag_switch(tag: Arc<str>) -> impl View {
         }
         None => set_tag_state(Some(TagState::Included)),
     })
+    .with_class("switch")
+    .class_opt(class_state)
+    .apply(&switch_style.0)
 }

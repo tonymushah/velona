@@ -45,6 +45,7 @@ velona_accesskit_xplat = { workspace = true }
 velona_router = { workspace = true }
 tempfile = { workspace = true }
 lru = { workspace = true }
+rand = { workspace = true, default-features = true }
 
 [dev-dependencies]
 wiremock = { workspace = true }

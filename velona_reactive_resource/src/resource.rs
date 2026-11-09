@@ -1,13 +1,14 @@
 use std::{ops::Deref, panic::Location};
 
 use reactive_graph::{
-    computed::AsyncDerived,
+    computed::{AsyncDerived, Memo},
     graph::{ReactiveNode, Source, ToAnySource},
     owner::{LocalStorage, SyncStorage},
     signal::{WriteSignal, signal},
     traits::{DefinedAt, IsDisposed, Read, ReadUntracked, Update},
 };
 
+// TODO move into Storage<ArcAsyncDerived> for Get, Read, IsDisposed
 #[derive(Debug)]
 pub struct Resource<T, S = SyncStorage> {
     #[cfg(debug_assertions)]
@@ -37,6 +38,16 @@ where
 {
     pub fn refetch(&self) {
         self.refetch.update(|u| *u += 1);
+    }
+}
+
+impl<T> Resource<T>
+where
+    T: 'static,
+{
+    pub fn is_loading(&self) -> Memo<bool> {
+        let _self = *self;
+        Memo::new(move |_| _self.read().is_none())
     }
 }
 
@@ -124,6 +135,20 @@ where
         Fut: Future<Output = T> + 'static,
     {
         Self::new_unsync_with_initial(None, fun)
+    }
+}
+
+impl<T, E> Resource<Result<T, E>>
+where
+    T: 'static,
+    E: 'static,
+{
+    pub fn is_error(&self) -> Memo<bool> {
+        let _self = *self;
+        Memo::new(move |_| match _self.read().as_ref() {
+            Some(res) => res.is_err(),
+            None => false,
+        })
     }
 }
 

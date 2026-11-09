@@ -23,23 +23,19 @@ pub fn routes() -> impl View {
         .route(
             Route::layout(routes_layout)
                 .child(Route::index(image_of_the_day::image_of_the_day))
-                .child(
-                    Route::static_("booru", booru_page::booru_layout)
-                        .child(Route::index(|| redirect("/booru/random")))
-                        .child(Route::params("category", booru_page::booru_page)),
-                )
+                .child(Route::static_("booru", booru_page::booru_page))
                 .child(Route::wildcard("any", not_found)),
         )
         .into_view()
 }
 
-fn redirect(route: &'static str) -> AnyNewWidget {
-    if let Err(err) = use_navigation_controller().push(route) {
-        log::error!("{err}");
-    }
+// fn redirect(route: &'static str) -> AnyNewWidget {
+//     if let Err(err) = use_navigation_controller().push(route) {
+//         log::error!("{err}");
+//     }
 
-    ().into_erased()
-}
+//     ().into_erased()
+// }
 
 fn routes_layout() -> AnyNewWidget {
     Split::new(

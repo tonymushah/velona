@@ -19,6 +19,7 @@ use velona_reactive_resource::Resource;
 use crate::{
     booru::{BooruContextStoreFields, expect_booru_context},
     components::booru_page::FetchError,
+    svgs::{MINUS_ICON, PLUS_ICON, build_static_svg},
 };
 
 type ResourceTagsResult =
@@ -93,51 +94,35 @@ pub fn tags_view(tags: ResourceTagsResult) -> impl View {
         let tags_read = tags.read();
         let tags_result = tags_read.as_ref().and_then(|a| a.as_ref().ok())?;
         let mut flex = Flex::column();
-        {
-            flex = flex.with_fixed(
-                "Tags"
-                    .into_label()
-                    .with_style(StyleProperty::Underline(true))
-                    .prepare(),
-            );
-            let mut tags_flex = Flex::row()
-                .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::Center);
-            for tag in &tags_result.tags {
-                tags_flex = tags_flex.with_fixed(tag_switch(tag.as_str().into()).into_new_widget());
-            }
-            flex = flex.with_fixed(tags_flex.prepare());
-        }
-        {
-            flex = flex.with_fixed(
-                "Character"
-                    .into_label()
-                    .with_style(StyleProperty::Underline(true))
-                    .prepare(),
-            );
-            let mut tags_flex = Flex::row()
-                .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::Center);
-            for tag in &tags_result.characters {
-                tags_flex = tags_flex.with_fixed(tag_switch(tag.as_str().into()).into_new_widget());
-            }
-            flex = flex.with_fixed(tags_flex.prepare());
-        }
-        {
-            flex = flex.with_fixed(
-                "Anime"
-                    .into_label()
-                    .with_style(StyleProperty::Underline(true))
-                    .prepare(),
-            );
-            let mut tags_flex = Flex::row()
-                .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::Center);
-            for tag in &tags_result.anime {
-                tags_flex = tags_flex.with_fixed(tag_switch(tag.as_str().into()).into_new_widget());
-            }
-            flex = flex.with_fixed(tags_flex.prepare());
-        }
+
+        flex = tags_view_base(flex, "Tags", &tags_result.tags).with_fixed_spacer(8.px());
+
+        flex =
+            tags_view_base(flex, "Characters", &tags_result.characters).with_fixed_spacer(8.px());
+
+        flex = tags_view_base(flex, "Anime", &tags_result.anime).with_fixed_spacer(8.px());
+
         Some(flex.prepare())
     })
     .into_new_sized_box()
+}
+
+fn tags_view_base(mut flex: Flex, label: &str, tags: &[String]) -> Flex {
+    flex = flex.with_fixed(
+        label
+            .into_label()
+            .with_style(StyleProperty::Underline(true))
+            .prepare(),
+    );
+    let mut tags_flex = Flex::row()
+        .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::Center);
+    for tag in tags {
+        tags_flex = tags_flex
+            .with_fixed(tag_switch(tag.as_str().into()).into_new_widget())
+            .with_fixed_spacer(4.px());
+    }
+    flex = flex.with_fixed(tags_flex.prepare());
+    flex
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -188,8 +173,13 @@ fn tag_switch(tag: Arc<str>) -> impl View {
         Flex::row()
             .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::Center)
             .cross_axis_alignment(velona::masonry::properties::types::CrossAxisAlignment::Center)
-            // TODO fill this
-            .with_fixed((move || None::<()>).into_new_sized_box())
+            .with_fixed(
+                (move || match tag_state()? {
+                    TagState::Included => Some(build_static_svg(PLUS_ICON).prepare()),
+                    TagState::Excluded => Some(build_static_svg(MINUS_ICON).prepare()),
+                })
+                .into_new_sized_box(),
+            )
             .with_fixed_spacer(4.px())
             .with_fixed(tag.into_label().prepare())
             .prepare(),

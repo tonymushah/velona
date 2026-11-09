@@ -1,6 +1,6 @@
 use futures_util::FutureExt;
 use velona::{
-    masonry::{core::Widget, layout::AsUnit, widgets::Flex},
+    masonry::{layout::AsUnit, widgets::Flex},
     reactive::traits::{Get, Read},
     widgets::{View, sized_box::IntoNewSizedBox},
 };
@@ -12,7 +12,7 @@ use crate::{
     client::{endpoint::image_caterory::GetRandomFromCategory, expect_client},
     components::{
         booru_page::{FetchError, show_fetch_error},
-        image_metadata::image_metadata_flex,
+        image_metadata::image_view,
     },
 };
 
@@ -61,7 +61,7 @@ pub fn image_fetching(flex: Flex) -> Flex {
                 let if_read = image_fetch.read();
                 let data = if_read.as_ref()?.as_ref().ok()?;
                 let image = data.images.first()?;
-                Some(image_metadata_flex(image, None).prepare())
+                Some(image_view(image))
             })
             .into_new_sized_box(),
         )

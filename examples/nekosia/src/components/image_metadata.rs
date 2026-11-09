@@ -45,7 +45,7 @@ pub fn image_metadata_flex(obj: &ImageObject, flex: Option<Flex>) -> Flex {
         )
 }
 
-pub fn image_view(obj: &ImageObject) -> impl View {
+pub fn image_view(obj: &ImageObject) -> impl View + use<> {
     let urls = obj.image.clone();
     // let metadata = obj.metadata.clone();
     let image_cache = expect_image_cache();

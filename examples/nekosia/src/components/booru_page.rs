@@ -75,6 +75,11 @@ fn booru_page_inner() -> impl View {
                             .map(|e| e.into_boxed_str().into())
                             .collect(),
                     })
+                    .inspect(|e| {
+                        log::info!("anime: {}", e.anime.len());
+                        log::info!("tags: {}", e.tags.len());
+                        log::info!("characters: {}", e.characters.len());
+                    })
             })
             .map(|e| Ok::<_, FetchError>(e??))
     });

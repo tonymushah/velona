@@ -42,7 +42,7 @@ use crate::{
     app::proxy::EventProxyHandle,
     app::{AppHandle, EventLoopEvent, window::WindowNew},
     utils::convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
-    utils::{FlumeReceiver, todo_warn_of_something},
+    utils::{FlumeReceiver, FlumeSender, todo_warn_of_something},
     window::{builder::WindowBuilder, renderer::WindowRendererFactory},
 };
 
@@ -58,7 +58,7 @@ where
     pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
     pub(crate) can_create_surfaces: bool,
     pub(crate) receiver: FlumeReceiver<EventLoopEvent>,
-    pub(crate) sender: flume::Sender<EventLoopEvent>,
+    pub(crate) sender: FlumeSender<EventLoopEvent>,
     pub(crate) on_event_loop_init: Option<OnEventLoopInitFns>,
     pub(crate) app_event_listeners: AppEventHandlers,
     pub(crate) fut_executor: Option<VelonaTasksExecutor>,
@@ -678,6 +678,7 @@ where
                         self.create_window_owner_children(edit_widget_fn_event.window_id);
                     self.use_window_render_root(edit_widget_fn_event.window_id, |root| {
                         if root.has_widget(edit_widget_fn_event.widget_id) {
+                            log::trace!("Trace editing widget {}", edit_widget_fn_event.widget_id);
                             root.edit_widget(edit_widget_fn_event.widget_id, |widget_mut| {
                                 if let Some(owner) = maybe_owner {
                                     owner.with_cleanup(|| {
@@ -687,6 +688,11 @@ where
                                     (edit_widget_fn_event.edit_fn)(widget_mut);
                                 }
                             });
+                        } else {
+                            log::warn!(
+                                "No widget found with id {}",
+                                edit_widget_fn_event.widget_id
+                            );
                         }
                     });
                 }
@@ -870,7 +876,7 @@ where
         if let Some(first_time) = maybe_first_time {
             self.first_time_ui_event.replace(first_time);
         }
-        match event {
+        match &event {
             WindowEvent::Destroyed if self.windows.is_empty() => {
                 event_loop.exit();
             }
@@ -878,13 +884,13 @@ where
                 self.handle_redraw_request(window_id);
             }
             WindowEvent::SurfaceResized(size) => {
-                self.handle_resize_event(window_id, size);
+                self.handle_resize_event(window_id, *size);
             }
             WindowEvent::CloseRequested => {
                 self.windows.remove(&window_id);
             }
             WindowEvent::Ime(ime) => {
-                if let Some(ime) = winit_ime_to_masonry(ime) {
+                if let Some(ime) = winit_ime_to_masonry(ime.clone()) {
                     self.use_window_render_root(window_id, |render_root| {
                         render_root.handle_text_event(masonry_core::core::TextEvent::Ime(ime));
                     });
@@ -896,13 +902,19 @@ where
                 ..
             } => {
                 self.use_window_render_root(window_id, |rr| {
-                    rr.handle_window_event(masonry_core::core::WindowEvent::Rescale(scale_factor));
+                    rr.handle_window_event(masonry_core::core::WindowEvent::Rescale(*scale_factor));
                 });
             }
             _e => {
                 // log::trace!("event {:#?} handling is not implemented yet", _e);
             }
         }
+        // IMPORTANT We put this at the end because it might trigger some proxy wake up that might fail actions like "drag_resize".
+        self.use_window_ref(window_id, |window| {
+            window
+                .window_event_listeners
+                .handle_event(window::event_listener::HandleEvent::WindowEvent(&event));
+        });
     }
     fn memory_warning(&mut self, _event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
         self.windows.shrink_to_fit();
@@ -921,7 +933,7 @@ where
     fn proxy_wake_up(&mut self, event_loop: &dyn winit_core::event_loop::ActiveEventLoop) {
         // #[cfg(feature = "hotpath")]
         // hotpath::dbg!(&event);
-        log::info!("Proxy wake up");
+        log::trace!("Proxy wake up");
 
         self.handle_app_events(event_loop);
     }

@@ -11,13 +11,17 @@ pub use self::{
     renderer::WindowRendererFactory,
 };
 
-use reactive_graph::owner::use_context;
+use reactive_graph::owner::{expect_context, use_context};
 
 /// Get the current window from the current context.
 ///
 /// Return [`None`] if the [`WindowHandle`] is not found inside the current context.
 pub fn use_window() -> Option<handle::WindowHandle> {
     use_context()
+}
+
+pub fn expect_window() -> handle::WindowHandle {
+    expect_context()
 }
 
 #[cfg(test)]

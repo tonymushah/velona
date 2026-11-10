@@ -12,5 +12,5 @@ hotpath = { workspace = true, optional = true }
 
 [features]
 hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
-hotpath-cpu = ["hotpath/hotpath-cpu"]
-hotpath-alloc = ["hotpath/hotpath-alloc"]
+hotpath-cpu = ["hotpath", "hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath", "hotpath/hotpath-alloc"]

@@ -35,6 +35,7 @@ dioxus-cli-config = { workspace = true, optional = true }
 dpi = { workspace = true }
 raw-window-handle.workspace = true
 velona_core_accesskit.workspace = true
+futures-util.workspace = true
 
 [dev-dependencies]
 masonry = { workspace = true }
@@ -43,4 +44,9 @@ masonry = { workspace = true }
 # default = ["hotpath"]
 hotpath = ["dep:hotpath", "hotpath/flume"]
 # testing = []
-subsecond = ["dep:velona_subsecond", "reactive_graph/subsecond", "dep:subsecond", "dep:dioxus-cli-config"]
+subsecond = [
+    "dep:velona_subsecond",
+    "reactive_graph/subsecond",
+    "dep:subsecond",
+    "dep:dioxus-cli-config",
+]

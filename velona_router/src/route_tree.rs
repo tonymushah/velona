@@ -79,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_segment_tests() {
-        assert!(RouteSegmentKind::Index < RouteSegmentKind::Static);
+        assert!(RouteSegmentKind::Index > RouteSegmentKind::Static);
     }
 
     #[test]

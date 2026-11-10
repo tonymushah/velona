@@ -636,4 +636,30 @@ mod tests {
             )
             .route(Route::wildcard("any", view))
     }
+
+    fn router_index_only() -> Router {
+        Router::default().route(Route::index(view))
+    }
+
+    #[test]
+    // Route: /
+    fn route_empty_only_index() {
+        let router = router_index_only();
+
+        let location = LocationState::default();
+
+        {
+            let matches = matches_routes(&router.tree, &location)
+                .expect("This should be producing something right?");
+            for (index, node) in matches.matches.iter().enumerate() {
+                match index {
+                    0 => {
+                        let node = router.tree.find(node.route_id).unwrap();
+                        assert_eq!(node.item.segment.kind(), RouteSegmentKind::Index);
+                    }
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
 }

@@ -8,6 +8,8 @@ mod handle;
 mod run;
 use velona_core_accesskit::AdapterFactory;
 use velona_renderer::WindowRenderer;
+use winit_core::error::EventLoopError;
+use winit_core::event_loop::EventLoopProvider;
 pub(crate) mod event_listener;
 pub(crate) mod proxy;
 
@@ -154,6 +156,15 @@ impl<W: WindowRenderer> Builder<W> {
         // event_loop.set_control_flow(winit_core::event_loop::ControlFlow::Wait);
         // event_loop.run_app(&mut app)?;
         app
+    }
+
+    pub fn run_in<E>(self, event_loop: E) -> Result<(), EventLoopError>
+    where
+        E: EventLoopProvider,
+        W: 'static,
+    {
+        let app = self.build();
+        event_loop.run_app(app)
     }
 }
 

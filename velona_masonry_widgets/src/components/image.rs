@@ -9,6 +9,7 @@ use velona_core::{
     reactive::{
         callback::{Callable, UnsyncCallback},
         send_wrapper_ext::SendOption,
+        traits::SignalOrFn,
     },
     widget_ref::UseWidgetFromRefError,
 };
@@ -47,12 +48,9 @@ fn change_box_child_element(
 /// If image_data return [`None`], it means that your image is not available yet
 /// and will show a [`fallback`](LazyImageOptions::fallback) if provided
 // TODO add add example
-pub fn lazy_image<Ifn, I>(
-    mut image_data: Ifn,
-    options: Option<LazyImageOptions>,
-) -> NewWidget<SizedBox>
+pub fn lazy_image<Ifn, I>(image_data: Ifn, options: Option<LazyImageOptions>) -> NewWidget<SizedBox>
 where
-    Ifn: FnMut() -> Option<I> + 'static,
+    Ifn: SignalOrFn<Output = Option<I>> + 'static,
     I: Into<ImageBrush>,
 {
     let options = options.unwrap_or_default();
@@ -67,7 +65,7 @@ where
             // We are reusing the Widget Ref here from the last effect run to prevent reallocating a new widget Image everytime
             let maybe_current_image_ref = maybe_current_image.flatten();
             // Run the image data function
-            let image_data = image_data().map(|i| i.into());
+            let image_data = image_data.run().map(|i| i.into());
             let Some(image_data) = image_data else {
                 // check if there is a fallback element
                 if let Some(fallback) = maybe_fallback {

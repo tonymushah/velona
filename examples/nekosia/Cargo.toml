@@ -1,0 +1,59 @@
+[package]
+name = "nekosia"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+reqwest = { workspace = true, features = [
+    "http2",
+    "rustls",
+    "charset",
+    "gzip",
+    "brotli",
+    "zstd",
+    "system-proxy",
+    "json",
+] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+velona = { workspace = true, default-features = true }
+velona_renderer_vello_hybrid.workspace = true
+env_logger.workspace = true
+log.workspace = true
+hotpath = { workspace = true, optional = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "fs", "io-util"] }
+futures-util = { workspace = true }
+clonelicious.workspace = true
+tracing = { workspace = true }
+masonry_widget_wrappers = { workspace = true }
+velona_tokio = { workspace = true }
+kurbo = { workspace = true }
+drag_resize_regions = { workspace = true }
+reactive_stores = { workspace = true }
+thiserror = { workspace = true }
+url = { workspace = true, features = ["serde"] }
+governor = { workspace = true }
+serde_qs = { workspace = true }
+arrayvec = { workspace = true, features = ["serde"] }
+color = { workspace = true, features = ["serde"] }
+time = { workspace = true, features = ["parsing", "macros"] }
+anyhow.workspace = true
+masonry_raw_box.workspace = true
+velona_reactive_resource.workspace = true
+image = {workspace = true, default-features = true }
+velona_accesskit_xplat = { workspace = true }
+velona_router = { workspace = true }
+tempfile = { workspace = true }
+lru = { workspace = true }
+rand = { workspace = true, default-features = true }
+heck = { workspace = true }
+
+[dev-dependencies]
+wiremock = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt"] }
+any_spawner = { workspace = true, features = ["async-executor"] }
+
+[features]
+hotpath = ["dep:hotpath", "velona/hotpath", "hotpath/hotpath"]
+hotpath-cpu = ["hotpath", "hotpath/hotpath-cpu"]
+hotpath-alloc = ["hotpath", "hotpath/hotpath-alloc"]

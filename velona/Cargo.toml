@@ -16,6 +16,7 @@ velona_scoped_styling = { workspace = true }
 winit= {workspace = true, default-features = false}
 velona_masonry_widgets = { workspace = true }
 velona_renderer = { workspace = true }
+velona_window_handlers_utils = { workspace = true }
 
 [features]
 default = ["wayland", "wayland-dlopen", "wayland-csd-adwaita", "x11"]

@@ -13,6 +13,7 @@ use masonry_raw_box::RawBox;
 use reactive_graph::effect::Effect;
 
 use reactive_graph::owner::ArenaItem;
+use reactive_graph::owner::use_context;
 use reactive_graph::traits::SignalOrFn;
 use send_wrapper::SendWrapper;
 
@@ -265,18 +266,29 @@ where
     {
         let widget_ref = self.create_velona_ref();
         let edit_fn = ArenaItem::new_local(edit_fn);
+        let suspense_context = use_context::<crate::suspense::SuspenseContext>();
+
+        if suspense_context.is_some() {
+            log::info!("Has suspense context!");
+        }
         Effect::new(move |effect_param: Option<Option<O>>| {
             let res = val_fn(effect_param.flatten());
 
-            let to_send = SendWrapper::new(res.to_edit_fn);
+            // We only edit if the current suspense is loaded.
+            if suspense_context.map(|e| (e.is_loaded)()).unwrap_or(true) {
+                let to_send = SendWrapper::new(res.to_edit_fn);
 
-            widget_ref
-                .edit(move |widget_mut| {
-                    edit_fn.try_update_value(|efn| {
-                        efn(widget_mut, to_send.take());
-                    });
-                })
-                .consume_with_log_err();
+                widget_ref
+                    .edit(move |mut widget_mut| {
+                        let res = edit_fn.try_update_value(|efn| {
+                            efn(widget_mut.reborrow_mut(), to_send.take());
+                        });
+                        if res.is_none() {
+                            log::warn!("Invalid Arena item for edit fn {}", widget_mut.id());
+                        }
+                    })
+                    .consume_with_log_err();
+            }
             res.to_next_effect_run
         });
         self

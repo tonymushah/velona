@@ -27,4 +27,14 @@ pub async fn tick() {
     Executor::tick().await
 }
 
+pub async fn tick_local() {
+    let (tx, rx) = futures_channel::oneshot::channel();
+
+    Executor::spawn_local(async move {
+        _ = tx.send(());
+    });
+
+    _ = rx.await;
+}
+
 pub use reactive_graph::{spawn_local_scoped, spawn_local_scoped_with_cancellation};

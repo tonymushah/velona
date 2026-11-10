@@ -3,7 +3,7 @@ use velona_core::{
     masonry_core::core::{FromDynWidget, Property, PropertyStack, PropertyStackId, Selector},
     reactive::{
         effect::Effect,
-        owner::on_cleanup,
+        owner::{ArenaItem, on_cleanup},
         signal::{ArcReadSignal, ArcWriteSignal, arc_signal},
         traits::{Get, GetUntracked, Update},
     },
@@ -135,6 +135,12 @@ impl ScopedPropstack {
     {
         self.prop_opt(selector, move |old_prop| Some(prop(old_prop)))
     }
+    pub fn static_prop<P>(self, selector: Selector, prop: P) -> Self
+    where
+        P: Property,
+    {
+        self.prop(selector, move |_| prop.clone())
+    }
 }
 
 impl ApplyToNewWidget for ScopedPropstack {
@@ -146,6 +152,29 @@ impl ApplyToNewWidget for ScopedPropstack {
         W: velona_core::masonry_core::core::Widget + FromDynWidget + ?Sized,
     {
         let id = self.get_id();
+        new_widget.use_widget_mut(
+            move || id.get(),
+            |mut this, maybe_id| {
+                if let Some(id) = maybe_id {
+                    this.ctx.set_property_stack(id);
+                }
+            },
+        )
+    }
+}
+
+impl ApplyToNewWidget for ArenaItem<ScopedPropstack> {
+    fn apply_to_widget<W>(
+        &self,
+        new_widget: velona_core::masonry_core::core::NewWidget<W>,
+    ) -> velona_core::masonry_core::core::NewWidget<W>
+    where
+        W: velona_core::masonry_core::core::Widget + FromDynWidget + ?Sized,
+    {
+        let Some(id) = self.try_with_value(|e| e.get_id()) else {
+            log::error!("The `ScopedPropstack` has already been disposed");
+            return new_widget;
+        };
         new_widget.use_widget_mut(
             move || id.get(),
             |mut this, maybe_id| {

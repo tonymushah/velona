@@ -1,4 +1,8 @@
-use velona_core::{AnyNewWidget, reactive::signal::ArcRwSignal};
+use masonry_raw_box::RawBox;
+use velona_core::{
+    AnyNewWidget, NewWidgetExt, masonry_core::core::Widget, reactive::signal::ArcRwSignal,
+    widgets::View,
+};
 
 use crate::{
     NavigationController,
@@ -55,6 +59,16 @@ impl Router {
         )
         .build_view()
     }
+
+    pub fn into_view(self) -> impl View {
+        let view_fn = self.build();
+        // building the view fn directly might cause the routes UI not showing with `Resource/Suspense`.
+        RawBox::empty()
+            .prepare()
+            .use_widget_mut(view_fn, |mut this, view| {
+                RawBox::set_child(&mut this, view);
+            })
+    }
 }
 
 pub struct Route {
@@ -64,6 +78,7 @@ pub struct Route {
     parent_id: Option<RouteId>,
 }
 
+// TODO refactor view fns into Fn() -> V where V is View
 impl Route {
     pub fn layout<V>(view: V) -> Self
     where

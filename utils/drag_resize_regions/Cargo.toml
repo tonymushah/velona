@@ -1,0 +1,10 @@
+[package]
+name = "drag_resize_regions"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+masonry_widget_wrappers.workspace = true
+tracing = { workspace = true }
+masonry_raw_box = { workspace = true }
+masonry_core = { workspace = true }

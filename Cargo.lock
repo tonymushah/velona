@@ -2222,22 +2222,6 @@ dependencies = [
 
 [[package]]
 name = "glifo"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "282a26c1e23de04bdab3e34a21b6f877a479b96737792516b9b8b8f69b6661be"
-dependencies = [
- "bytemuck",
- "foldhash",
- "hashbrown 0.17.1",
- "log",
- "peniko",
- "skrifa 0.44.0",
- "smallvec",
- "vello_common 0.2.0",
-]
-
-[[package]]
-name = "glifo"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f1218dedd5348c1b166ec3b8b3cbca49d2f527bd43b3fa072ea5123c523ed3f"
@@ -6514,21 +6498,6 @@ dependencies = [
 
 [[package]]
 name = "vello_common"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbb2141a2bca6e6d598e471fd4d1d7eed8e020aad6a28187edda07f091a325dd"
-dependencies = [
- "bytemuck",
- "fearless_simd 0.4.1",
- "guillotiere",
- "log",
- "peniko",
- "smallvec",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "vello_common"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73c2fbe53548bcd25c8ff42f75a93770a8611a16b37bee56d7ef7b44e36027f1"
@@ -6556,28 +6525,17 @@ dependencies = [
 
 [[package]]
 name = "vello_cpu"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ace506ca414548966fcf3c283be94eb1cad8254de488791ee698bf438b0890a9"
-dependencies = [
- "bytemuck",
- "crossbeam-channel",
- "glifo 0.3.0",
- "hashbrown 0.17.1",
- "ordered-channel",
- "rayon",
- "thread_local",
- "vello_common 0.2.0",
-]
-
-[[package]]
-name = "vello_cpu"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed1fec424fbba6acf6cbc78bb526447eb77590d95f40419d598870fe37535212"
 dependencies = [
  "bytemuck",
+ "crossbeam-channel",
+ "glifo",
  "hashbrown 0.17.1",
+ "ordered-channel",
+ "rayon",
+ "thread_local",
  "vello_common 0.3.0",
 ]
 
@@ -6601,7 +6559,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0e01b02c55094a3bcfbf80d736221a74bc3f8914b566298b4ad3c9f05e7ac08"
 dependencies = [
  "bytemuck",
- "glifo 0.4.0",
+ "glifo",
  "hashbrown 0.17.1",
  "log",
  "thiserror 2.0.21",
@@ -6769,13 +6727,14 @@ dependencies = [
 name = "velona_renderer_vello_cpu"
 version = "0.1.0"
 dependencies = [
+ "glifo",
  "imaging",
  "kurbo",
  "peniko",
  "raw-window-handle",
  "softbuffer",
  "vello_common 0.3.0",
- "vello_cpu 0.2.0",
+ "vello_cpu 0.3.0",
  "velona_renderer",
  "winit-core",
 ]
@@ -6786,7 +6745,7 @@ version = "0.1.0"
 dependencies = [
  "debug_timer",
  "futures-channel",
- "glifo 0.3.0",
+ "glifo",
  "imaging",
  "kurbo",
  "peniko",

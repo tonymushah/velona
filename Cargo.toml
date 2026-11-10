@@ -105,7 +105,7 @@ or_poisoned = { version = "0.1" }
 vello_gpu = { version = "0.3", default-features = false }
 debug_timer = "0.1"
 wgpu = "30"
-glifo = { version = "0.3", default-features = true }
+glifo = { version = "0.4", default-features = true }
 ui-events = { version = "0.3" }
 url = { version = "2" }
 arrayvec = { version = "0.7" }

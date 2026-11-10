@@ -24,7 +24,7 @@ use velona::{
 use crate::{
     booru::{BooruContextStoreFields, expect_booru_context},
     components::booru_page::ResourceTagsResult,
-    svgs::{MINUS_ICON, PLUS_ICON, build_static_svg},
+    svgs::{MINUS_ICON, PLUS_ICON, STAR_ICON, build_static_svg},
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -291,13 +291,24 @@ fn tag_switch(tag: Arc<str>) -> impl View {
             .cross_axis_alignment(velona::masonry::properties::types::CrossAxisAlignment::Center)
             .with_fixed(
                 (move || match tag_state()? {
-                    TagState::Included => Some(build_static_svg(PLUS_ICON).prepare()),
-                    TagState::Excluded => Some(build_static_svg(MINUS_ICON).prepare()),
-                    TagState::Base => None,
+                    TagState::Included => Some(
+                        build_static_svg(PLUS_ICON)
+                            .prepare()
+                            .with_props(Padding::right(4.px())),
+                    ),
+                    TagState::Excluded => Some(
+                        build_static_svg(MINUS_ICON)
+                            .prepare()
+                            .with_props(Padding::right(4.px())),
+                    ),
+                    TagState::Base => Some(
+                        build_static_svg(STAR_ICON)
+                            .prepare()
+                            .with_props(Padding::right(4.px())),
+                    ),
                 })
                 .into_new_sized_box(),
             )
-            .with_fixed_spacer(4.px())
             .with_fixed(
                 tag.into_label()
                     .prepare()

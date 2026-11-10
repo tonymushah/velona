@@ -14,6 +14,8 @@ pub const MINUS_ICON: &[u8] =
 
 pub const PLUS_ICON: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/svgs/plus.svg"));
 
+pub const STAR_ICON: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/svgs/star.svg"));
+
 pub fn build_static_svg(data: &'static [u8]) -> Svg {
     Svg::new(Arc::new(
         usvg::Tree::from_data(data, &usvg::Options::default()).unwrap(),

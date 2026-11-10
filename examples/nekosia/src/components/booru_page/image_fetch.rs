@@ -3,7 +3,8 @@ use velona::{
     masonry::{
         core::Widget,
         layout::AsUnit,
-        widgets::{Button, Flex},
+        properties::types::CrossAxisAlignment,
+        widgets::{Button, Flex, FlexParams},
     },
     reactive::traits::{Get, Read},
     widgets::{
@@ -62,13 +63,14 @@ pub fn image_fetching(flex: Flex) -> Flex {
             .map(|e| Ok::<_, FetchError>(e??))
     });
     flex.with_fixed_spacer(12.px())
-        .with_fixed(
+        .with(
             Button::new("Refetch".into_label().prepare())
                 .prepare()
                 .apply_primary_button_style()
                 .on_primary(move || {
                     image_fetch.refetch();
                 }),
+            FlexParams::new(0., None, CrossAxisAlignment::Center),
         )
         .with_fixed(show_fetch_error(image_fetch).into_new_widget())
         .with_fixed(

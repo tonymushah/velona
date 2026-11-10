@@ -25,7 +25,9 @@ pub fn image_of_the_day() -> AnyNewWidget {
         velona_tokio::tokio_spawn(clone!(client => async move {
             let client_read = client.read().await;
             client_read.wait_rate_limiter().await;
-            client_read.send_endpoint(ImageOfTheDay).await
+            client_read.send_endpoint(ImageOfTheDay).await.inspect_err(|e| {
+                log::error!("{:#?}", e);
+            })
         }))
         .map(|res| anyhow::Ok(res??))
     });

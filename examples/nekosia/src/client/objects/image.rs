@@ -62,7 +62,7 @@ pub struct ImageSource {
 #[serde(rename_all = "camelCase")]
 pub struct ImageArtist {
     pub username: String,
-    pub profile: Url,
+    pub profile: Option<Url>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

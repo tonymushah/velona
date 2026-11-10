@@ -178,7 +178,7 @@ fn tags_controls(
                     let Some(new) = data.checked_add(1) else {
                         return false;
                     };
-                    if new < pages {
+                    if new <= pages {
                         *data = new;
                         true
                     } else {

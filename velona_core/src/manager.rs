@@ -38,7 +38,7 @@ pub(crate) enum OtherManagerMethods {
     SetControlFlow(ControlFlow),
     RegisterCustomCursor(
         CustomCursorSource,
-        oneshot::Sender<Result<CustomCursor, winit_core::error::RequestError>>,
+        oneshot::Sender<Result<CustomCursor, winit_core::error::CustomCursorError>>,
     ),
     ListenDeviceEventsMode(DeviceEvents),
     SystemTheme(oneshot::Sender<Option<winit_core::window::Theme>>),

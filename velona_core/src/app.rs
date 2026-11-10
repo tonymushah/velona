@@ -13,11 +13,10 @@ use winit_core::event_loop::EventLoopProvider;
 pub(crate) mod event_listener;
 pub(crate) mod proxy;
 
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::sync::Arc;
 
 use crate::{app::executor::SpawnFn, window::builder::WindowBuilder};
 use any_spawner::PinnedFuture;
-use copypasta::ClipboardContext;
 use masonry_core::core::DefaultProperties;
 use reactive_graph::owner::Owner;
 // use winit_core::event_loop::{ControlFlow, DeviceEvents};
@@ -133,7 +132,6 @@ impl<W: WindowRenderer> Builder<W> {
             default_properties: Arc::new(self.default_properties),
             builder_windows: Some(self.windows),
             owner: self.owner,
-            clipboard_context: Rc::new(RefCell::new(ClipboardContext::new().unwrap())),
             can_create_surfaces: false,
             receiver,
             on_event_loop_init: {

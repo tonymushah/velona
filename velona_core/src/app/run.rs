@@ -18,7 +18,7 @@ use ui_events_velona_core::WindowEventTranslation;
 use velona_core_accesskit::{AdapterFactory, CreateAdapterArgs};
 use velona_executor::{TaskId, VelonaTasksExecutor};
 use velona_renderer::WindowRenderer;
-use winit_core::data_transfer::DataTransferSendBuilder;
+use winit_core::data_transfer::{DataTransferSendBuilder, TypeHint};
 use winit_core::window::{ImeCapabilities, ImeEnableRequest, ImeRequestData};
 use winit_core::{
     application::ApplicationHandler, event::WindowEvent, event_loop::ActiveEventLoop,
@@ -42,7 +42,7 @@ use crate::{
     app::proxy::EventProxyHandle,
     app::{AppHandle, EventLoopEvent, window::WindowNew},
     utils::convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
-    utils::{FlumeReceiver, FlumeSender, todo_warn_of_something},
+    utils::{FlumeReceiver, FlumeSender},
     window::{builder::WindowBuilder, renderer::WindowRendererFactory},
 };
 
@@ -867,11 +867,7 @@ where
         let first_time_ui_event = self.first_time_ui_event;
         let maybe_first_time = self
             .use_window(window_id, |window| {
-                handle_ui_translated_event(
-                    first_time_ui_event,
-                    &event,
-                    /*clipboard_context,*/ window,
-                )
+                handle_ui_translated_event(first_time_ui_event, &event, event_loop, window)
             })
             .flatten();
         if let Some(first_time) = maybe_first_time {
@@ -904,6 +900,11 @@ where
             } => {
                 self.use_window_render_root(window_id, |rr| {
                     rr.handle_window_event(masonry_core::core::WindowEvent::Rescale(*scale_factor));
+                });
+            }
+            WindowEvent::DataTransferReceived { id, serial, value } => {
+                self.use_window(window_id, |window| {
+                    window.handle_data_transfer(serial, id, value);
                 });
             }
             _e => {
@@ -955,7 +956,7 @@ where
 fn handle_ui_translated_event<W: WindowRenderer>(
     mut first_time_stamp: Option<Instant>,
     event: &WindowEvent,
-    // clipboard_context: Rc<RefCell<copypasta::x11_clipboard::X11ClipboardContext>>,
+    event_loop: &dyn ActiveEventLoop,
     window: &mut Window<W>,
 ) -> Option<Instant> {
     if !matches!(
@@ -987,19 +988,27 @@ fn handle_ui_translated_event<W: WindowRenderer>(
                         && action_mod
                         && k.state == KeyState::Down
                     {
-                        todo!();
-                        // match clipboard_context.borrow_mut().get_contents() {
-                        //     Ok(content) => {
-                        //         window
-                        //             .render_root
-                        //             .tree
-                        //             .handle_text_event(TextEvent::ClipboardPaste(content));
-                        //         todo_warn_of_something("Clipboard Paste");
-                        //     }
-                        //     Err(err) => {
-                        //         log::error!("Cannot get clipboard content: {err}")
-                        //     }
-                        // }
+                        let maybe_data =
+                            event_loop.clipboard().and_then(|maybe_data_transfer_id| {
+                                maybe_data_transfer_id
+                                    .map(|data_transfer_id| {
+                                        event_loop
+                                            .fetch_data_transfer(
+                                                data_transfer_id,
+                                                &TypeHint::Plaintext,
+                                            )
+                                            .map(|e| (e, data_transfer_id))
+                                    })
+                                    .transpose()
+                            });
+                        match maybe_data {
+                            Ok(maybe_content_id) => {
+                                window.mansory_current_clipboard_request = maybe_content_id;
+                            }
+                            Err(err) => {
+                                log::error!("Cannot get clipboard content: {err}")
+                            }
+                        }
                     } else {
                         window
                             .render_root

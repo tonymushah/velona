@@ -18,7 +18,9 @@ use send_wrapper::SendWrapper;
 use ui_events_velona_core::WindowEventReducer;
 use velona_core_accesskit::Adapter;
 use velona_renderer::WindowRenderer;
+use winit_core::data_transfer::{DataTransferId, TypedData};
 use winit_core::event::WindowEvent;
+use winit_core::event_loop::AsyncRequestSerial;
 use winit_core::window::Window as WinitWindow;
 
 use crate::{
@@ -43,6 +45,7 @@ where
     base_color: AlphaColor<Srgb>,
     pub(crate) winit_window: Arc<Box<dyn WinitWindow>>,
     handle: WindowHandle,
+    pub(crate) mansory_current_clipboard_request: Option<(AsyncRequestSerial, DataTransferId)>,
 }
 
 pub struct WindowNew<'i, V, W> {
@@ -150,6 +153,7 @@ where
             window_event_listeners: event_handlers,
             base_color: base_color.unwrap_or(WHITE),
             handle: window_handle,
+            mansory_current_clipboard_request: None,
         };
         Ok(this)
     }
@@ -248,6 +252,48 @@ where
         if let Some(adapter) = self.access_kit.as_mut() {
             adapter.update_if_active(Box::new(tree));
         }
+    }
+    fn handle_mansonry_clipboard_data_transfer(
+        &mut self,
+        async_serial: &AsyncRequestSerial,
+        data_transfer: &DataTransferId,
+        value: &dyn TypedData,
+    ) -> bool {
+        let Some((m_serial, m_data_transfer)) = self.mansory_current_clipboard_request.as_ref()
+        else {
+            return false;
+        };
+        if async_serial == m_serial && data_transfer == m_data_transfer {
+            match value.try_as_string() {
+                Ok(ee) => {
+                    self.render_root
+                        .tree
+                        .handle_text_event(masonry_core::core::TextEvent::ClipboardPaste(ee));
+                    self.mansory_current_clipboard_request.take();
+                    true
+                }
+                Err(err) => {
+                    if err.kind() == std::io::ErrorKind::WouldBlock {
+                        false
+                    } else {
+                        log::error!("Cannot get clip board content : {err}");
+                        self.mansory_current_clipboard_request.take();
+                        true
+                    }
+                }
+            }
+        } else {
+            false
+        }
+    }
+    pub fn handle_data_transfer(
+        &mut self,
+        async_serial: &AsyncRequestSerial,
+        data_transfer: &DataTransferId,
+        value: &Arc<dyn TypedData>,
+    ) {
+        let _is_masonry_clipboard_handled =
+            self.handle_mansonry_clipboard_data_transfer(async_serial, data_transfer, &**value);
     }
 }
 

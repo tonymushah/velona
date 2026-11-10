@@ -682,4 +682,125 @@ mod tests {
             "Internal Error"
         )
     }
+
+    #[tokio::test]
+    async fn test_more_parsing_1() {
+        let (server, client) = create_wiremock_client().await;
+
+        let response = json!({
+          "success": true,
+          "status": 200,
+          "key": "user:1358c:viewed:hololive",
+          "count": 47,
+          "id": "6823e3559ca50413d4de154e",
+          "colors": {
+            "main": "#BD9A8B",
+            "palette": [
+              "#3A3347",
+              "#BC9183",
+              "#C7CCDF",
+              "#5F607B",
+              "#7EC1AF",
+              "#F5E2CA",
+              "#0086E2",
+              "#453637",
+              "#665252",
+              "#7F8BAB",
+              "#8DB8F9",
+              "#D5ACC4",
+              "#222992",
+              "#DA3A43"
+            ]
+          },
+          "image": {
+            "original": {
+              "url": "https://cdn.nekosia.cat/images/vtuber/6823e3559ca50413d4de154e.png",
+              "extension": "png"
+            },
+            "compressed": {
+              "url": "https://cdn.nekosia.cat/images/vtuber/6823e3559ca50413d4de154e-compressed.jpg",
+              "extension": "jpeg"
+            }
+          },
+          "metadata": {
+            "original": {
+              "width": 2000,
+              "height": 2870,
+              "size": 5551313,
+              "extension": "png",
+              "colorProfile": null
+            },
+            "compressed": {
+              "width": 1280,
+              "height": 1837,
+              "size": 547272,
+              "extension": "jpeg",
+              "colorProfile": null
+            }
+          },
+          "category": "vtuber",
+          "tags": [
+            "vtuber",
+            "schoolgirl",
+            "catgirl",
+            "cat-ears",
+            "animal-ears",
+            "tail",
+            "cute",
+            "young-girl",
+            "thigh-high-socks",
+            "white-thigh-high-socks",
+            "butterfly",
+            "hololive",
+            "red-eyes",
+            "school-uniform",
+            "short-hair",
+            "socks",
+            "streaked-hair",
+            "uniform",
+            "uruha-rushia",
+            "valentine"
+          ],
+          "rating": "safe",
+          "anime": { "title": null, "character": "Uruha Rushia" },
+          "source": {
+            "url": "https://www.pixiv.net/en/artworks/105347321",
+            "direct": "https://i.pximg.net/img-original/img/2023/02/13/21/09/47/105347321_p0.png"
+          },
+          "attribution": {
+            "artist": {
+              "username": "ネコザメ🦈",
+              "profile": "https://www.pixiv.net/en/users/51853916"
+            },
+            "copyright": "Copyright 2023 © by ネコザメ🦈. All Rights Reserved."
+          }
+        });
+
+        Mock::given(method("GET"))
+            .and(path("/images/hololive"))
+            .and(query_param("session", "id"))
+            .and(query_param("id", "1358c"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(response))
+            .mount(&server)
+            .await;
+
+        let res = client
+            .send_endpoint({
+                let mut endpoint = GetRandomFromCategory::new("hololive");
+                endpoint.session(SessionType::Id("1358c".into()));
+                endpoint
+            })
+            .await
+            .unwrap();
+
+        assert!(res.success);
+
+        assert_eq!(res.images.len(), 1);
+
+        assert_eq!(res.images[0].tags.len(), 20);
+
+        assert_eq!(res.images[0].tags[0], "vtuber");
+
+        assert_eq!(res.images[0].category, "hololive");
+    }
 }

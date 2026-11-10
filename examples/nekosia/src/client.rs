@@ -63,6 +63,8 @@ impl NekosiaClient {
         let response = self.send_request_without_handling_error(request).await?;
         if response.status().is_success() {
             Ok(response)
+        } else if response.status() == 429 {
+            Err(error::Error::TooManyRequests)
         } else {
             let err = response.json::<error::RequestError>().await?;
             Err(Box::new(err).into())

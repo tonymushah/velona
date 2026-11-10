@@ -7,6 +7,8 @@ pub enum Error {
     Reqwest(#[from] reqwest::Error),
     NekosiaRequest(#[from] Box<RequestError>),
     Url(#[from] url::ParseError),
+    #[error("Too Many Requests")]
+    TooManyRequests,
 }
 
 #[derive(Debug, Deserialize, thiserror::Error)]

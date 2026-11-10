@@ -149,6 +149,9 @@ pub fn show_fetch_error<T: 'static>(resource: Resource<Result<T, FetchError>>) -
                     FetchError::TokioJoin(join_error) => format!("Tokio Join error ({join_error})")
                         .into_label()
                         .prepare(),
+                    FetchError::Client(crate::client::error::Error::TooManyRequests) => {
+                        "Too many requests has been sent!".into_label().prepare()
+                    }
                 })
                 .prepare(),
         )

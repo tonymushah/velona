@@ -10,7 +10,7 @@ use velona::{
         widgets::Flex,
     },
     reactive::{callback::UnsyncCallback, computed::Memo, traits::Read},
-    widgets::{View, label::IntoLabel, sized_box::IntoNewSizedBox},
+    widgets::{View, align::IntoAlign, label::IntoLabel, sized_box::IntoNewSizedBox},
 };
 
 use crate::{
@@ -89,7 +89,12 @@ pub fn image_view(obj: &ImageObject) -> impl View + use<> {
                                 to_show = format!("{to_show}...");
                             }
                         }
-                        to_show.into_label().prepare().erased()
+                        to_show
+                            .into_label()
+                            .prepare()
+                            .align_centered()
+                            .prepare()
+                            .erased()
                     })),
                     object_fit: None,
                 }),

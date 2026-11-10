@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use color::AlphaColor;
+use color::{AlphaColor, palette::css::TRANSPARENT};
 use velona::{
     NewWidgetExt,
     masonry::{
@@ -97,7 +97,7 @@ fn tags_view_base(mut flex: Flex, label: &str, tags: Arc<[ArcStr]>) -> Flex {
                 let tags = tags.clone();
                 move || {
                     tags.iter()
-                        .skip(pages * current_page())
+                        .skip(TAGS_PER_PAGE * current_page())
                         .take(TAGS_PER_PAGE)
                         .map(|tag| tag_switch(tag.clone()).into_erased())
                         .collect::<Box<[_]>>()
@@ -122,22 +122,35 @@ fn tags_controls(
     current_page: velona::reactive::signal::ReadSignal<usize>,
     set_page: velona::reactive::signal::WriteSignal<usize>,
 ) -> velona::masonry::core::NewWidget<Flex> {
+    let is_on_first = Memo::new(move |_| current_page() == 0);
+    let is_on_last = Memo::new(move |_| current_page() >= pages);
     Flex::row()
         .cross_axis_alignment(velona::masonry::properties::types::CrossAxisAlignment::Center)
         .main_axis_alignment(velona::masonry::properties::types::MainAxisAlignment::SpaceBetween)
         .with_fixed(
-            Button::with_text("Last")
-                .prepare()
-                .disabled_reactive(move || current_page() == 0)
-                .on_primary(move || {
-                    set_page.maybe_update(|data| {
-                        let Some(new) = data.checked_sub(1) else {
-                            return false;
-                        };
-                        *data = new;
-                        true
-                    });
-                }),
+            Button::new(
+                "Last"
+                    .into_label()
+                    .prepare()
+                    .with_props_opt_reactive(move || {
+                        if is_on_first() {
+                            Some(ContentColor::new(TRANSPARENT))
+                        } else {
+                            None
+                        }
+                    }),
+            )
+            .prepare()
+            .disabled_reactive(is_on_first)
+            .on_primary(move || {
+                set_page.maybe_update(|data| {
+                    let Some(new) = data.checked_sub(1) else {
+                        return false;
+                    };
+                    *data = new;
+                    true
+                });
+            }),
         )
         .with_fixed(
             label
@@ -146,22 +159,33 @@ fn tags_controls(
                 .prepare(),
         )
         .with_fixed(
-            Button::with_text("Next")
-                .prepare()
-                .disabled_reactive(move || current_page() >= pages)
-                .on_primary(move || {
-                    set_page.maybe_update(|data| {
-                        let Some(new) = data.checked_add(1) else {
-                            return false;
-                        };
-                        if new < pages {
-                            *data = new;
-                            true
+            Button::new(
+                "Next"
+                    .into_label()
+                    .prepare()
+                    .with_props_opt_reactive(move || {
+                        if is_on_last() {
+                            Some(ContentColor::new(TRANSPARENT))
                         } else {
-                            false
+                            None
                         }
-                    });
-                }),
+                    }),
+            )
+            .prepare()
+            .disabled_reactive(is_on_last)
+            .on_primary(move || {
+                set_page.maybe_update(|data| {
+                    let Some(new) = data.checked_add(1) else {
+                        return false;
+                    };
+                    if new < pages {
+                        *data = new;
+                        true
+                    } else {
+                        false
+                    }
+                });
+            }),
         )
         .prepare()
 }

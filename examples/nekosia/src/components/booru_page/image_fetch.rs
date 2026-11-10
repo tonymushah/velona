@@ -73,6 +73,7 @@ pub fn image_fetching(flex: Flex) -> Flex {
             FlexParams::new(0., None, CrossAxisAlignment::Center),
         )
         .with_fixed(show_fetch_error(image_fetch).into_new_widget())
+        .with_fixed_spacer(8.px())
         .with_fixed(
             (move || {
                 let if_read = image_fetch.read();

@@ -182,3 +182,4 @@ color = { version = "0.3" }
 time = { version = "0.3" }
 lru = { version = "0.19" }
 rand = { version = "0.10", default-features = false }
+heck = { version = "0.5" }

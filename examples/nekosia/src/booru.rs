@@ -3,7 +3,10 @@ use std::sync::Arc;
 use arrayvec::ArrayVec;
 use rand::RngExt;
 use reactive_stores::Store;
-use velona::reactive::owner::{expect_context, provide_context};
+use velona::{
+    masonry::core::ArcStr,
+    reactive::owner::{expect_context, provide_context},
+};
 
 use crate::client::objects::Rating;
 
@@ -22,12 +25,12 @@ pub struct BooruContext {
     // available: BooruTagsAvailable,
 }
 
-// #[derive(Debug, Store, Patch, Default)]
-// pub struct BooruTagsAvailable {
-//     pub tags: Vec<String>,
-//     pub anime: Vec<String>,
-//     pub characters: Vec<String>,
-// }
+#[derive(Debug, Default)]
+pub struct BooruTagsAvailable {
+    pub tags: Arc<[ArcStr]>,
+    pub anime: Arc<[ArcStr]>,
+    pub characters: Arc<[ArcStr]>,
+}
 
 impl BooruContext {
     pub fn with_session() -> Self {

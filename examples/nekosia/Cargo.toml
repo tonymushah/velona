@@ -46,6 +46,7 @@ velona_router = { workspace = true }
 tempfile = { workspace = true }
 lru = { workspace = true }
 rand = { workspace = true, default-features = true }
+heck = { workspace = true }
 
 [dev-dependencies]
 wiremock = { workspace = true }

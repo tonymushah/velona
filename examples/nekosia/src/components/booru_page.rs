@@ -2,6 +2,7 @@ mod image_fetch;
 mod tags;
 
 use futures_util::FutureExt;
+use heck::ToKebabCase;
 use velona::{
     AnyNewWidget,
     masonry::{
@@ -30,8 +31,7 @@ pub fn booru_page() -> AnyNewWidget {
     booru_page_inner().into_erased()
 }
 
-type ResourceTagsResult =
-    Resource<Result<crate::client::endpoint::tags::GetTagsResponse, FetchError>>;
+pub(super) type ResourceTagsResult = Resource<Result<crate::booru::BooruTagsAvailable, FetchError>>;
 
 fn booru_page_inner() -> impl View {
     let client = expect_client();
@@ -44,7 +44,37 @@ fn booru_page_inner() -> impl View {
             .spawn(async move {
                 let read = client.read().await;
                 read.wait_rate_limiter().await;
-                read.send_endpoint(GetTags).await
+                read.send_endpoint(GetTags)
+                    .await
+                    .map(|mut e| {
+                        e.anime.iter_mut().for_each(|tag| {
+                            *tag = tag.to_kebab_case();
+                        });
+                        e.characters.iter_mut().for_each(|tag| {
+                            *tag = tag.to_kebab_case();
+                        });
+                        e.anime.iter_mut().for_each(|tag| {
+                            *tag = tag.to_kebab_case();
+                        });
+                        e
+                    })
+                    .map(|data| crate::booru::BooruTagsAvailable {
+                        tags: data
+                            .tags
+                            .into_iter()
+                            .map(|e| e.into_boxed_str().into())
+                            .collect(),
+                        anime: data
+                            .anime
+                            .into_iter()
+                            .map(|e| e.into_boxed_str().into())
+                            .collect(),
+                        characters: data
+                            .characters
+                            .into_iter()
+                            .map(|e| e.into_boxed_str().into())
+                            .collect(),
+                    })
             })
             .map(|e| Ok::<_, FetchError>(e??))
     });

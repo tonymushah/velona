@@ -12,7 +12,7 @@ peniko.workspace = true
 kurbo.workspace = true
 debug_timer.workspace = true
 # hotpath = {workspace = true, optional=true}
-vello_hybrid = { workspace = true, features = ["wgpu", "text"] }
+vello_gpu = { workspace = true, features = ["wgpu", "text"] }
 vello_common.workspace = true
 wgpu.workspace = true
 glifo = { workspace = true, features = ["std"] }

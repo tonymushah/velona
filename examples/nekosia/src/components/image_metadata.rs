@@ -51,7 +51,7 @@ pub fn image_view(obj: &ImageObject) -> impl View + use<> {
     let image_cache = expect_image_cache();
     let maybe_image = image_cache
         .image_of_as_res(ImageCacheEntryKey {
-            url: urls.original.url,
+            url: urls.compressed.url,
             size: Some(PhysicalSize::new(500, 500)),
         })
         .into_resource();

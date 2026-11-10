@@ -20,7 +20,6 @@ send_wrapper.workspace = true
 # uuid = { workspace = true, features = ["v4"] }
 ui-events-velona_core.workspace = true
 # parking_lot = "0.12"
-copypasta.workspace = true
 futures-channel.workspace = true
 hotpath = { workspace = true, optional = true }
 # TODO add anyrender for rendering simplicity

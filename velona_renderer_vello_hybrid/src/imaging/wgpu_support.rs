@@ -11,6 +11,13 @@ pub(crate) enum ReadbackError {
     BufferMap,
     InvalidTargetStride,
     InvalidTargetBuffer,
+    MapRange,
+}
+
+impl From<wgpu::MapRangeError> for ReadbackError {
+    fn from(_value: wgpu::MapRangeError) -> Self {
+        Self::MapRange
+    }
 }
 
 impl core::fmt::Display for ReadbackError {
@@ -150,13 +157,12 @@ pub(crate) fn read_texture_into_target(
         .map_err(|_| ReadbackError::BufferMap)?;
 
     let mapped = slice.get_mapped_range();
-    for (row, out_row) in mapped
+    for (row, out_row) in mapped?
         .chunks_exact(bytes_per_row as usize)
         .zip(data.chunks_exact_mut(bytes_per_row_out))
     {
         out_row[..width_bytes_usize].copy_from_slice(&row[..width_bytes_usize]);
     }
-    drop(mapped);
     readback.unmap();
     Ok(())
 }

@@ -31,8 +31,8 @@ impl HybridImageRegistry {
 
     pub(crate) fn begin_upload_session<'a>(
         &'a mut self,
-        resources: &mut vello_hybrid::Resources,
-        renderer: &'a mut vello_hybrid::Renderer,
+        resources: &mut vello_gpu::Resources,
+        renderer: &'a mut vello_gpu::Renderer,
         device: &'a wgpu::Device,
         queue: &'a wgpu::Queue,
         mut encoder: wgpu::CommandEncoder,
@@ -69,8 +69,8 @@ impl HybridImageRegistry {
 
     fn evict_to_budget(
         &mut self,
-        resources: &mut vello_hybrid::Resources,
-        renderer: &mut vello_hybrid::Renderer,
+        resources: &mut vello_gpu::Resources,
+        renderer: &mut vello_gpu::Renderer,
         encoder: &mut wgpu::CommandEncoder,
     ) {
         while self.bytes_used > self.max_bytes {
@@ -84,8 +84,8 @@ impl HybridImageRegistry {
 
     pub(crate) fn clear(
         &mut self,
-        resources: &mut vello_hybrid::Resources,
-        renderer: &mut vello_hybrid::Renderer,
+        resources: &mut vello_gpu::Resources,
+        renderer: &mut vello_gpu::Renderer,
         encoder: &mut wgpu::CommandEncoder,
     ) {
         for image in self.live.drain(..) {
@@ -97,7 +97,7 @@ impl HybridImageRegistry {
 
 pub(crate) struct HybridImageUploadSession<'a> {
     registry: &'a mut HybridImageRegistry,
-    renderer: &'a mut vello_hybrid::Renderer,
+    renderer: &'a mut vello_gpu::Renderer,
     device: &'a wgpu::Device,
     queue: &'a wgpu::Queue,
     encoder: Option<wgpu::CommandEncoder>,
@@ -107,7 +107,7 @@ pub(crate) struct HybridImageUploadSession<'a> {
 impl HybridImageUploadSession<'_> {
     pub(crate) fn resolve_image_brush(
         &mut self,
-        resources: &mut vello_hybrid::Resources,
+        resources: &mut vello_gpu::Resources,
         brush: &ImageBrush,
     ) -> Result<VelloImage, Error> {
         let key = ImageKey::derive(&brush.image);
@@ -155,7 +155,7 @@ impl HybridImageUploadSession<'_> {
         })
     }
 
-    pub(crate) fn finish(&mut self, resources: &mut vello_hybrid::Resources, success: bool) {
+    pub(crate) fn finish(&mut self, resources: &mut vello_gpu::Resources, success: bool) {
         if success {
             for image in self.pending.drain(..) {
                 self.registry.live.push_back(image);

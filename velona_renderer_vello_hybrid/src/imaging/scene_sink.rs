@@ -3,7 +3,7 @@
 
 use super::image_registry::HybridImageUploadSession;
 use super::{Error, VelloHybridRenderer};
-use glifo::Glyph as VelloGlyph;
+use glifo::{DrawSink, Glyph as VelloGlyph, GlyphRenderError};
 use imaging::{
     BlurredRoundedRect, ClipRef, Composite, FillRef, GeometryRef, GlyphRunRef, GroupRef, PaintSink,
     StrokeRef,
@@ -11,9 +11,9 @@ use imaging::{
 use kurbo::{Affine, Shape as _};
 use peniko::{Brush, BrushRef, ImageBrush, Style};
 
-/// Borrowed adapter that streams `imaging` commands into an existing [`vello_hybrid::Scene`].
+/// Borrowed adapter that streams `imaging` commands into an existing [`vello_gpu::Scene`].
 pub struct VelloHybridSceneSink<'a> {
-    scene: &'a mut vello_hybrid::Scene,
+    scene: &'a mut vello_gpu::Scene,
     resources: SceneSinkResources<'a>,
     image_upload: Option<HybridImageUploadSession<'a>>,
     tolerance: f64,
@@ -24,12 +24,12 @@ pub struct VelloHybridSceneSink<'a> {
 
 #[allow(unused)]
 enum SceneSinkResources<'a> {
-    Owned(Box<vello_hybrid::Resources>),
-    Borrowed(&'a mut vello_hybrid::Resources),
+    Owned(Box<vello_gpu::Resources>),
+    Borrowed(&'a mut vello_gpu::Resources),
 }
 
 impl SceneSinkResources<'_> {
-    fn as_mut(&mut self) -> &mut vello_hybrid::Resources {
+    fn as_mut(&mut self) -> &mut vello_gpu::Resources {
         match self {
             Self::Owned(resources) => resources.as_mut(),
             Self::Borrowed(resources) => resources,
@@ -49,11 +49,11 @@ impl core::fmt::Debug for VelloHybridSceneSink<'_> {
 }
 
 impl<'a> VelloHybridSceneSink<'a> {
-    // Wrap an existing [`vello_hybrid::Scene`].
-    // pub fn new(scene: &'a mut vello_hybrid::Scene) -> Self {
+    // Wrap an existing [`vello_gpu::Scene`].
+    // pub fn new(scene: &'a mut vello_gpu::Scene) -> Self {
     //     Self {
     //         scene,
-    //         resources: SceneSinkResources::Owned(Box::new(vello_hybrid::Resources::new())),
+    //         resources: SceneSinkResources::Owned(Box::new(vello_gpu::Resources::new())),
     //         image_upload: None,
     //         tolerance: 0.1,
     //         error: None,
@@ -68,7 +68,7 @@ impl<'a> VelloHybridSceneSink<'a> {
     /// This is the native-scene path for image brushes. Uploaded images are cached on the
     /// renderer and reused across subsequent recordings and renders.
     pub fn with_renderer(
-        scene: &'a mut vello_hybrid::Scene,
+        scene: &'a mut vello_gpu::Scene,
         renderer: &'a mut VelloHybridRenderer,
     ) -> Self {
         let state = &mut renderer.state;
@@ -189,9 +189,9 @@ impl<'a> VelloHybridSceneSink<'a> {
         &mut self,
         glyph_run: GlyphRunRef<'_>,
         glyphs: &mut dyn Iterator<Item = imaging::record::Glyph>,
-    ) {
+    ) -> Result<(), GlyphRenderError> {
         let Some(paint) = self.brush_to_paint(glyph_run.brush, glyph_run.composite) else {
-            return;
+            return Ok(());
         };
         self.scene.set_transform(glyph_run.transform);
         self.scene
@@ -223,7 +223,7 @@ impl<'a> VelloHybridSceneSink<'a> {
                 } else {
                     builder
                 };
-                builder.fill_glyphs(glyphs.into_iter());
+                builder.fill_glyphs(glyphs.into_iter())?;
             }
             Style::Stroke(stroke) => {
                 self.scene.set_stroke(stroke.clone());
@@ -238,9 +238,10 @@ impl<'a> VelloHybridSceneSink<'a> {
                 } else {
                     builder
                 };
-                builder.stroke_glyphs(glyphs.into_iter());
+                builder.stroke_glyphs(glyphs.into_iter())?;
             }
         }
+        Ok(())
     }
 
     fn draw_blurred_rounded_rect(&mut self, _draw: BlurredRoundedRect) {
@@ -388,7 +389,7 @@ impl PaintSink for VelloHybridSceneSink<'_> {
         if self.error.is_some() {
             return;
         }
-        self.draw_glyph_run(draw, glyphs);
+        let _ = self.draw_glyph_run(draw, glyphs);
     }
 
     fn blurred_rounded_rect(&mut self, draw: BlurredRoundedRect) {
@@ -409,7 +410,7 @@ mod tests {
 
     #[test]
     fn hybrid_scene_sink_reports_clip_underflow() {
-        let mut scene = vello_hybrid::Scene::new(32, 32);
+        let mut scene = vello_gpu::Scene::new(32, 32);
         let gpu_context = wgpu_context::WGPUContext::default();
         let device_handle = &gpu_context.create_device_handle(None).block_on().unwrap();
         let mut renderer =
@@ -425,7 +426,7 @@ mod tests {
 
     #[test]
     fn hybrid_scene_sink_rejects_filters() {
-        let mut scene = vello_hybrid::Scene::new(32, 32);
+        let mut scene = vello_gpu::Scene::new(32, 32);
 
         let gpu_context = wgpu_context::WGPUContext::default();
         let device_handle = &gpu_context.create_device_handle(None).block_on().unwrap();
@@ -439,7 +440,7 @@ mod tests {
 
     #[test]
     fn hybrid_scene_sink_rejects_image_brushes_without_resolver() {
-        let mut scene = vello_hybrid::Scene::new(32, 32);
+        let mut scene = vello_gpu::Scene::new(32, 32);
         let gpu_context = wgpu_context::WGPUContext::default();
         let device_handle = &gpu_context.create_device_handle(None).block_on().unwrap();
         let mut renderer =
@@ -473,7 +474,7 @@ mod tests {
             peniko::Color::BLACK,
         ));
 
-        let mut scene = vello_hybrid::Scene::new(32, 32);
+        let mut scene = vello_gpu::Scene::new(32, 32);
         let gpu_context = wgpu_context::WGPUContext::default();
         let device_handle = &gpu_context.create_device_handle(None).block_on().unwrap();
         let mut renderer =

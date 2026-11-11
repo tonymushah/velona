@@ -10,7 +10,8 @@ use imaging::{
     record::{Scene, ValidateError, replay},
 };
 
-use vello_hybrid::{RenderError, RenderSettings, RenderSize, RenderTargetConfig, TextureBindings};
+use peniko::color::palette::css::TRANSPARENT;
+use vello_gpu::{RenderError, RenderSettings, RenderSize, RenderTargetConfig, TextureBindings};
 
 pub use scene_sink::VelloHybridSceneSink;
 use wgpu::{TextureFormat, wgt::CommandEncoderDescriptor};
@@ -51,8 +52,8 @@ impl core::error::Error for Error {}
 
 #[derive(Debug)]
 pub(crate) struct VelloHybridRendererState {
-    renderer: vello_hybrid::Renderer,
-    resources: vello_hybrid::Resources,
+    renderer: vello_gpu::Renderer,
+    resources: vello_gpu::Resources,
     device: wgpu::Device,
     queue: wgpu::Queue,
     tolerance: f64,
@@ -84,7 +85,7 @@ impl VelloHybridRendererState {
         render_settings: RenderSettings,
     ) -> Self {
         let (renderer, resources) =
-            vello_hybrid::Renderer::new_with(&device, target_config, render_settings);
+            vello_gpu::Renderer::new_with(&device, target_config, render_settings);
 
         Self {
             renderer,
@@ -123,12 +124,19 @@ impl VelloHybridRendererState {
     /// Lower a semantic [`imaging::record::Scene`] into a native [`vello_hybrid::Scene`].
     fn render_to_view(
         &mut self,
-        scene: &vello_hybrid::Scene,
+        scene: &vello_gpu::Scene,
         texture_view: &wgpu::TextureView,
         width: u32,
         height: u32,
     ) -> Result<(), Error> {
-        let render_size = RenderSize { width, height };
+        let render_size = RenderSize {
+            width: width
+                .try_into()
+                .map_err(|_| Error::Internal("Cannot convert u32 to u16 for width"))?,
+            height: height
+                .try_into()
+                .map_err(|_| Error::Internal("Cannot convert u32 to u16 for height"))?,
+        };
         let mut encoder = self
             .device
             .create_command_encoder(&CommandEncoderDescriptor {
@@ -144,7 +152,11 @@ impl VelloHybridRendererState {
                 &mut encoder,
                 &render_size,
                 texture_view,
+                None,
                 &TextureBindings::new(),
+                vello_common::TargetInit::Clear(vello_gpu::ClearSettings::Viewport {
+                    color: TRANSPARENT,
+                }),
             )
             .map_err(Error::Render)?;
 
@@ -197,9 +209,9 @@ impl VelloHybridRenderer {
         scene: &Scene,
         width: u16,
         height: u16,
-    ) -> Result<vello_hybrid::Scene, Error> {
+    ) -> Result<vello_gpu::Scene, Error> {
         scene.validate().map_err(Error::InvalidScene)?;
-        let mut native = vello_hybrid::Scene::new(width, height);
+        let mut native = vello_gpu::Scene::new(width, height);
         native.reset();
         let tolerance = self.state.tolerance;
         {
@@ -216,10 +228,10 @@ impl VelloHybridRenderer {
         source: &mut S,
         width: u32,
         height: u32,
-    ) -> Result<vello_hybrid::Scene, Error> {
+    ) -> Result<vello_gpu::Scene, Error> {
         source.validate().map_err(Error::InvalidScene)?;
         let (width, height) = VelloHybridRendererState::checked_size(width, height)?;
-        let mut native = vello_hybrid::Scene::new(width, height);
+        let mut native = vello_gpu::Scene::new(width, height);
         native.reset();
         let tolerance = self.state.tolerance;
         {
@@ -231,10 +243,10 @@ impl VelloHybridRenderer {
         Ok(native)
     }
 
-    /// Render a native [`vello_hybrid::Scene`] into a caller-provided texture view.
+    /// Render a native [`vello_gpu::Scene`] into a caller-provided texture view.
     pub fn render_to_texture_view(
         &mut self,
-        scene: &vello_hybrid::Scene,
+        scene: &vello_gpu::Scene,
         texture_view: &wgpu::TextureView,
         width: u32,
         height: u32,
@@ -256,7 +268,7 @@ impl VelloHybridRenderer {
     /// Render a native [`vello_hybrid::Scene`] into an RGBA8 image (unpremultiplied).
     pub fn render_into(
         &mut self,
-        scene: &vello_hybrid::Scene,
+        scene: &vello_gpu::Scene,
         width: u16,
         height: u16,
         image: &mut RgbaImage,
@@ -280,7 +292,7 @@ impl VelloHybridRenderer {
     /// Render a native [`vello_hybrid::Scene`] and return an RGBA8 image (unpremultiplied).
     pub fn render(
         &mut self,
-        scene: &vello_hybrid::Scene,
+        scene: &vello_gpu::Scene,
         width: u16,
         height: u16,
     ) -> Result<RgbaImage, Error> {
@@ -333,5 +345,6 @@ fn map_readback_error(err: ReadbackError) -> Error {
         ReadbackError::BufferMap => Error::Internal("buffer map failed"),
         ReadbackError::InvalidTargetStride => Error::Internal("image target row stride too small"),
         ReadbackError::InvalidTargetBuffer => Error::Internal("image target buffer too small"),
+        ReadbackError::MapRange => Error::Internal("Wgpu buffer view error (MapRange)"),
     }
 }

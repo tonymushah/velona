@@ -1,16 +1,15 @@
 use std::collections::HashSet;
 use std::time::Instant;
-use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use any_spawner::{PinnedFuture, PinnedLocalFuture};
-use copypasta::{ClipboardContext, ClipboardProvider};
 use dpi::PhysicalSize;
 use log::warn;
 use masonry_core::app::RenderRootSignal;
 use masonry_core::{
     app::RenderRoot,
     core::{
-        DefaultProperties, TextEvent, WindowEvent as MasonryWindowEvent,
+        DefaultProperties, WindowEvent as MasonryWindowEvent,
         keyboard::{Key, KeyState},
     },
 };
@@ -19,6 +18,7 @@ use ui_events_velona_core::WindowEventTranslation;
 use velona_core_accesskit::{AdapterFactory, CreateAdapterArgs};
 use velona_executor::{TaskId, VelonaTasksExecutor};
 use velona_renderer::WindowRenderer;
+use winit_core::data_transfer::{DataTransferSendBuilder, TypeHint};
 use winit_core::window::{ImeCapabilities, ImeEnableRequest, ImeRequestData};
 use winit_core::{
     application::ApplicationHandler, event::WindowEvent, event_loop::ActiveEventLoop,
@@ -42,7 +42,7 @@ use crate::{
     app::proxy::EventProxyHandle,
     app::{AppHandle, EventLoopEvent, window::WindowNew},
     utils::convert_winit_event::{masonry_resize_direction_to_winit, winit_ime_to_masonry},
-    utils::{FlumeReceiver, FlumeSender, todo_warn_of_something},
+    utils::{FlumeReceiver, FlumeSender},
     window::{builder::WindowBuilder, renderer::WindowRendererFactory},
 };
 
@@ -55,7 +55,6 @@ where
     pub(crate) builder_windows: Option<Vec<WindowBuilder>>,
     pub(crate) owner: Owner,
     pub(crate) window_renderer_factory: Box<dyn WindowRendererFactory<WindowRenderer = W>>,
-    pub(crate) clipboard_context: Rc<RefCell<ClipboardContext>>,
     pub(crate) can_create_surfaces: bool,
     pub(crate) receiver: FlumeReceiver<EventLoopEvent>,
     pub(crate) sender: FlumeSender<EventLoopEvent>,
@@ -664,10 +663,8 @@ where
                     self.windows.remove(&window_id);
                 }
                 EventLoopEvent::SetClipboardContent(text) => {
-                    let _ = self
-                        .clipboard_context
-                        .borrow_mut()
-                        .set_contents(text)
+                    let _ = event_loop
+                        .set_clipboard(DataTransferSendBuilder::new(text).build())
                         .inspect_err(|err| log::error!("cannot set clipboard content => {err}"));
                 }
                 EventLoopEvent::HandleRenderRootSignals(window_id, signal) => {
@@ -866,11 +863,11 @@ where
         self.use_window(window_id, |window| {
             window.forward_to_accesskit_adapter(&event);
         });
-        let clipboard_context = self.clipboard_context.clone();
+        // let clipboard_context = self.clipboard_context.clone();
         let first_time_ui_event = self.first_time_ui_event;
         let maybe_first_time = self
             .use_window(window_id, |window| {
-                handle_ui_translated_event(first_time_ui_event, &event, clipboard_context, window)
+                handle_ui_translated_event(first_time_ui_event, &event, event_loop, window)
             })
             .flatten();
         if let Some(first_time) = maybe_first_time {
@@ -903,6 +900,11 @@ where
             } => {
                 self.use_window_render_root(window_id, |rr| {
                     rr.handle_window_event(masonry_core::core::WindowEvent::Rescale(*scale_factor));
+                });
+            }
+            WindowEvent::DataTransferReceived { id, serial, value } => {
+                self.use_window(window_id, |window| {
+                    window.handle_data_transfer(serial, id, value);
                 });
             }
             _e => {
@@ -954,7 +956,7 @@ where
 fn handle_ui_translated_event<W: WindowRenderer>(
     mut first_time_stamp: Option<Instant>,
     event: &WindowEvent,
-    clipboard_context: Rc<RefCell<copypasta::x11_clipboard::X11ClipboardContext>>,
+    event_loop: &dyn ActiveEventLoop,
     window: &mut Window<W>,
 ) -> Option<Instant> {
     if !matches!(
@@ -986,13 +988,22 @@ fn handle_ui_translated_event<W: WindowRenderer>(
                         && action_mod
                         && k.state == KeyState::Down
                     {
-                        match clipboard_context.borrow_mut().get_contents() {
-                            Ok(content) => {
-                                window
-                                    .render_root
-                                    .tree
-                                    .handle_text_event(TextEvent::ClipboardPaste(content));
-                                todo_warn_of_something("Clipboard Paste");
+                        let maybe_data =
+                            event_loop.clipboard().and_then(|maybe_data_transfer_id| {
+                                maybe_data_transfer_id
+                                    .map(|data_transfer_id| {
+                                        event_loop
+                                            .fetch_data_transfer(
+                                                data_transfer_id,
+                                                &TypeHint::Plaintext,
+                                            )
+                                            .map(|e| (e, data_transfer_id))
+                                    })
+                                    .transpose()
+                            });
+                        match maybe_data {
+                            Ok(maybe_content_id) => {
+                                window.mansory_current_clipboard_request = maybe_content_id;
                             }
                             Err(err) => {
                                 log::error!("Cannot get clipboard content: {err}")

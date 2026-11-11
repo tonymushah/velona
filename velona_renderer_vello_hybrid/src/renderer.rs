@@ -7,7 +7,7 @@ use std::{
     future::ready,
     sync::{Arc, RwLock},
 };
-use vello_hybrid::{RenderSettings, RenderTargetConfig, Scene as VelloHybridScene};
+use vello_gpu::{RenderSettings, RenderTargetConfig, Scene as VelloHybridScene};
 use velona_renderer::{WindowRenderer, window_handle::WindowHandle};
 use wgpu::{CompositeAlphaMode, PresentMode, TextureFormat};
 use wgpu_context::{DeviceHandle, SurfaceRenderer, SurfaceRendererConfiguration, WGPUContext};
@@ -311,8 +311,12 @@ impl WindowRenderer for VelloHybridWindowRenderer {
                 render_surface.queue().clone(),
                 &RenderTargetConfig {
                     format: DEFAULT_TEXTURE_FORMAT,
-                    width,
-                    height,
+                    width: width
+                        .try_into()
+                        .expect("The width should be convertible to u16"),
+                    height: height
+                        .try_into()
+                        .expect("The height should be convertible to u16"),
                 },
                 render_config,
             );

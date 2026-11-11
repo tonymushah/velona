@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+use glifo::DrawSink;
 use imaging::{
     BlurredRoundedRect, ClipRef, Composite, FillRef, Filter, GeometryRef, GlyphRunRef, GroupRef,
     MaskMode, PaintSink, RgbaImage, StrokeRef,

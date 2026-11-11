@@ -18,6 +18,8 @@ pub enum AppHandleActionError {
     Request(#[from] winit_core::error::RequestError),
     #[error("The app has already exited")]
     AppExited,
+    #[error(transparent)]
+    CustomCursor(#[from] winit_core::error::CustomCursorError),
 }
 
 impl From<AppProxySendError> for AppHandleActionError {

@@ -71,3 +71,8 @@ run_tests:
         --exclude velona \
         --exclude velona_accesskit_xplat \
         test
+
+run_renderer_tests:
+    cargo test -p velona_renderer_vello
+    cargo test -p velona_renderer_vello_cpu
+    cargo test -p velona_renderer_vello_hybrid
